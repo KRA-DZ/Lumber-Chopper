@@ -9,13 +9,32 @@
   </head>
   <body>
     <header>
-      <a class="brand" href="../">Лесная смена <span>КРУГЛЫЙ МИР · 3D</span></a>
+      <a class="brand" href="../"
+        >Лесная смена <span id="world-badge">КРУГЛЫЙ МИР · 3D</span></a
+      >
       <div class="wallet">
         <span>Брёвна <b id="wood">0 / 20</b></span
         ><span>Монеты <b id="coins">0</b></span>
       </div>
     </header>
     <main>
+      <div class="style-picker" role="group" aria-label="Стиль графики">
+        <span id="style-status" role="status"
+          >Low-poly · основной стиль №4</span
+        >
+        <div class="style-options">
+          <button type="button" data-style-choice="lowpoly" aria-pressed="true">
+            Low-poly
+          </button>
+          <button
+            type="button"
+            data-style-choice="engraving"
+            aria-pressed="false"
+          >
+            Гравюра · проба
+          </button>
+        </div>
+      </div>
       <div id="viewport">
         <canvas
           id="world"

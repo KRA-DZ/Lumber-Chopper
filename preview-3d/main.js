@@ -1,11 +1,13 @@
 import { createScene } from "./scene.js";
 import { createGame } from "./game.js";
+import { installStyleControls } from "./render-style.js";
 const canvas = document.querySelector("#world");
 export let app = null;
 try {
   const world = createScene(canvas),
     game = createGame(world);
-  app = { world, game };
+  const style = installStyleControls(world);
+  app = { world, game, style };
   const initialFocus = new world.THREE.Vector3(game.player.x, 0, game.player.z);
   world.followCamera(initialFocus, 0, true);
   const { THREE } = world,

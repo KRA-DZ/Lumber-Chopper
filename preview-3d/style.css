@@ -46,6 +46,93 @@ header {
 main {
   padding: 0 3vw;
 }
+.style-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 0 2vw;
+  color: #c6c6aa;
+  font-size: 12px;
+}
+.style-options {
+  display: flex;
+  gap: 8px;
+}
+.style-options button {
+  width: auto;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.style-options button[aria-pressed="true"] {
+  background: #4a614a;
+  color: #fff1c6;
+}
+html[data-render-style="engraving"] body {
+  background: #d8cba5;
+  background-image: repeating-linear-gradient(
+    12deg,
+    #a99b7320 0,
+    #a99b7320 1px,
+    transparent 1px,
+    transparent 5px
+  );
+  color: #303929;
+}
+html[data-render-style="engraving"] .brand span,
+html[data-render-style="engraving"] .wallet,
+html[data-render-style="engraving"] .style-picker,
+html[data-render-style="engraving"] .save-status,
+html[data-render-style="engraving"] footer {
+  color: #505a40;
+}
+html[data-render-style="engraving"] .wallet b,
+html[data-render-style="engraving"] footer strong,
+html[data-render-style="engraving"] footer a {
+  color: #303d2c;
+}
+html[data-render-style="engraving"] #viewport {
+  border: 2px solid #47503c;
+  border-radius: 5px;
+}
+html[data-render-style="engraving"] button {
+  border-radius: 4px;
+  background: #303c2ce8;
+  border-color: #626447;
+  color: #eee0b6;
+}
+html[data-render-style="engraving"] .style-options button[aria-pressed="true"] {
+  background: #6b7050;
+}
+html[data-render-style="engraving"] .intro p,
+html[data-render-style="engraving"] .hint {
+  background: #293428e8;
+  border-radius: 3px;
+}
+html[data-render-style="engraving"] .hint,
+html[data-render-style="engraving"] #error {
+  color: #f4e6bc;
+}
+html[data-render-style="engraving"] button[aria-pressed="true"] {
+  border-color: #d2bd78;
+}
+@media (max-width: 600px) {
+  .style-picker {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 8px;
+  }
+  .style-options {
+    width: 100%;
+  }
+  .style-options button {
+    flex: 1;
+  }
+}
 #viewport {
   position: relative;
   height: min(76vh, 850px);

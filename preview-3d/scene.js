@@ -6,6 +6,7 @@ import { createCameraRig } from "./camera.js";
 import { createRenderBatches } from "./render-batches.js";
 import { SITES } from "./discoveries.js";
 import { createWeather } from "./weather.js";
+import { createEngraving } from "./engraving.js";
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -271,6 +272,7 @@ export function createScene(canvas) {
   }
   function setDayTime(time) {
     const darkness = nightAmount(time);
+    engraving.setNight(darkness);
     scene.background.copy(
       new THREE.Color("#b9c6b6").lerp(new THREE.Color("#354b62"), darkness),
     );
@@ -335,17 +337,20 @@ export function createScene(canvas) {
     renderer.setPixelRatio(low ? 1 : Math.min(devicePixelRatio, 1.35));
     renderer.shadowMap.enabled = !low;
     weather.setLow(low);
+    engraving.setLow(low);
     resize();
   }
   const draw = renderer.render.bind(renderer);
+  const engraving = createEngraving(renderer, draw);
   scene.matrixWorldAutoUpdate = false;
   renderer.render = (...args) => {
     scene.updateMatrixWorld(true);
     batches.update();
-    draw(...args);
+    engraving.render(...args);
   };
   return {
     cameraRig,
+    engraving,
     batches,
     weather,
     setLow,
