@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumber Clicker Pro</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+        
+        #ui {
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        canvas {
+            border: 4px solid #fff;
+            background: #4a7c59;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+        
+        #controls {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="ui">🪓 Дерево: <span id="wood">0</span> / <span id="maxWood">10</span> | 💰 Монеты: <span id="coins">0</span></div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div id="controls">Управление: Кликните мышкой (или тапните на экране), чтобы персонаж побежал к этой точке.</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Игровые ресурсы
+        let gameState = {
+            wood: 0,
+            maxWood: 10,
+            coins: 0,
+            axePower: 1,
+            upgradeCost: 15
+        };
+
+        // Персонаж
+        const player = {
+            x: 100,
+            y: 250,
+            targetX: 100,
+            targetY: 250,
+            speed: 4,
+            radius: 15,
+            stackedLogs: 0
+        };
+
+        // База (База приема древесины)
+        const base = {
+            x: 80,
+            y: 250,
+            width: 80,
+            height: 100
+        };
+
+        // Массив деревьев
+        let trees = [];
+
+        function spawnTree() {
+            trees.push({
+                x: Math.random() * (canvas.width - 250) + 200,
+                y: Math.random() * (canvas.height - 100) + 50,
+                hp: 3,
+                maxHp: 3,
+                radius: 20,
+                alive: true,
+                regenTimer: 0
+            });
+        }
+        // Создаем 5 начальных деревьев
+        for (let i = 0; i < 5; i++) spawnTree();
+
+        // Клик по экрану — задаем цель для ходьбы
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            player.targetX = e.clientX - rect.left;
+            player.targetY = e.clientY - rect.top;
+        });
+
+        // Проверка коллизий
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        }
+
+        // Главный игровой цикл
+        function update() {
+            // 1. Механика движения к цели
+            let distX = player.targetX - player.x;
+            let distY = player.targetY - player.y;
+            let distance = Math.sqrt(distX * distX + distY * distY);
+
+            if (distance > player.speed) {
+                player.x += (distX / distance) * player.speed;
+                player.y += (distY / distance) * player.speed;
+            }
+
+            // 2. Взаимодействие с базой (Сгружаем дерево)
+            if (player.x < base.x + base.width && player.y > base.y - base.height / 2 && player.y < base.y + base.height / 2) {
+                if (gameState.wood > 0) {
+                    gameState.coins += gameState.wood * 10;
+                    gameState.wood = 0;
+                    player.stackedLogs = 0;
+                    updateUI();
+                }
+            }
+
+            // 3. Авто-сруб при приближении к дереву
+            trees.forEach(tree => {
+                if (tree.alive) {
+                    let distToTree = getDistance(player.x, player.y, tree.x, tree.y);
+                    if (distToTree < player.radius + tree.radius + 10) {
+                        // Если есть место в рюкзаке, рубим кликом или авто-атакой
+                        if (gameState.wood < gameState.maxWood) {
+                            tree.hp -= 0.02; // Скорость рубки
+                            if (tree.hp <= 0) {
+                                tree.alive = false;
+                                tree.regenTimer = 300; // Время регенерации (кадры)
+                                gameState.wood++;
+                                player.stackedLogs++;
+                                updateUI();
+                            }
+                        }
+                    }
+                } else {
+                    tree.regenTimer--;
+                    if (tree.regenTimer <= 0) {
+                        tree.alive = true;
+                        tree.hp = tree.maxHp;
+                    }
+                }
+            });
+
+            // 4. Покупка улучшений (зона магазина прямо на экране сверху справа)
+            if (gameState.coins >= gameState.upgradeCost) {
+                // Упрощенный авто-апгрейд для кликера при клике на зону кнопки (обработаем отдельно)
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('wood').innerText = gameState.wood;
+            document.getElementById('maxWood').innerText = gameState.maxWood;
+            document.getElementById('coins').innerText = gameState.coins;
+        }
+
+        // Обработка покупки улучшений по клику на кнопку в Canvas
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Зона кнопки апгрейда рюкзака (справа сверху)
+            if (clickX > 620 && clickX < 780 && clickY > 20 && clickY < 60) {
+                if (gameState.coins >= gameState.upgradeCost) {
+                    gameState.coins -= gameState.upgradeCost;
+                    gameState.maxWood += 5;
+                    gameState.upgradeCost = Math.floor(gameState.upgradeCost * 1.5);
+                    updateUI();
+                }
+            }
+        });
+
+        // Отрисовка графики
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Рисуем Склад/Базу
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(base.x - base.width / 2, base.y - base.height / 2, base.width, base.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px sans-serif';
+            ctx.fillText("СКЛАД (ПРОДАЖА)", base.x - 50, base.y);
+
+            // Рисуем Деревья
+            trees.forEach(tree => {
+                if (tree.alive) {
+                    ctx.fillStyle = '#2e5a1c';
+                    ctx.beginPath();
+                    ctx.arc(tree.x, tree.y, tree.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    // ХП-бар дерева
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(tree.x - 15, tree.y - 30, 30, 5);
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(tree.x - 15, tree.y - 30, (tree.hp / tree.maxHp) * 30, 5);
+                } else {
+                    // Пеньки
+                    ctx.fillStyle = '#cd853f';
+                    ctx.beginPath();
+                    ctx.arc(tree.x, tree.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Рисуем Игрока
+            ctx.fillStyle = '#e63946';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Визуальная механика Lumber Chopper: стопка дров за спиной!
+            ctx.fillStyle = '#d4a373';
+            for (let i = 0; i < player.stackedLogs; i++) {
+                ctx.fillRect(player.x - 10, player.y - 20 - (i * 6), 20, 4);
+            }
+
+            // Кнопка Магазина / Улучшений
+            ctx.fillStyle = gameState.coins >= gameState.upgradeCost ? '#38b000' : '#777';
+            ctx.fillRect(620, 20, 160, 40);
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px sans-serif';
+            ctx.fillText(`Рюкзак +5 (Цена: ${gameState.upgradeCost} 💰)`, 630, 44);
+        }
+
+        // Запуск цикла
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+
+</body>
+
+</html>
