@@ -9,7 +9,7 @@
 <main>
 <header><div><small>ЛЕСНОЙ ПРОМЫСЕЛ / 01</small><h1>Лесная смена</h1></div><div class="stats"><div class="stat">Брёвна <b id="wood">0 / 20</b></div><div class="stat">Монеты <b id="coins">0</b></div></div></header>
 <canvas id="game" width="960" height="600" aria-label="Лес: нажмите на землю для движения, на дерево рядом для удара"></canvas>
-<footer><div><small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small><p>WASD / стрелки или нажатие на землю — движение. Рядом с деревом рубка идёт автоматически.<br>Нажимайте на дерево рядом, чтобы рубить быстрее. После рубки остаётся пень. Золотая площадка — продажа покупателям. Голубая — строительство лагеря.</p></div><div><button id="upgrade" type="button"></button></div></footer>
+<footer><div><small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small><p>WASD / стрелки или нажатие на землю — движение. Рядом с деревом рубка идёт автоматически.<br>Нажимайте на дерево рядом, чтобы рубить быстрее. После рубки остаётся пень. Золотая площадка — продажа покупателям. Голубая — строительство лагеря.</p></div><div><button id="upgrade" type="button"></button> <button id="sound" type="button" aria-pressed="false">Включить звуки леса</button></div></footer>
 <div id="campInfo" class="stat"></div>
 <div id="status" role="status" aria-live="polite"></div>
 </main>
@@ -24,7 +24,7 @@ const gameState = {
   upgradeCost: 15,      // Цена рюкзака, растёт в 1.5 раза после покупки.
   campLevel: 0,        // Построенные этапы лагеря: костёр, палатка, забор, хижина.
   buildWood: 0,        // Уже вложенные брёвна в текущий этап (не монеты).
-  worldTime: 48,        // Время мира в секундах: сутки = 240 с, без влияния на экономику.
+  worldTime: 240,       // Время мира в секундах: сутки = 1200 с, без влияния на экономику.
   cargoValue: 0         // Стоимость смешанного груза; обычные деревья дают бревно один раз.
 };
 const canvas = document.querySelector('#game'), ctx = canvas.getContext('2d');
@@ -41,8 +41,7 @@ const ancientTree={x:2080,y:1400,radius:65,workerOnly:true,infinite:true}; // З
 let notice='',noticeTimer=0;
 function showNotice(text){notice=text;noticeTimer=4;updateUI();}
 const sale={x:1420,y:1690,radius:53}, build={x:1780,y:1690,radius:53};
-const buyer={phase:'arriving',timer:0,x:1220,y:2070,load:0,trip:0};
-const DAY_SECONDS=240;
+const DAY_SECONDS=1200; // Спокойный 20-минутный цикл дня и ночи.
 const landmarks=[
   {id:'old-wall',type:'ruins',name:'Старая лесная застава',x:1240,y:1330},
   {id:'broken-cart',type:'wagon',name:'Забытая повозка',x:1790,y:2050},
@@ -73,7 +72,7 @@ function constrainPoint(x,y){const dx=x-CENTER.x,dy=y-CENTER.y,d=Math.hypot(dx,d
 const SAVE_KEY='lumber-chopper-v1';
 let saveWarning='';
 function saveProgress(){
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:3,worldTime:gameState.worldTime,discovered:[...discovered],wood:gameState.wood,maxWood:gameState.maxWood,coins:gameState.coins,upgradeCost:gameState.upgradeCost,cargoValue:gameState.cargoValue,campLevel:gameState.campLevel,buildWood:gameState.buildWood,x:player.x,y:player.y,trees:trees.map(t=>({id:t.id,hp:t.hp}))}));}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:4,daySeconds:DAY_SECONDS,worldTime:gameState.worldTime,discovered:[...discovered],wood:gameState.wood,maxWood:gameState.maxWood,coins:gameState.coins,upgradeCost:gameState.upgradeCost,cargoValue:gameState.cargoValue,campLevel:gameState.campLevel,buildWood:gameState.buildWood,x:player.x,y:player.y,trees:trees.map(t=>({id:t.id,hp:t.hp}))}));}
   catch{saveWarning='Браузер запретил сохранение. Прогресс доступен только в этой вкладке.';updateUI();}
 }
 function loadProgress(){
@@ -81,9 +80,10 @@ function loadProgress(){
     const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;
     const data=JSON.parse(raw);
     const valid=(v,min,max)=>Number.isFinite(v)&&v>=min&&v<=max;
-    if(![1,2,3].includes(data.version)||!Number.isInteger(data.maxWood)||!valid(data.maxWood,10,1000)||!Number.isInteger(data.wood)||!valid(data.wood,0,data.maxWood)||!valid(data.coins,0,1e12)||!valid(data.upgradeCost,1,1e12)||!valid(data.cargoValue,0,data.wood*40))throw Error('Invalid save');
+    if(![1,2,3,4].includes(data.version)||!Number.isInteger(data.maxWood)||!valid(data.maxWood,10,1000)||!Number.isInteger(data.wood)||!valid(data.wood,0,data.maxWood)||!valid(data.coins,0,1e12)||!valid(data.upgradeCost,1,1e12)||!valid(data.cargoValue,0,data.wood*40))throw Error('Invalid save');
     if(data.version>=2&&(!Number.isInteger(data.campLevel)||!valid(data.campLevel,0,4)||!Number.isInteger(data.buildWood)||!valid(data.buildWood,0,(stages[data.campLevel]?.cost||1)-1)))throw Error('Invalid camp');
-    if(valid(data.worldTime,0,DAY_SECONDS))gameState.worldTime=data.worldTime%DAY_SECONDS;
+    const savedCycle=valid(data.daySeconds,240,86400)?data.daySeconds:240;
+    if(valid(data.worldTime,0,savedCycle))gameState.worldTime=data.worldTime/savedCycle*DAY_SECONDS%DAY_SECONDS;
     if(Array.isArray(data.discovered))for(const id of data.discovered)if(landmarks.some(site=>site.id===id))discovered.add(id);
     for(const key of ['wood','coins','upgradeCost','cargoValue'])gameState[key]=data[key];
     gameState.maxWood=data.version===1?Math.min(1000,data.maxWood*2):data.maxWood;
@@ -93,8 +93,8 @@ function loadProgress(){
       if(Array.isArray(data.trees)){
         const byId=new Map(data.trees.filter(v=>v&&typeof v.id==='string').map(v=>[v.id,v]));
         trees.forEach(t=>{
-          const v=data.version===3?byId.get(t.id):data.trees[t.legacyIndex];
-          const oldMax=data.version===3?t.maxHp:(t.ring<4?4:t.ring<7?6:9);
+          const v=data.version>=3?byId.get(t.id):data.trees[t.legacyIndex];
+          const oldMax=data.version>=3?t.maxHp:(t.ring<4?4:t.ring<7?6:9);
           if(v&&valid(v.hp,0,oldMax))t.hp=v.hp===0?0:Math.max(1,Math.ceil(v.hp/oldMax*t.maxHp));
         });
       }
@@ -103,7 +103,7 @@ function loadProgress(){
   }catch{saveWarning='Сохранение недоступно или повреждено. Начата новая сессия.';}
 }
 function updateCamera(){camera.x=clamp(player.x-VIEW.width/2,0,WORLD.width-VIEW.width);camera.y=clamp(player.y-VIEW.height/2,0,WORLD.height-VIEW.height);}
-function clearKeys(){keys.clear();player.targetX=player.x;player.targetY=player.y;}
+function clearKeys(){keys.clear();player.targetX=player.x;player.targetY=player.y;player.path=[];}
 window.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select')||e.ctrlKey||e.metaKey||e.altKey)return;if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.code)){e.preventDefault();keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',clearKeys);
@@ -112,9 +112,159 @@ setInterval(saveProgress,5000);
 const player = {x:1600,y:1720,targetX:1600,targetY:1720,radius:15,speed:185,autoTimer:0,clickTimer:0,swing:0,moving:false};
 
 const trees = [], effects = [];
+player.path=[];player.pathVersion=0;
 let elapsed = 0, lastTime = null;
 const distance = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
 const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
+// Рельеф, тропы и физические основания объектов используют общие координаты.
+const pond={x:1150,y:1740,rx:150,ry:105};
+const streamX=y=>1160+65*Math.sin((y-1820)/160);
+const bridge={x:streamX(1950),y:1950,width:180,height:64};
+const trails=[
+  [{x:1600,y:1720},{x:1890,y:1740},{x:1990,y:1540},{x:2080,y:1490}],
+  [{x:1530,y:1690},{x:1340,y:1510},{x:1240,y:1390}],
+  [{x:1500,y:1680},{x:1370,y:1880},{x:bridge.x,y:1950},{x:990,y:1980}],
+  [{x:1640,y:1730},{x:1810,y:1850},{x:1790,y:2110}],
+  [{x:1690,y:1440},{x:1760,y:1180},{x:1880,y:860}],
+  [{x:1420,y:1775},{x:1390,y:1960},{x:1320,y:2140}]
+];
+const pondOutline=Array.from({length:32},(_,i)=>{const a=i/32*Math.PI*2,f=1+.07*Math.sin(a*3)+.05*Math.cos(a*5);return {x:pond.x+Math.cos(a)*pond.rx*f,y:pond.y+Math.sin(a)*pond.ry*f};});
+const streamOutline=[...Array.from({length:41},(_,i)=>{const y=1810+i*20;return {x:streamX(y)-27,y};}),...Array.from({length:41},(_,i)=>{const y=2610-i*20;return {x:streamX(y)+27,y};})];
+function pointInPolygon(x,y,points){let inside=false;for(let i=0,j=points.length-1;i<points.length;j=i++){const a=points[i],b=points[j];if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;}return inside;}
+function onBridge(x,y){return Math.abs(x-bridge.x)<=bridge.width/2&&Math.abs(y-bridge.y)<=bridge.height/2;}
+function inWater(x,y){return !onBridge(x,y)&&(pointInPolygon(x,y,pondOutline)||pointInPolygon(x,y,streamOutline));}
+function waterCollision(x,y,r){
+  if(x<pond.x-pond.rx-r-20||x>pond.x+pond.rx+r+110||y<pond.y-pond.ry-r-20||y>2620+r)return false;
+  for(let i=0;i<9;i++){const a=i/8*Math.PI*2;if(inWater(x+(i===8?0:Math.cos(a)*r),y+(i===8?0:Math.sin(a)*r)))return true;}return false;
+}
+function segmentDistance(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-a.x-dx*t,p.y-a.y-dy*t);}
+function nearTrail(p,width=44){return trails.some(path=>path.some((b,i)=>i>0&&segmentDistance(p,path[i-1],b)<width));}
+const obstacleBuckets=new Map();
+let obstacles=[],navVersion=0;
+const BUCKET=128,NAV=32,GRID=100;
+function campFencePosts(){const posts=[];if(gameState.campLevel>=3)for(let i=0;i<33;i++){const a=i/33*Math.PI*2;if(Math.sin(a)>.65)continue;posts.push({x:1600+Math.cos(a)*255,y:1600+Math.sin(a)*235});}return posts;}
+function rebuildObstacles(){
+  obstacles=[];obstacleBuckets.clear();navVersion++;
+  const circle=(x,y,r)=>obstacles.push({x,y,r});const rect=(x,y,w,h)=>obstacles.push({x,y,w,h});
+  for(const t of trees)circle(t.x,t.y-3,t.hp>0?12:7);
+  circle(ancientTree.x,ancientTree.y-12,53);rect(ancientTree.x-120,ancientTree.y+28,50,36);
+  for(let i=0;i<180;i+=3){const x=240+(i*373)%2720,y=240+(i*619)%2720;if(Math.hypot(x-1600,y-1600)>=300&&distance({x,y},ancientTree)>=180)circle(x,y,8);}
+  rect(1360,1570,120,48);rect(1727,1426,116,29);circle(1785,1470,13);
+  if(gameState.campLevel>=1)circle(1600,1600,29);
+  if(gameState.campLevel>=2)rect(1428,1457,114,29);
+  if(gameState.campLevel>=4)rect(1535,1415,130,60);
+  for(const p of campFencePosts())circle(p.x,p.y,10);
+  for(const site of landmarks){if(site.type==='chest')rect(site.x-26,site.y-21,52,25);else if(site.type==='camp')rect(site.x-65,site.y-25,116,30);else rect(site.x-55,site.y-25,110,35);}
+  for(const o of obstacles){const x0=o.r?o.x-o.r:o.x,y0=o.r?o.y-o.r:o.y,x1=o.r?o.x+o.r:o.x+o.w,y1=o.r?o.y+o.r:o.y+o.h;
+    for(let y=Math.floor(y0/BUCKET);y<=Math.floor(y1/BUCKET);y++)for(let x=Math.floor(x0/BUCKET);x<=Math.floor(x1/BUCKET);x++){const key=x+','+y;if(!obstacleBuckets.has(key))obstacleBuckets.set(key,[]);obstacleBuckets.get(key).push(o);}}
+}
+function isWalkable(x,y,r=15){
+  if(Math.hypot(x-1600,y-1600)>forestRadius()-r||waterCollision(x,y,r))return false;
+  for(let by=Math.floor((y-r)/BUCKET);by<=Math.floor((y+r)/BUCKET);by++)for(let bx=Math.floor((x-r)/BUCKET);bx<=Math.floor((x+r)/BUCKET);bx++){
+    for(const o of obstacleBuckets.get(bx+','+by)||[]){if(o.r){if(Math.hypot(x-o.x,y-o.y)<r+o.r-.01)return false;}else{const cx=Math.max(o.x,Math.min(o.x+o.w,x)),cy=Math.max(o.y,Math.min(o.y+o.h,y));if(Math.hypot(x-cx,y-cy)<r-.01)return false;}}
+  }return true;
+}
+function nearestGround(x,y,r=15){const p=constrainPoint(x,y);if(isWalkable(p.x,p.y,r))return p;for(let d=8;d<=320;d+=8)for(let i=0;i<24;i++){const a=i/24*Math.PI*2,n={x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d};if(isWalkable(n.x,n.y,r))return n;}return {x:1600,y:1720};}
+function clearSegment(a,b,r=15){const d=Math.hypot(b.x-a.x,b.y-a.y),steps=Math.max(1,Math.ceil(d/7));for(let i=1;i<=steps;i++)if(!isWalkable(a.x+(b.x-a.x)*i/steps,a.y+(b.y-a.y)*i/steps,r))return false;return true;}
+function moveBody(body,dx,dy,r=15){
+  const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/5));let moved=0;
+  for(let i=0;i<steps;i++){const ox=body.x,oy=body.y,sx=dx/steps,sy=dy/steps;
+    if(isWalkable(ox+sx,oy+sy,r)){body.x+=sx;body.y+=sy;}
+    else{if(isWalkable(body.x+sx,body.y,r))body.x+=sx;if(isWalkable(body.x,body.y+sy,r))body.y+=sy;}
+    moved+=Math.hypot(body.x-ox,body.y-oy);
+  }return moved;
+}
+// A* по сетке; проверка отрезков запрещает срезать углы и проходить через стволы.
+function findPath(start,goal){
+  const target=nearestGround(goal.x,goal.y);
+  if(clearSegment(start,target))return [target];
+  const walkCache=new Int8Array(GRID*GRID),cost=new Float64Array(GRID*GRID);cost.fill(Infinity);
+  const parent=new Int32Array(GRID*GRID);parent.fill(-1);const closed=new Uint8Array(GRID*GRID);
+  const center=id=>({x:(id%GRID)*NAV+NAV/2,y:Math.floor(id/GRID)*NAV+NAV/2});
+  const free=id=>{if(id<0||id>=10000)return false;if(!walkCache[id]){const p=center(id);walkCache[id]=isWalkable(p.x,p.y)?1:-1;}return walkCache[id]===1;};
+  function nearestCell(p){const cx=Math.floor(p.x/NAV),cy=Math.floor(p.y/NAV);for(let rad=0;rad<7;rad++){let best=-1,dist=Infinity;for(let y=cy-rad;y<=cy+rad;y++)for(let x=cx-rad;x<=cx+rad;x++){if(x<0||x>=GRID||y<0||y>=GRID)continue;const id=y*GRID+x,n=center(id),d=Math.hypot(p.x-n.x,p.y-n.y);if(d<dist&&free(id)&&clearSegment(p,n)){best=id;dist=d;}}if(best>=0)return best;}return -1;}
+  const first=nearestCell(start),last=nearestCell(target);if(first<0||last<0)return [];
+  const heap=[];function push(id,f){let i=heap.length;heap.push({id,f});while(i){const p=(i-1)>>1;if(heap[p].f<=f)break;heap[i]=heap[p];i=p;}heap[i]={id,f};}
+  function pop(){const top=heap[0],end=heap.pop();if(heap.length){let i=0;heap[0]=end;while(true){let c=i*2+1;if(c>=heap.length)break;if(c+1<heap.length&&heap[c+1].f<heap[c].f)c++;if(heap[c].f>=end.f)break;heap[i]=heap[c];i=c;heap[i]=end;}}return top.id;}
+  cost[first]=0;push(first,0);let visits=0,found=false;
+  while(heap.length&&visits++<10000){const id=pop();if(closed[id])continue;closed[id]=1;if(id===last){found=true;break;}const p=center(id),cx=id%GRID,cy=Math.floor(id/GRID);
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const x=cx+dx,y=cy+dy;if(x<0||x>=GRID||y<0||y>=GRID)continue;const next=y*GRID+x;if(closed[next]||!free(next))continue;const n=center(next);if(!clearSegment(p,n))continue;const g=cost[id]+Math.hypot(dx,dy);if(g<cost[next]){cost[next]=g;parent[next]=id;push(next,g+Math.hypot(x-last%GRID,y-Math.floor(last/GRID)));}}
+  }
+  if(!found)return [];
+  const raw=[target];for(let id=last;id!==-1;id=parent[id]){raw.push(center(id));if(id===first)break;}raw.reverse();
+  const result=[];let anchor=start,index=0;
+  while(index<raw.length){let far=index;while(far+1<raw.length&&clearSegment(anchor,raw[far+1]))far++;result.push(raw[far]);anchor=raw[far];index=far+1;}return result;
+}
+function setDestination(x,y){const target=nearestGround(x,y);player.targetX=target.x;player.targetY=target.y;player.path=findPath(player,target);player.pathVersion=navVersion;if(!player.path.length&&distance(player,target)>12)showNotice('Здесь нет прохода. Попробуйте подойти с другой стороны.');}
+function followPath(body,dt,speed){let budget=speed*dt,total=0;while(budget>0&&body.path?.length){const p=body.path[0],dx=p.x-body.x,dy=p.y-body.y,d=Math.hypot(dx,dy);if(d<1){body.path.shift();continue;}const step=Math.min(budget,d),moved=moveBody(body,dx/d*step,dy/d*step);total+=moved;budget-=step;if(moved<step*.1)break;if(Math.hypot(p.x-body.x,p.y-body.y)<1)body.path.shift();}return total;}
+
+// Очередь живёт весь торговый день; покупатель не уходит каждые несколько секунд.
+const BUYER_CAPACITY=40,BUYER_MIN_STAY=90,BUYER_INTERVAL=55,MAX_BUYERS=5;
+let buyerSequence=0,buyerSpawnTimer=0;
+const buyers=[];
+const shopOpen=()=>dayPhase()>=.06&&dayPhase()<.5; // 07:26–18:00 по часам мира.
+const buyerExit={x:1320,y:2140};
+function activeBuyer(){return shopOpen()?buyers.find(b=>b.phase==='waiting'&&b.slot===0&&b.load<BUYER_CAPACITY):null;}
+function spawnBuyer(){const b={id:buyerSequence++,x:buyerExit.x,y:buyerExit.y,phase:'arriving',load:0,wait:0,slot:-1,trip:buyerSequence,path:[],routeKey:''};buyers.push(b);return b;}
+function updateBuyers(dt){
+  const open=shopOpen();buyerSpawnTimer-=dt;
+  if(open&&buyerSpawnTimer<=0&&buyers.filter(b=>b.phase!=='leaving').length<MAX_BUYERS){spawnBuyer();buyerSpawnTimer=BUYER_INTERVAL;}
+  for(const b of buyers)if(!open||(b.slot===0&&b.load>=BUYER_CAPACITY&&b.wait>=BUYER_MIN_STAY))b.phase='leaving';
+  const queue=buyers.filter(b=>b.phase!=='leaving').sort((a,b)=>a.id-b.id);
+  queue.forEach((b,i)=>b.slot=i);
+  for(let i=buyers.length-1;i>=0;i--){const b=buyers[i],target=b.phase==='leaving'?buyerExit:{x:1420,y:1775+b.slot*64},key=`${b.phase==='leaving'?'exit':b.slot}:${navVersion}`;
+    if(b.routeKey!==key){b.path=findPath(b,target);b.routeKey=key;}
+    const moved=followPath(b,dt,64);b.moving=moved>.1;
+    if(distance(b,target)<5){if(b.phase==='leaving'){buyers.splice(i,1);continue;}b.phase=b.slot===0?'waiting':'queued';b.wait+=dt;}
+  }
+}
+const animals=[];
+function spawnAnimals(){
+  for(let i=0;i<18;i++){const angle=i*2.399,r=390+(i%5)*185,pos=nearestGround(1600+Math.cos(angle)*Math.min(r,forestRadius()-80),1600+Math.sin(angle)*Math.min(r,forestRadius()-80));
+    animals.push({id:i,type:['rabbit','squirrel','bird'][i%3],x:pos.x,y:pos.y,homeX:pos.x,homeY:pos.y,angle:i,timer:i*.7,state:'idle',moving:false,z:0});}
+}
+function updateAnimals(dt){
+  for(const a of animals){a.timer-=dt;const near=distance(a,player)<105;
+    if(near){a.state='flee';a.timer=2.5;const dx=a.x-player.x,dy=a.y-player.y;a.angle=Math.atan2(dy,dx)+(a.id%2?.2:-.2);}
+    else if(a.timer<=0){a.state=a.state==='idle'?'wander':'idle';a.timer=3+(a.id%4);a.angle+=1.7;}
+    const speed=a.state==='flee'?(a.type==='bird'?165:140):a.state==='wander'?27:0;
+    a.z=a.type==='bird'&&a.state==='flee'?Math.min(50,a.z+dt*60):Math.max(0,a.z-dt*25);
+    if(a.type==='bird'&&a.z>5){const p=constrainPoint(a.x+Math.cos(a.angle)*speed*dt,a.y+Math.sin(a.angle)*speed*dt);a.x=p.x;a.y=p.y;a.moving=speed>0;}
+    else{const moved=moveBody(a,Math.cos(a.angle)*speed*dt,Math.sin(a.angle)*speed*dt,8);a.moving=moved>.01;if(speed&&moved<speed*dt*.3)a.angle+=1.6;}
+    if(a.z<5&&!isWalkable(a.x,a.y,8)){const p=nearestGround(a.x,a.y,8);a.x=p.x;a.y=p.y;}
+  }
+}
+function drawAnimal(a){
+  if(a.x<camera.x-40||a.x>camera.x+1000||a.y<camera.y-30||a.y>camera.y+680)return;
+  ellipse(a.x,a.y+2,9,4,'#35523a25');ctx.save();ctx.translate(a.x,a.y-a.z-(a.moving?Math.abs(Math.sin(elapsed*13+a.id))*3:0));ctx.scale(Math.cos(a.angle)<0?-1:1,1);
+  if(a.type==='rabbit'){ellipse(0,-5,9,6,'#d9d1b9');ellipse(7,-10,5,5,'#eee4cc');ellipse(7,-18,2,7,'#e8ddc4');ellipse(11,-17,2,6,'#d8cbb1');ellipse(-9,-5,3,3,'#f5e9d2');ellipse(9,-11,1,1,'#354239');}
+  else if(a.type==='squirrel'){ellipse(-10,-10,6,11,'#aa7044');ellipse(0,-5,7,5,'#bd8750');ellipse(6,-9,4,4,'#d19b61');polygon([[3,-12],[5,-17],[8,-12]],'#a77449');ellipse(8,-10,1,1,'#354239');}
+  else{ellipse(0,-6,7,4,'#628591');ellipse(5,-9,4,4,'#a3b7aa');polygon([[8,-9],[13,-7],[8,-6]],'#e4bf69');ctx.strokeStyle='#344f5d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-2,-6);ctx.lineTo(-8,-9-Math.sin(elapsed*(a.z?18:5)+a.id)*5);ctx.stroke();}
+  ctx.restore();
+}
+// Процедурный звук без файлов и библиотек. Запуск только по кнопке пользователя.
+let audio=null,audioEnabled=false,audioTimer=0,crackleTimer=0;
+const soundButton=document.querySelector('#sound');
+async function toggleSound(){
+  try{
+    if(!audio){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw Error('unsupported');const ac=new Audio(),master=ac.createGain();master.gain.value=.5;master.connect(ac.destination);
+      const noise=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate),samples=noise.getChannelData(0);for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+      const wind=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();wind.buffer=noise;wind.loop=true;filter.type='lowpass';filter.frequency.value=450;gain.gain.value=.035;wind.connect(filter);filter.connect(gain);gain.connect(master);wind.start();audio={ac,master,noise,wind,gain};
+    }
+    audioEnabled=!audioEnabled;if(audioEnabled)await audio.ac.resume();else await audio.ac.suspend();
+    soundButton.textContent=audioEnabled?'Звук: вкл':'Включить звуки леса';soundButton.setAttribute('aria-pressed',String(audioEnabled));
+  }catch{audioEnabled=false;soundButton.textContent='Звук недоступен';soundButton.setAttribute('aria-pressed','false');showNotice('Браузер не разрешил звук. Игра продолжает работать без него.');}
+}
+soundButton.addEventListener('click',toggleSound);
+function chirp(frequency,duration,volume,slide){if(!audio||!audioEnabled)return;const {ac,master}=audio,o=ac.createOscillator(),g=ac.createGain(),now=ac.currentTime;o.type='sine';o.frequency.setValueAtTime(frequency,now);o.frequency.exponentialRampToValueAtTime(frequency*slide,now+duration);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(volume,now+.015);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(master);o.start();o.stop(now+duration+.01);}
+function updateAudio(dt){
+  if(!audioEnabled||!audio||document.hidden||audio.ac.state!=='running')return;
+  audioTimer-=dt;crackleTimer-=dt;audio.gain.gain.setTargetAtTime(.027+Math.sin(elapsed*.3)*.009,audio.ac.currentTime,.4);
+  if(audioTimer<=0){const night=nightAmount()>.4;chirp(night?3600:1800+Math.random()*900,night?.08:.2,night?.018:.027,night?1.05:1.7);audioTimer=night?.7:3+Math.random()*4;}
+  const fire=Math.max(0,1-distance(player,CENTER)/360);
+  if(gameState.campLevel>=1&&fire>0&&crackleTimer<=0){const {ac,noise,master}=audio,source=ac.createBufferSource(),g=ac.createGain(),filter=ac.createBiquadFilter();source.buffer=noise;filter.type='highpass';filter.frequency.value=1200;g.gain.setValueAtTime(fire*.03,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.08);source.connect(filter);filter.connect(g);g.connect(master);source.start(0,Math.random(),.09);crackleTimer=.15+Math.random()*.3;}
+}
+
 function spawnTrees(){
   // Стабильные id сохраняют пни между сессиями и при изменении оформления карты.
   let legacyIndex=0;
@@ -122,8 +272,9 @@ function spawnTrees(){
   for(let ring=0;ring<10;ring++){
     const r=350+ring*112,count=Math.floor(2*Math.PI*r/145);
     for(let i=0;i<count;i++,legacyIndex++){
-      const angle=i/count*Math.PI*2+ring*.37,rr=r+Math.sin(i*17+ring)*18;
+      const angle=i/count*Math.PI*2+ring*.37+Math.sin(i*13+ring)*.075,rr=r+Math.sin(i*17+ring)*70;
       const x=CENTER.x+Math.cos(angle)*rr,y=CENTER.y+Math.sin(angle)*rr;
+      if(rr<325||(x>1360&&x<1525&&y>1740&&y<2145)||waterCollision(x,y,40)||nearTrail({x,y},48)||trees.some(t=>Math.hypot(t.x-x,t.y-y)<66))continue;
       if(Math.hypot(x-ancientTree.x,y-ancientTree.y)<205||landmarks.some(site=>Math.hypot(x-site.x,y-site.y)<90))continue; // Отдельная поляна великого дерева.
       let hash=Math.imul(legacyIndex+73,0x45d9f3b);hash=Math.imul(hash^(hash>>>16),0x45d9f3b);hash^=hash>>>16;
       const type=types[(hash>>>0)%types.length],spec=treeTypes[type];
@@ -139,7 +290,7 @@ function updateUI(){
   ui.upgrade.disabled ||= gameState.maxWood>=1000;
   const next=stages[gameState.campLevel];
   document.querySelector('#campInfo').textContent=next?`Лагерь ${gameState.campLevel}/4 · ${next.name}: ${gameState.buildWood}/${next.cost} брёвен · Радиус леса: ${forestRadius()}`:'Лагерь 4/4 · Хижина построена · Весь лес открыт';
-  ui.status.textContent=saveWarning||notice||(gameState.wood>=gameState.maxWood?'Рюкзак полон — продайте брёвна или вложите их в лагерь.':'На площадке продажи ждите покупателя. На площадке стройки брёвна вкладываются автоматически.');
+  ui.status.textContent=saveWarning||notice||(gameState.wood>=gameState.maxWood?'Рюкзак полон — продайте брёвна или вложите их в лагерь.':'Покупатели торгуют до 18:00 и ждут в очереди. На площадке стройки брёвна вкладываются автоматически.');
 }
 function floatingText(x,y,text,color='#fff4ce'){effects.push({x,y,text,color,life:1,maxLife:1,vx:0,vy:-35});}
 function hitTree(tree){
@@ -148,7 +299,7 @@ function hitTree(tree){
   tree.hp-=damage;tree.shake=.25;player.swing=.32;player.facing=tree.x<player.x?-1:1;
   floatingText(tree.x,tree.y-55,`−${damage}`);
   for(let i=0;i<6;i++)effects.push({x:tree.x,y:tree.y-10,vx:(Math.random()-.5)*150,vy:-50-Math.random()*75,life:.5,maxLife:.5});
-  if(tree.hp<=0){gameState.wood++;gameState.cargoValue+=tree.value;floatingText(player.x,player.y-65,'+1 бревно');updateUI();saveProgress();}
+  if(tree.hp<=0){rebuildObstacles();gameState.wood++;gameState.cargoValue+=tree.value;floatingText(player.x,player.y-65,'+1 бревно');updateUI();saveProgress();}
 }
 // Ввод отделён от симуляции. Pointer Events поддерживают мышь, перо и касания.
 canvas.addEventListener('pointerdown',event=>{
@@ -161,12 +312,12 @@ canvas.addEventListener('pointerdown',event=>{
     if(screen.x<miniMap.x||screen.x>miniMap.x+miniMap.size||screen.y<miniMap.y||screen.y>miniMap.y+miniMap.size)return;
     const map=mapTransform();
     const point=constrainPoint(map.left+(screen.x-miniMap.x)/miniMap.size*map.span,map.top+(screen.y-miniMap.y)/miniMap.size*map.span);
-    player.targetX=point.x;player.targetY=point.y;return;
+    setDestination(point.x,point.y);return;
   }
   const point={x:screen.x+camera.x,y:screen.y+camera.y};
   if(treeAccessible(ancientTree)&&Math.hypot(point.x-ancientTree.x,(point.y-(ancientTree.y-110))*.65)<150){
     showNotice('Великое дерево — бесконечный источник для работников. Найм появится позже.');
-    const target=constrainPoint(ancientTree.x,ancientTree.y+90);player.targetX=target.x;player.targetY=target.y;return;
+    const target=constrainPoint(ancientTree.x,ancientTree.y+90);setDestination(target.x,target.y);return;
   }
   const clicked=trees.filter(t=>treeAccessible(t)&&t.hp>0&&Math.hypot(point.x-t.x,point.y-(t.y-25))<48).sort((a,b)=>distance(a,point)-distance(b,point))[0];
   if(clicked&&distance(player,clicked)<72){
@@ -174,28 +325,19 @@ canvas.addEventListener('pointerdown',event=>{
     return;
   }
   const target=constrainPoint(clicked?clicked.x:point.x,clicked?clicked.y+42:point.y);
-  player.targetX=target.x;player.targetY=target.y;
+  setDestination(target.x,target.y);
 });
 ui.upgrade.addEventListener('click',()=>{
   if(gameState.coins<gameState.upgradeCost||gameState.maxWood>=1000)return;
   gameState.coins-=gameState.upgradeCost;gameState.maxWood+=5;
   gameState.upgradeCost=Math.ceil(gameState.upgradeCost*1.5);updateUI();saveProgress();
 });
-// Покупатель приходит к прилавку, ждёт и уходит. Оплата только при встрече на площадке.
-function updateBuyer(dt){
-  buyer.timer+=dt;
-  const approach=()=>{const dx=buyerTarget.x-buyer.x,dy=buyerTarget.y-buyer.y,d=Math.hypot(dx,dy),step=Math.min(d,100*dt);if(d){buyer.x+=dx/d*step;buyer.y+=dy/d*step;}return d<3;};
-  let buyerTarget=buyer.phase==='leaving'?{x:1220,y:2070}:{x:1420,y:1775};
-  if(buyer.phase==='arriving'&&approach()){buyer.phase='waiting';buyer.timer=0;}
-  else if(buyer.phase==='waiting'&&buyer.timer>12){buyer.phase='leaving';buyer.timer=0;}
-  else if(buyer.phase==='leaving'&&approach()){buyer.phase='away';buyer.timer=0;}
-  else if(buyer.phase==='away'&&buyer.timer>3){buyer.phase='arriving';buyer.timer=0;buyer.load=0;buyer.trip++;}
-}
 function updatePlatforms(dt){
   transferTimer=Math.max(0,transferTimer-dt);
   if(transferTimer>0||gameState.wood===0)return;
   const building=distance(player,build)<build.radius&&gameState.campLevel<stages.length;
-  const selling=distance(player,sale)<sale.radius&&buyer.phase==='waiting';
+  const customer=activeBuyer();
+  const selling=distance(player,sale)<sale.radius&&customer;
   if(!building&&!selling)return;
   // Стоимость смешанного груза уменьшается пропорционально при расходовании бревна.
   const value=gameState.wood===1?gameState.cargoValue:Math.floor(gameState.cargoValue/gameState.wood);
@@ -203,23 +345,19 @@ function updatePlatforms(dt){
   if(building){
     gameState.buildWood++;floatingText(build.x,build.y-35,'+1 в лагерь','#b8e8e4');
     const stage=stages[gameState.campLevel];
-    if(gameState.buildWood>=stage.cost){gameState.buildWood=0;gameState.campLevel++;floatingText(CENTER.x,CENTER.y-90,`${stage.name}: готово! Лес расширен`);}
-  }else{buyer.load++;gameState.coins+=value;floatingText(sale.x,sale.y-35,`+${value} монет`,'#ffe296');}
+    if(gameState.buildWood>=stage.cost){gameState.buildWood=0;gameState.campLevel++;rebuildObstacles();floatingText(CENTER.x,CENTER.y-90,`${stage.name}: готово! Лес расширен`);}
+  }else{customer.load++;gameState.coins+=value;floatingText(sale.x,sale.y-35,`+${value} монет`,'#ffe296');}
   updateUI();saveProgress();
 }
 function update(dt){
   elapsed+=dt;gameState.worldTime=(gameState.worldTime+dt)%DAY_SECONDS;player.autoTimer=Math.max(0,player.autoTimer-dt);player.clickTimer=Math.max(0,player.clickTimer-dt);player.swing=Math.max(0,player.swing-dt);
   const kx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   const ky=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
-  const keyboard=keys.size>0;
-  const dx=keyboard?kx:player.targetX-player.x,dy=keyboard?ky:player.targetY-player.y,d=Math.hypot(dx,dy);
-  const step=keyboard?player.speed*dt:Math.min(d,player.speed*dt);
-  player.moving=d>.5;
-  if(d>0){player.x+=dx/d*step;player.y+=dy/d*step;if(dx)player.facing=dx<0?-1:1;}
-  const bounded=constrainPoint(player.x,player.y);player.x=bounded.x;player.y=bounded.y;
-  if(keyboard){player.targetX=player.x;player.targetY=player.y;}
-  updateCamera();
-  updateBuyer(dt);updatePlatforms(dt);updateDiscoveries();
+  const keyboard=keys.size>0,oldX=player.x,oldY=player.y;
+  if(keyboard){player.path=[];const d=Math.hypot(kx,ky);if(d){moveBody(player,kx/d*player.speed*dt,ky/d*player.speed*dt);if(kx)player.facing=kx<0?-1:1;}player.targetX=player.x;player.targetY=player.y;}
+  else if(player.path.length){if(player.pathVersion!==navVersion)setDestination(player.targetX,player.targetY);followPath(player,dt,player.speed);if(player.x!==oldX)player.facing=player.x<oldX?-1:1;}
+  player.moving=Math.hypot(player.x-oldX,player.y-oldY)>.01;
+  updateCamera();updateBuyers(dt);updatePlatforms(dt);updateDiscoveries();updateAnimals(dt);updateAudio(dt);
   for(const tree of trees)tree.shake=Math.max(0,tree.shake-dt);
   if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0){notice='';updateUI();}}
   const nearest=trees.filter(t=>treeAccessible(t)&&t.hp>0&&distance(player,t)<72).sort((a,b)=>distance(player,a)-distance(player,b))[0];
@@ -296,7 +434,7 @@ function drawPlayer(){
   ctx.restore();
   ctx.restore();
 }
-// Декорации лагеря: площадки — интерактивны; постройки и торговец — визуальные.
+// Земля и площадки рисуются отдельно от построек: глубина и столкновения учитывают основание.
 function polygon(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();}
 function drawTent(x,y,color){
   ellipse(x,y+10,65,19,'#263e3230');polygon([[x-62,y],[x,y-74],[x+62,y]],color);
@@ -305,33 +443,39 @@ function drawTent(x,y,color){
 function drawCamp(){
   const {x,y}=CENTER;
   ellipse(x,y,285,265,'#b4bb89');ellipse(x,y+8,260,238,'#c0be91');
-  // Дорожка покупателей ведёт к отдельному прилавку.
-  ctx.strokeStyle='#b5ad7b';ctx.lineWidth=36;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(1220,2070);ctx.lineTo(sale.x,sale.y+40);ctx.stroke();
   for(const [pad,color,title] of [[sale,'#edd18a','ПРОДАЖА'],[build,'#a7d8cf','СТРОИТЬ']]){
     ellipse(pad.x,pad.y,pad.radius+5,36,'#4b654c');ellipse(pad.x,pad.y-4,pad.radius,34,color);
     label(title,pad.x,pad.y,13,'#314538');
   }
-  label(buyer.phase==='waiting'?'Покупатель здесь':buyer.phase==='arriving'?'Покупатель в пути':'Ждём покупателя',sale.x,sale.y+58,12,'#314538');
+  const current=activeBuyer(),count=buyers.filter(b=>b.phase!=='leaving').length;
+  label(!shopOpen()?'Торговля с утра до 18:00':current?`Покупатель ${current.load}/${BUYER_CAPACITY} · Очередь: ${count}`:`Очередь: ${count} · ждём у прилавка`,sale.x,sale.y+58,11,'#314538');
   const next=stages[gameState.campLevel];label(next?`${next.name} ${gameState.buildWood}/${next.cost}`:'Лагерь построен',build.x,build.y+58,13,'#314538');
-  // Прилавок продажи с вывеской и тентом.
-  ctx.fillStyle='#8c623e';ctx.fillRect(1360,1570,120,48);polygon([[1348,1570],[1370,1536],[1470,1536],[1492,1570]],'#d6a75b');label('ЛЕСНАЯ ТОРГОВЛЯ',1420,1523,12,'#354b39');
-  drawTent(x+185,y-155,'#65587e');label('ЗАГАДОЧНЫЙ ТОРГОВЕЦ',x+185,y-245,12,'#354b39');
-  ellipse(x+185,y-125,20,8,'#33493940');polygon([[x+166,y-128],[x+171,y-165],[x+185,y-183],[x+199,y-165],[x+204,y-128]],'#343449');ellipse(x+185,y-162,8,11,'#161f2b');ellipse(x+182,y-164,1.5,1.5,'#eed39b');ellipse(x+188,y-164,1.5,1.5,'#eed39b');
-  label('Скоро здесь появятся товары',x+185,y-96,11,'#4d514c');
-  if(gameState.campLevel>=1){
-    ellipse(x,y+10,34,16,'#6b6550');for(let i=0;i<8;i++){const a=i/8*Math.PI*2;ellipse(x+Math.cos(a)*29,y+Math.sin(a)*13,7,5,'#8c9080');}
-    const flicker=Math.sin(elapsed*11)*4;ellipse(x,y-4,17+flicker/2,25+flicker,'#e99543');ellipse(x+3,y-3,9,17-flicker,'#ffe29b');
-  }else label('МЕСТО ДЛЯ КОСТРА',x,y,12,'#6c7358');
-  if(gameState.campLevel>=2)drawTent(x-115,y-125,'#bd8057');
-  if(gameState.campLevel>=3){
-    for(let i=0;i<33;i++){const a=i/33*Math.PI*2;if(Math.sin(a)>.65)continue;const fx=x+Math.cos(a)*255,fy=y+Math.sin(a)*235;ctx.fillStyle='#8a6747';ctx.fillRect(fx-4,fy-24,8,30);ctx.fillStyle='#b08c5e';ctx.fillRect(fx-10,fy-15,21,5);}
-  }
-  if(gameState.campLevel>=4){ctx.fillStyle='#976b47';ctx.fillRect(x-65,y-210,130,85);for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#9f7750':'#8e6545';ctx.fillRect(x-65,y-210+i*14,130,12);}polygon([[x-80,y-210],[x,y-276],[x+80,y-210]],'#574b3e');ctx.fillStyle='#493f32';ctx.fillRect(x-17,y-175,34,50);ctx.fillStyle='#edc57b';ctx.fillRect(x+31,y-188,20,22);}
 }
-// Повозка принимает уже продаваемые брёвна; цены и механика продаж прежние.
-function drawBuyer(){
+function traceOutline(points){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();}
+function drawTerrain(){
+  // Неровные мягкие пятна почвы разбивают визуальные кольца посадки.
+  for(let i=0;i<28;i++){const a=i*2.399,r=400+(i%6)*155,x=1600+Math.cos(a)*r,y=1600+Math.sin(a)*r;ellipse(x,y,90+(i%4)*30,50+(i%3)*25,i%2?'#8bac73':'#9cba80');}
+  for(const path of trails){ctx.lineJoin='round';ctx.lineCap='round';for(const [width,color] of [[42,'#9ca36d'],[30,'#c0bc8b']]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(let i=1;i<path.length;i++){const p=path[i];if(i<path.length-1){const next=path[i+1];ctx.quadraticCurveTo(p.x,p.y,(p.x+next.x)/2,(p.y+next.y)/2);}else ctx.lineTo(p.x,p.y);}ctx.stroke();}}
+  // Контуры воды совпадают с физикой; мост — единственный проход через ручей.
+  for(const outline of [pondOutline,streamOutline]){traceOutline(outline);ctx.strokeStyle='#b4ad79';ctx.lineWidth=22;ctx.stroke();ctx.fillStyle='#578f91';ctx.fill();ctx.save();ctx.clip();
+    for(let i=0;i<55;i++){const x=pond.x-180+(i*47)%350,y=pond.y-100+(i*73)%950;ctx.strokeStyle=i%2?'#96c4b07a':'#3f7f8655';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x+Math.sin(elapsed+i)*4,y,8+Math.sin(elapsed*.8+i)*3,2,0,0,Math.PI);ctx.stroke();}ctx.restore();}
+  for(let i=0;i<15;i++){const a=i/15*Math.PI*2,x=pond.x+Math.cos(a)*(pond.rx+12),y=pond.y+Math.sin(a)*(pond.ry+10);if(i%3===0){ellipse(x,y,10,5,'#929880');continue;}ctx.strokeStyle='#5e8259';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-4,y+4);ctx.lineTo(x-5+Math.sin(elapsed+i)*2,y-17);ctx.moveTo(x+2,y+5);ctx.lineTo(x+5,y-24);ctx.stroke();ctx.fillStyle='#887047';ctx.fillRect(x+3,y-25,4,8);}
+  const bx=bridge.x-bridge.width/2,by=bridge.y-bridge.height/2;
+  ctx.fillStyle='#674f36';ctx.fillRect(bx-2,by-4,bridge.width+4,bridge.height+8);
+  for(let i=0;i<15;i++){ctx.fillStyle=i%2?'#bd9661':'#ac8355';ctx.fillRect(bx+i*12,by,10,bridge.height);}
+  ctx.strokeStyle='#795f3d';ctx.lineWidth=5;for(const sy of [-1,1]){ctx.beginPath();ctx.moveTo(bx,bridge.y+sy*31);ctx.lineTo(bx+bridge.width,bridge.y+sy*31);ctx.stroke();}
+  for(const x of [bx,bx+bridge.width])for(const y of [by,by+bridge.height]){ctx.fillStyle='#806342';ctx.fillRect(x-4,y-10,8,17);}
+}
+function drawStall(){ctx.fillStyle='#8c623e';ctx.fillRect(1360,1570,120,48);polygon([[1348,1570],[1370,1536],[1470,1536],[1492,1570]],'#d6a75b');label('ЛЕСНАЯ ТОРГОВЛЯ',1420,1523,12,'#354b39');}
+function drawMerchant(){drawTent(1785,1445,'#65587e');label('ЗАГАДОЧНЫЙ ТОРГОВЕЦ',1785,1355,12,'#354b39');ellipse(1785,1475,20,8,'#33493940');polygon([[1766,1472],[1771,1435],[1785,1417],[1799,1435],[1804,1472]],'#343449');ellipse(1785,1438,8,11,'#161f2b');ellipse(1782,1436,1.5,1.5,'#eed39b');ellipse(1788,1436,1.5,1.5,'#eed39b');label('Скоро здесь появятся товары',1785,1504,11,'#4d514c');}
+function drawFire(){const {x,y}=CENTER;if(gameState.campLevel<1){label('МЕСТО ДЛЯ КОСТРА',x,y,12,'#6c7358');return;}ellipse(x,y+10,34,16,'#6b6550');for(let i=0;i<8;i++){const a=i/8*Math.PI*2;ellipse(x+Math.cos(a)*29,y+Math.sin(a)*13,7,5,'#8c9080');}const flicker=Math.sin(elapsed*11)*4;ellipse(x,y-4,17+flicker/2,25+flicker,'#e99543');ellipse(x+3,y-3,9,17-flicker,'#ffe29b');}
+function drawHut(){const {x,y}=CENTER;ctx.fillStyle='#976b47';ctx.fillRect(x-65,y-210,130,85);for(let i=0;i<6;i++){ctx.fillStyle=i%2?'#9f7750':'#8e6545';ctx.fillRect(x-65,y-210+i*14,130,12);}polygon([[x-80,y-210],[x,y-276],[x+80,y-210]],'#574b3e');ctx.fillStyle='#493f32';ctx.fillRect(x-17,y-175,34,50);ctx.fillStyle='#edc57b';ctx.fillRect(x+31,y-188,20,22);}
+function drawFencePost(p){ctx.fillStyle='#8a6747';ctx.fillRect(p.x-4,p.y-24,8,30);ctx.fillStyle='#b08c5e';ctx.fillRect(p.x-10,p.y-15,21,5);}
+
+// Повозка показывает загрузку покупателя; стоимость бревна определяется породой дерева.
+function drawBuyer(buyer){
   if(buyer.phase==='away')return;
-  const bob=buyer.phase==='waiting'?0:Math.sin(elapsed*13)*1.5;
+  const bob=buyer.moving?Math.sin(elapsed*13)*1.5:0;
   const x=buyer.x+42,y=buyer.y+10+bob;
   ellipse(x,y+7,40,15,'#294d3d40');
   ctx.fillStyle='#664c35';ctx.fillRect(x-38,y-29,75,8);ctx.fillRect(x-48,y-11,90,5);
@@ -412,6 +556,10 @@ function drawMiniMap(){
   ctx.save();ctx.translate(x,y);ctx.fillStyle='#183a30ee';ctx.fillRect(-4,-4,size+8,size+36);ctx.strokeStyle='#d7cd9866';ctx.lineWidth=1;ctx.strokeRect(-4,-4,size+8,size+36);
   ellipse(mx(CENTER.x),my(CENTER.y),forestRadius()*scale,forestRadius()*scale,'#7d9e6b');
   ctx.save();ctx.beginPath();ctx.arc(mx(CENTER.x),my(CENTER.y),forestRadius()*scale,0,Math.PI*2);ctx.clip();
+  ctx.save();ctx.scale(scale,scale);ctx.translate(-left,-top);
+  for(const path of trails){ctx.strokeStyle='#d0bc85';ctx.lineWidth=20;ctx.beginPath();path.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}
+  ctx.fillStyle='#569fa6';for(const outline of [pondOutline,streamOutline]){traceOutline(outline);ctx.fill();}
+  ctx.fillStyle='#d6b37b';ctx.fillRect(bridge.x-bridge.width/2,bridge.y-bridge.height/2,bridge.width,bridge.height);ctx.restore();
   ctx.fillStyle='#355d3b';for(const t of trees){if(t.hp>0)ctx.fillRect(mx(t.x),my(t.y),1.5,1.5);}
   for(const site of landmarks){if(discovered.has(site.id))ellipse(mx(site.x),my(site.y),3,3,'#e6cbaa');}
   ellipse(mx(CENTER.x),my(CENTER.y),4,4,'#f3c866');ellipse(mx(ancientTree.x),my(ancientTree.y),4,4,'#9fe1ca');
@@ -424,9 +572,12 @@ function draw(){
   ctx.fillStyle='#263f36';ctx.fillRect(0,0,WORLD.width,WORLD.height);
   ellipse(CENTER.x,CENTER.y,1450,1450,'#91b77e');
   for(let i=0;i<1300;i++){const x=(i*137+31)%3200,y=(i*283+23)%3200;if(x<camera.x||x>camera.x+960||y<camera.y||y>camera.y+600)continue;ctx.fillStyle='#719364';ctx.fillRect(x,y,3,5);}
-  drawForestDetails();drawCamp();drawAncientClearing();
+  drawTerrain();drawForestDetails();drawCamp();drawAncientClearing();
   if(player.moving){ctx.strokeStyle='#f5efd0aa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(player.targetX,player.targetY,8,0,Math.PI*2);ctx.stroke();}
-  const entities=trees.filter(t=>t.x>camera.x-80&&t.x<camera.x+VIEW.width+80&&t.y>camera.y-50&&t.y<camera.y+VIEW.height+150).map(t=>({y:t.y,draw:()=>drawTree(t)}));entities.push({y:player.y,draw:drawPlayer},{y:buyer.y,draw:drawBuyer},{y:ancientTree.y,draw:drawAncientTree},...landmarks.map(site=>({y:site.y,draw:()=>drawLandmark(site)})));entities.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
+  const entities=trees.filter(t=>t.x>camera.x-80&&t.x<camera.x+VIEW.width+80&&t.y>camera.y-50&&t.y<camera.y+VIEW.height+150).map(t=>({y:t.y,draw:()=>drawTree(t)}));entities.push({y:player.y,draw:drawPlayer},...buyers.map(b=>({y:b.y,draw:()=>drawBuyer(b)})),{y:ancientTree.y,draw:drawAncientTree},...landmarks.map(site=>({y:site.y,draw:()=>drawLandmark(site)})));entities.push({y:1618,draw:drawStall},{y:1475,draw:drawMerchant},{y:1608,draw:drawFire},...animals.map(a=>({y:a.y+(a.z>5?200:0),draw:()=>drawAnimal(a)})),...campFencePosts().map(p=>({y:p.y,draw:()=>drawFencePost(p)})));
+  if(gameState.campLevel>=2)entities.push({y:1485,draw:()=>drawTent(1485,1475,'#bd8057')});
+  if(gameState.campLevel>=4)entities.push({y:1475,draw:drawHut});
+  entities.sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
   for(const e of effects){ctx.globalAlpha=Math.max(0,e.life/e.maxLife);if(e.text)label(e.text,e.x,e.y,16,e.color);else{ctx.fillStyle='#edc28b';ctx.fillRect(e.x,e.y,5,3);}}ctx.globalAlpha=1;
   drawLanterns();
   // Туман скрывает закрытые кольца; круглая граница совпадает с ограничением движения.
@@ -441,7 +592,9 @@ function draw(){
   drawMiniMap();
 }
 function gameLoop(time){const dt=lastTime===null?0:Math.min((time-lastTime)/1000,.05);lastTime=time;update(dt);draw();requestAnimationFrame(gameLoop);}
-document.addEventListener('visibilitychange',()=>{lastTime=null;if(document.hidden){clearKeys();saveProgress();}});
-spawnTrees();loadProgress();updateCamera();updateUI();requestAnimationFrame(gameLoop);
+document.addEventListener('visibilitychange',()=>{lastTime=null;if(document.hidden){clearKeys();saveProgress();if(audio)audio.ac.suspend().catch(()=>{});}else if(audioEnabled&&audio)audio.ac.resume().catch(()=>{});});
+spawnTrees();loadProgress();rebuildObstacles();
+const safeStart=nearestGround(player.x,player.y);player.x=player.targetX=safeStart.x;player.y=player.targetY=safeStart.y;
+spawnAnimals();updateCamera();updateUI();requestAnimationFrame(gameLoop);
 </script>
 </html>
