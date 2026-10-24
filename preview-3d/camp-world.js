@@ -3,6 +3,7 @@ import { box, mesh, tree, camp } from "./models.js";
 import { RADII } from "./progress.js";
 export const BUILD_PAD = { x: 4.7, z: 4.5, radius: 1.4 };
 export const ANCIENT = { x: 15, z: -12, radius: 1.6 };
+export const MERCHANT = { x: 9.5, z: 0.5, scale: 1.12 };
 export function createCampWorld(scene, campsite) {
   function caption(text, x, z) {
     const c = document.createElement("canvas");
@@ -40,6 +41,7 @@ export function createCampWorld(scene, campsite) {
   // Крыша, стены и окно появляются только на четвёртой стадии.
   const hut = new THREE.Group();
   hut.position.set(0, 0, -4);
+  hut.scale.setScalar(1.12);
   scene.add(hut);
   box(hut, "#9d784d", 0, 1.2, 0, 4.4, 2.4, 3.2);
   for (let i = 0; i < 7; i++)
@@ -64,9 +66,11 @@ export function createCampWorld(scene, campsite) {
   roof.rotation.y = Math.PI / 4;
   roof.scale.z = 0.85;
   box(hut, "#4f513a", -0.65, 0.95, 1.79, 1, 1.9, 0.1);
-  box(hut, "#e8bd72", 1.1, 1.45, 1.79, 0.8, 0.8, 0.12);
+  const windowGlow = box(hut, "#e8bd72", 1.1, 1.45, 1.79, 0.8, 0.8, 0.12);
   box(hut, "#78623f", 1.1, 1.45, 1.87, 0.06, 0.8, 0.05);
   box(hut, "#78623f", 1.1, 1.45, 1.87, 0.8, 0.06, 0.05);
+  box(hut, "#737568", 1.2, 3.8, -0.55, 0.55, 1.3, 0.55);
+  box(hut, "#586255", 1.2, 4.48, -0.55, 0.7, 0.15, 0.7);
   const fence = new THREE.Group();
   scene.add(fence);
   const fencePosts = [];
@@ -110,8 +114,8 @@ export function createCampWorld(scene, campsite) {
   clearing.rotation.x = -Math.PI / 2;
   // Палатка торговца сделана из той же геометрии ткани; второй костёр/лавку не создаём.
   const merchantTent = campsite.tent.clone();
-  merchantTent.position.set(5.5, 0, -3.5);
-  merchantTent.scale.setScalar(0.8);
+  merchantTent.position.set(MERCHANT.x, 0, MERCHANT.z);
+  merchantTent.scale.setScalar(MERCHANT.scale);
   merchantTent.traverse((m) => {
     if (m.isMesh) {
       m.material = m.material.clone();
@@ -120,7 +124,8 @@ export function createCampWorld(scene, campsite) {
   });
   scene.add(merchantTent);
   const merchant = new THREE.Group();
-  merchant.position.set(5.5, 0, -1.8);
+  merchant.position.set(MERCHANT.x, 0, MERCHANT.z + 2.2);
+  merchant.scale.setScalar(1.75);
   scene.add(merchant);
   mesh(new THREE.ConeGeometry(0.4, 1.15, 6), "#4b4b65", merchant, 0, 0.58, 0);
   mesh(new THREE.ConeGeometry(0.3, 0.55, 6), "#5c5875", merchant, 0, 1.18, 0);
@@ -158,9 +163,15 @@ export function createCampWorld(scene, campsite) {
   function blocked(x, z, next) {
     if (Math.hypot(x - ANCIENT.x, z - ANCIENT.z) < ANCIENT.radius + 0.25)
       return true;
-    if (Math.abs(x - 5.5) < 1.65 && Math.abs(z + 3.5) < 1.65) return true;
-    if (next >= 2 && Math.abs(x) < 2.35 && z > -5.6 && z < -1.45) return true;
-    if (next >= 1 && Math.hypot(x, z) < 0.85) return true;
+    // Скруглённые основания вместо угловатых стеновых прямоугольников.
+    const rounded = (cx, cz, halfX, halfZ) =>
+      Math.hypot(
+        Math.max(0, Math.abs(x - cx) - halfX + 0.3),
+        Math.max(0, Math.abs(z - cz) - halfZ + 0.3),
+      ) < 0.3;
+    if (rounded(MERCHANT.x, MERCHANT.z, 2.2, 2.05)) return true;
+    if (next >= 2 && rounded(0, next >= 4 ? -4 : -3.5, 2.7, 2.2)) return true;
+    if (next >= 1 && Math.hypot(x, z) < 1) return true;
     if (next >= 3 && fencePosts.some((p) => Math.hypot(x - p.x, z - p.z) < 0.3))
       return true;
     if (
@@ -186,9 +197,11 @@ export function createCampWorld(scene, campsite) {
     blocked,
     buildPad,
     hut,
+    windowGlow,
     fence,
     merchant,
     merchantTent,
+    merchantCloth: merchantTent.children[0],
     giant,
     boundary,
   };

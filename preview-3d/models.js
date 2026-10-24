@@ -260,12 +260,22 @@ export function character({ coat = "#b85c3b" } = {}) {
   });
   function animateFace(time, mood = "happy") {
     const blink = Math.sin(time * 1.4) > 0.99;
-    eyes.forEach((e) => (e.scale.y = blink ? 0.1 : 1));
+    eyes.forEach(
+      (e) =>
+        (e.scale.y = blink
+          ? 0.1
+          : mood === "tired" || mood === "sleepy"
+            ? 0.45
+            : 1),
+    );
     brows.forEach(
       (b, i) => (b.rotation.z = mood === "focused" ? (i ? -0.25 : 0.25) : 0),
     );
-    smile.visible = mood !== "surprised";
-    surprise.visible = mood === "surprised";
+    smile.visible = mood !== "surprised" && mood !== "sleepy";
+    surprise.visible = !smile.visible;
+    surprise.scale.y = mood === "sleepy" ? 1.6 : 1;
+    smile.scale.x = mood === "celebrate" ? 1.3 : 1;
+    smile.rotation.z = mood === "tired" ? 0 : Math.PI;
   }
   const cargo = new THREE.Group();
   cargo.position.set(0, 1.05, -0.22);
@@ -288,7 +298,14 @@ export function camp(parent) {
   const tent = new THREE.Group();
   parent.add(tent);
   tent.position.set(0, 0, -3.5);
-  mesh(trianglePrism(3.9, 2.6, 3.3), "#b69c6e", tent, 0, 0, -1.65);
+  const cloth = mesh(
+    trianglePrism(3.9, 2.6, 3.3),
+    "#b69c6e",
+    tent,
+    0,
+    0,
+    -1.65,
+  );
   const door = mesh(
     new THREE.PlaneGeometry(1.35, 1.85),
     "#394e43",
@@ -354,5 +371,8 @@ export function camp(parent) {
     2.2,
     -0.95,
   );
-  return { tent, flames, pad, fire, stall };
+  tent.scale.setScalar(1.2);
+  fire.scale.setScalar(1.15);
+  stall.scale.setScalar(1.18);
+  return { tent, cloth, flames, pad, fire, stall };
 }

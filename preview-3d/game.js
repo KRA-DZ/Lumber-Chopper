@@ -3,6 +3,8 @@ import { DAY_SECONDS, clockText, shopOpen, nightAmount } from "./time.js";
 import { character, log } from "./models.js";
 import { RADII, STAGES, loadProgress, saveProgress } from "./progress.js";
 import { createCampWorld, BUILD_PAD, ANCIENT } from "./camp-world.js";
+import { createWoodEffects } from "./wood-effects.js";
+import { createCampLife } from "./camp-life.js";
 export function createGame(world) {
   const { THREE, scene, trees, pond, campsite } = world,
     actor = character();
@@ -15,6 +17,8 @@ export function createGame(world) {
   const restored = loadProgress(storage),
     state = restored.state;
   const campWorld = createCampWorld(scene, campsite);
+  const effects = createWoodEffects(scene),
+    campLife = createCampLife(scene, campsite, campWorld);
   const radius = () => RADII[state.campLevel];
   campWorld.apply(state.campLevel);
   for (const saved of restored.trees || []) {
@@ -44,12 +48,14 @@ export function createGame(world) {
     moving: false,
   };
   const keys = new Set();
-  const trade = createTrade(world, { pathTo, moveBody });
+  const trade = createTrade(world, { pathTo, moveBody, player });
   let elapsed = 0,
     sellTimer = 0,
     saveTimer = 0,
     uiTimer = 0,
-    noticeTimer = 0;
+    noticeTimer = 0,
+    celebration = 0,
+    idleTime = 0;
   let notice = restored.warning || "";
   const saveStatus = document.querySelector("#save-status");
   saveStatus.textContent =
@@ -74,7 +80,14 @@ export function createGame(world) {
     )
       return false;
     if (campWorld.blocked(x, z, state.campLevel)) return false;
-    if (Math.abs(x + 4.2) < 1.7 && Math.abs(z - 1.7) < 0.85) return false;
+    if (world.scenery.blocked(x, z)) return false;
+    if (
+      Math.hypot(
+        Math.max(0, Math.abs(x + 4.2) - 1.6),
+        Math.max(0, Math.abs(z - 1.7) - 0.65),
+      ) < 0.3
+    )
+      return false;
 
     return !trees.some(
       (t) => t.active && t.hp > 0 && Math.hypot(x - t.x, z - t.z) < 0.42,
@@ -245,10 +258,12 @@ export function createGame(world) {
       return false;
     t.hp--;
     t.shake = 0.23;
+    effects.strike(t, player);
     player.hit = 0.32;
     if (!player.moving)
       actor.root.rotation.y = Math.atan2(t.x - player.x, t.z - player.z);
     if (t.hp === 0) {
+      effects.fell(t, player);
       t.canopy.visible = false;
       t.trunk.visible = false;
       t.stump.visible = true;
@@ -297,6 +312,7 @@ export function createGame(world) {
   }
   function step(dt) {
     elapsed += dt;
+    celebration = Math.max(0, celebration - dt);
     state.worldTime = (state.worldTime + dt) % DAY_SECONDS;
     world.setDayTime(state.worldTime);
     trade.update(dt, state.worldTime, state.campLevel);
@@ -338,6 +354,7 @@ export function createGame(world) {
       }
     }
     player.moving = Math.hypot(player.x - ox, player.z - oz) > 0.001;
+    idleTime = player.moving || player.hit > 0 ? 0 : idleTime + dt;
     world.marker.visible = player.path.length > 0;
     if (player.moving)
       actor.root.rotation.y = Math.atan2(player.x - ox, player.z - oz);
@@ -378,6 +395,7 @@ export function createGame(world) {
           state.buildWood = 0;
           state.campLevel++;
           campWorld.apply(state.campLevel);
+          celebration = 3;
           notice = `${stage.name}: готово! Открыт новый круг леса.`;
           noticeTimer = 5;
           player.path = [];
@@ -385,6 +403,7 @@ export function createGame(world) {
       } else {
         state.coins += value;
         trade.receive(customer);
+        celebration = 1.8;
       }
       syncCargo();
       ui();
@@ -412,24 +431,48 @@ export function createGame(world) {
       onBridge(player.x, player.z) ? 0.27 : 0,
       player.z,
     );
+    const load = Math.min(state.wood / state.capacity, 1),
+      resting =
+        idleTime > 5 &&
+        state.campLevel >= 1 &&
+        Math.hypot(player.x, player.z) < 3 &&
+        !building &&
+        !selling;
     actor.body.position.y = player.moving
       ? Math.abs(Math.sin(elapsed * 10)) * 0.07
-      : Math.sin(elapsed * 2) * 0.018;
+      : Math.sin(elapsed * 2) * 0.018 -
+        (resting ? 0.1 : 0) +
+        (celebration > 0 ? Math.abs(Math.sin(elapsed * 7)) * 0.08 : 0);
+    actor.body.rotation.x = player.moving ? load * 0.16 : 0;
+    actor.body.rotation.z = player.moving
+      ? Math.sin(elapsed * 5) * load * 0.035
+      : 0;
     actor.legs.forEach(
       (leg, i) =>
         (leg.rotation.x = player.moving
           ? Math.sin(elapsed * 10 + i * Math.PI) * 0.5
-          : 0),
+          : resting
+            ? -0.35
+            : 0),
     );
-    actor.arm.rotation.x = player.moving ? Math.sin(elapsed * 10) * 0.3 : 0;
+    actor.arm.rotation.x = player.moving
+      ? Math.sin(elapsed * 10) * 0.3
+      : resting
+        ? -0.5
+        : 0;
+    actor.arm.rotation.z =
+      celebration > 0 && !player.moving
+        ? -0.9 - Math.sin(elapsed * 9) * 0.18
+        : 0;
     actor.axe.rotation.x =
       player.hit > 0
         ? -1.2 + Math.sin((1 - player.hit / 0.32) * Math.PI) * 2.2
         : 0;
     actor.cargo.rotation.z = player.moving
       ? Math.sin(elapsed * 9) * Math.min(state.wood / 20, 1) * 0.12
-      : 0;
+      : Math.sin(elapsed * 2) * load * 0.018;
     actor.cargo.children.forEach((l, i) => {
+      l.visible = i < actor.cargo.children.length - effects.flights.length;
       l.position.x = player.moving
         ? Math.sin(elapsed * 9 - i * 0.13) * i * 0.014
         : 0;
@@ -443,7 +486,7 @@ export function createGame(world) {
         t.active &&
         Math.hypot(t.x, t.z) < radius() - 1 &&
         Math.hypot(t.x - player.x, t.z - player.z) < 35;
-      const front = (t.x - player.x) * 25 + (t.z - player.z) * 29 > 0;
+      const front = t.z > player.z;
       let obscures = false;
       if (t.root.visible && front) {
         leafScreen.set(t.x, 3 * t.root.scale.y, t.z).project(world.camera);
@@ -458,17 +501,24 @@ export function createGame(world) {
       t.canopy.rotation.z = t.shake
         ? Math.sin(t.shake * 80) * 0.065
         : Math.sin(elapsed * 1.3 + t.id) * 0.012;
+      t.trunk.rotation.z = t.shake ? Math.sin(t.shake * 80) * 0.025 : 0;
     }
     actor.animateFace(
       elapsed,
       player.hit > 0
         ? "focused"
-        : state.wood >= state.capacity
-          ? "surprised"
-          : "happy",
+        : celebration > 0
+          ? "celebrate"
+          : resting
+            ? "sleepy"
+            : player.moving && load > 0.75
+              ? "tired"
+              : state.wood >= state.capacity
+                ? "surprised"
+                : "happy",
     );
     if (!player.moving && player.hit <= 0) {
-      const facing = Math.atan2(25, 29);
+      const facing = 0;
       actor.root.rotation.y +=
         Math.atan2(
           Math.sin(facing - actor.root.rotation.y),
@@ -483,6 +533,9 @@ export function createGame(world) {
       state.campLevel >= 1 ? 12 + Math.sin(elapsed * 9) * 2 : 0;
     campWorld.merchant.rotation.y = Math.sin(elapsed * 0.6) * 0.15;
     campWorld.giant.canopy.rotation.z = Math.sin(elapsed * 0.7) * 0.012;
+    effects.update(dt, player, 1.8 + Math.min(state.wood, 40) * 0.49);
+    campLife.update(elapsed, state.worldTime, state.campLevel);
+    world.scenery.update(elapsed, state.worldTime, radius());
     world.ripples.forEach((r, i) => {
       const t = (elapsed * 0.2 + i * 0.17) % 1;
       r.scale.setScalar(0.5 + t * 1.8);
@@ -542,6 +595,8 @@ export function createGame(world) {
   ui();
   return {
     state,
+    effects,
+    campLife,
     trade,
     toggleTime,
     campWorld,

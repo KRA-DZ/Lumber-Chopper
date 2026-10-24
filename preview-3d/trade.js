@@ -112,6 +112,8 @@ export function createTrade(world, navigation) {
       }
       let budget = dt * 2.5,
         moved = 0;
+      const oldX = b.x,
+        oldZ = b.z;
       while (budget > 0 && b.path.length) {
         const p = b.path[0],
           dx = p.x - b.x,
@@ -144,7 +146,27 @@ export function createTrade(world, navigation) {
       const walking = moved > 0.001;
       const t = time + b.id;
       b.person.root.position.set(b.x, 0, b.z);
-      b.person.root.rotation.y = 0.55 + (walking ? 0 : Math.sin(t * 0.4) * 0.2);
+      const hero = navigation.player,
+        neighbor = buyers.find(
+          (other) =>
+            other !== b &&
+            other.phase !== "leaving" &&
+            Math.hypot(other.x - b.x, other.z - b.z) < 3,
+        ),
+        lookAt =
+          hero && Math.hypot(hero.x - b.x, hero.z - b.z) < 5 ? hero : neighbor,
+        greeting = !walking && lookAt && Math.floor(t / 5) % 3 === 0,
+        sleepy = !walking && b.wait > 25 && Math.floor(t / 8) % 4 === 0;
+      const facing = walking
+        ? Math.atan2(b.x - oldX, b.z - oldZ)
+        : greeting
+          ? Math.atan2(lookAt.x - b.x, lookAt.z - b.z)
+          : Math.sin(t * 0.4) * 0.25;
+      b.person.root.rotation.y +=
+        Math.atan2(
+          Math.sin(facing - b.person.root.rotation.y),
+          Math.cos(facing - b.person.root.rotation.y),
+        ) * Math.min(1, dt * 6);
       b.person.body.position.y = walking
         ? Math.abs(Math.sin(t * 10)) * 0.05
         : Math.sin(t * 2) * 0.015;
@@ -156,10 +178,14 @@ export function createTrade(world, navigation) {
       );
       b.person.arm.rotation.z = walking
         ? 0
-        : Math.floor(t / 6) % 3 === 0
-          ? -0.55
+        : greeting || Math.floor(t / 6) % 3 === 0
+          ? -0.9 + Math.sin(t * 7) * 0.15
           : 0;
-      b.person.animateFace(t, "happy");
+      b.person.axe.rotation.x = sleepy ? -1 : 0;
+      b.person.animateFace(
+        t,
+        sleepy ? "sleepy" : greeting || b.load > 0 ? "celebrate" : "happy",
+      );
       b.cart.position.set(b.x + 1.8, 0, b.z + 0.3);
       b.wheels.forEach((w) => {
         if (walking) w.rotation.x += dt * 5;

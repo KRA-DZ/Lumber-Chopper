@@ -1,6 +1,9 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { mesh, rock, tree, camp, box } from "./models.js";
 import { nightAmount } from "./time.js";
+import { createScenery } from "./scenery.js";
+// Фронтальный вид: входы лагеря направлены к +Z; азимут камеры всегда нулевой.
+export const CAMERA_OFFSET = new THREE.Vector3(0, 38, 32);
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -17,7 +20,7 @@ export function createScene(canvas) {
   scene.background = new THREE.Color("#b9c6b6");
   scene.fog = new THREE.Fog("#b9c6b6", 85, 150);
   const camera = new THREE.OrthographicCamera(-20, 20, 16, -16, 0.1, 200);
-  camera.position.set(25, 43, 29);
+  camera.position.copy(CAMERA_OFFSET);
   camera.lookAt(0, 0, 0);
   scene.add(new THREE.HemisphereLight("#ecedcf", "#456459", 2.1));
   const sun = new THREE.DirectionalLight("#fff1ca", 3.1);
@@ -163,6 +166,9 @@ export function createScene(canvas) {
       !(Math.abs(x) < 6 && z > 5 && z < 11) &&
       !(x > -7 && x < -0.3 && z > 5 && z < 20) &&
       !(Math.abs(z - 2) < 1.7 && x > 6 && x < 18);
+    // Торговцу нужна собственная широкая поляна сбоку от лагеря.
+    if (Math.hypot(x - 9.5, z - 0.5) < 3.8) t.active = false;
+    if (Math.hypot(x + 17, z + 8) < 2.7) t.active = false;
     t.leaves = [];
     t.canopy.traverse((m) => {
       if (m.isMesh) {
@@ -224,12 +230,14 @@ export function createScene(canvas) {
   );
   marker.rotation.x = -Math.PI / 2;
   marker.visible = false;
-  let height = 25;
+  const scenery = createScenery(scene, trees, pond);
+  let height = 19;
   function resize() {
     const rect = canvas.getBoundingClientRect();
     renderer.setSize(rect.width, rect.height, false);
     const aspect = rect.width / rect.height;
-    const h = height * (aspect < 0.9 ? 1.1 : 1);
+    // В портретном режиме сохраняем достаточную ширину прохода у лагеря.
+    const h = height * (aspect < 0.9 ? 1.18 : 1);
     camera.left = (-h * aspect) / 2;
     camera.right = (h * aspect) / 2;
     camera.top = h / 2;
@@ -237,18 +245,20 @@ export function createScene(canvas) {
     camera.updateProjectionMatrix();
   }
   function zoom(delta) {
-    height = THREE.MathUtils.clamp(height + delta, 18, 42);
+    height = THREE.MathUtils.clamp(height + delta, 14, 36);
     resize();
   }
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   resize();
   const cameraAnchor = new THREE.Vector3(),
-    cameraOffset = new THREE.Vector3(25, 43, 29);
+    cameraOffset = CAMERA_OFFSET.clone();
   function followCamera(target, dt, immediate = false) {
-    if (immediate) cameraAnchor.copy(target);
+    // Держим героя чуть ниже центра: палатки и дорога впереди лучше видны.
+    const focus = target.clone().add(new THREE.Vector3(0, 0, -3));
+    if (immediate) cameraAnchor.copy(focus);
     else {
-      const delta = target.clone().sub(cameraAnchor);
+      const delta = focus.sub(cameraAnchor);
       delta.y = 0;
       const distance = delta.length();
       if (distance > 3.5)
@@ -310,6 +320,7 @@ export function createScene(canvas) {
     scene,
     camera,
     trees,
+    scenery,
     pond,
     campsite,
     fireLight,
