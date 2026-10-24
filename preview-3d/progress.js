@@ -1,3 +1,4 @@
+import { normalizedTime } from "./time.js";
 // Радиусы в единицах 3D-мира; строительство расходует брёвна, не монеты.
 export const STAGES = [
   { name: "Костёр", cost: 10 },
@@ -16,6 +17,7 @@ export function defaults() {
     campLevel: 0,
     buildWood: 0,
     upgradeCost: 15,
+    worldTime: 240,
   };
 }
 function validState(s) {
@@ -53,13 +55,25 @@ export function loadProgress(storage) {
       const data = JSON.parse(raw);
       if (data.version !== 1 || !validState(data.state))
         throw Error("invalid save");
-      return { ...data, source: "3d" };
+      return {
+        ...data,
+        state: {
+          ...data.state,
+          worldTime: normalizedTime(data.state.worldTime),
+        },
+        source: "3d",
+      };
     }
     const legacy = storage.getItem("lumber-chopper-v1");
     if (!legacy) return { state: defaults(), source: "new" };
     const old = JSON.parse(legacy);
     if (![1, 2, 3, 4].includes(old.version)) throw Error("legacy");
     const state = {
+      worldTime: normalizedTime(
+        Number.isFinite(old.worldTime)
+          ? (old.worldTime / (old.daySeconds || 1200)) * 1200
+          : 240,
+      ),
       wood: old.wood,
       capacity:
         old.version === 1 ? Math.min(1000, old.maxWood * 2) : old.maxWood,

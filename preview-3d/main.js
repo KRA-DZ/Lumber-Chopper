@@ -7,11 +7,7 @@ try {
     game = createGame(world);
   app = { world, game };
   const initialFocus = new world.THREE.Vector3(game.player.x, 0, game.player.z);
-  world.camera.position
-    .copy(initialFocus)
-    .add(new world.THREE.Vector3(25, 43, 29));
-  world.camera.lookAt(initialFocus);
-  world.updateFocus(initialFocus);
+  world.followCamera(initialFocus, 0, true);
   const { THREE } = world,
     raycaster = new THREE.Raycaster(),
     plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
@@ -39,12 +35,14 @@ try {
     const hits = raycaster.intersectObjects(
       [
         ...world.trees
-          .filter((t) => t.hp > 0 && t.root.visible)
+          .filter((t) => t.active && t.hp > 0 && t.root.visible)
           .map((t) => t.root),
         game.campWorld.giant.root,
       ],
       true,
     );
+    while (hits.length && (hits[0].object.material?.opacity ?? 1) < 0.5)
+      hits.shift();
     if (hits.length) {
       if (hits[0].object.userData.ancient) {
         game.ancientNotice();
@@ -75,12 +73,7 @@ try {
   });
   window.addEventListener("keyup", (e) => game.keys.delete(e.code));
   window.addEventListener("blur", () => game.keys.clear());
-  let dusk = false;
-  document.querySelector("#light").onclick = () => {
-    dusk = !dusk;
-    world.setDusk(dusk);
-    document.querySelector("#light").setAttribute("aria-pressed", String(dusk));
-  };
+  document.querySelector("#light").onclick = () => game.toggleTime();
   document.querySelector("#zoom-in").onclick = () => world.zoom(-3);
   document.querySelector("#zoom-out").onclick = () => world.zoom(3);
   document.querySelector("#ancient").onclick = () => game.ancientNotice();
@@ -97,11 +90,7 @@ try {
     const dt = last === null ? 0 : Math.min((time - last) / 1000, 0.05);
     last = time;
     game.step(dt);
-    const focus = new THREE.Vector3(game.player.x, 0, game.player.z),
-      cameraGoal = focus.clone().add(new THREE.Vector3(25, 43, 29));
-    world.camera.position.lerp(cameraGoal, 1 - Math.exp(-dt * 3));
-    world.camera.lookAt(focus);
-    world.updateFocus(focus);
+    world.followCamera(new THREE.Vector3(game.player.x, 0, game.player.z), dt);
     world.renderer.render(world.scene, world.camera);
     frame = requestAnimationFrame(loop);
   }

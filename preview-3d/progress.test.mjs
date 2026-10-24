@@ -61,3 +61,14 @@ test("corrupt 3D data is backed up before a fresh session is offered", () => {
 test("unavailable browser storage does not prevent starting the game", () => {
   assert.equal(loadProgress(undefined).source, "error");
 });
+test("existing 3D saves acquire the clock without losing resources or camp", () => {
+  const storage = memory();
+  const state = { ...defaults(), coins: 50, campLevel: 2, buildWood: 7 };
+  delete state.worldTime;
+  storage.setItem(SAVE_KEY, JSON.stringify({ version: 1, state }));
+  const restored = loadProgress(storage);
+  assert.equal(restored.state.worldTime, 240);
+  assert.equal(restored.state.coins, 50);
+  assert.equal(restored.state.campLevel, 2);
+  assert.equal(restored.state.buildWood, 7);
+});

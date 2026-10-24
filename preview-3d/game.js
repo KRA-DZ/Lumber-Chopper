@@ -1,3 +1,5 @@
+import { createTrade } from "./trade.js";
+import { DAY_SECONDS, clockText, shopOpen, nightAmount } from "./time.js";
 import { character, log } from "./models.js";
 import { RADII, STAGES, loadProgress, saveProgress } from "./progress.js";
 import { createCampWorld, BUILD_PAD, ANCIENT } from "./camp-world.js";
@@ -5,7 +7,7 @@ export function createGame(world) {
   const { THREE, scene, trees, pond, campsite } = world,
     actor = character();
   scene.add(actor.root);
-  actor.root.scale.setScalar(1.35);
+  actor.root.scale.setScalar(1.75);
   let storage;
   try {
     storage = window.localStorage;
@@ -42,6 +44,7 @@ export function createGame(world) {
     moving: false,
   };
   const keys = new Set();
+  const trade = createTrade(world, { pathTo, moveBody });
   let elapsed = 0,
     sellTimer = 0,
     saveTimer = 0,
@@ -73,7 +76,9 @@ export function createGame(world) {
     if (campWorld.blocked(x, z, state.campLevel)) return false;
     if (Math.abs(x + 4.2) < 1.7 && Math.abs(z - 1.7) < 0.85) return false;
 
-    return !trees.some((t) => t.hp > 0 && Math.hypot(x - t.x, z - t.z) < 0.55);
+    return !trees.some(
+      (t) => t.active && t.hp > 0 && Math.hypot(x - t.x, z - t.z) < 0.42,
+    );
   }
   function line(a, b) {
     const d = Math.hypot(b.x - a.x, b.z - a.z),
@@ -99,9 +104,9 @@ export function createGame(world) {
       }
     return { x: player.x, z: player.z };
   }
-  function pathTo(goal) {
+  function pathTo(goal, body = player) {
     const target = freePoint(goal.x, goal.z);
-    if (line(player, target)) return [target];
+    if (line(body, target)) return [target];
     const cell = 0.8,
       N = 112,
       origin = -44.8;
@@ -125,7 +130,7 @@ export function createGame(world) {
           }
       return -1;
     }
-    const start = nearest(player),
+    const start = nearest(body),
       end = nearest(target);
     if (start < 0 || end < 0) return [];
     const cost = new Float64Array(N * N);
@@ -185,7 +190,7 @@ export function createGame(world) {
     }
     raw.reverse();
     const result = [];
-    let anchor = player,
+    let anchor = body,
       i = 0;
     while (i < raw.length) {
       let far = i;
@@ -205,6 +210,18 @@ export function createGame(world) {
   function ui() {
     wood.textContent = `${state.wood} / ${state.capacity}`;
     coins.textContent = state.coins;
+    document
+      .querySelector("#light")
+      .setAttribute("aria-pressed", String(nightAmount(state.worldTime) > 0.4));
+    const current = trade.buyers.find(
+      (b) => b.slot === 0 && b.phase === "waiting",
+    );
+    document.querySelector("#clock").textContent = clockText(state.worldTime);
+    document.querySelector("#trade-status").textContent = !shopOpen(
+      state.worldTime,
+    )
+      ? "Лавка закрыта до утра"
+      : `Покупатели: ${trade.buyers.filter((b) => b.phase !== "leaving").length}/5${current ? " · Груз " + current.load + "/40" : " · ждём у прилавка"}`;
     const stage = STAGES[state.campLevel];
     document.querySelector("#camp-progress").textContent = stage
       ? `Лагерь ${state.campLevel}/4 · ${stage.name}: ${state.buildWood}/${stage.cost} брёвен`
@@ -219,6 +236,7 @@ export function createGame(world) {
   }
   function hit(t) {
     if (
+      !t.active ||
       t.workerOnly ||
       Math.hypot(t.x, t.z) > radius() - 1 ||
       t.hp <= 0 ||
@@ -228,7 +246,8 @@ export function createGame(world) {
     t.hp--;
     t.shake = 0.23;
     player.hit = 0.32;
-    actor.root.rotation.y = Math.atan2(t.x - player.x, t.z - player.z);
+    if (!player.moving)
+      actor.root.rotation.y = Math.atan2(t.x - player.x, t.z - player.z);
     if (t.hp === 0) {
       t.canopy.visible = false;
       t.trunk.visible = false;
@@ -242,7 +261,7 @@ export function createGame(world) {
     return true;
   }
   function approach(t) {
-    if (Math.hypot(t.x, t.z) > radius() - 1) {
+    if (!t.active || Math.hypot(t.x, t.z) > radius() - 1) {
       notice = "Сначала улучшите лагерь, чтобы открыть это кольцо леса.";
       noticeTimer = 4;
       ui();
@@ -258,22 +277,29 @@ export function createGame(world) {
     const a = Math.atan2(player.z - t.z, player.x - t.x);
     goTo(t.x + Math.cos(a) * 1.4, t.z + Math.sin(a) * 1.4);
   }
-  function move(dx, dz) {
+  function moveBody(body, dx, dz) {
     const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.08));
     for (let i = 0; i < steps; i++) {
-      const x = player.x + dx / steps,
-        z = player.z + dz / steps;
+      const x = body.x + dx / steps,
+        z = body.z + dz / steps;
       if (walkable(x, z)) {
-        player.x = x;
-        player.z = z;
+        body.x = x;
+        body.z = z;
       } else {
-        if (walkable(x, player.z)) player.x = x;
-        if (walkable(player.x, z)) player.z = z;
+        if (walkable(x, body.z)) body.x = x;
+        if (walkable(body.x, z)) body.z = z;
       }
     }
   }
+
+  function move(dx, dz) {
+    moveBody(player, dx, dz);
+  }
   function step(dt) {
     elapsed += dt;
+    state.worldTime = (state.worldTime + dt) % DAY_SECONDS;
+    world.setDayTime(state.worldTime);
+    trade.update(dt, state.worldTime, state.campLevel);
     player.auto = Math.max(0, player.auto - dt);
     player.click = Math.max(0, player.click - dt);
     player.hit = Math.max(0, player.hit - dt);
@@ -317,7 +343,10 @@ export function createGame(world) {
       actor.root.rotation.y = Math.atan2(player.x - ox, player.z - oz);
     const near = trees
       .filter(
-        (t) => t.hp > 0 && Math.hypot(t.x - player.x, t.z - player.z) < 1.95,
+        (t) =>
+          t.active &&
+          t.hp > 0 &&
+          Math.hypot(t.x - player.x, t.z - player.z) < 1.95,
       )
       .sort(
         (a, b) =>
@@ -331,7 +360,9 @@ export function createGame(world) {
     const building =
       Math.hypot(player.x - BUILD_PAD.x, player.z - BUILD_PAD.z) <
         BUILD_PAD.radius && state.campLevel < 4;
-    const selling = Math.hypot(player.x + 3.8, player.z - 4.4) < 1.35;
+    const customer = trade.active(state.worldTime);
+    const selling =
+      customer && Math.hypot(player.x + 3.8, player.z - 4.4) < 1.35;
     if (dt > 0 && (building || selling) && state.wood > 0 && sellTimer <= 0) {
       const value =
         state.wood === 1
@@ -351,7 +382,10 @@ export function createGame(world) {
           noticeTimer = 5;
           player.path = [];
         }
-      } else state.coins += value;
+      } else {
+        state.coins += value;
+        trade.receive(customer);
+      }
       syncCargo();
       ui();
       save();
@@ -400,14 +434,46 @@ export function createGame(world) {
         ? Math.sin(elapsed * 9 - i * 0.13) * i * 0.014
         : 0;
     });
+    const heroScreen = new THREE.Vector3(player.x, 2.4, player.z).project(
+        world.camera,
+      ),
+      leafScreen = new THREE.Vector3();
     for (const t of trees) {
       t.root.visible =
+        t.active &&
         Math.hypot(t.x, t.z) < radius() - 1 &&
-        Math.hypot(t.x - player.x, t.z - player.z) < 29;
+        Math.hypot(t.x - player.x, t.z - player.z) < 35;
+      const front = (t.x - player.x) * 25 + (t.z - player.z) * 29 > 0;
+      let obscures = false;
+      if (t.root.visible && front) {
+        leafScreen.set(t.x, 3 * t.root.scale.y, t.z).project(world.camera);
+        obscures =
+          Math.abs(leafScreen.x - heroScreen.x) <
+            (5 * t.root.scale.x) / (world.camera.right - world.camera.left) &&
+          Math.abs(leafScreen.y - heroScreen.y) <
+            (4.5 * t.root.scale.y) / (world.camera.top - world.camera.bottom);
+      }
+      for (const leaf of t.leaves) leaf.material.opacity = obscures ? 0.23 : 1;
       t.shake = Math.max(0, t.shake - dt);
       t.canopy.rotation.z = t.shake
         ? Math.sin(t.shake * 80) * 0.065
         : Math.sin(elapsed * 1.3 + t.id) * 0.012;
+    }
+    actor.animateFace(
+      elapsed,
+      player.hit > 0
+        ? "focused"
+        : state.wood >= state.capacity
+          ? "surprised"
+          : "happy",
+    );
+    if (!player.moving && player.hit <= 0) {
+      const facing = Math.atan2(25, 29);
+      actor.root.rotation.y +=
+        Math.atan2(
+          Math.sin(facing - actor.root.rotation.y),
+          Math.cos(facing - actor.root.rotation.y),
+        ) * Math.min(1, dt * 2);
     }
     campsite.flames.forEach((f, i) => {
       f.scale.y = 1 + Math.sin(elapsed * 9 + i) * 0.16;
@@ -449,6 +515,12 @@ export function createGame(world) {
     goTo(ANCIENT.x, ANCIENT.z + 2.5);
     ui();
   }
+  function toggleTime() {
+    state.worldTime = shopOpen(state.worldTime) ? 900 : 240;
+    step(0);
+    save();
+    ui();
+  }
   function dispose() {
     keys.clear();
     save();
@@ -470,6 +542,8 @@ export function createGame(world) {
   ui();
   return {
     state,
+    trade,
+    toggleTime,
     campWorld,
     radius,
     save,

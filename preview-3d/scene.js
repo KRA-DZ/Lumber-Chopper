@@ -1,5 +1,6 @@
 import * as THREE from "./vendor/three.module.min.js";
 import { mesh, rock, tree, camp, box } from "./models.js";
+import { nightAmount } from "./time.js";
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -134,7 +135,7 @@ export function createScene(canvas) {
     return seed / 4294967296;
   };
   const trees = [];
-  for (let i = 0; i < 1600 && trees.length < 280; i++) {
+  for (let i = 0; i < 2600 && trees.length < 400; i++) {
     const a = rnd() * Math.PI * 2,
       r = 8 + rnd() * 35,
       x = Math.cos(a) * r,
@@ -154,7 +155,22 @@ export function createScene(canvas) {
           ? 12
           : 10;
     t.scale = 0.85 + rnd() * 0.4;
-    t.root.scale.setScalar(t.scale);
+    t.root.scale.set(t.scale * 1.35, t.scale * 1.85, t.scale * 1.35);
+    // Стабильные id сохраняют старые пни, даже если часть посадки прорежена.
+    t.active =
+      t.id % 2 === 0 &&
+      t.id % 10 !== 0 &&
+      !(Math.abs(x) < 6 && z > 5 && z < 11) &&
+      !(x > -7 && x < -0.3 && z > 5 && z < 20) &&
+      !(Math.abs(z - 2) < 1.7 && x > 6 && x < 18);
+    t.leaves = [];
+    t.canopy.traverse((m) => {
+      if (m.isMesh) {
+        m.material = m.material.clone();
+        m.material.transparent = true;
+        t.leaves.push(m);
+      }
+    });
     t.root.rotation.y = rnd() * 6;
     scene.add(t.root);
     t.root.traverse((m) => {
@@ -227,17 +243,68 @@ export function createScene(canvas) {
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   resize();
-  function setDusk(dusk) {
-    scene.background.set(dusk ? "#657e83" : "#b9c6b6");
+  const cameraAnchor = new THREE.Vector3(),
+    cameraOffset = new THREE.Vector3(25, 43, 29);
+  function followCamera(target, dt, immediate = false) {
+    if (immediate) cameraAnchor.copy(target);
+    else {
+      const delta = target.clone().sub(cameraAnchor);
+      delta.y = 0;
+      const distance = delta.length();
+      if (distance > 3.5)
+        cameraAnchor.addScaledVector(
+          delta,
+          ((distance - 3.5) / distance) * (1 - Math.exp(-dt * 4)),
+        );
+    }
+    camera.position.copy(cameraAnchor).add(cameraOffset);
+    camera.lookAt(cameraAnchor);
+    updateFocus(cameraAnchor);
+  }
+  function updateFocus(focus) {
+    sun.position.copy(focus).add(new THREE.Vector3(-15, 28, 10));
+    sun.target.position.copy(focus);
+    sun.target.updateMatrixWorld();
+  }
+  const lanterns = [];
+  for (const [x, z] of [
+    [-4.2, 2.4],
+    [5.5, -1.8],
+  ]) {
+    box(scene, "#786341", x, 1, z, 0.1, 2, 0.1);
+    box(scene, "#d7b16c", x, 2, z, 0.25, 0.35, 0.25);
+    const light = new THREE.PointLight("#ffc277", 0, 11, 2);
+    light.position.set(x, 2.1, z);
+    scene.add(light);
+    lanterns.push(light);
+  }
+  function setDayTime(time) {
+    const darkness = nightAmount(time);
+    scene.background.copy(
+      new THREE.Color("#b9c6b6").lerp(new THREE.Color("#354b62"), darkness),
+    );
     scene.fog.color.copy(scene.background);
-    sun.intensity = dusk ? 0.7 : 3.1;
-    sun.color.set(dusk ? "#a6b9cd" : "#fff1ca");
-    scene.children.find((o) => o.isHemisphereLight).intensity = dusk
-      ? 1.15
-      : 2.1;
+    sun.intensity = 3.1 - darkness * 2.75;
+    sun.color.copy(
+      new THREE.Color("#fff1ca").lerp(new THREE.Color("#90afd0"), darkness),
+    );
+    const hemi = scene.children.find((o) => o.isHemisphereLight);
+    hemi.intensity = 2.1 - darkness * 1.1;
+    hemi.color.copy(
+      new THREE.Color("#ecedcf").lerp(new THREE.Color("#8097bd"), darkness),
+    );
+    hemi.groundColor.copy(
+      new THREE.Color("#456459").lerp(new THREE.Color("#253b42"), darkness),
+    );
+    lanterns.forEach((l) => (l.intensity = darkness * 15));
+  }
+  function setDusk(dusk) {
+    setDayTime(dusk ? 900 : 240);
   }
   return {
     setDusk,
+    setDayTime,
+    followCamera,
     THREE,
     renderer,
     scene,
@@ -252,10 +319,6 @@ export function createScene(canvas) {
     zoom,
     observer,
     sun,
-    updateFocus(focus) {
-      sun.position.copy(focus).add(new THREE.Vector3(-15, 28, 10));
-      sun.target.position.copy(focus);
-      sun.target.updateMatrixWorld();
-    },
+    updateFocus,
   };
 }

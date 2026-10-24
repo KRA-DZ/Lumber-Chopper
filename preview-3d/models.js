@@ -145,20 +145,20 @@ export function tree(type, x, z, index) {
     scale: 1,
   };
 }
-export function character() {
+export function character({ coat = "#b85c3b" } = {}) {
   const root = new THREE.Group(),
     body = new THREE.Group();
   root.add(body);
   const shirt = mesh(
     new THREE.CylinderGeometry(0.26, 0.3, 0.55, 6),
-    "#b85c3b",
+    coat,
     body,
     0,
     0.87,
     0,
   );
   const head = mesh(
-    new THREE.IcosahedronGeometry(0.27, 1),
+    new THREE.IcosahedronGeometry(0.31, 1),
     "#dcb78c",
     body,
     0,
@@ -173,7 +173,7 @@ export function character() {
     1.61,
     0,
   );
-  mesh(
+  const brim = mesh(
     new THREE.CylinderGeometry(0.39, 0.39, 0.04, 8),
     "#d3b57a",
     body,
@@ -181,6 +181,7 @@ export function character() {
     1.55,
     0,
   );
+  brim.scale.z = 0.62;
   box(body, "#486666", 0, 0.75, 0.22, 0.36, 0.42, 0.08);
   for (const x of [-0.13, 0.13])
     box(body, "#c1b68b", x, 0.92, 0.265, 0.035, 0.35, 0.02);
@@ -196,20 +197,80 @@ export function character() {
   const arm = new THREE.Group();
   arm.position.set(-0.32, 1.05, 0);
   body.add(arm);
-  box(arm, "#b85c3b", 0, -0.18, 0, 0.17, 0.38, 0.19);
+  box(arm, coat, 0, -0.18, 0, 0.17, 0.38, 0.19);
   mesh(new THREE.IcosahedronGeometry(0.12, 0), "#e6c99e", arm, 0, -0.4, 0);
   const axe = new THREE.Group();
   axe.position.set(0.34, 1.05, 0);
   body.add(axe);
-  box(axe, "#b85c3b", 0, -0.14, 0, 0.17, 0.32, 0.19);
+  box(axe, coat, 0, -0.14, 0, 0.17, 0.32, 0.19);
   mesh(new THREE.IcosahedronGeometry(0.12, 0), "#e6c99e", axe, 0, -0.3, 0.1);
   box(axe, "#8a633d", 0, -0.26, 0.32, 0.055, 0.065, 0.72);
   const blade = box(axe, "#b8c6bd", 0.12, -0.26, 0.64, 0.27, 0.32, 0.075);
   blade.rotation.z = 0.2;
+  const face = new THREE.Group();
+  body.add(face);
+  const eyes = [],
+    brows = [];
+  for (const x of [-0.09, 0.09]) {
+    const eye = mesh(
+      new THREE.SphereGeometry(0.035, 6, 4),
+      "#293d37",
+      face,
+      x,
+      1.43,
+      0.295,
+    );
+    eyes.push(eye);
+    mesh(
+      new THREE.SphereGeometry(0.012, 4, 3),
+      "#fbf1ce",
+      face,
+      x - 0.007,
+      1.445,
+      0.32,
+    );
+    const brow = box(face, "#715136", x, 1.5, 0.3, 0.085, 0.022, 0.025);
+    brows.push(brow);
+  }
+  const smile = mesh(
+    new THREE.TorusGeometry(0.065, 0.012, 3, 10, Math.PI),
+    "#78533c",
+    face,
+    0,
+    1.34,
+    0.31,
+  );
+  smile.rotation.z = Math.PI;
+  const surprise = mesh(
+    new THREE.TorusGeometry(0.035, 0.014, 4, 10),
+    "#78533c",
+    face,
+    0,
+    1.34,
+    0.31,
+  );
+  surprise.visible = false;
+  mesh(new THREE.SphereGeometry(0.045, 6, 4), "#d2a375", face, 0, 1.37, 0.32);
+  face.traverse((m) => {
+    if (m.isMesh) {
+      m.material = new THREE.MeshBasicMaterial({ color: m.material.color });
+      m.castShadow = false;
+      m.receiveShadow = false;
+    }
+  });
+  function animateFace(time, mood = "happy") {
+    const blink = Math.sin(time * 1.4) > 0.99;
+    eyes.forEach((e) => (e.scale.y = blink ? 0.1 : 1));
+    brows.forEach(
+      (b, i) => (b.rotation.z = mood === "focused" ? (i ? -0.25 : 0.25) : 0),
+    );
+    smile.visible = mood !== "surprised";
+    surprise.visible = mood === "surprised";
+  }
   const cargo = new THREE.Group();
   cargo.position.set(0, 1.05, -0.22);
   body.add(cargo);
-  return { root, body, legs, arm, axe, cargo };
+  return { root, body, legs, arm, axe, cargo, face, animateFace };
 }
 function trianglePrism(width, height, depth) {
   const shape = new THREE.Shape();

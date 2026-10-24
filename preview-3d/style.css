@@ -219,3 +219,22 @@ footer a {
     padding: 5px 8px;
   }
 }
+
+.intro {
+  max-width: calc(100% - 95px);
+}
+.intro h1 {
+  font-size: 24px;
+  margin: 8px 0;
+}
+.intro p {
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .intro h1 {
+    font-size: 20px;
+  }
+  .intro p {
+    font-size: 10px;
+  }
+}
