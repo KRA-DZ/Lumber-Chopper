@@ -1,14 +1,116 @@
-import {createScene} from './scene.js';
-import {createGame} from './game.js';
-const canvas=document.querySelector('#world');export let app=null;
-try{
- const world=createScene(canvas),game=createGame(world);app={world,game};const {THREE}=world,raycaster=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),pointer=new THREE.Vector2();let down=null,last=null,frame;
- canvas.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0){e.preventDefault();down={x:e.clientX,y:e.clientY};}});
- canvas.addEventListener('pointerup',e=>{if(!down||!e.isPrimary)return;const d=down;down=null;if(Math.hypot(d.x-e.clientX,d.y-e.clientY)>12)return;const rect=canvas.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,world.camera);const hits=raycaster.intersectObjects(world.trees.filter(t=>t.hp>0).map(t=>t.root),true);if(hits.length){game.approach(hits[0].object.userData.tree);return;}const p=new THREE.Vector3();if(raycaster.ray.intersectPlane(plane,p))game.goTo(p.x,p.z);});
- canvas.addEventListener('pointercancel',()=>down=null);
- const codes=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];window.addEventListener('keydown',e=>{if(codes.includes(e.code)&&!e.ctrlKey&&!e.metaKey){e.preventDefault();game.keys.add(e.code);}});window.addEventListener('keyup',e=>game.keys.delete(e.code));window.addEventListener('blur',()=>game.keys.clear());
- let dusk=false;document.querySelector('#light').onclick=()=>{dusk=!dusk;world.setDusk(dusk);document.querySelector('#light').setAttribute('aria-pressed',String(dusk));};
- document.querySelector('#zoom-in').onclick=()=>world.zoom(-3);document.querySelector('#zoom-out').onclick=()=>world.zoom(3);document.querySelector('#home').onclick=()=>game.goTo(0,5.5);canvas.addEventListener('wheel',e=>{e.preventDefault();world.zoom(e.deltaY>0?1:-1);},{passive:false});
- function loop(time){const dt=last===null?0:Math.min((time-last)/1000,.05);last=time;game.step(dt);const focus=new THREE.Vector3(game.player.x*.35,0,game.player.z*.35),cameraGoal=focus.clone().add(new THREE.Vector3(28,34,32));world.camera.position.lerp(cameraGoal,1-Math.exp(-dt*3));world.camera.lookAt(focus);world.renderer.render(world.scene,world.camera);frame=requestAnimationFrame(loop);}
- document.addEventListener('visibilitychange',()=>{last=null;game.keys.clear();});frame=requestAnimationFrame(loop);window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);game.dispose();});window.addEventListener('pageshow',event=>{if(event.persisted){last=null;frame=requestAnimationFrame(loop);}});
-}catch(error){const el=document.querySelector('#error');el.hidden=false;el.textContent='Не удалось открыть 3D-сцену. Для неё нужен WebGL 2. Попробуйте включить аппаратное ускорение или открыть 2D-версию по ссылке внизу.';console.error(error);}
+import { createScene } from "./scene.js";
+import { createGame } from "./game.js";
+const canvas = document.querySelector("#world");
+export let app = null;
+try {
+  const world = createScene(canvas),
+    game = createGame(world);
+  app = { world, game };
+  const { THREE } = world,
+    raycaster = new THREE.Raycaster(),
+    plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+    pointer = new THREE.Vector2();
+  let down = null,
+    last = null,
+    frame;
+  canvas.addEventListener("pointerdown", (e) => {
+    if (e.isPrimary && e.button === 0) {
+      e.preventDefault();
+      down = { x: e.clientX, y: e.clientY };
+    }
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (!down || !e.isPrimary) return;
+    const d = down;
+    down = null;
+    if (Math.hypot(d.x - e.clientX, d.y - e.clientY) > 12) return;
+    const rect = canvas.getBoundingClientRect();
+    pointer.set(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      (-(e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    raycaster.setFromCamera(pointer, world.camera);
+    const hits = raycaster.intersectObjects(
+      world.trees.filter((t) => t.hp > 0).map((t) => t.root),
+      true,
+    );
+    if (hits.length) {
+      game.approach(hits[0].object.userData.tree);
+      return;
+    }
+    const p = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(plane, p)) game.goTo(p.x, p.z);
+  });
+  canvas.addEventListener("pointercancel", () => (down = null));
+  const codes = [
+    "KeyW",
+    "KeyA",
+    "KeyS",
+    "KeyD",
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+  ];
+  window.addEventListener("keydown", (e) => {
+    if (codes.includes(e.code) && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      game.keys.add(e.code);
+    }
+  });
+  window.addEventListener("keyup", (e) => game.keys.delete(e.code));
+  window.addEventListener("blur", () => game.keys.clear());
+  let dusk = false;
+  document.querySelector("#light").onclick = () => {
+    dusk = !dusk;
+    world.setDusk(dusk);
+    document.querySelector("#light").setAttribute("aria-pressed", String(dusk));
+  };
+  document.querySelector("#zoom-in").onclick = () => world.zoom(-3);
+  document.querySelector("#zoom-out").onclick = () => world.zoom(3);
+  document.querySelector("#home").onclick = () => game.goTo(0, 5.5);
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      world.zoom(e.deltaY > 0 ? 1 : -1);
+    },
+    { passive: false },
+  );
+  function loop(time) {
+    const dt = last === null ? 0 : Math.min((time - last) / 1000, 0.05);
+    last = time;
+    game.step(dt);
+    const focus = new THREE.Vector3(
+        game.player.x * 0.35,
+        0,
+        game.player.z * 0.35,
+      ),
+      cameraGoal = focus.clone().add(new THREE.Vector3(28, 34, 32));
+    world.camera.position.lerp(cameraGoal, 1 - Math.exp(-dt * 3));
+    world.camera.lookAt(focus);
+    world.renderer.render(world.scene, world.camera);
+    frame = requestAnimationFrame(loop);
+  }
+  document.addEventListener("visibilitychange", () => {
+    last = null;
+    game.keys.clear();
+  });
+  frame = requestAnimationFrame(loop);
+  window.addEventListener("pagehide", () => {
+    cancelAnimationFrame(frame);
+    game.dispose();
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      last = null;
+      frame = requestAnimationFrame(loop);
+    }
+  });
+} catch (error) {
+  const el = document.querySelector("#error");
+  el.hidden = false;
+  el.textContent =
+    "Не удалось открыть 3D-сцену. Для неё нужен WebGL 2. Попробуйте включить аппаратное ускорение или открыть 2D-версию по ссылке внизу.";
+  console.error(error);
+}
