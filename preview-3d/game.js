@@ -1,10 +1,14 @@
 import { createTrade } from "./trade.js";
 import { DAY_SECONDS, clockText, shopOpen, nightAmount } from "./time.js";
-import { character, log } from "./models.js";
+import { character, log, disposeGeometry } from "./models.js";
 import { RADII, STAGES, loadProgress, saveProgress } from "./progress.js";
 import { createCampWorld, BUILD_PAD, ANCIENT } from "./camp-world.js";
 import { createWoodEffects } from "./wood-effects.js";
 import { createCampLife } from "./camp-life.js";
+import { createDiscoveries } from "./discoveries.js";
+import { createWildlife } from "./wildlife.js";
+import { createSound } from "./sound.js";
+import { createOcclusion } from "./occlusion.js";
 export function createGame(world) {
   const { THREE, scene, trees, pond, campsite } = world,
     actor = character();
@@ -17,6 +21,16 @@ export function createGame(world) {
   const restored = loadProgress(storage),
     state = restored.state;
   const campWorld = createCampWorld(scene, campsite);
+  const discoveries = createDiscoveries(scene),
+    sound = createSound(storage);
+  const updateOcclusion = createOcclusion([
+    campsite.tent,
+    campsite.stall,
+    campWorld.hut,
+    campWorld.merchantTent,
+    campWorld.giant.root,
+    ...discoveries.sites.map((s) => s.root),
+  ]);
   const effects = createWoodEffects(scene),
     campLife = createCampLife(scene, campsite, campWorld);
   const radius = () => RADII[state.campLevel];
@@ -49,6 +63,29 @@ export function createGame(world) {
   };
   const keys = new Set();
   const trade = createTrade(world, { pathTo, moveBody, player });
+  const wildlife = createWildlife(
+    scene,
+    { freePoint, moveBody, walkable },
+    sound,
+  );
+  let low = matchMedia("(pointer:coarse)").matches;
+  try {
+    const setting = storage?.getItem("lumber-chopper-low-v1");
+    if (setting !== null && setting !== undefined) low = setting === "on";
+  } catch {}
+  function applyQuality() {
+    world.setLow(low);
+    wildlife.setLow(low);
+  }
+  function toggleQuality() {
+    low = !low;
+    applyQuality();
+    try {
+      storage?.setItem("lumber-chopper-low-v1", low ? "on" : "off");
+    } catch {}
+    ui();
+  }
+  applyQuality();
   let elapsed = 0,
     sellTimer = 0,
     saveTimer = 0,
@@ -68,8 +105,9 @@ export function createGame(world) {
   const wood = document.querySelector("#wood"),
     coins = document.querySelector("#coins"),
     hint = document.querySelector("#hint");
-  const onBridge = (x, z) =>
-    Math.abs(x + 9.2) < 2.45 && Math.abs(z - 6.5) < 0.65;
+  function onBridge(x, z) {
+    return Math.abs(x + 9.2) < 2.45 && Math.abs(z - 6.5) < 0.65;
+  }
   function walkable(x, z) {
     if (Math.hypot(x, z) > radius() - 0.35) return false;
     if (
@@ -81,6 +119,7 @@ export function createGame(world) {
       return false;
     if (campWorld.blocked(x, z, state.campLevel)) return false;
     if (world.scenery.blocked(x, z)) return false;
+    if (discoveries.blocked(x, z, radius())) return false;
     if (
       Math.hypot(
         Math.max(0, Math.abs(x + 4.2) - 1.6),
@@ -223,6 +262,26 @@ export function createGame(world) {
   function ui() {
     wood.textContent = `${state.wood} / ${state.capacity}`;
     coins.textContent = state.coins;
+    document.querySelector("#weather-status").textContent =
+      world.weather.current.name;
+    document.querySelector("#discoveries").textContent =
+      `Находки: ${state.discoveries.length}/5`;
+    document.querySelector("#sound").textContent = sound.enabled ? "♪" : "♩";
+    document
+      .querySelector("#sound")
+      .setAttribute("aria-pressed", String(sound.enabled));
+    document
+      .querySelector("#sound")
+      .setAttribute(
+        "aria-label",
+        sound.enabled ? "Выключить звук" : "Включить звук",
+      );
+    document
+      .querySelector("#quality")
+      .setAttribute("aria-pressed", String(low));
+    document.querySelector("#quality").title = low
+      ? "Экономный режим включён"
+      : "Включить экономный режим";
     document
       .querySelector("#light")
       .setAttribute("aria-pressed", String(nightAmount(state.worldTime) > 0.4));
@@ -259,6 +318,7 @@ export function createGame(world) {
     t.hp--;
     t.shake = 0.23;
     effects.strike(t, player);
+    sound.hit();
     player.hit = 0.32;
     if (!player.moving)
       actor.root.rotation.y = Math.atan2(t.x - player.x, t.z - player.z);
@@ -268,6 +328,7 @@ export function createGame(world) {
       t.trunk.visible = false;
       t.stump.visible = true;
       state.wood++;
+      sound.pickup();
       state.cargoValue += t.value || 10;
       syncCargo();
       ui();
@@ -314,6 +375,7 @@ export function createGame(world) {
     elapsed += dt;
     celebration = Math.max(0, celebration - dt);
     state.worldTime = (state.worldTime + dt) % DAY_SECONDS;
+    world.weather.update(dt, elapsed, state.worldTime, player);
     world.setDayTime(state.worldTime);
     trade.update(dt, state.worldTime, state.campLevel);
     player.auto = Math.max(0, player.auto - dt);
@@ -389,6 +451,13 @@ export function createGame(world) {
       state.cargoValue -= value;
       sellTimer = 0.18;
       if (building) {
+        const target = campWorld.constructionTarget(state.campLevel);
+        effects.deliver(
+          player,
+          1.8 + Math.min(40, state.wood + 1) * 0.49,
+          target,
+        );
+        sound.build();
         state.buildWood++;
         const stage = STAGES[state.campLevel];
         if (state.buildWood >= stage.cost) {
@@ -396,6 +465,8 @@ export function createGame(world) {
           state.campLevel++;
           campWorld.apply(state.campLevel);
           celebration = 3;
+          effects.celebrate(target);
+          sound.complete();
           notice = `${stage.name}: готово! Открыт новый круг леса.`;
           noticeTimer = 5;
           player.path = [];
@@ -403,6 +474,7 @@ export function createGame(world) {
       } else {
         state.coins += value;
         trade.receive(customer);
+        sound.sell();
         celebration = 1.8;
       }
       syncCargo();
@@ -485,16 +557,42 @@ export function createGame(world) {
       t.root.visible =
         t.active &&
         Math.hypot(t.x, t.z) < radius() - 1 &&
-        Math.hypot(t.x - player.x, t.z - player.z) < 35;
+        Math.hypot(t.x - player.x, t.z - player.z) < (low ? 23 : 28);
       const front = t.z > player.z;
       let obscures = false;
       if (t.root.visible && front) {
         leafScreen.set(t.x, 3 * t.root.scale.y, t.z).project(world.camera);
-        obscures =
-          Math.abs(leafScreen.x - heroScreen.x) <
-            (5 * t.root.scale.x) / (world.camera.right - world.camera.left) &&
-          Math.abs(leafScreen.y - heroScreen.y) <
-            (4.5 * t.root.scale.y) / (world.camera.top - world.camera.bottom);
+        const edge = new THREE.Vector3(
+          t.x + 1.4 * t.root.scale.x,
+          3 * t.root.scale.y,
+          t.z,
+        ).project(world.camera);
+        const top = new THREE.Vector3(t.x, 4.4 * t.root.scale.y, t.z).project(
+          world.camera,
+        );
+        const bottom = new THREE.Vector3(
+          t.x,
+          1.6 * t.root.scale.y,
+          t.z,
+        ).project(world.camera);
+        const protectedPoints = [heroScreen];
+        if (Math.hypot(player.x, player.z) < 9)
+          for (const p of [
+            { x: 4.7, z: 4.5 },
+            { x: -3.8, z: 4.4 },
+          ]) {
+            if (t.z > p.z)
+              protectedPoints.push(
+                new THREE.Vector3(p.x, 0.5, p.z).project(world.camera),
+              );
+          }
+        obscures = protectedPoints.some(
+          (p) =>
+            Math.abs(leafScreen.x - p.x) <
+              Math.abs(edge.x - leafScreen.x) + 0.06 &&
+            p.y > bottom.y - 0.12 &&
+            p.y < top.y + 0.12,
+        );
       }
       for (const leaf of t.leaves) leaf.material.opacity = obscures ? 0.23 : 1;
       t.shake = Math.max(0, t.shake - dt);
@@ -536,6 +634,37 @@ export function createGame(world) {
     effects.update(dt, player, 1.8 + Math.min(state.wood, 40) * 0.49);
     campLife.update(elapsed, state.worldTime, state.campLevel);
     world.scenery.update(elapsed, state.worldTime, radius());
+    campWorld.updateConstruction(
+      state.campLevel,
+      state.buildWood,
+      STAGES[state.campLevel]?.cost || 1,
+      dt,
+    );
+    discoveries.update(elapsed, radius());
+    wildlife.update(dt, elapsed, state.worldTime, player);
+    world.updateContactShadows([
+      player,
+      ...trade.buyers,
+      ...wildlife.animals
+        .filter((a) => a.model.root.visible && a.mode !== "flying")
+        .map((a) => ({ x: a.x, z: a.z, size: a.kind === "deer" ? 0.8 : 0.35 })),
+    ]);
+    sound.update(dt, elapsed, state, player, world.weather.current);
+    if (dt > 0)
+      for (const s of discoveries.sites) {
+        if (
+          !state.discoveries.includes(s.id) &&
+          Math.hypot(s.x, s.z) < radius() - 1 &&
+          Math.hypot(player.x - s.x, player.z - s.z) < 3.6
+        ) {
+          state.discoveries.push(s.id);
+          notice = `Найдено: ${s.name}`;
+          noticeTimer = 6;
+          sound.discovery();
+          save();
+          ui();
+        }
+      }
     world.ripples.forEach((r, i) => {
       const t = (elapsed * 0.2 + i * 0.17) % 1;
       r.scale.setScalar(0.5 + t * 1.8);
@@ -556,7 +685,7 @@ export function createGame(world) {
     while (actor.cargo.children.length > count) {
       const child = actor.cargo.children.at(-1);
       actor.cargo.remove(child);
-      child.traverse((m) => m.geometry?.dispose());
+      disposeGeometry(child);
     }
     while (actor.cargo.children.length < count)
       log(actor.cargo, 0, actor.cargo.children.length * 0.28, 0, 1.1);
@@ -576,6 +705,7 @@ export function createGame(world) {
   }
   function dispose() {
     keys.clear();
+    sound.pause();
     save();
   }
   if (
@@ -595,6 +725,15 @@ export function createGame(world) {
   ui();
   return {
     state,
+    discoveries,
+    wildlife,
+    sound,
+    toggleQuality,
+    get low() {
+      return low;
+    },
+    refreshUi: ui,
+    updateOcclusion: () => updateOcclusion(world.camera, player),
     effects,
     campLife,
     trade,

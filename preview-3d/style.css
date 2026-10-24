@@ -91,6 +91,7 @@ p {
   right: 18px;
   top: 20px;
   display: grid;
+  grid-template-columns: repeat(2, 42px);
   gap: 7px;
 }
 button {
@@ -105,6 +106,13 @@ button {
 }
 button:hover {
   background: #3b5745;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+button[aria-pressed="true"] {
+  border-color: #d5bd7b;
 }
 .hint {
   position: absolute;
@@ -221,7 +229,7 @@ footer a {
 }
 
 .intro {
-  max-width: calc(100% - 95px);
+  max-width: calc(100% - 140px);
 }
 .intro h1 {
   font-size: 24px;

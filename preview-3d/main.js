@@ -12,11 +12,13 @@ try {
     raycaster = new THREE.Raycaster(),
     plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
     pointer = new THREE.Vector2();
+  raycaster.layers.enable(1);
   let down = null,
     last = null,
     frame;
   canvas.addEventListener("pointerdown", (e) => {
     if (e.isPrimary && e.button === 0) {
+      game.sound.unlock();
       e.preventDefault();
       down = { x: e.clientX, y: e.clientY };
     }
@@ -41,7 +43,10 @@ try {
       ],
       true,
     );
-    while (hits.length && (hits[0].object.material?.opacity ?? 1) < 0.5)
+    while (
+      hits.length &&
+      ((hits[0].object.material?.opacity ?? 1) < 0.5 || !hits[0].object.visible)
+    )
       hits.shift();
     if (hits.length) {
       if (hits[0].object.userData.ancient) {
@@ -68,21 +73,39 @@ try {
   window.addEventListener("keydown", (e) => {
     if (codes.includes(e.code) && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
+      game.sound.unlock();
       game.keys.add(e.code);
     }
   });
   window.addEventListener("keyup", (e) => game.keys.delete(e.code));
   window.addEventListener("blur", () => game.keys.clear());
   document.querySelector("#light").onclick = () => game.toggleTime();
-  document.querySelector("#zoom-in").onclick = () => world.zoom(-3);
-  document.querySelector("#zoom-out").onclick = () => world.zoom(3);
+  document.querySelector("#zoom-in").onclick = () => world.zoom(-0.8);
+  document.querySelector("#zoom-out").onclick = () => world.zoom(0.8);
   document.querySelector("#ancient").onclick = () => game.ancientNotice();
   document.querySelector("#home").onclick = () => game.goTo(0, 5.5);
+  document.querySelector("#sound").onclick = async () => {
+    await game.sound.toggle();
+    game.refreshUi();
+  };
+  document.querySelector("#quality").onclick = () => game.toggleQuality();
+  document.querySelector("#weather").onclick = () => {
+    const mode = world.weather.cycle();
+    const button = document.querySelector("#weather");
+    button.textContent =
+      mode === "rain" ? "☂" : mode === "clear" ? "☀" : "☁";
+    button.setAttribute(
+      "aria-label",
+      `Погода: ${mode === "auto" ? "автоматически" : mode === "rain" ? "дождь" : "ясно"}. Сменить погоду`,
+    );
+    game.step(0);
+    game.refreshUi();
+  };
   canvas.addEventListener(
     "wheel",
     (e) => {
       e.preventDefault();
-      world.zoom(e.deltaY > 0 ? 1 : -1);
+      world.zoom(e.deltaY > 0 ? 0.4 : -0.4);
     },
     { passive: false },
   );
@@ -91,13 +114,17 @@ try {
     last = time;
     game.step(dt);
     world.followCamera(new THREE.Vector3(game.player.x, 0, game.player.z), dt);
+    game.updateOcclusion();
     world.renderer.render(world.scene, world.camera);
     frame = requestAnimationFrame(loop);
   }
   document.addEventListener("visibilitychange", () => {
     last = null;
     game.keys.clear();
-    if (document.hidden) game.save();
+    if (document.hidden) {
+      game.save();
+      game.sound.pause();
+    } else game.sound.resume();
   });
   frame = requestAnimationFrame(loop);
   window.addEventListener("pagehide", () => {
@@ -106,6 +133,7 @@ try {
   });
   window.addEventListener("pageshow", (event) => {
     if (event.persisted) {
+      game.sound.resume();
       last = null;
       frame = requestAnimationFrame(loop);
     }

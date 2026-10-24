@@ -2,15 +2,17 @@ import * as THREE from "./vendor/three.module.min.js";
 import { mesh, rock, tree, camp, box } from "./models.js";
 import { nightAmount } from "./time.js";
 import { createScenery } from "./scenery.js";
-// Фронтальный вид: входы лагеря направлены к +Z; азимут камеры всегда нулевой.
-export const CAMERA_OFFSET = new THREE.Vector3(0, 38, 32);
+import { createCameraRig } from "./camera.js";
+import { createRenderBatches } from "./render-batches.js";
+import { SITES } from "./discoveries.js";
+import { createWeather } from "./weather.js";
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.35));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -18,10 +20,9 @@ export function createScene(canvas) {
   renderer.toneMappingExposure = 1.08;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#b9c6b6");
-  scene.fog = new THREE.Fog("#b9c6b6", 85, 150);
-  const camera = new THREE.OrthographicCamera(-20, 20, 16, -16, 0.1, 200);
-  camera.position.copy(CAMERA_OFFSET);
-  camera.lookAt(0, 0, 0);
+  scene.fog = new THREE.Fog("#b9c6b6", 29, 52);
+  const cameraRig = createCameraRig(),
+    camera = cameraRig.camera;
   scene.add(new THREE.HemisphereLight("#ecedcf", "#456459", 2.1));
   const sun = new THREE.DirectionalLight("#fff1ca", 3.1);
   sun.position.set(-15, 28, 10);
@@ -39,7 +40,7 @@ export function createScene(canvas) {
   sun.shadow.bias = -0.00015;
   scene.add(sun);
   const earth = mesh(
-    new THREE.CylinderGeometry(46, 46.2, 1.9, 64),
+    new THREE.CylinderGeometry(80, 80.2, 1.9, 64),
     "#768b60",
     scene,
     0,
@@ -48,7 +49,7 @@ export function createScene(canvas) {
   );
   earth.receiveShadow = true;
   const grass = mesh(
-    new THREE.CylinderGeometry(45.9, 45.9, 0.06, 64),
+    new THREE.CylinderGeometry(79.9, 79.9, 0.06, 64),
     "#6f945f",
     scene,
     0,
@@ -169,6 +170,8 @@ export function createScene(canvas) {
     // Торговцу нужна собственная широкая поляна сбоку от лагеря.
     if (Math.hypot(x - 9.5, z - 0.5) < 3.8) t.active = false;
     if (Math.hypot(x + 17, z + 8) < 2.7) t.active = false;
+    if (SITES.some((s) => Math.hypot(x - s.x, z - s.z) < s.clear))
+      t.active = false;
     t.leaves = [];
     t.canopy.traverse((m) => {
       if (m.isMesh) {
@@ -231,45 +234,23 @@ export function createScene(canvas) {
   marker.rotation.x = -Math.PI / 2;
   marker.visible = false;
   const scenery = createScenery(scene, trees, pond);
-  let height = 19;
+  const weather = createWeather(scene, pond);
   function resize() {
     const rect = canvas.getBoundingClientRect();
     renderer.setSize(rect.width, rect.height, false);
-    const aspect = rect.width / rect.height;
-    // В портретном режиме сохраняем достаточную ширину прохода у лагеря.
-    const h = height * (aspect < 0.9 ? 1.18 : 1);
-    camera.left = (-h * aspect) / 2;
-    camera.right = (h * aspect) / 2;
-    camera.top = h / 2;
-    camera.bottom = -h / 2;
-    camera.updateProjectionMatrix();
+    cameraRig.resize(rect.width, rect.height);
   }
   function zoom(delta) {
-    height = THREE.MathUtils.clamp(height + delta, 14, 36);
-    resize();
+    const distance = cameraRig.zoom(delta);
+    document.querySelector("#zoom-in").disabled = distance <= 18;
+    document.querySelector("#zoom-out").disabled = distance >= 21.5;
   }
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   resize();
-  const cameraAnchor = new THREE.Vector3(),
-    cameraOffset = CAMERA_OFFSET.clone();
   function followCamera(target, dt, immediate = false) {
-    // Держим героя чуть ниже центра: палатки и дорога впереди лучше видны.
-    const focus = target.clone().add(new THREE.Vector3(0, 0, -3));
-    if (immediate) cameraAnchor.copy(focus);
-    else {
-      const delta = focus.sub(cameraAnchor);
-      delta.y = 0;
-      const distance = delta.length();
-      if (distance > 3.5)
-        cameraAnchor.addScaledVector(
-          delta,
-          ((distance - 3.5) / distance) * (1 - Math.exp(-dt * 4)),
-        );
-    }
-    camera.position.copy(cameraAnchor).add(cameraOffset);
-    camera.lookAt(cameraAnchor);
-    updateFocus(cameraAnchor);
+    cameraRig.follow(target, dt, immediate);
+    updateFocus(target);
   }
   function updateFocus(focus) {
     sun.position.copy(focus).add(new THREE.Vector3(-15, 28, 10));
@@ -293,8 +274,15 @@ export function createScene(canvas) {
     scene.background.copy(
       new THREE.Color("#b9c6b6").lerp(new THREE.Color("#354b62"), darkness),
     );
+    scene.background.lerp(
+      new THREE.Color("#97a9ad"),
+      weather.current.cloud * 0.22 * (1 - darkness),
+    );
     scene.fog.color.copy(scene.background);
-    sun.intensity = 3.1 - darkness * 2.75;
+    scene.fog.near = 29 - weather.current.rain * 3;
+    scene.fog.far = 52 - weather.current.rain * 7;
+    sun.intensity =
+      (3.1 - darkness * 2.75) * (1 - weather.current.cloud * 0.43);
     sun.color.copy(
       new THREE.Color("#fff1ca").lerp(new THREE.Color("#90afd0"), darkness),
     );
@@ -306,12 +294,62 @@ export function createScene(canvas) {
     hemi.groundColor.copy(
       new THREE.Color("#456459").lerp(new THREE.Color("#253b42"), darkness),
     );
-    lanterns.forEach((l) => (l.intensity = darkness * 15));
+    lanterns.forEach(
+      (l) =>
+        (l.intensity = Math.max(darkness, weather.current.cloud * 0.3) * 15),
+    );
   }
   function setDusk(dusk) {
     setDayTime(dusk ? 900 : 240);
   }
+  const batches = createRenderBatches(scene);
+  const contactShadows = new THREE.InstancedMesh(
+    new THREE.CircleGeometry(1, 14),
+    new THREE.MeshBasicMaterial({
+      color: "#243d30",
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    }),
+    16,
+  );
+  contactShadows.frustumCulled = false;
+  contactShadows.count = 0;
+  scene.add(contactShadows);
+  const shadowPose = new THREE.Object3D();
+  let economical = false;
+  function updateContactShadows(points) {
+    contactShadows.count = economical ? Math.min(points.length, 16) : 0;
+    for (let i = 0; i < contactShadows.count; i++) {
+      const p = points[i];
+      shadowPose.position.set(p.x, 0.095, p.z);
+      shadowPose.rotation.set(-Math.PI / 2, 0, 0);
+      shadowPose.scale.set(p.size || 0.55, (p.size || 0.55) * 0.65, 1);
+      shadowPose.updateMatrix();
+      contactShadows.setMatrixAt(i, shadowPose.matrix);
+    }
+    contactShadows.instanceMatrix.needsUpdate = true;
+  }
+  function setLow(low) {
+    economical = low;
+    renderer.setPixelRatio(low ? 1 : Math.min(devicePixelRatio, 1.35));
+    renderer.shadowMap.enabled = !low;
+    weather.setLow(low);
+    resize();
+  }
+  const draw = renderer.render.bind(renderer);
+  scene.matrixWorldAutoUpdate = false;
+  renderer.render = (...args) => {
+    scene.updateMatrixWorld(true);
+    batches.update();
+    draw(...args);
+  };
   return {
+    cameraRig,
+    batches,
+    weather,
+    setLow,
+    updateContactShadows,
     setDusk,
     setDayTime,
     followCamera,

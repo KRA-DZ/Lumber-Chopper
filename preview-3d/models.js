@@ -1,5 +1,21 @@
 import * as THREE from "./vendor/three.module.min.js";
 const materials = new Map();
+const geometries = new Map();
+function sharedGeometry(geometry) {
+  if (!geometry.parameters || geometry.type === "ExtrudeGeometry")
+    return geometry;
+  const key = geometry.type + JSON.stringify(geometry.parameters);
+  if (!geometries.has(key)) {
+    geometry.userData.shared = true;
+    geometries.set(key, geometry);
+  } else geometry.dispose();
+  return geometries.get(key);
+}
+export function disposeGeometry(root) {
+  root.traverse((m) => {
+    if (m.geometry && !m.geometry.userData.shared) m.geometry.dispose();
+  });
+}
 export function mat(color, extra = {}) {
   const key = color + JSON.stringify(extra);
   if (!materials.has(key))
@@ -15,7 +31,8 @@ export function mat(color, extra = {}) {
   return materials.get(key);
 }
 export function mesh(geo, color, parent, x = 0, y = 0, z = 0, extra = {}) {
-  const m = new THREE.Mesh(geo, mat(color, extra));
+  const m = new THREE.Mesh(sharedGeometry(geo), mat(color, extra));
+  m.userData.batchable = true;
   m.position.set(x, y, z);
   m.castShadow = true;
   m.receiveShadow = true;
@@ -23,18 +40,20 @@ export function mesh(geo, color, parent, x = 0, y = 0, z = 0, extra = {}) {
   return m;
 }
 export function box(parent, color, x, y, z, w, h, d) {
-  return mesh(new THREE.BoxGeometry(w, h, d), color, parent, x, y, z);
+  const m = mesh(new THREE.BoxGeometry(1, 1, 1), color, parent, x, y, z);
+  m.scale.set(w, h, d);
+  return m;
 }
 export function rock(parent, x, z, size = 1, color = "#89948b") {
   const m = mesh(
-    new THREE.DodecahedronGeometry(size, 0),
+    new THREE.DodecahedronGeometry(1, 0),
     color,
     parent,
     x,
     size * 0.3,
     z,
   );
-  m.scale.set(1, 0.65, 0.8);
+  m.scale.set(size, size * 0.65, size * 0.8);
   m.rotation.set(0.2, x * 3, z);
   return m;
 }

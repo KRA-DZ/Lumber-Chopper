@@ -48,6 +48,8 @@ test("repeated strikes cap debris and falling copies, then clean up", () => {
   }
   assert.equal(fx.chips.length, 64);
   assert.equal(fx.falls.length, 4);
+  assert.equal(fx.flights.length, 12);
   fx.update(2, player, 3);
-  assert.equal(scene.children.length, 1); // Only the reusable debris mesh remains.
+  assert.equal(scene.children.length, 2); // Reusable debris and the hidden completion ring.
+  assert.equal(scene.children.filter((m) => m.visible).length, 1);
 });

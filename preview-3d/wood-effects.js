@@ -1,5 +1,5 @@
 import * as THREE from "./vendor/three.module.min.js";
-import { log } from "./models.js";
+import { log, disposeGeometry } from "./models.js";
 
 // Эффекты не меняют экономику: ресурс выдаётся ровно один раз при обнулении HP.
 export function createWoodEffects(scene) {
@@ -7,6 +7,7 @@ export function createWoodEffects(scene) {
     chips = [],
     falls = [],
     flights = [],
+    deliveries = [],
     labels = [];
   const chipMesh = new THREE.InstancedMesh(
     new THREE.BoxGeometry(0.1, 0.06, 0.18),
@@ -18,20 +19,54 @@ export function createWoodEffects(scene) {
   chipMesh.count = 0;
   scene.add(chipMesh);
   const textures = new Map();
+  const completion = new THREE.Mesh(
+    new THREE.RingGeometry(0.93, 1, 32),
+    new THREE.MeshBasicMaterial({
+      color: "#efcc7b",
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    }),
+  );
+  completion.rotation.x = -Math.PI / 2;
+  completion.visible = false;
+  scene.add(completion);
+  let completionAge = 2;
+  function deliver(player, height, target) {
+    if (deliveries.length >= 12) {
+      const old = deliveries.shift();
+      scene.remove(old.root);
+      disposeGeometry(old.root);
+    }
+    const root = log(scene, player.x, Math.min(8, height), player.z, 1.2);
+    deliveries.push({
+      root,
+      start: root.position.clone(),
+      target: new THREE.Vector3(target.x, target.y, target.z),
+      age: 0,
+    });
+  }
+  function celebrate(target) {
+    completion.position.set(target.x, 0.12, target.z);
+    completion.visible = true;
+    completionAge = 0;
+    label("Готово!", "#f6d990", target.x, 3, target.z);
+  }
   function label(text, color, x, y, z) {
     if (typeof document === "undefined") return;
     if (!textures.has(text + color)) {
       const canvas = document.createElement("canvas");
-      canvas.width = 128;
+      canvas.width = text.length > 3 ? 256 : 128;
       canvas.height = 64;
       const ctx = canvas.getContext("2d");
       ctx.font = "bold 40px sans-serif";
       ctx.textAlign = "center";
       ctx.lineWidth = 5;
       ctx.strokeStyle = "#304635";
-      ctx.strokeText(text, 64, 47);
+      ctx.strokeText(text, canvas.width / 2, 47);
       ctx.fillStyle = color;
-      ctx.fillText(text, 64, 47);
+      ctx.fillText(text, canvas.width / 2, 47);
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       textures.set(text + color, texture);
@@ -45,7 +80,7 @@ export function createWoodEffects(scene) {
       }),
     );
     sprite.position.set(x, y, z);
-    sprite.scale.set(1.4, 0.7, 1);
+    sprite.scale.set(text.length > 3 ? 2.8 : 1.4, 0.7, 1);
     scene.add(sprite);
     labels.push({ sprite, age: 0 });
   }
@@ -115,6 +150,11 @@ export function createWoodEffects(scene) {
     const axis = new THREE.Vector3(direction.z, 0, -direction.x);
     scene.add(root);
     falls.push({ root, age: 0, axis });
+    if (flights.length >= 12) {
+      const old = flights.shift();
+      scene.remove(old.root);
+      disposeGeometry(old.root);
+    }
     const flyingLog = log(scene, t.x, 1, t.z, 1.35);
     flights.push({
       root: flyingLog,
@@ -124,6 +164,24 @@ export function createWoodEffects(scene) {
     label("+1", "#e8d18c", t.x, 3.1, t.z);
   }
   function update(dt, player, cargoHeight) {
+    completionAge += dt;
+    completion.visible = completionAge < 1;
+    completion.scale.setScalar(1 + completionAge * 3);
+    completion.material.opacity = Math.max(0, (1 - completionAge) * 0.7);
+    for (let i = deliveries.length - 1; i >= 0; i--) {
+      const f = deliveries[i];
+      f.age += dt;
+      const t = Math.min(1, f.age / 0.65),
+        ease = t * t * (3 - 2 * t);
+      f.root.position.lerpVectors(f.start, f.target, ease);
+      f.root.position.y += Math.sin(t * Math.PI) * 1.3;
+      f.root.rotation.y = t * 3;
+      if (t === 1) {
+        scene.remove(f.root);
+        disposeGeometry(f.root);
+        deliveries.splice(i, 1);
+      }
+    }
     for (let i = chips.length - 1; i >= 0; i--) {
       const c = chips[i];
       c.age += dt;
@@ -172,7 +230,7 @@ export function createWoodEffects(scene) {
       f.root.rotation.y = f.age * 6;
       if (f.age >= 0.75) {
         scene.remove(f.root);
-        f.root.traverse((m) => m.geometry?.dispose());
+        disposeGeometry(f.root);
         flights.splice(i, 1);
       }
     }
@@ -187,5 +245,16 @@ export function createWoodEffects(scene) {
       }
     }
   }
-  return { strike, fell, update, flights, falls, chips, chipMesh };
+  return {
+    strike,
+    fell,
+    deliver,
+    celebrate,
+    update,
+    deliveries,
+    flights,
+    falls,
+    chips,
+    chipMesh,
+  };
 }

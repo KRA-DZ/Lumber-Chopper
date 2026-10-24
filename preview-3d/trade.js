@@ -1,4 +1,4 @@
-import { character, box, mesh, log } from "./models.js";
+import { character, box, mesh, log, disposeGeometry } from "./models.js";
 import { shopOpen } from "./time.js";
 export const BUYER_CAPACITY = 40,
   MIN_STAY = 90,
@@ -135,8 +135,7 @@ export function createTrade(world, navigation) {
         if (b.phase === "leaving") {
           scene.remove(b.person.root, b.cart);
           b.person.face.traverse((m) => m.material?.dispose());
-          for (const root of [b.person.root, b.cart])
-            root.traverse((m) => m.geometry?.dispose());
+          for (const root of [b.person.root, b.cart]) disposeGeometry(root);
           buyers.splice(i, 1);
           continue;
         }

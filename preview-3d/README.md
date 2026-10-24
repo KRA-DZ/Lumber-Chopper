@@ -1,33 +1,50 @@
-# Low-poly 3D world
+# Лесная смена: 3D
 
-Run `python -m http.server 8000` from the repository root and open `preview-3d/`. No build, CDN or installation is needed. Both versions remain available: `/` is the 2D game, `/preview-3d/` is the 3D game. Each page links to the other.
+Из корня репозитория запустите `python -m http.server 8000` и откройте `/preview-3d/`. Сборка, CDN и установка пакетов для запуска не нужны. `/` по-прежнему открывает 2D-версию; обе страницы содержат переключатель. Three.js 0.180.0 находится в `vendor/` вместе с MIT-лицензией, требуется WebGL 2.
 
-The 3D camera is orthographic, about 50° above the ground, facing the camp entrances directly along +Z with no diagonal azimuth. Its default view height is 19 rather than 25 world units (about 32% larger on-screen); zoom ranges from 14 to 36. Portrait view height is multiplied by 1.18 to leave walking room. A 3.5-unit dead zone keeps the camp view stationary for short movements, and only translation follows the player. The focus is three units ahead of the hero so the camp is visible above them. The circular world has five accessible radii: 24, 29, 34, 39 and 44 world units. Camp construction costs 10/20/35/50 logs and adds a fire, tent, fence and hut. The gold pad sells wood to the current waiting customer; the turquoise pad builds. The giant tree is reserved for future workers. The mysterious merchant has no goods yet.
+Примеры текущего вида: [развитый лагерь](../docs/living-world-3d.png), [портретный экран в экономном режиме](../docs/living-world-mobile.png).
 
-Camp buildings are also larger independently of zoom: the tent is scaled 1.2×, hut 1.12×, fire 1.15× and wood stall 1.18×. The merchant tent is 1.12× rather than 0.8×, and sits on its own clearing at (9.5, 0.5). Rounded building footprints follow their larger sizes, while the entrance and both pads remain accessible. Small crates, benches, logs, mushrooms and ferns are passable; the ruin's two substantial pillars are solid, with an open passage between them.
+## Камера и управление
 
-3D progress is stored under `lumber-chopper-3d-v1`. On the first visit only, coins, carried wood/value, backpack capacity and camp construction progress are copied from `lumber-chopper-v1` if present. The legacy record is never changed. Later sessions restore the independent 3D record, including position and damaged/cut 3D trees. The 3D map is newly generated; legacy tree IDs/positions are not imported. Switching versions does not continuously synchronize progress. Both versions must be served from the same origin for the one-time migration to find the old save. Storage denial is reported in the UI. Corrupt 3D records are backed up before replacement.
+Перспективная камера смотрит на мир под углом 33° над землёй. Направление по миру фиксировано: повороты героя не вращают карту. Камера плавно сопровождает персонажа, сохраняя пространство впереди. Поле зрения — 42° на широком экране и 50° в портретном режиме. Дистанция ограничена 18–21.5 единицами (начальная — 20): приблизить/отдалить можно немного, обзор всей карты недоступен. Даль скрывает дымка. Листва перед героем и площадками лагеря, а также постройки, закрывающие персонажа, становятся прозрачными.
 
-- `models.js`: meshes/materials and character parts.
-- `scene.js`: deterministic landscape, lighting and camera.
-- `camp-world.js`: camp stages, merchant, giant tree and collision footprints.
-- `camp-life.js`: stage-dependent camp props, cloth movement, smoke, sparks and window glow.
-- `scenery.js`: instanced ground cover, trails, ferns, mushrooms, fallen logs, ruined arch and night fireflies.
-- `wood-effects.js`: temporary falling-tree copies, bounded debris, flying pickup logs and damage/resource labels. Effects do not award resources or alter saved HP.
-- `trade.js`: buyer queue, carts, waiting and departure.
-- `time.js`: 20-minute clock and shop hours.
-- `progress.js`: saved-state validation and one-time migration.
-- `game.js`: movement, pathfinding, chopping, building, inventory and selling.
-- `main.js`: input, page lifecycle and render loop.
+- WASD/стрелки или нажатие по земле — идти; рядом с деревом — автоматическая рубка, нажатие по дереву — подход/дополнительный удар.
+- Золотая площадка продаёт брёвна ожидающему покупателю; бирюзовая строит лагерь.
+- ＋/− и колесо — ограниченное приближение, ⌂ — идти к лагерю, ♧ — к Великому дереву.
+- ☾ — перейти между дневным временем и полуночью.
+- ♪ — включить/выключить звук. Web Audio запускается только после игрового жеста; предпочтение сохраняется. Никаких внешних аудиофайлов или фоновой музыки.
+- ☁ — погода: автоматически → дождь → ясно. Это переключение не расходует ресурсы и не меняет часы.
+- ⚙ — экономный режим. На устройствах с сенсорным управлением он включён по умолчанию; ручной выбор сохраняется.
 
-Run regression checks with `node --test preview-3d/*.test.mjs` (persistence, buyer schedule and effect cleanup/shared geometry). In a browser, verify WASD/tap movement, harvesting and reloading during a falling-tree animation, all four construction stages and their entrance routes, and desktop/portrait zoom. Both version-switch links remain available.
+## Мир и прогресс
 
-Three.js **0.180.0** is vendored with its MIT license. Rendering requires WebGL 2. DPR is capped at 1.5 and shadows use a single 1024² directional shadow map. Trees outside the current ring and beyond the local view distance are hidden. Test performance on target devices before production release.
+Доступные радиусы леса: 24/29/34/39/44. Строительство за 10/20/35/50 брёвен добавляет костёр, палатку, забор и хижину. Вложенные брёвна немедленно сохраняются, перелетают со стопки на стройку, а детали постройки появляются постепенно. Незавершённые постройки восстанавливаются после перезагрузки; завершение сопровождается световым кольцом и коротким звуком. Анимации не начисляют и не списывают ресурсы самостоятельно.
 
-Automatic days last 20 minutes. Trading is open 07:26–18:00. Up to five buyers queue, arrive 55 seconds apart, and wait at least 90 seconds before leaving with 40 logs. All remaining buyers leave in the evening. Cart loads are visualized, while sale prices still reflect carried wood value. Night trading is disabled. Clock time is saved; transient queue positions are reconstructed on a new visit. The moon button jumps between daytime and midnight.
+В лесу есть смешанные деревья, тропинки, папоротники, грибы и поваленные стволы. Маленький декор и пни проходимы. Пять находок — забытая стоянка, старый колодец, заросшая повозка, водопад и древняя арка — отмечаются при приближении и сохраняются, но не дают валюту. Крупные строения и водоёмы непроходимы; проход под аркой открыт. Вечером у пруда и арки видны огоньки. Великий дуб по-прежнему предназначен только для будущих работников, торговец в отдельной палатке пока не продаёт товары.
 
-The forest is selectively thinned to roughly 150 active trees, with clearings around the merchant and ruined arch (the underlying deterministic tree IDs, including previously damaged/felled ones, are preserved). Tree visuals are 1.85× taller and 1.35× wider without increasing trunk collision radii. Stumps, leaves and stones are passable. Foreground foliage that covers the hero fades and lets pointer input through. Player/NPC scale is 1.75 rather than 1.35. The hero leans under a heavy load, celebrates sales/construction and rests near the fire after standing idle. Buyers look around, wave to the hero/each other, and occasionally yawn. Faces blink and reflect these moods.
+В мире не более восьми животных: три зайца, четыре птицы и олень у пруда. Они гуляют, реагируют на приближение героя, птицы взлетают, ночью животные скрываются. Погода определяется сохранённым временем суток: облачные тени плавно проходят по земле, дождь меняет свет и создаёт круги на пруду. В лагере остаётся тёплое освещение. Синтезируются шаги, топор, подбор и перенос древесины, продажи, стройка, птицы/сверчки, ветер, дождь, костёр и шум у водопада. При скрытии вкладки звук приостанавливается.
 
-Each strike produces chips and a damage label. A felled tree falls away from the hero and fades while a log hops into the swaying stack. The wood and stump are committed immediately, so reloading during the animation neither loses nor duplicates wood. Debris and falling copies are capped and temporary geometry/materials are cleaned up; original shared tree geometry stays alive. Static foliage uses instanced batches. The ruined arch glows faintly and fireflies appear near it and the pond at night; these are atmospheric hints without monsters or rewards.
+Сутки длятся 20 минут. Торговля открыта 07:26–18:00: до пяти покупателей с тележками приходят каждые 55 секунд, ждут минимум 90 секунд, увозят до 40 брёвен и уходят вечером. Очередь не сохраняется между посещениями, экономика и время сохраняются.
 
-Animals and ambient audio remain in the 2D version and have not yet been ported.
+Сохранение: `lumber-chopper-3d-v1`. При первом посещении импортируются ресурсы, стоимость ноши, вместимость и стадия лагеря из `lumber-chopper-v1`. Исходная запись 2D не изменяется; далее версии сохраняются независимо. Повреждения и пни имеют прежние детерминированные ID. Часть посадки скрыта на полянах, но ID сохранены. Старые 3D-записи автоматически получают пустой список находок. Некорректная запись копируется в резервную перед началом новой сессии; запрет хранилища отображается в интерфейсе.
+
+## Нагрузка
+
+Логические объекты независимы для анимаций, HP, коллизий и выбора мышью. Их повторяющиеся детали рисуются общими `InstancedMesh` с цветом на экземпляр; геометрия простых примитивов переиспользуется. Исходные меши находятся в отдельном слое для raycaster и не рисуются второй раз. Интенсивность света меняет существующий материал без создания новой группы на каждом кадре. Общая геометрия не удаляется при уходе покупателя или исчезновении бревна.
+
+Новые эффекты имеют фиксированные ограничения: 200 капель дождя одним `LineSegments`, 64 щепки, четыре падающих дерева, по 12 летящих/передаваемых брёвен, 16 надписей, 18 частиц дыма и 12 искр. Дождь следует только за ближайшей областью игрока. Экономный режим снижает дождь до 80 капель, активных животных до шести, DPR до 1, дальность локальных деревьев до 23 и заменяет динамические тени простыми пятнами под персонажами. В обычном режиме DPR ограничен 1.35, локальные деревья — 28 единицами, карта теней — 1024²; мелкие детали тени не отбрасывают.
+
+В контрольной сцене развитого лагеря с очередью число команд отрисовки сократилось с примерно 600 до порядка 90 вместе с новыми эффектами. Это счётчики рендера, а не обещание FPS: браузерная проверка в облаке использует программный WebGL. Производительность на реальных телефонах нужно проверять отдельно.
+
+## Структура и проверки
+
+- `camera.js`, `scene.js`, `render-batches.js`, `occlusion.js` — камера, свет, пакетная отрисовка и прозрачность препятствий.
+- `models.js`, `scenery.js`, `discoveries.js` — модели, окружение и ориентиры.
+- `camp-world.js`, `camp-life.js`, `wood-effects.js` — стадии строительства, детали лагеря, рубка и перенос брёвен.
+- `wildlife.js`, `weather.js`, `sound.js` — животные, погода и ограниченный синтез звука.
+- `progress.js`, `time.js`, `trade.js` — сохранения, часы и очередь покупателей.
+- `game.js`, `main.js` — игровые правила, движение, ввод и цикл кадров.
+
+`node --test preview-3d/*.test.mjs` проверяет миграцию/сохранения, очередь, очистку эффектов, пределы камеры, переиспользование геометрии и групп, буферы дождя и реакции птиц. В браузере дополнительно проверяются реальные нажатия мышью/пальцем по земле и деревьям после пакетной отрисовки, WASD, звук после жеста, все стадии стройки, перезагрузка посреди анимации/стройки, находки, погода, настройки качества, продажи и оба переключателя версий.
+
+2D-животные и звуковая система остаются в старой версии; новые 3D-системы реализованы отдельно. Код 2D не удалён.

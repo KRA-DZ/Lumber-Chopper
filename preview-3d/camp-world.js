@@ -150,15 +150,71 @@ export function createCampWorld(scene, campsite) {
   );
   boundary.rotation.x = -Math.PI / 2;
   boundary.castShadow = false;
+  const buildGroups = [campsite.fire, campsite.tent, fence, hut];
+  const parts = buildGroups.map((root) => {
+    root.updateMatrixWorld(true);
+    const list = [];
+    root.traverse((m) => {
+      if (m.isMesh && m.visible) {
+        const bounds = new THREE.Box3().setFromObject(m);
+        list.push({
+          m,
+          position: m.position.clone(),
+          scale: m.scale.clone(),
+          height: bounds.max.y,
+        });
+      }
+    });
+    return list.sort((a, b) => a.height - b.height);
+  });
+  let progressLevel = -1,
+    reveal = 0;
+  function resetParts() {
+    for (const list of parts)
+      for (const p of list) {
+        p.m.visible = true;
+        p.m.position.copy(p.position);
+        p.m.scale.copy(p.scale);
+      }
+  }
   let level = -1;
   function apply(next) {
     if (level === next) return;
+    resetParts();
     level = next;
     campsite.fire.visible = next >= 1;
     campsite.tent.visible = next >= 2 && next < 4;
     fence.visible = next >= 3;
     hut.visible = next >= 4;
     boundary.scale.setScalar(RADII[next]);
+  }
+  function updateConstruction(next, paid, cost, dt) {
+    if (progressLevel !== next) {
+      resetParts();
+      progressLevel = next;
+      reveal = paid / Math.max(1, cost);
+    }
+    const ratio = paid / Math.max(1, cost);
+    reveal += (ratio - reveal) * (dt === 0 ? 1 : 1 - Math.exp(-dt * 9));
+    if (next >= 4) return;
+    buildGroups[next].visible = paid > 0;
+    if (next === 3 && paid > 0) campsite.tent.visible = false;
+    parts[next].forEach((p, i, list) => {
+      const amount = THREE.MathUtils.clamp(reveal * list.length - i, 0, 1);
+      p.m.visible = amount > 0.001;
+      p.m.scale.copy(p.scale);
+      p.m.scale.y *= Math.max(0.01, amount);
+      p.m.position.copy(p.position);
+      p.m.position.y -= (1 - amount) * 0.15;
+    });
+  }
+  function constructionTarget(next) {
+    return [
+      { x: 0, z: 0, y: 0.8 },
+      { x: 0, z: -3.5, y: 1.6 },
+      { x: 5, z: -2.5, y: 0.7 },
+      { x: 0, z: -4, y: 1.7 },
+    ][Math.min(3, next)];
   }
   function blocked(x, z, next) {
     if (Math.hypot(x - ANCIENT.x, z - ANCIENT.z) < ANCIENT.radius + 0.25)
@@ -194,6 +250,8 @@ export function createCampWorld(scene, campsite) {
   }
   return {
     apply,
+    updateConstruction,
+    constructionTarget,
     blocked,
     buildPad,
     hut,

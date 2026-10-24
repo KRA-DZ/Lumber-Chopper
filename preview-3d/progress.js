@@ -1,4 +1,5 @@
 import { normalizedTime } from "./time.js";
+import { normalizeDiscoveries } from "./discoveries.js";
 // Радиусы в единицах 3D-мира; строительство расходует брёвна, не монеты.
 export const STAGES = [
   { name: "Костёр", cost: 10 },
@@ -18,6 +19,7 @@ export function defaults() {
     buildWood: 0,
     upgradeCost: 15,
     worldTime: 240,
+    discoveries: [], // Найденные ориентиры; не выдают валюту и не меняют баланс.
   };
 }
 function validState(s) {
@@ -60,6 +62,7 @@ export function loadProgress(storage) {
         state: {
           ...data.state,
           worldTime: normalizedTime(data.state.worldTime),
+          discoveries: normalizeDiscoveries(data.state.discoveries),
         },
         source: "3d",
       };
@@ -82,6 +85,7 @@ export function loadProgress(storage) {
       campLevel: old.campLevel ?? 0,
       buildWood: old.buildWood ?? 0,
       upgradeCost: old.upgradeCost ?? 15,
+      discoveries: [],
     };
     if (!validState(state)) throw Error("legacy state");
     return { state, source: "2d" };

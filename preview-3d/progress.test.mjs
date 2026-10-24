@@ -72,3 +72,18 @@ test("existing 3D saves acquire the clock without losing resources or camp", () 
   assert.equal(restored.state.campLevel, 2);
   assert.equal(restored.state.buildWood, 7);
 });
+test("old saves gain discoveries and new saves preserve found landmarks without economic changes", () => {
+  const storage = memory(),
+    state = {
+      ...defaults(),
+      coins: 42,
+      discoveries: ["well", "well", "unknown", "arch"],
+    };
+  saveProgress(storage, state, { x: 0, z: 6 }, []);
+  const result = loadProgress(storage).state;
+  assert.deepEqual(result.discoveries, ["well", "arch"]);
+  assert.equal(result.coins, 42);
+  delete state.discoveries;
+  storage.setItem(SAVE_KEY, JSON.stringify({ version: 1, state }));
+  assert.deepEqual(loadProgress(storage).state.discoveries, []);
+});

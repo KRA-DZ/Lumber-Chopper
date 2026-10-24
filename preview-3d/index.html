@@ -27,6 +27,8 @@
           <p>
             <span id="camp-progress"></span><br /><span id="location"></span
             ><br /><span id="clock"></span> · <span id="trade-status"></span>
+            <br /><span id="weather-status"></span> ·
+            <span id="discoveries"></span>
           </p>
         </div>
         <div class="tools">
@@ -40,6 +42,29 @@
             ☾</button
           ><button id="ancient" aria-label="Идти к Великому дереву">♧</button
           ><button id="home" aria-label="Идти к лагерю">⌂</button>
+          <button
+            id="sound"
+            aria-label="Выключить звук"
+            aria-pressed="true"
+            title="Звук"
+          >
+            ♪
+          </button>
+          <button
+            id="weather"
+            aria-label="Погода: автоматически. Сменить погоду"
+            title="Погода: авто → дождь → ясно"
+          >
+            ☁
+          </button>
+          <button
+            id="quality"
+            aria-label="Экономный режим"
+            aria-pressed="false"
+            title="Экономный режим"
+          >
+            ⚙
+          </button>
         </div>
         <div class="hint" id="hint" role="status">
           Нажмите на дерево — лесоруб подойдёт и начнёт рубить.
@@ -53,6 +78,7 @@
           <p>
             WASD / стрелки или нажатие — идти · рядом с деревом — автоматическая
             рубка · золотая площадка — продажа · бирюзовая — строительство
+            <br />♪ — звук · ☁ — погода · ⚙ — экономный режим
           </p>
         </div>
         <a href="../">Переключиться в 2D ↗</a>
