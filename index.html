@@ -193,8 +193,24 @@ function drawPlayer(){
   ctx.fillStyle='#d96b46';ctx.fillRect(-13,-28,26,29);
   ellipse(0,-37,11,12,'#edc593');ellipse(0,-46,14,6,'#f3cc78');
   ctx.save();ctx.translate((player.facing||1)*15,-17);ctx.scale(player.facing||1,1);ctx.rotate(player.swing>0?-.9+Math.sin((1-player.swing/.32)*Math.PI)*2.2:.25);ctx.fillStyle='#694d32';ctx.fillRect(0,-22,4,32);ctx.fillStyle='#d6e0d7';ctx.fillRect(2,-23,14,10);ctx.restore();
-  const sway=player.moving?Math.sin(elapsed*9)*3:0;
-  for(let i=0;i<Math.min(gameState.wood,40);i++){const x=-5+sway*i/Math.max(1,gameState.wood),y=-27-i*5;ctx.fillStyle='#a16c42';ctx.fillRect(x-12,y,25,6);ellipse(x+13,y+3,4,3,'#edc28b');}
+  // Толстые брёвна рисуются поверх тела: большой груз закрывает лесоруба.
+  const visibleLogs=Math.min(gameState.wood,40);
+  const load=Math.min(gameState.wood/20,1.5); // Тяжесть усиливает тряску, не меняя скорость.
+  const stackBounce=player.moving?Math.sin(elapsed*14)*(1+load*2):0;
+  ctx.save();ctx.translate(0,stackBounce);
+  for(let i=0;i<visibleLogs;i++){
+    const height=i/Math.max(1,visibleLogs-1);
+    const sway=player.moving?Math.sin(elapsed*9-height*1.8)*(2+height*11)*load:0;
+    ctx.save();ctx.translate(sway+(i%2?3:-3),5-i*10);
+    ctx.rotate(player.moving?Math.sin(elapsed*9-height*1.8)*height*.09*load:0);
+    ctx.fillStyle='#795035';ctx.fillRect(-27,-1,54,13);
+    ctx.fillStyle='#ae794b';ctx.fillRect(-27,0,54,9);
+    ctx.fillStyle='#c18b55';ctx.fillRect(-25,1,50,3);
+    ellipse(-27,5,6,6,'#cda06b');ellipse(27,5,7,6,'#edc28b');
+    ctx.strokeStyle='#bb8958';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(27,5,3.5,3,0,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
   ctx.restore();
 }
 // Декорации лагеря: площадки — интерактивны; постройки и торговец — визуальные.
