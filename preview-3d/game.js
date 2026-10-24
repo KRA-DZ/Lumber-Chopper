@@ -1,10 +1,36 @@
 import { character, log } from "./models.js";
+import { RADII, STAGES, loadProgress, saveProgress } from "./progress.js";
+import { createCampWorld, BUILD_PAD, ANCIENT } from "./camp-world.js";
 export function createGame(world) {
   const { THREE, scene, trees, pond, campsite } = world,
     actor = character();
   scene.add(actor.root);
   actor.root.scale.setScalar(1.35);
-  const state = { wood: 0, capacity: 20, coins: 0 }; // Отдельная пробная поляна: сохранения основной игры не меняются.
+  let storage;
+  try {
+    storage = window.localStorage;
+  } catch {}
+  const restored = loadProgress(storage),
+    state = restored.state;
+  const campWorld = createCampWorld(scene, campsite);
+  const radius = () => RADII[state.campLevel];
+  campWorld.apply(state.campLevel);
+  for (const saved of restored.trees || []) {
+    const t = trees.find((t) => t.id === saved.id);
+    if (
+      t &&
+      Number.isInteger(saved.hp) &&
+      saved.hp >= 0 &&
+      saved.hp <= t.maxHp
+    ) {
+      t.hp = saved.hp;
+      if (!t.hp) {
+        t.canopy.visible = false;
+        t.trunk.visible = false;
+        t.stump.visible = true;
+      }
+    }
+  }
   const player = {
     x: 0,
     z: 6,
@@ -17,7 +43,18 @@ export function createGame(world) {
   };
   const keys = new Set();
   let elapsed = 0,
-    sellTimer = 0;
+    sellTimer = 0,
+    saveTimer = 0,
+    uiTimer = 0,
+    noticeTimer = 0;
+  let notice = restored.warning || "";
+  const saveStatus = document.querySelector("#save-status");
+  saveStatus.textContent =
+    restored.source === "2d"
+      ? "Прогресс перенесён из 2D. Теперь версии сохраняются отдельно."
+      : restored.source === "3d"
+        ? "3D-прогресс восстановлен · автосохранение включено"
+        : "3D-прогресс сохраняется автоматически";
   actor.root.position.set(player.x, 0, player.z);
   const wood = document.querySelector("#wood"),
     coins = document.querySelector("#coins"),
@@ -25,7 +62,7 @@ export function createGame(world) {
   const onBridge = (x, z) =>
     Math.abs(x + 9.2) < 2.45 && Math.abs(z - 6.5) < 0.65;
   function walkable(x, z) {
-    if (Math.hypot(x, z) > 22) return false;
+    if (Math.hypot(x, z) > radius() - 0.35) return false;
     if (
       !onBridge(x, z) &&
       ((x - pond.x) / (pond.rx + 0.25)) ** 2 +
@@ -33,9 +70,9 @@ export function createGame(world) {
         1
     )
       return false;
-    if (Math.abs(x) < 1.9 && z > -5.35 && z < -1.55) return false;
+    if (campWorld.blocked(x, z, state.campLevel)) return false;
     if (Math.abs(x + 4.2) < 1.7 && Math.abs(z - 1.7) < 0.85) return false;
-    if (Math.hypot(x, z) < 0.9) return false;
+
     return !trees.some((t) => t.hp > 0 && Math.hypot(x - t.x, z - t.z) < 0.55);
   }
   function line(a, b) {
@@ -47,6 +84,12 @@ export function createGame(world) {
     return true;
   }
   function freePoint(x, z) {
+    const d = Math.hypot(x, z),
+      r = radius() - 0.5;
+    if (d > r) {
+      x = (x / d) * r;
+      z = (z / d) * r;
+    }
     if (walkable(x, z)) return { x, z };
     for (let r = 0.3; r < 5; r += 0.3)
       for (let i = 0; i < 20; i++) {
@@ -60,8 +103,8 @@ export function createGame(world) {
     const target = freePoint(goal.x, goal.z);
     if (line(player, target)) return [target];
     const cell = 0.8,
-      N = 56,
-      origin = -22.4;
+      N = 112,
+      origin = -44.8;
     const pos = (id) => ({
       x: origin + ((id % N) + 0.5) * cell,
       z: origin + (Math.floor(id / N) + 0.5) * cell,
@@ -162,13 +205,26 @@ export function createGame(world) {
   function ui() {
     wood.textContent = `${state.wood} / ${state.capacity}`;
     coins.textContent = state.coins;
+    const stage = STAGES[state.campLevel];
+    document.querySelector("#camp-progress").textContent = stage
+      ? `Лагерь ${state.campLevel}/4 · ${stage.name}: ${state.buildWood}/${stage.cost} брёвен`
+      : "Лагерь 4/4 · Хижина построена";
+    document.querySelector("#location").textContent =
+      `Радиус леса: ${radius()} · До лагеря: ${Math.round(Math.hypot(player.x, player.z))}`;
     hint.textContent =
-      state.wood >= state.capacity
-        ? "Вот это башня! Отнесите брёвна на светлую площадку у лавки."
-        : "Нажмите на дерево — лесоруб подойдёт и начнёт рубить.";
+      notice ||
+      (state.wood >= state.capacity
+        ? "Рюкзак полон: золотая площадка — продажа, бирюзовая — строительство."
+        : "Золотая площадка — продать брёвна · Бирюзовая — строить лагерь и расширять лес");
   }
   function hit(t) {
-    if (t.hp <= 0 || state.wood >= state.capacity) return false;
+    if (
+      t.workerOnly ||
+      Math.hypot(t.x, t.z) > radius() - 1 ||
+      t.hp <= 0 ||
+      state.wood >= state.capacity
+    )
+      return false;
     t.hp--;
     t.shake = 0.23;
     player.hit = 0.32;
@@ -178,12 +234,20 @@ export function createGame(world) {
       t.trunk.visible = false;
       t.stump.visible = true;
       state.wood++;
-      log(actor.cargo, 0, (state.wood - 1) * 0.28, 0, 1.1);
+      state.cargoValue += t.value || 10;
+      syncCargo();
       ui();
+      save();
     }
     return true;
   }
   function approach(t) {
+    if (Math.hypot(t.x, t.z) > radius() - 1) {
+      notice = "Сначала улучшите лагерь, чтобы открыть это кольцо леса.";
+      noticeTimer = 4;
+      ui();
+      return;
+    }
     if (Math.hypot(t.x - player.x, t.z - player.z) < 2) {
       if (player.click <= 0) {
         hit(t);
@@ -260,22 +324,54 @@ export function createGame(world) {
           Math.hypot(a.x - player.x, a.z - player.z) -
           Math.hypot(b.x - player.x, b.z - player.z),
       )[0];
-    if (near && player.auto <= 0 && state.wood < state.capacity) {
+    if (dt > 0 && near && player.auto <= 0 && state.wood < state.capacity) {
       hit(near);
       player.auto = 0.7;
     }
-    if (
-      Math.hypot(player.x + 3.8, player.z - 4.4) < 1.35 &&
-      state.wood > 0 &&
-      sellTimer <= 0
-    ) {
+    const building =
+      Math.hypot(player.x - BUILD_PAD.x, player.z - BUILD_PAD.z) <
+        BUILD_PAD.radius && state.campLevel < 4;
+    const selling = Math.hypot(player.x + 3.8, player.z - 4.4) < 1.35;
+    if (dt > 0 && (building || selling) && state.wood > 0 && sellTimer <= 0) {
+      const value =
+        state.wood === 1
+          ? state.cargoValue
+          : Math.floor(state.cargoValue / state.wood);
       state.wood--;
-      state.coins += 10;
-      const cargoLog = actor.cargo.children.at(-1);
-      actor.cargo.remove(cargoLog);
-      cargoLog.traverse((m) => m.geometry?.dispose());
-      sellTimer = 0.15;
+      state.cargoValue -= value;
+      sellTimer = 0.18;
+      if (building) {
+        state.buildWood++;
+        const stage = STAGES[state.campLevel];
+        if (state.buildWood >= stage.cost) {
+          state.buildWood = 0;
+          state.campLevel++;
+          campWorld.apply(state.campLevel);
+          notice = `${stage.name}: готово! Открыт новый круг леса.`;
+          noticeTimer = 5;
+          player.path = [];
+        }
+      } else state.coins += value;
+      syncCargo();
       ui();
+      save();
+    }
+    saveTimer += dt;
+    uiTimer += dt;
+    if (saveTimer >= 5) {
+      save();
+      saveTimer = 0;
+    }
+    if (uiTimer >= 0.25) {
+      ui();
+      uiTimer = 0;
+    }
+    if (noticeTimer > 0) {
+      noticeTimer -= dt;
+      if (noticeTimer <= 0) {
+        notice = "";
+        ui();
+      }
     }
     actor.root.position.set(
       player.x,
@@ -305,6 +401,9 @@ export function createGame(world) {
         : 0;
     });
     for (const t of trees) {
+      t.root.visible =
+        Math.hypot(t.x, t.z) < radius() - 1 &&
+        Math.hypot(t.x - player.x, t.z - player.z) < 29;
       t.shake = Math.max(0, t.shake - dt);
       t.canopy.rotation.z = t.shake
         ? Math.sin(t.shake * 80) * 0.065
@@ -314,19 +413,67 @@ export function createGame(world) {
       f.scale.y = 1 + Math.sin(elapsed * 9 + i) * 0.16;
       f.rotation.y = elapsed * (i + 1) * 0.5;
     });
-    world.fireLight.intensity = 12 + Math.sin(elapsed * 9) * 2;
+    world.fireLight.intensity =
+      state.campLevel >= 1 ? 12 + Math.sin(elapsed * 9) * 2 : 0;
+    campWorld.merchant.rotation.y = Math.sin(elapsed * 0.6) * 0.15;
+    campWorld.giant.canopy.rotation.z = Math.sin(elapsed * 0.7) * 0.012;
     world.ripples.forEach((r, i) => {
       const t = (elapsed * 0.2 + i * 0.17) % 1;
       r.scale.setScalar(0.5 + t * 1.8);
       r.material.opacity = (1 - t) * 0.4;
     });
   }
+  function save() {
+    try {
+      saveProgress(storage, state, player, trees);
+    } catch {
+      notice =
+        "Браузер запретил сохранение. Прогресс доступен только в этой вкладке.";
+      saveStatus.textContent = notice;
+    }
+  }
+  function syncCargo() {
+    const count = Math.min(40, state.wood);
+    while (actor.cargo.children.length > count) {
+      const child = actor.cargo.children.at(-1);
+      actor.cargo.remove(child);
+      child.traverse((m) => m.geometry?.dispose());
+    }
+    while (actor.cargo.children.length < count)
+      log(actor.cargo, 0, actor.cargo.children.length * 0.28, 0, 1.1);
+  }
+  function ancientNotice() {
+    notice =
+      "Великое дерево — бесконечный источник только для будущих работников.";
+    noticeTimer = 5;
+    goTo(ANCIENT.x, ANCIENT.z + 2.5);
+    ui();
+  }
   function dispose() {
     keys.clear();
+    save();
   }
+  if (
+    restored.position &&
+    Number.isFinite(restored.position.x) &&
+    Number.isFinite(restored.position.z) &&
+    Math.abs(restored.position.x) < 46 &&
+    Math.abs(restored.position.z) < 46
+  ) {
+    const p = freePoint(restored.position.x, restored.position.z);
+    player.x = p.x;
+    player.z = p.z;
+  }
+  syncCargo();
+  step(0);
+  save();
   ui();
   return {
     state,
+    campWorld,
+    radius,
+    save,
+    ancientNotice,
     player,
     actor,
     keys,

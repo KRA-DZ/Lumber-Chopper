@@ -6,6 +6,12 @@ try {
   const world = createScene(canvas),
     game = createGame(world);
   app = { world, game };
+  const initialFocus = new world.THREE.Vector3(game.player.x, 0, game.player.z);
+  world.camera.position
+    .copy(initialFocus)
+    .add(new world.THREE.Vector3(25, 43, 29));
+  world.camera.lookAt(initialFocus);
+  world.updateFocus(initialFocus);
   const { THREE } = world,
     raycaster = new THREE.Raycaster(),
     plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
@@ -31,10 +37,19 @@ try {
     );
     raycaster.setFromCamera(pointer, world.camera);
     const hits = raycaster.intersectObjects(
-      world.trees.filter((t) => t.hp > 0).map((t) => t.root),
+      [
+        ...world.trees
+          .filter((t) => t.hp > 0 && t.root.visible)
+          .map((t) => t.root),
+        game.campWorld.giant.root,
+      ],
       true,
     );
     if (hits.length) {
+      if (hits[0].object.userData.ancient) {
+        game.ancientNotice();
+        return;
+      }
       game.approach(hits[0].object.userData.tree);
       return;
     }
@@ -68,6 +83,7 @@ try {
   };
   document.querySelector("#zoom-in").onclick = () => world.zoom(-3);
   document.querySelector("#zoom-out").onclick = () => world.zoom(3);
+  document.querySelector("#ancient").onclick = () => game.ancientNotice();
   document.querySelector("#home").onclick = () => game.goTo(0, 5.5);
   canvas.addEventListener(
     "wheel",
@@ -81,20 +97,18 @@ try {
     const dt = last === null ? 0 : Math.min((time - last) / 1000, 0.05);
     last = time;
     game.step(dt);
-    const focus = new THREE.Vector3(
-        game.player.x * 0.35,
-        0,
-        game.player.z * 0.35,
-      ),
-      cameraGoal = focus.clone().add(new THREE.Vector3(28, 34, 32));
+    const focus = new THREE.Vector3(game.player.x, 0, game.player.z),
+      cameraGoal = focus.clone().add(new THREE.Vector3(25, 43, 29));
     world.camera.position.lerp(cameraGoal, 1 - Math.exp(-dt * 3));
     world.camera.lookAt(focus);
+    world.updateFocus(focus);
     world.renderer.render(world.scene, world.camera);
     frame = requestAnimationFrame(loop);
   }
   document.addEventListener("visibilitychange", () => {
     last = null;
     game.keys.clear();
+    if (document.hidden) game.save();
   });
   frame = requestAnimationFrame(loop);
   window.addEventListener("pagehide", () => {

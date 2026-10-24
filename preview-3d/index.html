@@ -9,9 +9,7 @@
   </head>
   <body>
     <header>
-      <a class="brand" href="../"
-        >Лесная смена <span>НОВАЯ ПОЛЯНА · 3D</span></a
-      >
+      <a class="brand" href="../">Лесная смена <span>КРУГЛЫЙ МИР · 3D</span></a>
       <div class="wallet">
         <span>Брёвна <b id="wood">0 / 20</b></span
         ><span>Монеты <b id="coins">0</b></span>
@@ -25,9 +23,9 @@
         ></canvas>
         <div class="intro">
           <span class="eyebrow">ТИХИЙ ЛЕС</span>
-          <h1>Новая смена,<br />новое измерение.</h1>
+          <h1>Свой лагерь.<br />Большой лес.</h1>
           <p>
-            Тёплый лагерь. Глубокий лес.<br />И целая башня брёвен за спиной.
+            <span id="camp-progress"></span><br /><span id="location"></span>
           </p>
         </div>
         <div class="tools">
@@ -39,6 +37,7 @@
             aria-pressed="false"
           >
             ☾</button
+          ><button id="ancient" aria-label="Идти к Великому дереву">♧</button
           ><button id="home" aria-label="Идти к лагерю">⌂</button>
         </div>
         <div class="hint" id="hint" role="status">
@@ -46,15 +45,16 @@
         </div>
         <div id="error" role="alert" hidden></div>
       </div>
+      <p id="save-status" class="save-status" role="status"></p>
       <footer>
         <div>
           <strong>ПРОГУЛЯЙТЕСЬ ПО ПОЛЯНЕ</strong>
           <p>
             WASD / стрелки или нажатие — идти · рядом с деревом — автоматическая
-            рубка · светлая площадка у лагеря — продажа
+            рубка · золотая площадка — продажа · бирюзовая — строительство
           </p>
         </div>
-        <a href="../">Открыть 2D-версию ↗</a>
+        <a href="../">Переключиться в 2D ↗</a>
       </footer>
     </main>
     <script type="module" src="./main.js"></script>

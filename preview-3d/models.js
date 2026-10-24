@@ -293,5 +293,5 @@ export function camp(parent) {
     2.2,
     -0.95,
   );
-  return { tent, flames, pad };
+  return { tent, flames, pad, fire, stall };
 }

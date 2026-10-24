@@ -195,3 +195,27 @@ footer a {
     gap: 5px;
   }
 }
+
+.save-status {
+  font-size: 12px;
+  color: #b9c6ac;
+  padding: 0 2vw;
+  margin: 12px 0 0;
+}
+.intro p {
+  display: block;
+  font-size: 12px;
+  line-height: 1.8;
+  background: #1c382cbf;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+@media (max-width: 600px) {
+  .intro h1 {
+    font-size: 20px;
+  }
+  .intro p {
+    font-size: 10px;
+    padding: 5px 8px;
+  }
+}

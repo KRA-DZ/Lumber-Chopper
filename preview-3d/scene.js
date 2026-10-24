@@ -1,5 +1,5 @@
 import * as THREE from "./vendor/three.module.min.js";
-import { mesh, mat, rock, tree, camp, box } from "./models.js";
+import { mesh, rock, tree, camp, box } from "./models.js";
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -14,9 +14,9 @@ export function createScene(canvas) {
   renderer.toneMappingExposure = 1.08;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#b9c6b6");
-  scene.fog = new THREE.Fog("#b9c6b6", 60, 110);
-  const camera = new THREE.OrthographicCamera(-20, 20, 16, -16, 0.1, 150);
-  camera.position.set(28, 34, 32);
+  scene.fog = new THREE.Fog("#b9c6b6", 85, 150);
+  const camera = new THREE.OrthographicCamera(-20, 20, 16, -16, 0.1, 200);
+  camera.position.set(25, 43, 29);
   camera.lookAt(0, 0, 0);
   scene.add(new THREE.HemisphereLight("#ecedcf", "#456459", 2.1));
   const sun = new THREE.DirectionalLight("#fff1ca", 3.1);
@@ -35,7 +35,7 @@ export function createScene(canvas) {
   sun.shadow.bias = -0.00015;
   scene.add(sun);
   const earth = mesh(
-    new THREE.CylinderGeometry(23, 23.2, 1.9, 64),
+    new THREE.CylinderGeometry(46, 46.2, 1.9, 64),
     "#768b60",
     scene,
     0,
@@ -44,7 +44,7 @@ export function createScene(canvas) {
   );
   earth.receiveShadow = true;
   const grass = mesh(
-    new THREE.CylinderGeometry(22.9, 22.9, 0.06, 64),
+    new THREE.CylinderGeometry(45.9, 45.9, 0.06, 64),
     "#6f945f",
     scene,
     0,
@@ -134,18 +134,25 @@ export function createScene(canvas) {
     return seed / 4294967296;
   };
   const trees = [];
-  for (let i = 0; i < 150 && trees.length < 50; i++) {
+  for (let i = 0; i < 1600 && trees.length < 280; i++) {
     const a = rnd() * Math.PI * 2,
-      r = 8 + rnd() * 13,
+      r = 8 + rnd() * 35,
       x = Math.cos(a) * r,
       z = Math.sin(a) * r;
     if (
       ((x - pond.x) / 5) ** 2 + ((z - pond.z) / 4) ** 2 < 1 ||
+      Math.hypot(x - 15, z + 12) < 5.3 ||
       trees.some((t) => Math.hypot(x - t.x, z - t.z) < 1.9) ||
       (Math.abs(x + 3) < 2 && z > 6)
     )
       continue;
     const t = tree(["pine", "birch", "oak"][i % 3], x, z, trees.length);
+    t.value =
+      ["pine", "birch", "oak"][i % 3] === "pine"
+        ? 15
+        : ["pine", "birch", "oak"][i % 3] === "birch"
+          ? 12
+          : 10;
     t.scale = 0.85 + rnd() * 0.4;
     t.root.scale.setScalar(t.scale);
     t.root.rotation.y = rnd() * 6;
@@ -244,5 +251,11 @@ export function createScene(canvas) {
     resize,
     zoom,
     observer,
+    sun,
+    updateFocus(focus) {
+      sun.position.copy(focus).add(new THREE.Vector3(-15, 28, 10));
+      sun.target.position.copy(focus);
+      sun.target.updateMatrixWorld();
+    },
   };
 }
