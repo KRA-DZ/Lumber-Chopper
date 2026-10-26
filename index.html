@@ -194,6 +194,14 @@
   <script type="module">
     import { createPixelArt, PIXEL_SCALE, METRICS, CAMP } from "./pixel-art.js";
     import { createTerrain } from "./terrain.js";
+    import { createEffects } from "./effects.js";
+    import {
+      createConstruction,
+      STAGE_COSTS,
+      partialFence,
+      constructionCollisionKey,
+    } from "./construction.js";
+    import { createEnvironment } from "./environment.js";
     ("use strict");
     // Баланс: расстояния в мировых пикселях, интервалы — в секундах.
     const gameState = {
@@ -223,10 +231,10 @@
     const keys = new Set();
     const CENTER = { x: 1600, y: 1600 };
     const stages = [
-      { name: "Костёр", cost: 10 },
-      { name: "Палатка", cost: 20 },
-      { name: "Забор", cost: 35 },
-      { name: "Хижина", cost: 50 },
+      { name: "Костёр", cost: STAGE_COSTS[0] },
+      { name: "Палатка", cost: STAGE_COSTS[1] },
+      { name: "Забор", cost: STAGE_COSTS[2] },
+      { name: "Хижина", cost: STAGE_COSTS[3] },
     ];
     const radii = [900, 1040, 1180, 1320, 1450]; // Каждый этап открывает новое кольцо леса.
     // Породы перемешаны по всему лесу, сложность не привязана к кольцам карты.
@@ -672,37 +680,26 @@
     }
     const obstacleBuckets = new Map();
     let obstacles = [],
-      navVersion = 0;
+      navVersion = 0,
+      lastConstructionKey = "";
     const BUCKET = 128,
       NAV = 32,
       GRID = 100;
     const FOOT_RADIUS = 10; // Физика учитывает ноги, а не ширину спрайта или рюкзака.
     function campFencePosts() {
-      const posts = [];
-      if (gameState.campLevel >= 3)
-        for (let i = 0; i < 33; i++) {
-          const a = (i / 33) * Math.PI * 2;
-          if (Math.sin(a) > 0.65) continue;
-          posts.push({
-            id: i,
-            x: CENTER.x + Math.cos(a) * CAMP.fenceRX,
-            y: CENTER.y + Math.sin(a) * CAMP.fenceRY,
-          });
-        }
-      return posts;
+      return partialFence(gameState, construction.plan).posts;
     }
     function campFenceSegments() {
-      const posts = campFencePosts(),
-        byId = new Map(posts.map((p) => [p.id, p]));
-      return posts.flatMap((p) => {
-        const q = byId.get((p.id + 1) % 33);
-        return q ? [[p, q]] : [];
-      });
+      return partialFence(gameState, construction.plan).segments;
     }
     function rebuildObstacles() {
       obstacles = [];
       obstacleBuckets.clear();
       navVersion++;
+      lastConstructionKey = constructionCollisionKey(
+        gameState,
+        construction.plan,
+      );
       const circle = (x, y, r) => obstacles.push({ x, y, r, half: 0 });
       // Горизонтальная капсула: скруглённое основание вместо цепляющихся прямых углов.
       const capsule = (x, y, w, h) =>
@@ -717,10 +714,17 @@
       // Пни, камни, сундуки, траву и стопки дров можно пересекать свободно.
       capsule(CAMP.stall.x - 80, CAMP.stall.y - 30, 160, 32);
       capsule(CAMP.merchant.x - 82, CAMP.merchant.y - 24, 164, 28);
-      if (gameState.campLevel >= 1) circle(1600, 1600, 23);
-      if (gameState.campLevel >= 2)
+      if (gameState.campLevel >= 1 || gameState.buildWood > 0)
+        circle(1600, 1600, 23);
+      if (
+        (gameState.campLevel >= 2 && gameState.campLevel < 4) ||
+        (gameState.campLevel === 1 && gameState.buildWood > 0)
+      )
         capsule(CAMP.tent.x - 80, CAMP.tent.y - 22, 160, 26);
-      if (gameState.campLevel >= 4)
+      if (
+        gameState.campLevel >= 4 ||
+        (gameState.campLevel === 3 && gameState.buildWood > 0)
+      )
         capsule(CAMP.hut.x - 114, CAMP.hut.y - 44, 228, 48);
       for (const p of campFencePosts()) circle(p.x, p.y, 5);
       for (const [a, b] of campFenceSegments())
@@ -1090,7 +1094,13 @@
               : { x: 1420, y: 1775 + b.slot * 64 },
           key = `${b.phase === "leaving" ? "exit" : b.slot}:${navVersion}`;
         if (b.routeKey !== key) {
-          b.path = findPath(b, target);
+          const changedTarget = b.routeKey.split(":")[0] !== key.split(":")[0];
+          if (
+            changedTarget ||
+            (!b.path.length && distance(b, target) > 5) ||
+            b.path.some((p, i) => !clearSegment(i ? b.path[i - 1] : b, p))
+          )
+            b.path = findPath(b, target);
           b.routeKey = key;
         }
         const ox = b.x,
@@ -1109,6 +1119,17 @@
                 ? "up"
                 : "down";
         } else b.direction = "down";
+        b.greetCooldown = Math.max(0, (b.greetCooldown || 0) - dt);
+        b.actionTimer = Math.max(0, (b.actionTimer || 0) - dt);
+        b.thanks = Math.max(0, (b.thanks || 0) - dt);
+        if (!b.moving && distance(b, player) < 130 && b.greetCooldown <= 0) {
+          b.action = "greet";
+          b.actionTimer = 2.5;
+          b.greetCooldown = 16;
+        } else if (!b.moving && b.actionTimer <= 0)
+          b.action = ["idle", "look", "shift", "yawn"][
+            Math.floor((elapsed + b.id * 4) / 5) % 4
+          ];
         if (distance(b, target) < 5) {
           if (b.phase === "leaving") {
             buyers.splice(i, 1);
@@ -1173,11 +1194,15 @@
         merchantLife.greetCooldown = 16;
       } else if (merchantLife.timer <= 0) {
         merchantLife.cycle++;
-        merchantLife.action = ["idle", "adjust", "read", "look"][
-          merchantLife.cycle % 4
+        merchantLife.action = ["idle", "adjust", "read", "look", "peek"][
+          merchantLife.cycle % 5
         ];
         merchantLife.timer = merchantLife.action === "adjust" ? 4 : 7;
       }
+      const desired = merchantLife.action === "peek" ? 8 : 36;
+      merchantLife.offset =
+        (merchantLife.offset ?? 36) +
+        (desired - (merchantLife.offset ?? 36)) * (1 - Math.exp(-dt * 4));
     }
     function waterRestPoint(id) {
       const angle = -0.5 + (id % 6) * 0.52;
@@ -1468,6 +1493,7 @@
           : "Покупатели торгуют до 18:00 и ждут в очереди. На площадке стройки брёвна вкладываются автоматически.");
     }
     function floatingText(x, y, text, color = "#fff4ce") {
+      if (effects.length >= 128) effects.shift();
       effects.push({ x, y, text, color, life: 1, maxLife: 1, vx: 0, vy: -35 });
     }
     function hitTree(tree) {
@@ -1501,10 +1527,13 @@
           life: 0.5,
           maxLife: 0.5,
         });
+      if (effects.length > 128) effects.splice(0, effects.length - 128);
       if (tree.hp <= 0) {
+        visualEffects.fell(tree, treeSpriteFor(tree), player);
         rebuildObstacles();
         gameState.wood++;
         gameState.cargoValue += tree.value;
+        visualEffects.pickup(tree, gameState.wood - 1);
         floatingText(player.x, player.y - 65, "+1 бревно");
         updateUI();
         saveProgress();
@@ -1608,16 +1637,24 @@
         gameState.wood === 1
           ? gameState.cargoValue
           : Math.floor(gameState.cargoValue / gameState.wood);
+      const start = {
+        x: player.x,
+        y: player.y - 4 - Math.min(39, gameState.wood - 1) * 9,
+      };
       gameState.wood--;
       gameState.cargoValue -= value;
       transferTimer = 0.18;
       if (building) {
+        const target = construction.target(gameState);
+        visualEffects.transfer("build", start, target);
         gameState.buildWood++;
         floatingText(build.x, build.y - 35, "+1 в лагерь", "#b8e8e4");
         const stage = stages[gameState.campLevel];
         if (gameState.buildWood >= stage.cost) {
           gameState.buildWood = 0;
           gameState.campLevel++;
+          player.celebration = 2.2;
+          visualEffects.complete(target);
           rebuildObstacles();
           floatingText(
             CENTER.x,
@@ -1626,15 +1663,30 @@
           );
         }
       } else {
+        const slot = customer.load < 12 ? customer.load : -1;
         customer.load++;
+        customer.thanks = 1.5;
+        visualEffects.transfer("sell", start, {
+          follow: customer,
+          dx: slot < 0 ? 44 : 30 + (slot % 2) * 24,
+          dy: -28 - Math.floor(Math.min(11, customer.load - 1) / 2) * 9,
+          slot,
+        });
+        player.celebration = 1.4;
         gameState.coins += value;
         floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
       }
+      if (
+        lastConstructionKey !==
+        constructionCollisionKey(gameState, construction.plan)
+      )
+        rebuildObstacles();
       updateUI();
       saveProgress();
     }
     function update(dt) {
       elapsed += dt;
+      player.celebration = Math.max(0, (player.celebration || 0) - dt);
       gameState.worldTime = (gameState.worldTime + dt) % DAY_SECONDS;
       player.autoTimer = Math.max(0, player.autoTimer - dt);
       player.clickTimer = Math.max(0, player.clickTimer - dt);
@@ -1709,6 +1761,9 @@
         hitTree(nearest);
         player.autoTimer = gameState.autoInterval;
       }
+      visualEffects.update(dt, player, gameState.wood);
+      construction.update(gameState, dt);
+      environment.update(dt, elapsed, trees, player);
       for (let i = effects.length - 1; i >= 0; i--) {
         const e = effects[i];
         e.life -= dt;
@@ -1720,6 +1775,9 @@
     }
     // Отрисовка отделена от update/ввода: каждый объект получает готовый пиксельный спрайт.
     const art = createPixelArt();
+    const visualEffects = createEffects(art),
+      construction = createConstruction(art, CENTER),
+      environment = createEnvironment(art);
     const terrain = createTerrain({
       center: CENTER,
       pondOutline,
@@ -1802,7 +1860,12 @@
         Math.abs(player.x - t.x) < sprite.width * 0.75;
       ctx.save();
       if (overlap) ctx.globalAlpha = 0.5;
-      art.draw(ctx, sprite, t.x + shake, t.y);
+      art.draw(
+        ctx,
+        t.shake ? sprite : environment.treeSprite(t, sprite, elapsed),
+        t.x + shake,
+        t.y,
+      );
       ctx.restore();
       if (t.hp < t.maxHp) {
         pixelRect(t.x - 24, t.y - sprite.height * 2 - 8, 48, 6, "#324b30");
@@ -1839,7 +1902,14 @@
         );
       }
     }
-    function characterSprite(role, direction, moving, seed = 0) {
+    function characterSprite(
+      role,
+      direction,
+      moving,
+      seed = 0,
+      mood = "neutral",
+      gesture = "none",
+    ) {
       const dir =
           direction === "up"
             ? "up"
@@ -1847,15 +1917,39 @@
               ? "side"
               : "down",
         frame = moving ? Math.floor(elapsed * 9 + seed) % 4 : 0;
-      return art.sprites.characters[role][dir][frame];
+      const selectedFrame =
+        !moving && gesture !== "none" ? Math.floor(elapsed * 5) % 2 : frame;
+      if (mood === "neutral" && Math.sin(elapsed * 1.3 + seed) > 0.985)
+        mood = "blink";
+      return art.person(role, dir, selectedFrame, mood, gesture);
+    }
+    function getPlayerMood() {
+      return player.swing > 0
+        ? "focused"
+        : player.celebration > 0
+          ? "happy"
+          : gameState.wood / gameState.maxWood > 0.75
+            ? "tired"
+            : "neutral";
     }
     function drawPlayer() {
       shadow(player.x, player.y + 4, 19, 6);
       const direction = player.direction || "down",
-        bob = player.moving ? (Math.floor(elapsed * 9) % 2) * 2 : 0;
+        bob = player.moving
+          ? (Math.floor(elapsed * 9) % 2) * 2
+          : player.celebration > 0
+            ? (Math.floor(elapsed * 7) % 2) * 4
+            : 0;
       art.draw(
         ctx,
-        characterSprite("player", direction, player.moving),
+        characterSprite(
+          "player",
+          direction,
+          player.moving,
+          0,
+          getPlayerMood(),
+          player.celebration > 0 && !player.moving ? "cheer" : "none",
+        ),
         player.x,
         player.y - bob,
         2,
@@ -1877,6 +1971,7 @@
       const count = Math.min(gameState.wood, 40),
         load = Math.min(gameState.wood / 20, 1.5);
       for (let i = 0; i < count; i++) {
+        if (visualEffects.cargoHidden(i)) continue;
         const height = i / Math.max(1, count - 1),
           sway = player.moving
             ? Math.sin(elapsed * 9 - height * 1.8) * (2 + height * 11) * load
@@ -1910,23 +2005,17 @@
     }
     function drawMerchant() {
       drawTent(CAMP.merchant.x, CAMP.merchant.y, "merchant");
-      const x = CAMP.merchant.x,
-        y = CAMP.merchant.y + 36;
-      shadow(x, y + 4, 20, 6);
-      art.draw(ctx, art.sprites.merchant, x, y);
-      if (merchantLife.action === "greet") {
-        pixelRect(
-          x + 26,
-          y - 52 + (Math.floor(elapsed * 5) % 2) * 4,
-          6,
-          8,
-          "#d9ba85",
-        );
-      }
+      const action = merchantLife.action,
+        frame = Math.floor(elapsed * 3) % 2,
+        x = CAMP.merchant.x + (action === "look" ? (frame ? 2 : -2) : 0),
+        y = CAMP.merchant.y + Math.round((merchantLife.offset ?? 36) / 2) * 2;
+      if (action !== "peek") shadow(x, y + 4, 20, 6);
+      art.draw(ctx, art.merchantPose(action, frame), x, y);
       label("ТОРГОВЕЦ", x, CAMP.merchant.y - 158, 12, "#f5e2ac");
     }
     function drawFire() {
       if (gameState.campLevel < 1) {
+        if (gameState.buildWood > 0) return;
         ellipse(CENTER.x, CENTER.y, 25, 10, "#9e8a51");
         label("Костёр", CENTER.x, CENTER.y + 24, 12, "#675431");
         return;
@@ -1972,15 +2061,32 @@
     function drawBuyer(b) {
       shadow(b.x + 44, b.y + 12, 44, 9);
       art.draw(ctx, art.sprites.cart, b.x + 44, b.y + 10);
-      for (let i = 0; i < Math.min(12, b.load); i++)
+      for (let i = 0; i < Math.min(12, b.load); i++) {
+        if (
+          visualEffects.logs.some(
+            (l) =>
+              l.kind === "sell" && l.target.follow === b && l.target.slot === i,
+          )
+        )
+          continue;
         art.draw(
           ctx,
           art.sprites.log,
           b.x + 30 + (i % 2) * 24,
           b.y - 28 - Math.floor(i / 2) * 9,
         );
+      }
       shadow(b.x, b.y + 4, 18, 6);
-      const direction = b.direction || "down";
+      const direction =
+        !b.moving && b.action === "look"
+          ? Math.floor(elapsed / 2) % 2
+            ? "left"
+            : "right"
+          : b.direction || "down";
+      const mood =
+          b.thanks > 0 ? "happy" : b.action === "yawn" ? "yawn" : "neutral",
+        gesture =
+          !b.moving && (b.action === "greet" || b.thanks > 0) ? "wave" : "none";
       art.draw(
         ctx,
         characterSprite(
@@ -1988,8 +2094,13 @@
           direction,
           b.moving,
           b.id,
+          mood,
+          gesture,
         ),
-        b.x,
+        b.x +
+          (!b.moving && b.action === "shift"
+            ? (Math.floor(elapsed * 2) % 2) * 2
+            : 0),
         b.y,
         2,
         direction === "left",
@@ -2078,6 +2189,20 @@
           i % 2 ? "#94cac0" : "#529eaa",
         );
       }
+      for (let i = 0; i < 7; i++) {
+        const x = pond.x - 110 + i * 34,
+          y = pond.y - 48 + Math.sin(i * 2) * 55;
+        if (
+          inWater(x, y) &&
+          x > camera.x - 30 &&
+          x < camera.x + VIEW.width + 30 &&
+          y > camera.y - 15 &&
+          y < camera.y + VIEW.height + 15
+        ) {
+          const phase = Math.floor(elapsed * 1.6 + i * 0.7) % 4;
+          art.draw(ctx, art.sprites.ripples[phase], x, y);
+        }
+      }
       for (let i = 0; i < 4; i++) {
         const x = pond.x - 80 + i * 43,
           y = pond.y - 30 + Math.sin(i * 2) * 35;
@@ -2153,7 +2278,15 @@
         )
           continue;
         const type = ["rock", "fern", "flowers", "mushroom"][i % 4];
-        art.draw(ctx, art.sprites.details[type][i % 2], x, y);
+        const sprite = art.sprites.details[type][i % 2];
+        art.draw(
+          ctx,
+          type === "fern" || type === "flowers"
+            ? environment.plantSprite(sprite, elapsed, i)
+            : sprite,
+          x,
+          y,
+        );
       }
     }
     function campLights() {
@@ -2328,6 +2461,13 @@
             t.y < camera.y + VIEW.height + 250,
         )
         .map((t) => ({ y: t.y, draw: () => drawTree(t) }));
+      for (const f of visualEffects.falls)
+        entities.push({
+          y: f.y + 0.2,
+          draw: () => visualEffects.drawFall(ctx, f),
+        });
+      for (const e of construction.previewEntities(gameState))
+        entities.push({ y: e.y, draw: () => e.draw(ctx) });
       entities.push(
         { y: player.y, draw: drawPlayer },
         ...buyers.map((b) => ({ y: b.y, draw: () => drawBuyer(b) })),
@@ -2357,6 +2497,14 @@
       if (gameState.campLevel >= 4)
         entities.push({ y: CAMP.hut.y, draw: drawHut });
       entities.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
+      const localView = {
+        x: camera.x,
+        y: camera.y,
+        width: VIEW.width,
+        height: VIEW.height,
+      };
+      environment.draw(ctx, elapsed, localView);
+      visualEffects.draw(ctx, localView);
       for (const e of effects) {
         ctx.globalAlpha = Math.max(0, e.life / e.maxLife);
         if (e.text) label(e.text, e.x, e.y, 14, e.color);
@@ -2411,6 +2559,7 @@
     player.x = player.targetX = safeStart.x;
     player.y = player.targetY = safeStart.y;
     spawnAnimals();
+    construction.update(gameState, 0);
     fitGameView();
     updateCamera();
     updateUI();
@@ -2428,6 +2577,11 @@
       art,
       terrain,
       metrics: METRICS,
+      visualEffects,
+      construction,
+      environment,
+      merchantLife,
+      getPlayerMood,
       camp: CAMP,
       stages,
       build,

@@ -242,7 +242,21 @@ function treeSprite(type, variant) {
       }
       return;
     }
-    const pal = leafPalettes[type];
+    const pal = leafPalettes[type].map((hex) => {
+      if (variant === 0) return hex;
+      const value = parseInt(hex.slice(1), 16),
+        delta = variant === 1 ? [4, 2, -3] : [-3, 0, 3];
+      return (
+        "#" +
+        [16, 8, 0]
+          .map((shift, i) =>
+            Math.max(0, Math.min(255, ((value >> shift) & 255) + delta[i]))
+              .toString(16)
+              .padStart(2, "0"),
+          )
+          .join("")
+      );
+    });
     foliage(p, ax, ay - 49, w * 0.43, 23, pal, variant + 31);
     foliage(p, ax - 17, ay - 66, w * 0.28, 23, pal, variant + 91);
     foliage(p, ax + 16, ay - 72, w * 0.28, 24, pal, variant + 139);
@@ -258,7 +272,7 @@ function treeSprite(type, variant) {
     );
   });
 }
-function character(coat, direction, frame) {
+function character(coat, direction, frame, mood = "neutral", gesture = "none") {
   return sprite(24, 36, 12, 34, (p) => {
     const side = direction === "side",
       up = direction === "up",
@@ -279,6 +293,18 @@ function character(coat, direction, frame) {
     p.rect(18, 18 + step, 3, 8, coat);
     p.rect(3, 24 - step, 3, 3, skin);
     p.rect(18, 24 + step, 3, 3, skin);
+    if (gesture === "wave" || gesture === "cheer") {
+      p.g.clearRect(18, 18 + step, 4, 11);
+      p.rect(18, 14, 3, 8, coat);
+      p.rect(20, 11 + (frame % 2), 3, 5, skin);
+      if (gesture === "cheer") {
+        p.g.clearRect(2, 17, 4, 12);
+        p.rect(3, 13, 3, 9, coat);
+        p.rect(1, 10 + (frame % 2), 3, 5, skin);
+      }
+    }
+    p.g.save();
+    if (mood === "tired") p.g.translate(side ? 1 : 0, 1);
     p.border(6, 7, 12, 12, dark, skin);
     p.rect(7, 9, 10, 5, "#f1ca91");
     p.rect(5, 11, 2, 4, skin);
@@ -298,11 +324,37 @@ function character(coat, direction, frame) {
       p.rect(7, 15, 2, 1, "#de9c6c");
       p.rect(15, 15, 2, 1, "#de9c6c");
     }
+    if (!up) {
+      if (mood === "blink" || mood === "tired") {
+        p.rect(side ? 13 : 7, 11, side ? 3 : 10, 3, "#f1ca91");
+        if (side) p.rect(14, 12, 2, 1, "#293c35");
+        else {
+          p.rect(8, 12, 2, 1, "#293c35");
+          p.rect(14, 12, 2, 1, "#293c35");
+        }
+      }
+      if (mood === "tired") {
+        p.rect(side ? 14 : 10, 16, 3, 1, "#9c6747");
+        p.rect(18, 10, 1, 3, "#9ac7c0");
+      }
+      if (mood === "happy") {
+        p.rect(side ? 14 : 10, 15, 4, 1, "#9c6747");
+        p.rect(side ? 15 : 11, 16, 2, 1, "#9c6747");
+      }
+      if (mood === "yawn") {
+        p.rect(side ? 15 : 11, 15, 2, 3, "#70503c");
+      }
+      if (mood === "focused") {
+        p.rect(side ? 14 : 8, 10, 2, 1, "#795335");
+        if (!side) p.rect(13, 10, 2, 1, "#795335");
+      }
+    }
     p.border(6, 2, 12, 6, "#6e5131", "#c9974e");
     p.rect(7, 3, 10, 2, "#efd184");
     p.rect(6, 7, 12, 2, "#956735");
     p.rect(3, 8, 18, 2, dark);
     p.rect(4, 8, 16, 1, "#e1bb6b");
+    p.g.restore();
   });
 }
 function tent(purple = false, abandoned = false) {
@@ -596,7 +648,7 @@ function detail(type, variant = 0) {
       }
   });
 }
-function fire(frame) {
+function fire(frame, lit = true) {
   return sprite(40, 40, 20, 34, (p) => {
     p.oval(20, 31, 18, 7, "#414d39");
     for (let i = 0; i < 9; i++) {
@@ -608,6 +660,7 @@ function fire(frame) {
     }
     p.line(10, 30, 30, 33, "#68432c", 5);
     p.line(12, 33, 28, 27, "#97623b", 4);
+    if (!lit) return;
     p.poly(
       [
         [10, 29],
@@ -768,7 +821,8 @@ export function createPixelArt() {
     log: logSprite(),
     cart: cart(),
     ancient: ancient(),
-    fire: [0, 1, 2].map(fire),
+    fire: [0, 1, 2].map((frame) => fire(frame)),
+    unlitFire: fire(0, false),
     details: {},
     animals: {},
   };
@@ -872,6 +926,82 @@ export function createPixelArt() {
   sprites.shadow = sprite(64, 20, 32, 10, (p) =>
     p.oval(32, 10, 30, 8, "#173a2b35"),
   );
+  sprites.tentFrame = sprite(96, 80, 48, 75, (p) => {
+    p.line(8, 71, 89, 71, "#9c7546", 3);
+    p.line(46, 9, 46, 72, "#62472e", 3);
+    p.line(47, 10, 47, 72, "#cba166");
+    p.line(8, 70, 46, 9, "#b69560");
+    p.line(46, 9, 89, 70, "#b69560");
+    p.rect(5, 70, 5, 6, "#76512f");
+    p.rect(87, 70, 5, 6, "#76512f");
+    for (let x = 17; x < 82; x += 12) p.rect(x, 68, 9, 3, "#a6804a");
+  });
+  sprites.houseFrame = sprite(128, 128, 64, 124, (p) => {
+    p.border(11, 110, 108, 14, "#62684f", "#a8a487");
+    for (let x = 15; x < 116; x += 20) {
+      p.rect(x, 73, 3, 44, "#795633");
+      p.rect(x + 1, 74, 1, 42, "#d1a266");
+    }
+    p.line(12, 74, 116, 74, "#87623a", 3);
+    p.line(4, 66, 64, 10, "#72502e", 3);
+    p.line(64, 10, 124, 66, "#72502e", 3);
+    p.line(4, 66, 124, 66, "#ba8d51", 3);
+    p.line(30, 65, 64, 10, "#a78049", 2);
+    p.line(64, 10, 98, 65, "#a78049", 2);
+  });
+  sprites.ripples = [0, 1, 2, 3].map((frame) =>
+    sprite(18, 10, 9, 5, (p) => {
+      p.oval(9, 5, 3 + frame * 2, 1 + frame, "#b8d8c47a");
+      p.g.globalCompositeOperation = "destination-out";
+      p.oval(9, 5, 2 + frame * 2, Math.max(0.5, frame), "#ffffff");
+      p.g.globalCompositeOperation = "source-over";
+    }),
+  );
+  const characterCache = new Map(),
+    merchantCache = new Map(),
+    coats = { player: "#b8663c", buyerA: "#967944", buyerB: "#588d83" };
+  function person(role, direction, frame, mood = "neutral", gesture = "none") {
+    if (mood === "neutral" && gesture === "none")
+      return sprites.characters[role][direction][frame];
+    const key = [role, direction, frame, mood, gesture].join(":");
+    if (!characterCache.has(key)) {
+      characterCache.set(
+        key,
+        character(coats[role], direction, frame, mood, gesture),
+      );
+      if (characterCache.size > 96)
+        characterCache.delete(characterCache.keys().next().value);
+    }
+    return characterCache.get(key);
+  }
+  function merchantPose(action, frame = 0) {
+    const key = action + ":" + (frame % 2);
+    if (merchantCache.has(key)) return merchantCache.get(key);
+    const s = sprite(32, 40, 16, 36, (p) => {
+      p.g.drawImage(sprites.merchant.bitmap, 0, 0);
+      if (action !== "read") {
+        p.rect(8, 24, 17, 10, "#655b79");
+        p.line(11, 24, 9, 33, "#9b87a1");
+        p.line(21, 24, 24, 33, "#4e4c66");
+      }
+      if (action === "greet") {
+        p.rect(25, 17, 4, 11, "#655b79");
+        p.rect(27, 12 + (frame % 2), 3, 6, "#d9ba85");
+      }
+      if (action === "adjust") {
+        p.rect(23, 15, 5, 8, "#655b79");
+        p.rect(22, 11 + (frame % 2), 4, 4, "#d9ba85");
+      }
+      if (action === "look") {
+        p.rect(10, 13, 13, 3, "#2b3438");
+        p.rect(11 + (frame % 2) * 2, 14, 2, 1, "#f5cc72");
+        p.rect(17 + (frame % 2) * 2, 14, 2, 1, "#f5cc72");
+      }
+      if (action === "peek") p.g.clearRect(0, 24, 32, 16);
+    });
+    merchantCache.set(key, s);
+    return s;
+  }
   function draw(ctx, s, x, y, scale = PIXEL_SCALE, flip = false) {
     ctx.imageSmoothingEnabled = false;
     const dx = Math.round(x / 2) * 2,
@@ -908,5 +1038,14 @@ export function createPixelArt() {
       s.mask[py * s.width + px] > 64
     );
   }
-  return { sprites, draw, contains };
+  return {
+    sprites,
+    draw,
+    contains,
+    person,
+    merchantPose,
+    get cachedPeople() {
+      return characterCache.size;
+    },
+  };
 }
