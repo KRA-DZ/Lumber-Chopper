@@ -74,7 +74,7 @@ try:
             scale = page.evaluate("g.mapTransform().scale")
             assert page.evaluate("!g.isWalkable(2590,1600)")
             page.evaluate(
-                "g.state.buildWood=9;g.state.wood=1;g.state.cargoValue=10;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.rebuildObstacles();g.update(.1)"
+                "g.state.buildWood=9;g.state.cargo=[];g.state.wood=0;g.state.cargoValue=0;g.forestry.addCargo(10);g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.rebuildObstacles();g.update(.1)"
             )
             assert page.evaluate(
                 "g.state.campLevel===1&&g.state.wood===0&&g.forestRadius()===1040&&g.expansion.banner.from===900&&g.expansion.radius>900&&g.expansion.radius<1040"
@@ -167,7 +167,7 @@ try:
             page.reload()
             ready(page)
             assert page.evaluate(
-                "g.state.wood===0&&g.state.coins===0&&g.state.maxWood===20&&g.state.campLevel===0&&g.state.buildWood===0&&g.discovered.size===0&&g.trees.every(t=>t.hp===t.maxHp)&&g.weather.tracks.length===0&&g.expansion.rings.length===0"
+                "g.state.wood===0&&g.state.coins===0&&g.state.maxWood===2&&g.state.campLevel===0&&g.state.buildWood===0&&g.discovered.size===0&&g.trees.every(t=>t.hp===t.maxHp)&&g.weather.tracks.length===0&&g.expansion.rings.length===0"
             )
             assert not errors, errors
             print(

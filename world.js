@@ -1,4 +1,4 @@
-import { CAMP, pixelHash } from "./pixel-art.js";
+import { CAMP, pixelHash, random } from "./pixel-art.js";
 
 // Поляны заданы вручную, породы по-прежнему перемешаны по всему лесу.
 export const FOREST_SITES = Object.freeze([
@@ -92,6 +92,44 @@ export function groveOffset(angle, ring, index) {
   );
 }
 
+export function scatterDetails({ allowed, seed = 7331, count = 230 }) {
+  const rnd = random(seed),
+    items = [],
+    types = ["rock", "fern", "flowers", "mushroom"];
+  for (
+    let attempt = 0;
+    attempt < count * 16 && items.length < count;
+    attempt++
+  ) {
+    const x = 220 + rnd() * 2760,
+      y = 220 + rnd() * 2760;
+    if (!allowed(x, y) || items.some((p) => Math.hypot(p.x - x, p.y - y) < 26))
+      continue;
+    const type = types[Math.floor(rnd() * types.length)],
+      variant = Math.floor(rnd() * 2);
+    items.push({ x, y, type, variant, phase: rnd() * 8 });
+    if (type === "mushroom" && rnd() < 0.55) {
+      const a = rnd() * Math.PI * 2,
+        r = 18 + rnd() * 17,
+        xx = x + Math.cos(a) * r,
+        yy = y + Math.sin(a) * r;
+      if (
+        items.length < count &&
+        allowed(xx, yy) &&
+        items.every((p) => Math.hypot(p.x - xx, p.y - yy) >= 16)
+      )
+        items.push({
+          x: xx,
+          y: yy,
+          type,
+          variant: 1 - variant,
+          phase: rnd() * 8,
+        });
+    }
+  }
+  return items;
+}
+
 export function createWorldDressing({
   art,
   sprites,
@@ -104,13 +142,27 @@ export function createWorldDressing({
   const ground = [],
     plants = [],
     siteItems = [];
+  const details = scatterDetails({
+    allowed: (x, y) =>
+      Math.hypot(x - center.x, y - center.y) > 320 &&
+      Math.hypot(x - ancientTree.x, y - ancientTree.y) > 195 &&
+      !nearTrail({ x, y }, 40) &&
+      !inWater(x, y) &&
+      !inClearing(x, y),
+  });
   const add = (list, type, x, y, extra = {}) =>
     list.push({ type, x, y, ...extra });
   for (const t of trees) {
     const n = pixelHash(t.legacyIndex, 47);
     if (n % 3 !== 0) add(ground, "moss", t.x + 10, t.y + 3);
     if (n % 4 === 0) add(ground, "roots", t.x, t.y + 4);
-    if (n % 3 === 0) add(plants, "mushroom", t.x - 24, t.y + 14, { tree: t });
+    if (n % 3 === 0) {
+      const a = (n % 628) / 100,
+        r = 25 + ((n >>> 8) % 16);
+      add(plants, "mushroom", t.x + Math.cos(a) * r, t.y + Math.sin(a) * r, {
+        tree: t,
+      });
+    }
     if (n % 4 !== 1) continue;
     const x = t.x + (n % 2 ? 65 : -65),
       y = t.y + 24;
@@ -238,6 +290,7 @@ export function createWorldDressing({
     }
   }
   return {
+    details,
     ground,
     plants,
     siteItems,

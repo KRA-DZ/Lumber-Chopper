@@ -22,11 +22,11 @@ export function createEffects(art) {
     }
     const frames = [-0.04, 0.06, 0.28, 0.64, 1.05, 1.5].map((angle) => {
       const bitmap = document.createElement("canvas");
-      bitmap.width = 176;
-      bitmap.height = 144;
+      bitmap.width = 210;
+      bitmap.height = 190;
       const ctx = bitmap.getContext("2d");
       ctx.imageSmoothingEnabled = false;
-      ctx.translate(48, 130);
+      ctx.translate(55, 140);
       ctx.rotate(angle);
       // Нижние пиксели остаются пнём, а не вращаются вместе с кроной.
       const h = Math.min(sprite.height, sprite.ay - 4);
@@ -41,7 +41,7 @@ export function createEffects(art) {
         sprite.width,
         h,
       );
-      return { bitmap, width: 176, height: 144, ax: 48, ay: 130 };
+      return { bitmap, width: 210, height: 190, ax: 55, ay: 140 };
     });
     frameCache.set(sprite, frames);
     while (frameCache.size > EFFECT_LIMITS.frameSets)

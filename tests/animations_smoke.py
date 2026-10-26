@@ -64,7 +64,7 @@ try:
             q.goto(url)
             ready(q)
             cut = q.evaluate(
-                """()=>{const t=g.trees.find(t=>t.hp>0&&t.type==='oak'&&Math.hypot(t.x-1600,t.y-1600)<800&&g.isWalkable(t.x+46,t.y+38));g.player.x=t.x+46;g.player.y=t.y+38;g.player.path=[];g.update(0);while(t.hp>0)g.hitTree(t);return {id:t.id,wood:g.state.wood,value:g.state.cargoValue,treeValue:t.value,fall:g.visualEffects.falls.length,fly:g.visualEffects.logs.length};}"""
+                """()=>{const t=g.trees.find(t=>t.hp>0&&t.type==='oak'&&Math.hypot(t.x-1600,t.y-1600)<800&&g.isWalkable(t.x+46,t.y+38));g.player.x=t.x+46;g.player.y=t.y+38;g.player.path=[];g.update(0);while(t.hp>0)g.hitTree(t);g.forestry.collect(.01,g.player);return {id:t.id,wood:g.state.wood,value:g.state.cargoValue,treeValue:t.value,fall:g.visualEffects.falls.length,fly:g.visualEffects.logs.length};}"""
             )
             assert (
                 cut["wood"] == 1
@@ -98,7 +98,7 @@ try:
             assert q.evaluate("!!g.activeBuyer()")
             prior = q.evaluate("g.state.coins")
             q.evaluate(
-                "g.state.wood=2;g.state.cargoValue=27;g.player.x=g.sale.x;g.player.y=g.sale.y;g.player.swing=0;g.update(.1)"
+                "g.state.cargo=[14,13];g.state.wood=2;g.state.cargoValue=27;g.player.x=g.sale.x;g.player.y=g.sale.y;g.player.swing=0;g.update(.1)"
             )
             assert q.evaluate(
                 'g.state.wood===1&&g.state.cargoValue===14&&g.visualEffects.logs.some(l=>l.kind==="sell")&&g.getPlayerMood()==="happy"'
@@ -113,7 +113,7 @@ try:
             assert q.evaluate("g.state.coins") == 0
             # Перелёт на стройку не является дополнительным списанием материала.
             q.evaluate(
-                "g.state.campLevel=3;g.state.buildWood=24;g.state.wood=5;g.state.cargoValue=50;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.player.swing=0;g.rebuildObstacles();g.construction.update(g.state,0);g.update(.1)"
+                "g.state.campLevel=3;g.state.buildWood=24;g.state.maxWood=6;g.state.cargo=[10,10,10,10,10];g.state.wood=5;g.state.cargoValue=50;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.player.swing=0;g.rebuildObstacles();g.construction.update(g.state,0);g.update(.1)"
             )
             assert q.evaluate(
                 'g.state.buildWood===25&&g.state.wood===4&&g.state.cargoValue===40&&g.visualEffects.logs.some(l=>l.kind==="build")'
@@ -156,7 +156,7 @@ try:
                 "g.environment.leaves.length>0&&g.environment.leaves.length<=24&&g.environment.cachedSwaySets<=16&&g.visualEffects.cachedFrameSets<=4"
             )
             assert q.evaluate(
-                "g.state.maxWood===20&&g.player.speed===200&&document.documentElement.scrollWidth<=innerWidth"
+                "g.state.maxWood===6&&g.player.speed===200&&document.documentElement.scrollWidth<=innerWidth"
             )
             assert not errors, errors
             print(

@@ -1,3 +1,4 @@
+import { AXE_TIERS } from "./economy.js";
 // Собственные спрайты: целые пиксели, ограниченная палитра, без сглаживания.
 export const PIXEL_SCALE = 2;
 export const METRICS = Object.freeze({
@@ -827,7 +828,19 @@ export function createPixelArt() {
     animals: {},
   };
   for (const type of ["oak", "birch", "spruce", "dead"])
-    sprites.trees[type] = [0, 1, 2].map((v) => treeSprite(type, v));
+    sprites.trees[type] = [0, 1, 2].map((v) => {
+      const base = treeSprite(type, v);
+      if (v !== 2) return base;
+      const w = Math.round(base.width * 1.14),
+        h = Math.round(base.height * 1.14);
+      return sprite(
+        w,
+        h,
+        Math.round(base.ax * 1.14),
+        Math.round(base.ay * 1.14),
+        (p) => p.g.drawImage(base.bitmap, 0, 0, w, h),
+      );
+    });
   for (const [role, coat] of [
     ["player", "#b8663c"],
     ["buyerA", "#967944"],
@@ -858,38 +871,41 @@ export function createPixelArt() {
     p.rect(8, 10, 1, 4, "#896339");
     p.rect(6, 21, 5, 2, "#6c542f");
   });
-  sprites.axe = [0, 1, 2].map((f) =>
-    sprite(24, 24, 12, 19, (p) => {
-      const points = [
-        [9, 19, 11, 4],
-        [5, 18, 18, 5],
-        [3, 12, 21, 14],
-      ][f];
-      p.line(...points, "#553d2c", 3);
-      p.line(...points, "#bd8b4d");
-      const x = points[2],
-        y = points[3];
-      p.poly(
-        [
-          [x - 1, y - 3],
-          [x + 7, y - 4],
-          [x + 8, y + 3],
-          [x + 1, y + 4],
-        ],
-        "#43564e",
-      );
-      p.poly(
-        [
-          [x, y - 2],
-          [x + 6, y - 3],
-          [x + 7, y + 2],
-          [x + 2, y + 2],
-        ],
-        "#b4c9bf",
-      );
-      p.rect(x + 5, y - 2, 2, 4, "#e6e5cb");
-    }),
+  sprites.axes = AXE_TIERS.map((tier) =>
+    [0, 1, 2].map((f) =>
+      sprite(24, 24, 12, 19, (p) => {
+        const points = [
+          [9, 19, 11, 4],
+          [5, 18, 18, 5],
+          [3, 12, 21, 14],
+        ][f];
+        p.line(...points, "#553d2c", 3);
+        p.line(...points, "#bd8b4d");
+        const x = points[2],
+          y = points[3];
+        p.poly(
+          [
+            [x - 1, y - 3],
+            [x + 7, y - 4],
+            [x + 8, y + 3],
+            [x + 1, y + 4],
+          ],
+          "#43564e",
+        );
+        p.poly(
+          [
+            [x, y - 2],
+            [x + 6, y - 3],
+            [x + 7, y + 2],
+            [x + 2, y + 2],
+          ],
+          tier.color,
+        );
+        p.rect(x + 5, y - 2, 2, 4, tier.edge);
+      }),
+    ),
   );
+  sprites.axe = sprites.axes[0];
   sprites.merchant = sprite(32, 40, 16, 36, (p) => {
     p.poly(
       [

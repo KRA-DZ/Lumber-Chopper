@@ -98,7 +98,7 @@ try:
         )
         # Нулевой шаг на стройке не расходует дерево; перезагрузка сбрасывает этап.
         page.evaluate(
-            "g.state.campLevel=2;g.state.buildWood=7;g.state.wood=4;g.state.cargoValue=40;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.rebuildObstacles();g.refreshUI()"
+            "g.state.campLevel=2;g.state.buildWood=7;g.state.maxWood=4;g.state.cargo=[10,10,10,10];g.state.wood=4;g.state.cargoValue=40;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.rebuildObstacles();g.refreshUI()"
         )
         page.evaluate("g.update(0)")
         assert page.evaluate(
@@ -108,7 +108,7 @@ try:
         page.evaluate("g.state.campLevel=0;g.state.buildWood=0;g.rebuildObstacles()")
         for level, cost in enumerate([10, 20, 35, 50], 1):
             page.evaluate(
-                """cost=>{g.state.wood=cost;g.state.cargoValue=cost*10;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];for(let i=0;i<cost*3+5;i++)g.update(.1)}""",
+                """cost=>{g.state.maxWood=cost;g.state.cargo=Array(cost).fill(10);g.state.wood=cost;g.state.cargoValue=cost*10;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];for(let i=0;i<cost*3+5;i++)g.update(.1)}""",
                 cost,
             )
             assert page.evaluate("g.state.campLevel") == level
@@ -129,7 +129,7 @@ try:
         assert page.evaluate("g.buyers.filter(b=>b.phase!=='leaving').length") == 5
         prior = page.evaluate("g.state.coins")
         page.evaluate(
-            "g.player.x=g.sale.x;g.player.y=g.sale.y;g.state.wood=2;g.state.cargoValue=27;for(let i=0;i<5;i++)g.update(.2)"
+            "g.player.x=g.sale.x;g.player.y=g.sale.y;g.state.cargo=[14,13];g.state.wood=2;g.state.cargoValue=27;for(let i=0;i<5;i++)g.update(.2)"
         )
         assert page.evaluate("g.state.wood===0&&g.state.cargoValue===0")
         assert page.evaluate("g.state.coins") == prior + 27
@@ -182,7 +182,7 @@ try:
         old.goto(url)
         ready(old)
         assert old.evaluate(
-            'g.state.wood===0&&g.state.maxWood===20&&g.state.coins===0&&g.state.worldTime===120&&g.state.campLevel===0&&g.state.buildWood===0&&localStorage.getItem("lumber-chopper-v1")===null'
+            'g.state.wood===0&&g.state.maxWood===2&&g.state.coins===0&&g.state.worldTime===120&&g.state.campLevel===0&&g.state.buildWood===0&&localStorage.getItem("lumber-chopper-v1")===null'
         )
         assert not errors, errors
         print(
