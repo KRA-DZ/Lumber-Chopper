@@ -5,6 +5,7 @@ export function createShop(state, { onChange, onOpen }) {
     balance = dialog.querySelector("[data-balance]"),
     items = dialog.querySelector("[data-items]"),
     message = dialog.querySelector("[data-message]");
+  items.replaceChildren();
   const cards = new Map();
   for (const id of SHOP_IDS) {
     const card = document.createElement("article");
@@ -70,12 +71,15 @@ export function createShop(state, { onChange, onOpen }) {
     refresh();
     if (!dialog.open) dialog.showModal();
   }
-  dialog
-    .querySelector("[data-close]")
-    .addEventListener("click", () => dialog.close());
+  const close = () => dialog.close();
+  dialog.querySelector("[data-close]").addEventListener("click", close);
   return {
     open,
     refresh,
+    destroy() {
+      dialog.querySelector("[data-close]").removeEventListener("click", close);
+      items.replaceChildren();
+    },
     get isOpen() {
       return dialog.open;
     },

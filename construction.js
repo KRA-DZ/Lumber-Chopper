@@ -43,6 +43,21 @@ export function partialFence(state, plan) {
 export function constructionCollisionKey(state, plan) {
   return `${state.campLevel}:${state.campLevel === 2 ? partialFence(state, plan).posts.length : Number(state.buildWood > 0)}`;
 }
+export function constructionTarget(state, center, plan = fencePlan(center)) {
+  const r = stageRatio(state);
+  if (state.campLevel === 0) return { x: center.x, y: center.y - 12 };
+  if (state.campLevel === 1)
+    return { x: CAMP.tent.x, y: CAMP.tent.y - 26 - r * 72 };
+  if (state.campLevel === 2) {
+    const p =
+      plan.posts[
+        Math.min(plan.posts.length - 1, Math.floor(r * plan.posts.length))
+      ];
+    return { x: p.x, y: p.y - 20 };
+  }
+  return { x: CAMP.hut.x, y: CAMP.hut.y - 25 - r * 170 };
+}
+
 export function createConstruction(art, center) {
   const plan = fencePlan(center);
   let level = -1,
@@ -74,18 +89,7 @@ export function createConstruction(art, center) {
     );
   }
   function target(state) {
-    const r = stageRatio(state);
-    if (state.campLevel === 0) return { x: center.x, y: center.y - 12 };
-    if (state.campLevel === 1)
-      return { x: CAMP.tent.x, y: CAMP.tent.y - 26 - r * 72 };
-    if (state.campLevel === 2) {
-      const p =
-        plan.posts[
-          Math.min(plan.posts.length - 1, Math.floor(r * plan.posts.length))
-        ];
-      return { x: p.x, y: p.y - 20 };
-    }
-    return { x: CAMP.hut.x, y: CAMP.hut.y - 25 - r * 170 };
+    return constructionTarget(state, center, plan);
   }
   function drawFire(ctx, state) {
     if (state.campLevel === 0 && state.buildWood > 0) {

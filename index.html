@@ -233,6 +233,11 @@
         <div class="stat">Монеты <b id="coins">0</b></div>
       </div>
     </header>
+    <p>
+      <a href="./phaser.html" style="color: #efd18a"
+        >Открыть пробную версию на Phaser</a
+      >
+    </p>
     <canvas
       id="game"
       width="960"
@@ -299,42 +304,17 @@
     } from "./construction.js";
     import { createEnvironment } from "./environment.js";
     import { createWorldArt } from "./world-art.js";
-    import {
-      FOREST_SITES,
-      inClearing,
-      groveOffset,
-      createWorldDressing,
-    } from "./world.js";
+    import { FOREST_SITES, createWorldDressing } from "./world.js";
     import { createWeather } from "./weather.js";
     import { createExpansion } from "./expansion.js";
-    import { applyUpgrades, AXE_TIERS } from "./economy.js";
+    import { createInitialState, DAY_SECONDS } from "./game/config.js";
+    import { createWorldModel } from "./game/world-model.js";
+    import { createNavigation } from "./game/navigation.js";
     import { createShop } from "./shop.js";
     import { createForestry, growthStage } from "./forestry.js";
     import { createMystery, MYSTERY_CLUES, nightSight } from "./mystery.js";
     ("use strict");
-    const DAY_SECONDS = 600; // Полные сутки (день и ночь) — 10 реальных минут.
-    // Баланс: расстояния в мировых пикселях, интервалы — в секундах.
-    const gameState = {
-      wood: 0,
-      maxWood: 2, // На старте две руки; сила переноски добавляет по два бревна.
-      coins: 0,
-      axePower: 1, // Урон одного автоматического или активного удара.
-      autoInterval: 0.85, // Задержка автоматической рубки.
-      clickInterval: 0.18, // Ограничение частоты активных ударов.
-      carryLevel: 0, // До 40 улучшений: цена 20 × 1.55^уровень, вместимость 2 + 2×уровень.
-      axeLevel: 0, // Редкость меняет цвет, урон и интервал взмаха топора.
-      bootsLevel: 0, // +8% скорости за уровень, до пяти покупок.
-      pickupLevel: 0, // +12 к радиусу подбора за уровень, до пяти покупок.
-      lanternLevel: 0, // +24 к ночному радиусу света за уровень, до четырёх покупок.
-      pickupRadius: 68,
-      runSpeed: 200,
-      campLevel: 0, // Построенные этапы лагеря: костёр, палатка, забор, хижина.
-      buildWood: 0, // Уже вложенные брёвна в текущий этап (не монеты).
-      worldTime: 120, // Начинаем в 10:48; цикл — 600 с, цены и интервалы торговли прежние.
-      cargoValue: 0, // Сумма цен переносимых брёвен; добыча возвращается после роста дерева.
-      cargo: [], // Цена каждого переносимого бревна: продажа снимает верхнее без округлений.
-    };
-    applyUpgrades(gameState);
+    const gameState = createInitialState();
     const canvas = document.querySelector("#game"),
       ctx = canvas.getContext("2d");
     const ui = {
@@ -357,19 +337,6 @@
     ];
     const radii = [900, 1040, 1180, 1320, 1450]; // Каждый этап открывает новое кольцо леса.
     // Породы перемешаны по всему лесу, сложность не привязана к кольцам карты.
-    const treeTypes = {
-      oak: { name: "Лиственное дерево", value: 10, hp: 4 },
-      birch: { name: "Берёза", value: 12, hp: 3 },
-      spruce: { name: "Ель", value: 15, hp: 5 },
-      dead: { name: "Сухое дерево", value: 8, hp: 2 },
-    };
-    const ancientTree = {
-      x: 2080,
-      y: 1400,
-      radius: 65,
-      workerOnly: true,
-      infinite: true,
-    }; // Запас не иссякает; добыча зарезервирована для будущих работников.
     let notice = "",
       noticeTimer = 0;
     function showNotice(text, duration = 4) {
@@ -523,8 +490,20 @@
       moving: false,
     };
 
-    const trees = [],
-      effects = [];
+    const worldModel = createWorldModel();
+    const {
+      trees,
+      ancientTree,
+      pond,
+      pondOutline,
+      streamOutline,
+      trails,
+      bridge,
+      inWater,
+      waterCollision,
+      nearTrail,
+    } = worldModel;
+    const effects = [];
     player.path = [];
     player.pathVersion = 0;
     let elapsed = 0,
@@ -533,483 +512,19 @@
     const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     // Рельеф, тропы и физические основания объектов используют общие координаты.
-    const pond = { x: 1150, y: 1740, rx: 150, ry: 105 };
-    const streamX = (y) => 1160 + 65 * Math.sin((y - 1820) / 160);
-    const bridge = { x: streamX(1950), y: 1950, width: 180, height: 64 };
-    const trails = [
-      [
-        { x: 1600, y: 1720 },
-        { x: 1890, y: 1740 },
-        { x: 1990, y: 1540 },
-        { x: 2080, y: 1490 },
-      ],
-      [
-        { x: 1530, y: 1690 },
-        { x: 1340, y: 1510 },
-        { x: 1240, y: 1390 },
-      ],
-      [
-        { x: 1500, y: 1680 },
-        { x: 1370, y: 1880 },
-        { x: bridge.x, y: 1950 },
-        { x: 990, y: 1980 },
-      ],
-      [
-        { x: 1640, y: 1730 },
-        { x: 1810, y: 1850 },
-        { x: 1790, y: 2110 },
-      ],
-      [
-        { x: 1690, y: 1440 },
-        { x: 1760, y: 1180 },
-        { x: 1880, y: 860 },
-      ],
-      [
-        { x: 1420, y: 1775 },
-        { x: 1390, y: 1960 },
-        { x: 1320, y: 2140 },
-      ],
-    ];
-    const pondOutline = Array.from({ length: 32 }, (_, i) => {
-      const a = (i / 32) * Math.PI * 2,
-        f = 1 + 0.07 * Math.sin(a * 3) + 0.05 * Math.cos(a * 5);
-      return {
-        x: pond.x + Math.cos(a) * pond.rx * f,
-        y: pond.y + Math.sin(a) * pond.ry * f,
-      };
-    });
-    const streamOutline = [
-      ...Array.from({ length: 41 }, (_, i) => {
-        const y = 1810 + i * 20;
-        return { x: streamX(y) - 27, y };
-      }),
-      ...Array.from({ length: 41 }, (_, i) => {
-        const y = 2610 - i * 20;
-        return { x: streamX(y) + 27, y };
-      }),
-    ];
-    function pointInPolygon(x, y, points) {
-      let inside = false;
-      for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-        const a = points[i],
-          b = points[j];
-        if (
-          a.y > y !== b.y > y &&
-          x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x
-        )
-          inside = !inside;
-      }
-      return inside;
-    }
-    function onBridge(x, y) {
-      return (
-        Math.abs(x - bridge.x) <= bridge.width / 2 &&
-        Math.abs(y - bridge.y) <= bridge.height / 2
-      );
-    }
-    function inWater(x, y) {
-      return (
-        !onBridge(x, y) &&
-        (pointInPolygon(x, y, pondOutline) ||
-          pointInPolygon(x, y, streamOutline))
-      );
-    }
-    function waterCollision(x, y, r) {
-      if (
-        x < pond.x - pond.rx - r - 20 ||
-        x > pond.x + pond.rx + r + 110 ||
-        y < pond.y - pond.ry - r - 20 ||
-        y > 2620 + r
-      )
-        return false;
-      for (let i = 0; i < 9; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        if (
-          inWater(
-            x + (i === 8 ? 0 : Math.cos(a) * r),
-            y + (i === 8 ? 0 : Math.sin(a) * r),
-          )
-        )
-          return true;
-      }
-      return false;
-    }
-    function segmentDistance(p, a, b) {
-      const dx = b.x - a.x,
-        dy = b.y - a.y,
-        t = Math.max(
-          0,
-          Math.min(
-            1,
-            ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1),
-          ),
-        );
-      return Math.hypot(p.x - a.x - dx * t, p.y - a.y - dy * t);
-    }
-    function nearTrail(p, width = 44) {
-      return trails.some((path) =>
-        path.some(
-          (b, i) => i > 0 && segmentDistance(p, path[i - 1], b) < width,
-        ),
-      );
-    }
-    const obstacleBuckets = new Map();
-    let obstacles = [],
-      navVersion = 0,
-      lastConstructionKey = "";
-    const BUCKET = 128,
-      NAV = 32,
-      GRID = 100;
-    const FOOT_RADIUS = 10; // Физика учитывает ноги, а не ширину спрайта или рюкзака.
-    function campFencePosts() {
-      return partialFence(gameState, construction.plan).posts;
-    }
-    function campFenceSegments() {
-      return partialFence(gameState, construction.plan).segments;
-    }
-    function rebuildObstacles() {
-      obstacles = [];
-      obstacleBuckets.clear();
-      navVersion++;
-      lastConstructionKey = constructionCollisionKey(
-        gameState,
-        construction.plan,
-      );
-      const circle = (x, y, r) => obstacles.push({ x, y, r, half: 0 });
-      // Горизонтальная капсула: скруглённое основание вместо цепляющихся прямых углов.
-      const capsule = (x, y, w, h) =>
-        obstacles.push({
-          x: x + w / 2,
-          y: y + h / 2,
-          r: h / 2,
-          half: Math.max(0, (w - h) / 2),
-        });
-      for (const t of trees) if (t.hp > 0) circle(t.x, t.y - 3, 8);
-      circle(ancientTree.x, ancientTree.y - 12, 50);
-      // Пни, камни, сундуки, траву и стопки дров можно пересекать свободно.
-      capsule(CAMP.stall.x - 80, CAMP.stall.y - 30, 160, 32);
-      capsule(CAMP.merchant.x - 82, CAMP.merchant.y - 24, 164, 28);
-      if (gameState.campLevel >= 1 || gameState.buildWood > 0)
-        circle(1600, 1600, 23);
-      if (
-        (gameState.campLevel >= 2 && gameState.campLevel < 4) ||
-        (gameState.campLevel === 1 && gameState.buildWood > 0)
-      )
-        capsule(CAMP.tent.x - 80, CAMP.tent.y - 22, 160, 26);
-      if (
-        gameState.campLevel >= 4 ||
-        (gameState.campLevel === 3 && gameState.buildWood > 0)
-      )
-        capsule(CAMP.hut.x - 114, CAMP.hut.y - 44, 228, 48);
-      for (const p of campFencePosts()) circle(p.x, p.y, 5);
-      for (const [a, b] of campFenceSegments())
-        obstacles.push({
-          x: (a.x + b.x) / 2,
-          y: (a.y + b.y) / 2,
-          r: 4,
-          half: 0,
-          a,
-          b,
-        });
-      for (const site of landmarks) {
-        if (site.type === "camp") capsule(site.x - 57, site.y - 18, 100, 22);
-        else if (site.type === "arch") {
-          // У ворот остаётся проём: непроходимы только основания двух колонн.
-          capsule(site.x - 82, site.y - 18, 30, 20);
-          capsule(site.x + 56, site.y - 18, 30, 20);
-        } else if (site.type === "ruins")
-          capsule(site.x - 49, site.y - 18, 98, 22);
-        else if (site.type === "wagon")
-          capsule(site.x - 40, site.y - 16, 80, 24);
-      }
-      for (const o of obstacles) {
-        const x0 = (o.a ? Math.min(o.a.x, o.b.x) : o.x - o.half) - o.r,
-          y0 = (o.a ? Math.min(o.a.y, o.b.y) : o.y) - o.r,
-          x1 = (o.a ? Math.max(o.a.x, o.b.x) : o.x + o.half) + o.r,
-          y1 = (o.a ? Math.max(o.a.y, o.b.y) : o.y) + o.r;
-        for (let y = Math.floor(y0 / BUCKET); y <= Math.floor(y1 / BUCKET); y++)
-          for (
-            let x = Math.floor(x0 / BUCKET);
-            x <= Math.floor(x1 / BUCKET);
-            x++
-          ) {
-            const key = x + "," + y;
-            if (!obstacleBuckets.has(key)) obstacleBuckets.set(key, []);
-            obstacleBuckets.get(key).push(o);
-          }
-      }
-    }
-    function obstacleContact(x, y, r = FOOT_RADIUS) {
-      let deepest = null;
-      for (
-        let by = Math.floor((y - r) / BUCKET);
-        by <= Math.floor((y + r) / BUCKET);
-        by++
-      )
-        for (
-          let bx = Math.floor((x - r) / BUCKET);
-          bx <= Math.floor((x + r) / BUCKET);
-          bx++
-        ) {
-          for (const o of obstacleBuckets.get(bx + "," + by) || []) {
-            let cx = clamp(x, o.x - o.half, o.x + o.half),
-              cy = o.y;
-            if (o.a) {
-              const vx = o.b.x - o.a.x,
-                vy = o.b.y - o.a.y,
-                t = clamp(
-                  ((x - o.a.x) * vx + (y - o.a.y) * vy) / (vx * vx + vy * vy),
-                  0,
-                  1,
-                );
-              cx = o.a.x + vx * t;
-              cy = o.a.y + vy * t;
-            }
-            const dx = x - cx,
-              dy = y - cy,
-              d = Math.hypot(dx, dy),
-              depth = r + o.r - d;
-            if (depth > 0.005 && (!deepest || depth > deepest.depth))
-              deepest = {
-                depth,
-                nx: d > 0.001 ? dx / d : 0,
-                ny: d > 0.001 ? dy / d : 1,
-              };
-          }
-        }
-      return deepest;
-    }
-    function isWalkable(x, y, r = FOOT_RADIUS) {
-      return (
-        Math.hypot(x - 1600, y - 1600) <= forestRadius() - r &&
-        !waterCollision(x, y, r) &&
-        !obstacleContact(x, y, r)
-      );
-    }
-    function nearestGround(x, y, r = FOOT_RADIUS) {
-      const p = constrainPoint(x, y);
-      if (isWalkable(p.x, p.y, r)) return p;
-      for (let d = 8; d <= 320; d += 8)
-        for (let i = 0; i < 24; i++) {
-          const a = (i / 24) * Math.PI * 2,
-            n = { x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d };
-          if (isWalkable(n.x, n.y, r)) return n;
-        }
-      return { x: 1600, y: 1720 };
-    }
-    function clearSegment(a, b, r = FOOT_RADIUS) {
-      const d = Math.hypot(b.x - a.x, b.y - a.y),
-        steps = Math.max(1, Math.ceil(d / 7));
-      for (let i = 1; i <= steps; i++)
-        if (
-          !isWalkable(
-            a.x + ((b.x - a.x) * i) / steps,
-            a.y + ((b.y - a.y) * i) / steps,
-            r,
-          )
-        )
-          return false;
-      return true;
-    }
-    function moveBody(body, dx, dy, r = FOOT_RADIUS) {
-      const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 4));
-      let moved = 0;
-      for (let i = 0; i < steps; i++) {
-        const ox = body.x,
-          oy = body.y,
-          sx = dx / steps,
-          sy = dy / steps;
-        if (isWalkable(ox + sx, oy + sy, r)) {
-          body.x += sx;
-          body.y += sy;
-        } else {
-          // Выталкиваем только на глубину проникновения: движение плавно идёт по касательной.
-          let x = ox + sx,
-            y = oy + sy;
-          for (let pass = 0; pass < 4; pass++) {
-            const c = obstacleContact(x, y, r);
-            if (!c) break;
-            x += c.nx * (c.depth + 0.02);
-            y += c.ny * (c.depth + 0.02);
-          }
-          if (
-            Math.hypot(x - ox, y - oy) <= Math.hypot(sx, sy) * 1.5 + 0.1 &&
-            isWalkable(x, y, r)
-          ) {
-            body.x = x;
-            body.y = y;
-          } else {
-            if (isWalkable(body.x + sx, body.y, r)) body.x += sx;
-            if (isWalkable(body.x, body.y + sy, r)) body.y += sy;
-          }
-        }
-        moved += Math.hypot(body.x - ox, body.y - oy);
-      }
-      return moved;
-    }
-    // A* по сетке; проверка отрезков запрещает срезать углы и проходить через стволы.
-    function findPath(start, goal) {
-      const target = nearestGround(goal.x, goal.y);
-      if (clearSegment(start, target)) return [target];
-      const walkCache = new Int8Array(GRID * GRID),
-        cost = new Float64Array(GRID * GRID);
-      cost.fill(Infinity);
-      const parent = new Int32Array(GRID * GRID);
-      parent.fill(-1);
-      const closed = new Uint8Array(GRID * GRID);
-      const center = (id) => ({
-        x: (id % GRID) * NAV + NAV / 2,
-        y: Math.floor(id / GRID) * NAV + NAV / 2,
-      });
-      const free = (id) => {
-        if (id < 0 || id >= 10000) return false;
-        if (!walkCache[id]) {
-          const p = center(id);
-          walkCache[id] = isWalkable(p.x, p.y) ? 1 : -1;
-        }
-        return walkCache[id] === 1;
-      };
-      function nearestCell(p) {
-        const cx = Math.floor(p.x / NAV),
-          cy = Math.floor(p.y / NAV);
-        for (let rad = 0; rad < 7; rad++) {
-          let best = -1,
-            dist = Infinity;
-          for (let y = cy - rad; y <= cy + rad; y++)
-            for (let x = cx - rad; x <= cx + rad; x++) {
-              if (x < 0 || x >= GRID || y < 0 || y >= GRID) continue;
-              const id = y * GRID + x,
-                n = center(id),
-                d = Math.hypot(p.x - n.x, p.y - n.y);
-              if (d < dist && free(id) && clearSegment(p, n)) {
-                best = id;
-                dist = d;
-              }
-            }
-          if (best >= 0) return best;
-        }
-        return -1;
-      }
-      const first = nearestCell(start),
-        last = nearestCell(target);
-      if (first < 0 || last < 0) return [];
-      const heap = [];
-      function push(id, f) {
-        let i = heap.length;
-        heap.push({ id, f });
-        while (i) {
-          const p = (i - 1) >> 1;
-          if (heap[p].f <= f) break;
-          heap[i] = heap[p];
-          i = p;
-        }
-        heap[i] = { id, f };
-      }
-      function pop() {
-        const top = heap[0],
-          end = heap.pop();
-        if (heap.length) {
-          let i = 0;
-          heap[0] = end;
-          while (true) {
-            let c = i * 2 + 1;
-            if (c >= heap.length) break;
-            if (c + 1 < heap.length && heap[c + 1].f < heap[c].f) c++;
-            if (heap[c].f >= end.f) break;
-            heap[i] = heap[c];
-            i = c;
-            heap[i] = end;
-          }
-        }
-        return top.id;
-      }
-      cost[first] = 0;
-      push(first, 0);
-      let visits = 0,
-        found = false;
-      while (heap.length && visits++ < 10000) {
-        const id = pop();
-        if (closed[id]) continue;
-        closed[id] = 1;
-        if (id === last) {
-          found = true;
-          break;
-        }
-        const p = center(id),
-          cx = id % GRID,
-          cy = Math.floor(id / GRID);
-        for (let dy = -1; dy <= 1; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            if (!dx && !dy) continue;
-            const x = cx + dx,
-              y = cy + dy;
-            if (x < 0 || x >= GRID || y < 0 || y >= GRID) continue;
-            const next = y * GRID + x;
-            if (closed[next] || !free(next)) continue;
-            const n = center(next);
-            if (!clearSegment(p, n)) continue;
-            const g = cost[id] + Math.hypot(dx, dy);
-            if (g < cost[next]) {
-              cost[next] = g;
-              parent[next] = id;
-              push(
-                next,
-                g + Math.hypot(x - (last % GRID), y - Math.floor(last / GRID)),
-              );
-            }
-          }
-      }
-      if (!found) return [];
-      const raw = [target];
-      for (let id = last; id !== -1; id = parent[id]) {
-        raw.push(center(id));
-        if (id === first) break;
-      }
-      raw.reverse();
-      const result = [];
-      let anchor = start,
-        index = 0;
-      while (index < raw.length) {
-        let far = index;
-        while (far + 1 < raw.length && clearSegment(anchor, raw[far + 1]))
-          far++;
-        result.push(raw[far]);
-        anchor = raw[far];
-        index = far + 1;
-      }
-      return result;
-    }
-    function setDestination(x, y) {
-      const target = nearestGround(x, y);
-      player.targetX = target.x;
-      player.targetY = target.y;
-      player.path = findPath(player, target);
-      player.pathVersion = navVersion;
-      if (!player.path.length && distance(player, target) > 12)
-        showNotice("Здесь нет прохода. Попробуйте подойти с другой стороны.");
-    }
-    function followPath(body, dt, speed) {
-      let budget = speed * dt,
-        total = 0;
-      while (budget > 0 && body.path?.length) {
-        const p = body.path[0],
-          dx = p.x - body.x,
-          dy = p.y - body.y,
-          d = Math.hypot(dx, dy);
-        if (d < 1) {
-          body.path.shift();
-          continue;
-        }
-        const step = Math.min(budget, d),
-          moved = moveBody(body, (dx / d) * step, (dy / d) * step);
-        total += moved;
-        budget -= step;
-        if (moved < step * 0.1) break;
-        if (Math.hypot(p.x - body.x, p.y - body.y) < 1) body.path.shift();
-      }
-      return total;
-    }
-
+    const nav = createNavigation(worldModel, gameState, player, showNotice);
+    const {
+      rebuildObstacles,
+      isWalkable,
+      nearestGround,
+      clearSegment,
+      moveBody,
+      findPath,
+      setDestination,
+      followPath,
+      campFencePosts,
+      campFenceSegments,
+    } = nav;
     // Очередь живёт весь торговый день; покупатель не уходит каждые несколько секунд.
     const BUYER_INTERVAL = 55,
       MAX_BUYERS = 5;
@@ -1070,7 +585,7 @@
             b.phase === "leaving"
               ? buyerExit
               : { x: 1420, y: 1775 + b.slot * 64 },
-          key = `${b.phase === "leaving" ? "exit" : b.slot}:${navVersion}`;
+          key = `${b.phase === "leaving" ? "exit" : b.slot}:${nav.version}`;
         if (b.routeKey !== key) {
           const changedTarget = b.routeKey.split(":")[0] !== key.split(":")[0];
           if (
@@ -1216,9 +731,9 @@
             a.state = "idle";
             a.timer = 2;
           } else if (a.state === "seekWater") {
-            if (a.pathVersion !== navVersion) {
+            if (a.pathVersion !== nav.version) {
               a.path = findPath(a, a.waterTarget);
-              a.pathVersion = navVersion;
+              a.pathVersion = nav.version;
             }
             const moved = followPath(a, dt, 32);
             a.moving = moved > 0.01;
@@ -1238,7 +753,7 @@
             if (a.id % 4 === 0 && a.cycle % 3 === 1) {
               a.waterTarget = waterRestPoint(a.id);
               a.path = findPath(a, a.waterTarget);
-              a.pathVersion = navVersion;
+              a.pathVersion = nav.version;
               a.state = a.path.length ? "seekWater" : "rest";
               a.timer = 8;
             } else {
@@ -1404,58 +919,6 @@
       }
     }
 
-    function spawnTrees() {
-      // Стабильные id позволяют сравнивать деревья и пни при отладке одной сессии.
-      let legacyIndex = 0;
-      const types = Object.keys(treeTypes);
-      for (let ring = 0; ring < 10; ring++) {
-        const r = 350 + ring * 112,
-          count = Math.floor((2 * Math.PI * r) / 145);
-        for (let i = 0; i < count; i++, legacyIndex++) {
-          const angle =
-              (i / count) * Math.PI * 2 +
-              ring * 0.37 +
-              Math.sin(i * 13 + ring) * 0.075,
-            rr = r + groveOffset(angle, ring, i);
-          const x = CENTER.x + Math.cos(angle) * rr,
-            y = CENTER.y + Math.sin(angle) * rr;
-          if (
-            rr < 330 ||
-            Math.hypot(x - CAMP.merchant.x, y - CAMP.merchant.y) < 145 ||
-            (x > 1360 && x < 1525 && y > 1740 && y < 2145) ||
-            waterCollision(x, y, 40) ||
-            nearTrail({ x, y }, 48) ||
-            trees.some((t) => Math.hypot(t.x - x, t.y - y) < 66)
-          )
-            continue;
-          if (
-            Math.hypot(x - ancientTree.x, y - ancientTree.y) < 205 ||
-            inClearing(x, y)
-          )
-            continue; // Отдельная поляна великого дерева.
-          let hash = Math.imul(legacyIndex + 73, 0x45d9f3b);
-          hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
-          hash ^= hash >>> 16;
-          const type = types[(hash >>> 0) % types.length],
-            spec = treeTypes[type];
-          trees.push({
-            id: `${ring}:${i}`,
-            legacyIndex,
-            ring,
-            x,
-            y,
-            type,
-            value: spec.value,
-            radius: 25,
-            size: legacyIndex % 3, // Увеличенный третий спрайт даёт 3 бревна, остальные — 2.
-            cutDay: null,
-            hp: spec.hp + (legacyIndex % 3 === 2 ? 2 : 0),
-            maxHp: spec.hp + (legacyIndex % 3 === 2 ? 2 : 0),
-            shake: 0,
-          });
-        }
-      }
-    }
     function updateUI() {
       ui.wood.textContent = `${gameState.wood} / ${gameState.maxWood}`;
       ui.coins.textContent = gameState.coins;
@@ -1682,7 +1145,7 @@
         floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
       }
       if (
-        lastConstructionKey !==
+        nav.collisionKey !==
         constructionCollisionKey(gameState, construction.plan)
       )
         rebuildObstacles();
@@ -1730,7 +1193,7 @@
         player.targetX = player.x;
         player.targetY = player.y;
       } else if (player.path.length) {
-        if (player.pathVersion !== navVersion)
+        if (player.pathVersion !== nav.version)
           setDestination(player.targetX, player.targetY);
         followPath(player, dt, player.speed);
         if (player.x !== oldX) player.facing = player.x < oldX ? -1 : 1;
@@ -2734,7 +2197,6 @@
         if (audio) audio.ac.suspend().catch(() => {});
       } else if (audioEnabled && audio) audio.ac.resume().catch(() => {});
     });
-    spawnTrees();
     const dressing = createWorldDressing({
       art,
       sprites: scenerySprites,

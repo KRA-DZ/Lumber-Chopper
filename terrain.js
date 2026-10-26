@@ -125,6 +125,15 @@ export function createTerrain({
     out.putImageData(image, 0, 0);
     return bitmap;
   }
+  function getChunk(x, y) {
+    const key = x + "," + y;
+    let chunk = cache.get(key);
+    if (!chunk) chunk = bake(x, y);
+    cache.delete(key);
+    cache.set(key, chunk);
+    while (cache.size > MAX_CHUNKS) cache.delete(cache.keys().next().value);
+    return chunk;
+  }
   function draw(ctx, camera, view) {
     const x0 = Math.floor(camera.x / WORLD_CHUNK),
       x1 = Math.floor((camera.x + view.width) / WORLD_CHUNK),
@@ -132,15 +141,7 @@ export function createTerrain({
       y1 = Math.floor((camera.y + view.height) / WORLD_CHUNK);
     for (let y = y0; y <= y1; y++)
       for (let x = x0; x <= x1; x++) {
-        const key = x + "," + y;
-        let chunk = cache.get(key);
-        if (!chunk) {
-          chunk = bake(x, y);
-          cache.set(key, chunk);
-        } else {
-          cache.delete(key);
-          cache.set(key, chunk);
-        }
+        const chunk = getChunk(x, y);
         ctx.drawImage(
           chunk,
           x * WORLD_CHUNK,
@@ -156,6 +157,7 @@ export function createTerrain({
   }
   return {
     draw,
+    getChunk,
     get cachedChunks() {
       return cache.size;
     },
