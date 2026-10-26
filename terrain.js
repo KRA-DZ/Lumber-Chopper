@@ -8,6 +8,7 @@ export function createTerrain({
   streamOutline,
   trails,
   ancientTree,
+  clearings = [],
 }) {
   const cache = new Map();
   function bake(cx, cy) {
@@ -26,6 +27,8 @@ export function createTerrain({
     oval(center.x, center.y, 305, 265);
     oval(CAMP.merchant.x, CAMP.merchant.y + 12, 116, 92);
     oval(ancientTree.x, ancientTree.y, 190, 150);
+    for (const site of clearings)
+      oval(site.x, site.y, site.clearing * 0.7, site.clearing * 0.5);
     g.strokeStyle = "#ff0000";
     g.lineCap = g.lineJoin = "round";
     g.lineWidth = 64;

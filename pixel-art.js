@@ -107,7 +107,7 @@ function painter(canvas) {
   };
   return { g, rect, line, oval, poly, border };
 }
-function sprite(w, h, ax, ay, paint) {
+export function sprite(w, h, ax, ay, paint) {
   const bitmap = document.createElement("canvas");
   bitmap.width = w;
   bitmap.height = h;

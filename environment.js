@@ -4,7 +4,12 @@ export function createEnvironment(art) {
   const cache = new Map(),
     leaves = [];
   let timer = 0,
-    serial = 0;
+    serial = 0,
+    quality = "full";
+  function setQuality(value) {
+    quality = value === "light" ? "light" : "full";
+    if (quality === "light") leaves.splice(0, Math.max(0, leaves.length - 8));
+  }
   function sway(sprite, phase) {
     if (phase === 0) return sprite;
     if (!cache.has(sprite)) {
@@ -69,7 +74,10 @@ export function createEnvironment(art) {
           (t.type === "oak" || t.type === "birch") &&
           Math.hypot(t.x - player.x, t.y - player.y) < 450,
       );
-      if (live.length && leaves.length < ENVIRONMENT_LIMITS.leaves) {
+      if (
+        live.length &&
+        leaves.length < (quality === "light" ? 8 : ENVIRONMENT_LIMITS.leaves)
+      ) {
         const t = live[serial++ % live.length],
           phase = serial * 2.399;
         leaves.push({
@@ -116,6 +124,7 @@ export function createEnvironment(art) {
     draw,
     treeSprite,
     plantSprite,
+    setQuality,
     leaves,
     get cachedSwaySets() {
       return cache.size;

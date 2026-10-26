@@ -1,4 +1,4 @@
-"""Анимации и сохранения: python tests/animations_smoke.py."""
+"""Анимации и новые тестовые сессии: python tests/animations_smoke.py."""
 
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -79,18 +79,21 @@ try:
                 q,
                 "/tmp/pixel-felling-mobile.png" if mobile else "/tmp/pixel-felling.png",
             )
-            # Перезагрузка в момент падения не теряет и не дублирует ресурс.
-            q.evaluate("g.save()")
+            # Перезагрузка в момент падения начинает новую сессию.
+            q.evaluate("g.update(0)")
             q.reload()
             ready(q)
             assert q.evaluate(
-                "g.state.wood===1&&g.visualEffects.logs.length===0&&g.visualEffects.falls.length===0&&!g.visualEffects.cargoHidden(0)"
+                "g.state.wood===0&&g.visualEffects.logs.length===0&&g.visualEffects.falls.length===0&&!g.visualEffects.cargoHidden(0)"
             )
-            assert q.evaluate("id=>g.trees.find(t=>t.id===id).hp===0", cut["id"])
+            assert q.evaluate(
+                "id=>{const t=g.trees.find(t=>t.id===id);return t.hp===t.maxHp;}",
+                cut["id"],
+            )
             q.evaluate("g.state.campLevel=4;g.state.buildWood=0;g.rebuildObstacles()")
             assert q.evaluate("g.isWalkable(g.camp.tent.x,g.camp.tent.y-10)")
             q.evaluate(
-                "g.player.x=1600;g.player.y=1800;g.player.path=[];g.state.worldTime=240;for(let i=0;i<220;i++)g.update(.1)"
+                "g.player.x=1600;g.player.y=1800;g.player.path=[];g.state.worldTime=120;for(let i=0;i<220;i++)g.update(.1)"
             )
             assert q.evaluate("!!g.activeBuyer()")
             prior = q.evaluate("g.state.coins")
@@ -101,13 +104,13 @@ try:
                 'g.state.wood===1&&g.state.cargoValue===14&&g.visualEffects.logs.some(l=>l.kind==="sell")&&g.getPlayerMood()==="happy"'
             )
             assert q.evaluate("g.state.coins") == prior + 13
-            q.evaluate("g.update(0);g.save()")
+            q.evaluate("g.update(0)")
             q.reload()
             ready(q)
             assert q.evaluate(
-                "g.state.wood===1&&g.state.cargoValue===14&&g.visualEffects.logs.length===0"
+                "g.state.wood===0&&g.state.cargoValue===0&&g.visualEffects.logs.length===0"
             )
-            assert q.evaluate("g.state.coins") == prior + 13
+            assert q.evaluate("g.state.coins") == 0
             # Перелёт на стройку не является дополнительным списанием материала.
             q.evaluate(
                 "g.state.campLevel=3;g.state.buildWood=24;g.state.wood=5;g.state.cargoValue=50;g.player.x=g.build.x;g.player.y=g.build.y;g.player.path=[];g.player.swing=0;g.rebuildObstacles();g.construction.update(g.state,0);g.update(.1)"
@@ -126,9 +129,7 @@ try:
                     else "/tmp/pixel-building.png"
                 ),
             )
-            q.evaluate("g.save()")
-            q.reload()
-            ready(q)
+            q.evaluate("g.update(0)")
             assert q.evaluate(
                 "g.state.campLevel===3&&g.state.buildWood===25&&g.state.wood===4&&g.state.cargoValue===40&&g.construction.ratio===.5"
             )
@@ -161,7 +162,7 @@ try:
             print(
                 "PASS",
                 "mobile" if mobile else "desktop",
-                "fall/pickup/sale/build reload integrity, partial build pixels",
+                "fall/pickup/sale/build transactions, reload resets, partial build pixels",
                 pixels,
                 "solid partial fence",
                 count,

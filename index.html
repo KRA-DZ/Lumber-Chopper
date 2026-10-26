@@ -141,6 +141,7 @@
       }
       footer > div:last-child {
         display: flex;
+        flex-wrap: wrap;
         gap: 10px;
         width: 100%;
       }
@@ -186,9 +187,13 @@
         <button id="sound" type="button" aria-pressed="false">
           Включить звуки леса
         </button>
+        <button id="effectsBtn" type="button" aria-pressed="false">
+          Эффекты: полные
+        </button>
       </div>
     </footer>
     <div id="campInfo" class="stat"></div>
+    <p>Тестовая версия: каждая загрузка начинает новую игру.</p>
     <div id="status" role="status" aria-live="polite"></div>
   </main>
   <script type="module">
@@ -202,7 +207,17 @@
       constructionCollisionKey,
     } from "./construction.js";
     import { createEnvironment } from "./environment.js";
+    import { createWorldArt } from "./world-art.js";
+    import {
+      FOREST_SITES,
+      inClearing,
+      groveOffset,
+      createWorldDressing,
+    } from "./world.js";
+    import { createWeather } from "./weather.js";
+    import { createExpansion } from "./expansion.js";
     ("use strict");
+    const DAY_SECONDS = 600; // Полные сутки (день и ночь) — 10 реальных минут.
     // Баланс: расстояния в мировых пикселях, интервалы — в секундах.
     const gameState = {
       wood: 0,
@@ -214,7 +229,7 @@
       upgradeCost: 15, // Цена рюкзака, растёт в 1.5 раза после покупки.
       campLevel: 0, // Построенные этапы лагеря: костёр, палатка, забор, хижина.
       buildWood: 0, // Уже вложенные брёвна в текущий этап (не монеты).
-      worldTime: 240, // Время мира в секундах: сутки = 1200 с, без влияния на экономику.
+      worldTime: 120, // Начинаем в 10:48; цикл — 600 с, цены и интервалы торговли прежние.
       cargoValue: 0, // Стоимость смешанного груза; обычные деревья дают бревно один раз.
     };
     const canvas = document.querySelector("#game"),
@@ -253,62 +268,18 @@
     }; // Запас не иссякает; добыча зарезервирована для будущих работников.
     let notice = "",
       noticeTimer = 0;
-    function showNotice(text) {
+    function showNotice(text, duration = 4) {
       notice = text;
-      noticeTimer = 4;
+      noticeTimer = duration;
       updateUI();
     }
     const sale = { x: 1420, y: 1690, radius: 53 },
       build = { x: 1780, y: 1690, radius: 53 };
-    const DAY_SECONDS = 1200; // Спокойный 20-минутный цикл дня и ночи.
-    const landmarks = [
-      {
-        id: "old-wall",
-        type: "ruins",
-        name: "Старая лесная застава",
-        x: 1240,
-        y: 1330,
-      },
-      {
-        id: "broken-cart",
-        type: "wagon",
-        name: "Забытая повозка",
-        x: 1790,
-        y: 2050,
-      },
-      {
-        id: "moss-chest",
-        type: "chest",
-        name: "Заросший сундук",
-        x: 970,
-        y: 1940,
-      },
-      {
-        id: "quiet-camp",
-        type: "camp",
-        name: "Покинутая стоянка",
-        x: 1880,
-        y: 790,
-      },
-      {
-        id: "stone-arch",
-        type: "ruins",
-        name: "Развалины у тропы",
-        x: 630,
-        y: 1400,
-      },
-      {
-        id: "lost-chest",
-        type: "chest",
-        name: "Сундук под папоротниками",
-        x: 2390,
-        y: 2200,
-      },
-    ];
+    const landmarks = FOREST_SITES;
     const discovered = new Set();
     const miniMap = { x: 780, y: 16, size: 164 };
     function mapTransform() {
-      const span = (forestRadius() + 100) * 2;
+      const span = WORLD.width; // Постоянный масштаб: видно, как растёт открытый круг.
       return {
         span,
         left: CENTER.x - span / 2,
@@ -364,7 +335,6 @@
           showNotice(
             `Открыто место: ${site.name}. Пока это часть истории леса.`,
           );
-          saveProgress();
         }
       }
     }
@@ -381,111 +351,12 @@
         ? { x: CENTER.x + (dx / d) * r, y: CENTER.y + (dy / d) * r }
         : { x, y };
     }
-    const SAVE_KEY = "lumber-chopper-v1";
-    let saveWarning = "";
-    function saveProgress() {
-      try {
-        localStorage.setItem(
-          SAVE_KEY,
-          JSON.stringify({
-            version: 4,
-            daySeconds: DAY_SECONDS,
-            worldTime: gameState.worldTime,
-            discovered: [...discovered],
-            wood: gameState.wood,
-            maxWood: gameState.maxWood,
-            coins: gameState.coins,
-            upgradeCost: gameState.upgradeCost,
-            cargoValue: gameState.cargoValue,
-            campLevel: gameState.campLevel,
-            buildWood: gameState.buildWood,
-            x: player.x,
-            y: player.y,
-            trees: trees.map((t) => ({ id: t.id, hp: t.hp })),
-          }),
-        );
-      } catch {
-        saveWarning =
-          "Браузер запретил сохранение. Прогресс доступен только в этой вкладке.";
-        updateUI();
-      }
-    }
-    function loadProgress() {
-      try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        const valid = (v, min, max) =>
-          Number.isFinite(v) && v >= min && v <= max;
-        if (
-          ![1, 2, 3, 4].includes(data.version) ||
-          !Number.isInteger(data.maxWood) ||
-          !valid(data.maxWood, 10, 1000) ||
-          !Number.isInteger(data.wood) ||
-          !valid(data.wood, 0, data.maxWood) ||
-          !valid(data.coins, 0, 1e12) ||
-          !valid(data.upgradeCost, 1, 1e12) ||
-          !valid(data.cargoValue, 0, data.wood * 40)
-        )
-          throw Error("Invalid save");
-        if (
-          data.version >= 2 &&
-          (!Number.isInteger(data.campLevel) ||
-            !valid(data.campLevel, 0, 4) ||
-            !Number.isInteger(data.buildWood) ||
-            !valid(data.buildWood, 0, (stages[data.campLevel]?.cost || 1) - 1))
-        )
-          throw Error("Invalid camp");
-        const savedCycle = valid(data.daySeconds, 240, 86400)
-          ? data.daySeconds
-          : 240;
-        if (valid(data.worldTime, 0, savedCycle))
-          gameState.worldTime =
-            ((data.worldTime / savedCycle) * DAY_SECONDS) % DAY_SECONDS;
-        if (Array.isArray(data.discovered))
-          for (const id of data.discovered)
-            if (landmarks.some((site) => site.id === id)) discovered.add(id);
-        for (const key of ["wood", "coins", "upgradeCost", "cargoValue"])
-          gameState[key] = data[key];
-        gameState.maxWood =
-          data.version === 1 ? Math.min(1000, data.maxWood * 2) : data.maxWood;
-        if (data.version >= 2) {
-          gameState.campLevel = data.campLevel;
-          gameState.buildWood = data.buildWood;
-          if (valid(data.x, 0, WORLD.width) && valid(data.y, 0, WORLD.height)) {
-            const pos = constrainPoint(data.x, data.y);
-            player.x = player.targetX = pos.x;
-            player.y = player.targetY = pos.y;
-          }
-          if (Array.isArray(data.trees)) {
-            const byId = new Map(
-              data.trees
-                .filter((v) => v && typeof v.id === "string")
-                .map((v) => [v.id, v]),
-            );
-            trees.forEach((t) => {
-              const v =
-                data.version >= 3 ? byId.get(t.id) : data.trees[t.legacyIndex];
-              const oldMax =
-                data.version >= 3
-                  ? t.maxHp
-                  : t.ring < 4
-                    ? 4
-                    : t.ring < 7
-                      ? 6
-                      : 9;
-              if (v && valid(v.hp, 0, oldMax))
-                t.hp =
-                  v.hp === 0
-                    ? 0
-                    : Math.max(1, Math.ceil((v.hp / oldMax) * t.maxHp));
-            });
-          }
-        }
-      } catch {
-        saveWarning =
-          "Сохранение недоступно или повреждено. Начата новая сессия.";
-      }
+    // Пока тестируем со старта: нет загрузки, сериализации и таймера автосохранения.
+    // Удаляем только прежнюю запись этой игры, не затрагивая данные других страниц.
+    try {
+      localStorage.removeItem("lumber-chopper-v1");
+    } catch {
+      /* Хранилище не требуется. */
     }
     function updateCamera() {
       camera.x =
@@ -534,8 +405,6 @@
     });
     window.addEventListener("keyup", (e) => keys.delete(e.code));
     window.addEventListener("blur", clearKeys);
-    window.addEventListener("pagehide", saveProgress);
-    setInterval(saveProgress, 5000);
     const player = {
       x: 1600,
       y: 1720,
@@ -554,7 +423,8 @@
     player.path = [];
     player.pathVersion = 0;
     let elapsed = 0,
-      lastTime = null;
+      lastTime = null,
+      dayNumber = 0;
     const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     // Рельеф, тропы и физические основания объектов используют общие координаты.
@@ -738,7 +608,11 @@
         });
       for (const site of landmarks) {
         if (site.type === "camp") capsule(site.x - 57, site.y - 18, 100, 22);
-        else if (site.type === "ruins")
+        else if (site.type === "arch") {
+          // У ворот остаётся проём: непроходимы только основания двух колонн.
+          capsule(site.x - 82, site.y - 18, 30, 20);
+          capsule(site.x + 56, site.y - 18, 30, 20);
+        } else if (site.type === "ruins")
           capsule(site.x - 49, site.y - 18, 98, 22);
         else if (site.type === "wagon")
           capsule(site.x - 40, site.y - 16, 80, 24);
@@ -1427,7 +1301,7 @@
     }
 
     function spawnTrees() {
-      // Стабильные id сохраняют пни между сессиями и при изменении оформления карты.
+      // Стабильные id позволяют сравнивать деревья и пни при отладке одной сессии.
       let legacyIndex = 0;
       const types = Object.keys(treeTypes);
       for (let ring = 0; ring < 10; ring++) {
@@ -1438,11 +1312,12 @@
               (i / count) * Math.PI * 2 +
               ring * 0.37 +
               Math.sin(i * 13 + ring) * 0.075,
-            rr = r + Math.sin(i * 17 + ring) * 70;
+            rr = r + groveOffset(angle, ring, i);
           const x = CENTER.x + Math.cos(angle) * rr,
             y = CENTER.y + Math.sin(angle) * rr;
           if (
-            rr < 325 ||
+            rr < 330 ||
+            Math.hypot(x - CAMP.merchant.x, y - CAMP.merchant.y) < 145 ||
             (x > 1360 && x < 1525 && y > 1740 && y < 2145) ||
             waterCollision(x, y, 40) ||
             nearTrail({ x, y }, 48) ||
@@ -1451,7 +1326,7 @@
             continue;
           if (
             Math.hypot(x - ancientTree.x, y - ancientTree.y) < 205 ||
-            landmarks.some((site) => Math.hypot(x - site.x, y - site.y) < 90)
+            inClearing(x, y)
           )
             continue; // Отдельная поляна великого дерева.
           let hash = Math.imul(legacyIndex + 73, 0x45d9f3b);
@@ -1486,7 +1361,6 @@
         ? `Лагерь ${gameState.campLevel}/4 · ${next.name}: ${gameState.buildWood}/${next.cost} брёвен · Радиус леса: ${forestRadius()}`
         : "Лагерь 4/4 · Хижина построена · Весь лес открыт";
       ui.status.textContent =
-        saveWarning ||
         notice ||
         (gameState.wood >= gameState.maxWood
           ? "Рюкзак полон — продайте брёвна или вложите их в лагерь."
@@ -1536,7 +1410,6 @@
         visualEffects.pickup(tree, gameState.wood - 1);
         floatingText(player.x, player.y - 65, "+1 бревно");
         updateUI();
-        saveProgress();
       }
     }
     // Ввод отделён от симуляции. Pointer Events поддерживают мышь, перо и касания.
@@ -1620,7 +1493,6 @@
       gameState.maxWood += 5;
       gameState.upgradeCost = Math.ceil(gameState.upgradeCost * 1.5);
       updateUI();
-      saveProgress();
     });
     function updatePlatforms(dt) {
       if (dt <= 0) return;
@@ -1652,7 +1524,13 @@
         const stage = stages[gameState.campLevel];
         if (gameState.buildWood >= stage.cost) {
           gameState.buildWood = 0;
+          const oldRadius = forestRadius();
           gameState.campLevel++;
+          expansion.open(oldRadius, forestRadius());
+          showNotice(
+            `Открыта новая территория! Радиус леса: ${forestRadius()}`,
+            8,
+          );
           player.celebration = 2.2;
           visualEffects.complete(target);
           rebuildObstacles();
@@ -1682,12 +1560,13 @@
       )
         rebuildObstacles();
       updateUI();
-      saveProgress();
     }
     function update(dt) {
       elapsed += dt;
       player.celebration = Math.max(0, (player.celebration || 0) - dt);
-      gameState.worldTime = (gameState.worldTime + dt) % DAY_SECONDS;
+      const nextTime = gameState.worldTime + dt;
+      dayNumber += Math.floor(nextTime / DAY_SECONDS);
+      gameState.worldTime = nextTime % DAY_SECONDS;
       player.autoTimer = Math.max(0, player.autoTimer - dt);
       player.clickTimer = Math.max(0, player.clickTimer - dt);
       player.swing = Math.max(0, player.swing - dt);
@@ -1764,6 +1643,8 @@
       visualEffects.update(dt, player, gameState.wood);
       construction.update(gameState, dt);
       environment.update(dt, elapsed, trees, player);
+      weather.update(dt, gameState, DAY_SECONDS, dayNumber, trees, player);
+      expansion.update(dt, gameState.campLevel);
       for (let i = effects.length - 1; i >= 0; i--) {
         const e = effects[i];
         e.life -= dt;
@@ -1778,12 +1659,24 @@
     const visualEffects = createEffects(art),
       construction = createConstruction(art, CENTER),
       environment = createEnvironment(art);
+    const scenerySprites = createWorldArt();
+    const weather = createWeather({
+      art,
+      sprites: scenerySprites,
+      pond,
+      springs: landmarks.filter((s) => s.type === "spring"),
+      inWater,
+      nearTrail,
+      center: CENTER,
+    });
+    const expansion = createExpansion({ center: CENTER, radii });
     const terrain = createTerrain({
       center: CENTER,
       pondOutline,
       streamOutline,
       trails,
       ancientTree,
+      clearings: landmarks,
     });
     function treeSpriteFor(t) {
       return art.sprites.trees[t.type][t.legacyIndex % 3];
@@ -2232,8 +2125,26 @@
     }
     function drawLandmark(s) {
       const { x, y } = s;
+      if (
+        x < camera.x - 180 ||
+        x > camera.x + VIEW.width + 180 ||
+        y < camera.y - 40 ||
+        y > camera.y + VIEW.height + 210
+      )
+        return;
       shadow(x, y + 6, 60, 12);
-      if (s.type === "camp") drawTent(x, y, "old");
+      if (["arch", "spring", "log"].includes(s.type)) {
+        art.draw(ctx, scenerySprites[s.type], x, y);
+        if (s.type === "spring")
+          art.draw(
+            ctx,
+            art.sprites.ripples[Math.floor(elapsed * 2) % 4],
+            x + 10,
+            y - 2,
+          );
+      } else if (s.type === "logging")
+        art.draw(ctx, art.sprites.stump, x - 52, y + 22);
+      else if (s.type === "camp") drawTent(x, y, "old");
       else if (s.type === "ruins") {
         for (let col = 0; col < 5; col++)
           for (let row = 0; row < (col === 2 ? 1 : col === 4 ? 2 : 3); row++) {
@@ -2301,7 +2212,10 @@
           r: 220 + Math.sin(elapsed * 8) * 8,
         });
       if (gameState.campLevel >= 4)
-        lights.push({ x: CAMP.hut.x + 65, y: CAMP.hut.y - 76, r: 100 });
+        lights.push(
+          { x: CAMP.hut.x + 65, y: CAMP.hut.y - 76, r: 100 },
+          { x: CAMP.hut.x - 60, y: CAMP.hut.y - 76, r: 85 },
+        );
       return lights;
     }
     function drawLanterns() {
@@ -2383,6 +2297,8 @@
         13,
         "#f5e5b2",
       );
+      pixelRect(14, 84, 186, 24, "#243c2de8");
+      label(weather.profile.name, 107, 101, 12, "#c7d7ba");
     }
     function drawMiniMap() {
       const { x, y, size } = miniMap,
@@ -2395,13 +2311,13 @@
       ellipse(
         size / 2,
         size / 2,
-        forestRadius() * scale,
-        forestRadius() * scale,
+        expansion.radius * scale,
+        expansion.radius * scale,
         "#68a34e",
       );
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, size, size);
+      ctx.arc(size / 2, size / 2, expansion.radius * scale, 0, Math.PI * 2);
       ctx.clip();
       ctx.strokeStyle = "#dab86b";
       ctx.lineWidth = 2;
@@ -2431,6 +2347,7 @@
       );
       pixelRect(mx(player.x) - 2, my(player.y) - 2, 4, 4, "#fff8e9");
       ctx.restore();
+      expansion.drawMapRings(ctx, size, scale, gameState.campLevel);
       label(
         `${discovered.size}/${landmarks.length} мест`,
         size / 2,
@@ -2445,9 +2362,17 @@
       ctx.clearRect(0, 0, VIEW.width, VIEW.height);
       ctx.save();
       ctx.translate(-camera.x, -camera.y);
+      const localView = {
+        x: camera.x,
+        y: camera.y,
+        width: VIEW.width,
+        height: VIEW.height,
+      };
       drawTerrain();
+      dressing.drawGround(ctx, localView, elapsed);
       drawForestDetails();
       drawCamp();
+      weather.drawGround(ctx, localView);
       if (player.moving) {
         pixelRect(player.targetX - 8, player.targetY - 2, 16, 2, "#f5e6b6");
         pixelRect(player.targetX - 2, player.targetY - 8, 2, 16, "#f5e6b6");
@@ -2467,6 +2392,12 @@
           draw: () => visualEffects.drawFall(ctx, f),
         });
       for (const e of construction.previewEntities(gameState))
+        entities.push({ y: e.y, draw: () => e.draw(ctx) });
+      for (const e of dressing.entities(
+        localView,
+        elapsed,
+        gameState.campLevel,
+      ))
         entities.push({ y: e.y, draw: () => e.draw(ctx) });
       entities.push(
         { y: player.y, draw: drawPlayer },
@@ -2497,12 +2428,13 @@
       if (gameState.campLevel >= 4)
         entities.push({ y: CAMP.hut.y, draw: drawHut });
       entities.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
-      const localView = {
-        x: camera.x,
-        y: camera.y,
-        width: VIEW.width,
-        height: VIEW.height,
-      };
+      dressing.drawHouseLife(
+        ctx,
+        localView,
+        elapsed,
+        gameState.campLevel,
+        nightAmount(),
+      );
       environment.draw(ctx, elapsed, localView);
       visualEffects.draw(ctx, localView);
       for (const e of effects) {
@@ -2512,18 +2444,8 @@
       }
       ctx.globalAlpha = 1;
       drawLanterns();
-      ctx.fillStyle = "#173c2bd9";
-      ctx.beginPath();
-      ctx.rect(0, 0, WORLD.width, WORLD.height);
-      ctx.arc(CENTER.x, CENTER.y, forestRadius(), 0, Math.PI * 2);
-      ctx.fill("evenodd");
-      ctx.strokeStyle = "#d8cd9866";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 10]);
-      ctx.beginPath();
-      ctx.arc(CENTER.x, CENTER.y, forestRadius(), 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      weather.draw(ctx, localView);
+      expansion.drawWorld(ctx, localView, gameState.campLevel);
       ctx.restore();
       drawAtmosphere();
       pixelRect(14, 12, 234, 30, "#243c2de8");
@@ -2535,6 +2457,27 @@
         "#f3e9c2",
       );
       drawMiniMap();
+      drawExpansionBanner();
+    }
+    function drawExpansionBanner() {
+      const event = expansion.banner;
+      if (!event) return;
+      const w = Math.min(440, VIEW.width - 32),
+        x = (VIEW.width - w) / 2,
+        y = VIEW.width < 600 ? 182 : 100;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, event.age * 3, (5.5 - event.age) * 2);
+      pixelRect(x - 2, y - 2, w + 4, 64, "#cdb779");
+      pixelRect(x, y, w, 60, "#263e2bef");
+      label("Открыта новая территория", VIEW.width / 2, y + 25, 17, "#ffe4a0");
+      label(
+        `Радиус леса ${event.from} → ${event.to}`,
+        VIEW.width / 2,
+        y + 47,
+        12,
+        "#d4e1b9",
+      );
+      ctx.restore();
     }
     function gameLoop(time) {
       const dt =
@@ -2548,23 +2491,39 @@
       lastTime = null;
       if (document.hidden) {
         clearKeys();
-        saveProgress();
         if (audio) audio.ac.suspend().catch(() => {});
       } else if (audioEnabled && audio) audio.ac.resume().catch(() => {});
     });
     spawnTrees();
-    loadProgress();
+    const dressing = createWorldDressing({
+      art,
+      sprites: scenerySprites,
+      trees,
+      center: CENTER,
+      ancientTree,
+      nearTrail,
+      inWater,
+    });
     rebuildObstacles();
     const safeStart = nearestGround(player.x, player.y);
     player.x = player.targetX = safeStart.x;
     player.y = player.targetY = safeStart.y;
     spawnAnimals();
     construction.update(gameState, 0);
+    weather.update(0, gameState, DAY_SECONDS, dayNumber, trees, player);
     fitGameView();
     updateCamera();
     updateUI();
+    document.querySelector("#effectsBtn").addEventListener("click", () => {
+      const light = weather.quality !== "light";
+      weather.setQuality(light ? "light" : "full");
+      environment.setQuality(light ? "light" : "full");
+      const button = document.querySelector("#effectsBtn");
+      button.textContent = light ? "Эффекты: лёгкие" : "Эффекты: полные";
+      button.setAttribute("aria-pressed", String(light));
+    });
     draw();
-    // Небольшой API для проверки сохранений, управления и замены спрайтов.
+    // Небольшой API для проверки симуляции, управления и замены спрайтов.
     window.lumberGame = {
       state: gameState,
       player,
@@ -2580,6 +2539,13 @@
       visualEffects,
       construction,
       environment,
+      weather,
+      expansion,
+      dressing,
+      landmarks,
+      discovered,
+      daySeconds: DAY_SECONDS,
+      mapTransform,
       merchantLife,
       getPlayerMood,
       camp: CAMP,
@@ -2592,8 +2558,6 @@
       update,
       draw,
       refreshUI: updateUI,
-      save: saveProgress,
-      load: loadProgress,
       rebuildObstacles,
       isWalkable,
       nearestGround,
