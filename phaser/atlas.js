@@ -1,3 +1,4 @@
+import { HERO_WALK_FRAMES, STRIKE_MS } from "./art/hero-motion.js";
 import { createForestArt } from "./art/forest-art.js";
 import { createEnvironment } from "../environment.js";
 import { sprite } from "../pixel-art.js";
@@ -64,11 +65,41 @@ export function createAtlas(scene) {
       ? ["happy", "tired", "focused"]
       : ["happy"])
       for (const dir of ["down", "up", "side"])
-        for (let f = 0; f < 4; f++)
+        for (let f = 0; f < (role === "player" ? HERO_WALK_FRAMES : 4); f++)
           sources.set(
             `people.${role}.${mood}.${dir}.${f}`,
             art.person(role, dir, f, mood),
           );
+  for (const dir of ["up", "down", "side"]) {
+    for (const mode of ["carry", "heavy"])
+      for (let f = 0; f < HERO_WALK_FRAMES; f++)
+        sources.set(
+          `hero.${mode}.${dir}.${f}`,
+          art.person(
+            "player",
+            dir,
+            f,
+            mode === "heavy" ? "tired" : "neutral",
+            "carry",
+          ),
+        );
+    for (let f = 0; f < 6; f++)
+      sources.set(
+        `hero.strike.${dir}.${f}`,
+        art.person("player", dir, f, "focused", "chop"),
+      );
+    for (let f = 0; f < 2; f++)
+      sources.set(
+        `hero.cheer.${dir}.${f}`,
+        art.person("player", dir, f, "happy", "cheer"),
+      );
+    for (let tier = 0; tier < art.sprites.axes.length; tier++)
+      for (let f = 0; f < 6; f++)
+        sources.set(
+          `tools.swing.${tier}.${dir}.${f}`,
+          art.swingTool(tier, dir, f),
+        );
+  }
   sources.set(
     "chip",
     sprite(4, 2, 2, 1, (p) => p.rect(0, 0, 4, 2, "#d9ae72")),
@@ -77,7 +108,9 @@ export function createAtlas(scene) {
     y = 2,
     row = 0;
   const frames = [];
-  for (const [key, s] of sources) {
+  for (const [key, s] of [...sources].sort(
+    (a, b) => b[1].height - a[1].height,
+  )) {
     if (x + s.width + 2 > 2048) {
       x = 2;
       y += row + 2;
@@ -129,22 +162,37 @@ export function createAtlas(scene) {
             : `people.${role}.${mood}.${dir}`;
         scene.anims.create({
           key: `walk.${role}.${mood}.${dir}`,
-          frames: Array.from({ length: 4 }, (_, i) => ({
-            key: "forest",
-            frame: `${prefix}.${i}`,
-          })),
-          frameRate: 9,
+          frames: Array.from(
+            { length: role === "player" ? HERO_WALK_FRAMES : 4 },
+            (_, i) => ({
+              key: "forest",
+              frame: `${prefix}.${i}`,
+            }),
+          ),
+          frameRate: role === "player" ? 12 : 9,
           repeat: -1,
         });
       }
+  for (const mode of ["carry", "heavy"])
+    for (const dir of ["up", "down", "side"])
+      scene.anims.create({
+        key: `walk.player.${mode}.${dir}`,
+        frames: Array.from({ length: HERO_WALK_FRAMES }, (_, i) => ({
+          key: "forest",
+          frame: `hero.${mode}.${dir}.${i}`,
+        })),
+        frameRate: 12,
+        repeat: -1,
+      });
   for (let tier = 0; tier < art.sprites.axes.length; tier++)
-    scene.anims.create({
-      key: `chop.${tier}`,
-      frames: [0, 1, 2].map((i) => ({
-        key: "forest",
-        frame: `axes.${tier}.${i}`,
-      })),
-      duration: 320,
-    });
+    for (const dir of ["side", "up", "down"])
+      scene.anims.create({
+        key: `chop.${tier}${dir === "side" ? "" : `.${dir}`}`,
+        frames: Array.from({ length: 6 }, (_, i) => ({
+          key: "forest",
+          frame: `tools.swing.${tier}.${dir}.${i}`,
+        })),
+        duration: STRIKE_MS,
+      });
   return { art, worldArt, meta, image, setFrame };
 }

@@ -1,3 +1,5 @@
+import { AXE_TIERS } from "../../economy.js";
+import { HERO_WALK_FRAMES, STRIKE_HANDS, AXE_TIPS } from "./hero-motion.js";
 import { createPixelArt, sprite, random, pixelHash } from "../../pixel-art.js";
 
 // Оригинальный набор Forest Ledger: единый native-пиксель = 2 мировые единицы.
@@ -213,23 +215,44 @@ function tree(type, variant) {
     (p) => p.g.drawImage(s.bitmap, 0, 0, width, height),
   );
 }
-function person(coat, dir, frame, mood = "neutral", gesture = "none") {
+function person(
+  coat,
+  dir,
+  frame,
+  mood = "neutral",
+  gesture = "none",
+  smooth = false,
+) {
   return sprite(32, 46, 16, 44, (p) => {
     const side = dir === "side",
       up = dir === "up",
-      step = [0, 1, 0, -1][frame % 4],
+      step =
+        gesture === "chop" || gesture === "cheer"
+          ? 0
+          : smooth
+            ? [0, 1, 2, 1, 0, -1, -2, -1][frame % 8]
+            : [0, 1, 0, -1][frame % 4],
       skin = "#d9a477",
       light = "#f1c394",
       shade = "#a67556";
     p.oval(16, 43, 11, 2, "#223b3433");
-    p.rect(10, 32, 5, 10, "#344b4c");
-    p.rect(18, 32, 5, 10, "#344b4c");
-    p.rect(11, 33, 2, 7, "#63797a");
-    p.rect(19, 33, 2, 7, "#63797a");
-    p.border(8, 40 + Math.max(0, step), 8, 4, ink, "#675440");
-    p.border(17, 40 - Math.min(0, step), 8, 4, ink, "#675440");
-    p.rect(9, 40 + Math.max(0, step), 5, 1, "#ad9162");
-    p.rect(18, 40 - Math.min(0, step), 5, 1, "#ad9162");
+    const leftLift = smooth ? Math.max(0, step) : 0,
+      rightLift = smooth ? Math.max(0, -step) : 0;
+    p.rect(10, 32, 5, 10 - leftLift, "#344b4c");
+    p.rect(18, 32, 5, 10 - rightLift, "#344b4c");
+    p.rect(11, 33, 2, 7 - leftLift, "#63797a");
+    p.rect(19, 33, 2, 7 - rightLift, "#63797a");
+    const leftY = smooth ? 40 - leftLift : 40 + Math.max(0, step),
+      rightY = smooth ? 40 - rightLift : 40 - Math.min(0, step);
+    p.border(8 + (side && smooth ? step : 0), leftY, 8, 4, ink, "#675440");
+    p.border(17 - (side && smooth ? step : 0), rightY, 8, 4, ink, "#675440");
+    p.rect(9 + (side && smooth ? step : 0), leftY, 5, 1, "#ad9162");
+    p.rect(18 - (side && smooth ? step : 0), rightY, 5, 1, "#ad9162");
+    p.g.save();
+    p.g.translate(
+      0,
+      smooth && gesture !== "chop" && Math.abs(step) === 2 ? -1 : 0,
+    );
     p.border(8, 23, 17, 12, ink, coat);
     p.rect(9, 24, 14, 2, "#d79a66");
     p.rect(9, 28, 14, 1, "#472f293d");
@@ -246,7 +269,30 @@ function person(coat, dir, frame, mood = "neutral", gesture = "none") {
     p.rect(25, 24 + step, 3, 10, ink);
     p.rect(25, 25 + step, 2, 8, coat);
     p.rect(25, 33 + step, 3, 3, skin);
-    if (gesture !== "none") {
+    if (gesture === "carry") {
+      p.g.clearRect(3, 23, 6, 14);
+      p.g.clearRect(24, 23, 7, 14);
+      for (const [sx, hx] of [
+        [7, 12],
+        [25, 23],
+      ]) {
+        p.line(sx, 25, hx, 30, ink, 5);
+        p.line(sx, 25, hx, 30, coat, 3);
+        p.rect(hx - 1, 29, 4, 3, skin);
+      }
+    } else if (gesture === "chop") {
+      const [hx, hy] = STRIKE_HANDS[dir][frame % 6];
+      p.g.clearRect(3, 23, 6, 14);
+      p.g.clearRect(24, 23, 7, 14);
+      for (const [sx, sy, dx, dy] of [
+        [25, 25, 0, 0],
+        [8, 25, -3, 2],
+      ]) {
+        p.line(sx, sy, hx + dx, hy + dy, ink, 5);
+        p.line(sx, sy, hx + dx, hy + dy, coat, 3);
+        p.rect(hx + dx - 1, hy + dy - 1, 3, 3, skin);
+      }
+    } else if (gesture !== "none") {
       p.g.clearRect(24, 23, 6, 14);
       p.line(25, 29, 27, 16, coat, 4);
       p.rect(26, 12 + (frame % 2), 4, 5, skin);
@@ -308,6 +354,7 @@ function person(coat, dir, frame, mood = "neutral", gesture = "none") {
     p.rect(4, 12, 25, 3, ink);
     p.rect(5, 12, 23, 1, "#cfb777");
     p.rect(23, 8, 3, 3, "#c56645");
+    p.g.restore();
     p.g.restore();
   });
 }
@@ -762,6 +809,37 @@ function forestMerchant(action, frame) {
   });
 }
 
+function swingTool(tier, dir, frame) {
+  return sprite(64, 80, 32, 48, (p) => {
+    const [dx, dy] = AXE_TIPS[dir][frame],
+      x = 32 + dx,
+      y = 48 + dy,
+      len = Math.hypot(dx, dy),
+      nx = -dy / len,
+      ny = dx / len;
+    p.line(32, 48, x, y, "#493e31", 4);
+    p.line(32, 48, x, y, "#bf9257", 2);
+    p.line(33, 47, x, y, "#e0b87a");
+    const polygon = (a, b, c, d) => [
+      [x + nx * a + (dx / len) * b, y + ny * a + (dy / len) * b],
+      [x + nx * c + (dx / len) * b, y + ny * c + (dy / len) * b],
+      [x + nx * d + (dx / len) * 4, y + ny * d + (dy / len) * 4],
+      [x + nx * a + (dx / len) * 3, y + ny * a + (dy / len) * 3],
+    ];
+    p.poly(polygon(-3, -3, 7, 8), "#344b48");
+    p.poly(polygon(-2, -2, 6, 7), AXE_TIERS[tier].color);
+    p.line(
+      x + nx * 6 - (dx / len) * 2,
+      y + ny * 6 - (dy / len) * 2,
+      x + nx * 7 + (dx / len) * 3,
+      y + ny * 7 + (dy / len) * 3,
+      AXE_TIERS[tier].edge,
+      2,
+    );
+    p.rect(31, 46, 3, 2, "#735437");
+  });
+}
+
 export function createForestArt() {
   const base = createPixelArt(),
     s = base.sprites;
@@ -778,15 +856,19 @@ export function createForestArt() {
   ) => {
     const key = [role, dir, frame, mood, gesture].join(":");
     if (!cache.has(key)) {
-      cache.set(key, person(coats[role], dir, frame, mood, gesture));
+      cache.set(
+        key,
+        person(coats[role], dir, frame, mood, gesture, role === "player"),
+      );
       if (cache.size > 96) cache.delete(cache.keys().next().value);
     }
     return cache.get(key);
   };
   for (const role of Object.keys(coats))
     for (const dir of ["down", "up", "side"])
-      s.characters[role][dir] = [0, 1, 2, 3].map((f) =>
-        personSprite(role, dir, f),
+      s.characters[role][dir] = Array.from(
+        { length: role === "player" ? HERO_WALK_FRAMES : 4 },
+        (_, f) => personSprite(role, dir, f),
       );
   s.ancient = ancientOak();
   s.merchant = forestMerchant("read", 0);
@@ -876,6 +958,7 @@ export function createForestArt() {
   return {
     ...base,
     person: personSprite,
+    swingTool,
     merchantPose,
     style: "forest-ledger",
     metrics: { hero: 40, oak: 139, birch: 149, spruce: 157, house: 153 },

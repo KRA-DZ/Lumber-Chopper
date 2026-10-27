@@ -1,3 +1,5 @@
+import { HeroView } from "./hero-view.js";
+import { ChoppingFeedback } from "./chopping-feedback.js";
 import { createSimulation } from "../game/simulation.js";
 import { CENTER, WORLD, DAY_SECONDS } from "../game/config.js";
 import { CAMP } from "../pixel-art.js";
@@ -65,14 +67,11 @@ export class WorldScene extends Phaser.Scene {
         maxAliveParticles: 64,
       })
       .setDepth(5000);
-    this.player = this.add
-      .sprite(1600, 1720, "forest", "characters.player.down.0")
-      .setOrigin(0.5, 44 / 46)
-      .setScale(2);
-    this.axe = this.add
-      .sprite(1620, 1704, "forest", "axes.0.0")
-      .setOrigin(0.5, 19 / 24)
-      .setScale(2);
+    this.heroView = new HeroView(this);
+    this.player = this.heroView.player;
+    this.axe = this.heroView.axe;
+    this.feedback = new ChoppingFeedback(this);
+    this.hiddenCargo = new Set();
     this.camera = this.cameras.main;
     this.camera
       .setBounds(0, 0, WORLD.width, WORLD.height)
@@ -534,45 +533,15 @@ export class WorldScene extends Phaser.Scene {
       s = c.state,
       p = c.player,
       t = c.elapsed;
-    this.player.setPosition(
-      snap(p.x),
-      snap(p.y) -
-        (p.moving
-          ? (Math.floor(t * 9) % 2) * 2
-          : p.celebration > 0
-            ? (Math.floor(t * 7) % 2) * 4
-            : 0),
-    );
-    this.animatePerson(
-      this.player,
-      "player",
-      p,
-      p.swing > 0
-        ? "focused"
-        : p.celebration > 0
-          ? "happy"
-          : s.wood / s.maxWood > 0.75
-            ? "tired"
-            : "neutral",
-    );
-    if (p.swing <= 0) {
-      this.axe.stop();
-      this.axe.setFrame(`axes.${s.axeLevel}.0`);
-    }
-    this.axe
-      .setPosition(
-        snap(p.x + (p.direction === "left" ? -20 : 20)),
-        snap(p.y - 16),
-      )
-      .setFlipX(p.direction === "left")
-      .setDepth(p.y + 0.03);
+    this.heroView.render();
+    this.hiddenCargo.clear();
+    for (const f of this.flights)
+      if (f.kind === "pickup") this.hiddenCargo.add(f.index);
     const count = Math.min(s.wood, 40);
     while (this.cargo.length < count)
       this.cargo.push(this.addImage("log", 0, 0));
     for (let i = 0; i < this.cargo.length; i++) {
-      const hidden = [...this.flights].some(
-          (f) => f.kind === "pickup" && f.index === i,
-        ),
+      const hidden = this.hiddenCargo.has(i),
         height = i / Math.max(1, count - 1),
         load = Math.min(s.wood / 20, 1.5);
       this.cargo[i]
@@ -584,7 +553,13 @@ export class WorldScene extends Phaser.Scene {
                 ? Math.sin(t * 9 - height * 1.8) * (2 + height * 11) * load
                 : 0),
           ),
-          snap(p.y - 4 - i * 9),
+          snap(
+            p.y -
+              4 -
+              i * 9 +
+              this.heroView.bob +
+              (p.moving ? Math.sin(t * 12) * (1 + load) : 0),
+          ),
         )
         .setDepth(p.y + 0.04 + i * 0.0001);
     }
@@ -620,6 +595,7 @@ export class WorldScene extends Phaser.Scene {
     this.camera?.preRender();
     this.refreshView();
     this.atmosphere.render();
+    this.feedback.render();
     const hudKey = [
       s.wood,
       s.maxWood,
@@ -849,10 +825,22 @@ export class WorldScene extends Phaser.Scene {
   onModelEvent(type, e) {
     if (type === "hit") {
       this.audio?.hit();
-      this.axe?.play(`chop.${this.core.state.axeLevel}`);
-      this.chips?.explode(this.effectsLight ? 3 : 8, e.tree.x, e.tree.y - 12);
+      this.heroView?.hit();
+      this.feedback?.hit(e.tree);
+      this.chips?.explode(
+        this.effectsLight
+          ? e.tree.hp === 0
+            ? 4
+            : 3
+          : e.tree.hp === 0
+            ? 12
+            : 8,
+        e.tree.x,
+        e.tree.y - 12,
+      );
       this.float(`−${e.damage}`, e.tree.x, e.tree.y - 55, "#f5e3b8");
     } else if (type === "fell") {
+      this.feedback?.fell(e.tree);
       if (this.falls.length >= 4) {
         const oldest = this.falls.shift();
         this.tweens.killTweensOf(oldest);

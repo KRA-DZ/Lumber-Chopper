@@ -1,0 +1,215 @@
+{
+  "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.step only, frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
+  "samples": [
+    {
+      "version": "baseline",
+      "scenario": "day-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 106,
+        "median": 0.7,
+        "p95": 5.5,
+        "max": 10.7
+      },
+      "frameMs": {
+        "count": 106,
+        "median": 33.3,
+        "p95": 50,
+        "max": 83.4
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1129,
+      "textures": 35,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "baseline",
+      "scenario": "rain-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 78,
+        "median": 0.9,
+        "p95": 4.7,
+        "max": 29.7
+      },
+      "frameMs": {
+        "count": 78,
+        "median": 33.4,
+        "p95": 66.6,
+        "max": 83.4
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1129,
+      "textures": 35,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "baseline",
+      "scenario": "night-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 86,
+        "median": 1,
+        "p95": 5.3,
+        "max": 18.6
+      },
+      "frameMs": {
+        "count": 86,
+        "median": 33.4,
+        "p95": 66.6,
+        "max": 66.7
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1129,
+      "textures": 35,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "baseline",
+      "scenario": "night-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 88,
+        "median": 0.8,
+        "p95": 2.8,
+        "max": 6.2
+      },
+      "frameMs": {
+        "count": 88,
+        "median": 33.3,
+        "p95": 66.6,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1127,
+      "textures": 34,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "current",
+      "scenario": "day-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 115,
+        "median": 1,
+        "p95": 2.1,
+        "max": 26.1
+      },
+      "frameMs": {
+        "count": 115,
+        "median": 16.8,
+        "p95": 50,
+        "max": 66.7
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1132,
+      "textures": 36,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "current",
+      "scenario": "rain-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 89,
+        "median": 0.9,
+        "p95": 4.3,
+        "max": 16.3
+      },
+      "frameMs": {
+        "count": 89,
+        "median": 33.3,
+        "p95": 50.1,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1132,
+      "textures": 36,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "current",
+      "scenario": "night-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 81,
+        "median": 1.2,
+        "p95": 3.9,
+        "max": 7.1
+      },
+      "frameMs": {
+        "count": 81,
+        "median": 33.3,
+        "p95": 66.7,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1132,
+      "textures": 36,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    },
+    {
+      "version": "current",
+      "scenario": "night-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 76,
+        "median": 0.9,
+        "p95": 4.6,
+        "max": 21.9
+      },
+      "frameMs": {
+        "count": 76,
+        "median": 33.4,
+        "p95": 66.7,
+        "max": 150
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 1130,
+      "textures": 35,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0
+    }
+  ],
+  "baseline": "f6fc344b20d418b23c2ab723148b4535a5f93fb5",
+  "measured_date": "2026-10-27"
+}

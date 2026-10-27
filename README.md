@@ -6,6 +6,8 @@
 
 [Сравнение двух версий](docs/forest-comparison.png) · [герой, деревья и постройки крупным планом](docs/forest-art-sheet.png).
 
+Доработаны ходьба и переноска героя, направленный замах, прочность текущего дерева и подсказки подбора. [Превью рубки](docs/chopping-hero.png) · [замеры нагрузки](docs/PERFORMANCE.md).
+
 Новые снимки: [лагерь](docs/forest-day.png), [ночь](docs/forest-night.png), [дождь](docs/forest-rain.png), [телефон](docs/forest-mobile.png).
 
 Примеры: [лавка](docs/progression-shop.png), [ночь и глаза в темноте](docs/progression-night.png), [брёвна на земле](docs/progression-ground.png), [лавка на телефоне](docs/progression-shop-mobile.png), [новое кольцо леса](docs/living-expansion.png), [сравнение размеров спрайтов](docs/pixel-scale.png).
