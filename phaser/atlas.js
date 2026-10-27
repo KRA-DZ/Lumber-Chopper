@@ -1,3 +1,4 @@
+import { createCampArt } from "./art/camp-art.js";
 import { HERO_WALK_FRAMES, STRIKE_MS } from "./art/hero-motion.js";
 import { createForestArt } from "./art/forest-art.js";
 import { createEnvironment } from "../environment.js";
@@ -60,6 +61,7 @@ export function createAtlas(scene) {
           ),
         );
   collect(worldArt, "world");
+  collect(createCampArt(), "camp");
   for (const role of ["player", "buyerA", "buyerB"])
     for (const mood of role === "player"
       ? ["happy", "tired", "focused"]

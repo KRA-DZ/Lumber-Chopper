@@ -1,3 +1,4 @@
+import { LAYERS } from "./layers.js";
 export const FEEDBACK_LIMITS = Object.freeze({ piles: 8, impacts: 4 });
 const snap = (v) => Math.round(v / 2) * 2;
 // Two reused Graphics + one reused text. No object per tree or glow shader.
@@ -8,8 +9,10 @@ export class ChoppingFeedback {
     this.impacts = [];
     this.highlightCount = 0;
     this.ground = scene.add.graphics().setDepth(-3500);
-    this.badge = scene.add.graphics().setDepth(5004);
-    this.label = scene.text("", 0, 0, 11, "#f8e5b3", 5005).setVisible(false);
+    this.badge = scene.add.graphics().setDepth(LAYERS.health);
+    this.label = scene
+      .text("", 0, 0, 11, "#f8e5b3", LAYERS.healthText)
+      .setVisible(false);
     this.barVisible = false;
   }
   hit(tree) {

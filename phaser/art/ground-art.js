@@ -9,6 +9,8 @@ export function createForestGround({
   trails,
   ancientTree,
   clearings = [],
+  merchant = CAMP.merchant,
+  biomeAt = () => "forest",
 }) {
   const cache = new Map();
   function bake(cx, cy) {
@@ -25,7 +27,7 @@ export function createForestGround({
     };
     g.fillStyle = "#ff0000";
     oval(center.x, center.y, 305, 265);
-    oval(CAMP.merchant.x, CAMP.merchant.y + 12, 116, 92);
+    oval(merchant.x, merchant.y + 12, 116, 92);
     oval(ancientTree.x, ancientTree.y, 190, 150);
     for (const site of clearings)
       oval(site.x, site.y, site.clearing * 0.7, site.clearing * 0.5);
@@ -150,6 +152,16 @@ export function createForestGround({
             [r, gr, b] = [146, 164, 91];
           if (cell % 23 === 0 && px === 5 && py === 4)
             [r, gr, b] = [205, 194, 130];
+        }
+        const biome = biomeAt(wx * 2, wy * 2);
+        if (!marked && biome === "mystery") {
+          r = Math.round(r * 0.88);
+          gr = Math.round(gr * 0.68);
+          b = Math.round(b * 1.15);
+        } else if (!marked && biome === "ruins") {
+          r = Math.round(r * 0.9);
+          gr = Math.round(gr * 0.9);
+          b = Math.round(b * 1.06);
         }
         data[i] = r;
         data[i + 1] = gr;

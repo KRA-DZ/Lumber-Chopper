@@ -1,3 +1,4 @@
+import { LAYERS } from "./layers.js";
 import { createWeather } from "../weather.js";
 import { createEnvironment } from "../environment.js";
 import { createMystery, MYSTERY_CLUES, nightSight } from "../mystery.js";
@@ -12,6 +13,8 @@ export class Atmosphere {
     this.core = scene.core;
     this.assets = scene.assets;
     this.quality = "full";
+    this.merchantSite = this.core.world.merchant || CAMP.merchant;
+    this.clueData = this.core.world.clues || MYSTERY_CLUES;
     this.environment = createEnvironment(this.assets.art);
     this.weather = createWeather({
       art: this.assets.art,
@@ -26,10 +29,10 @@ export class Atmosphere {
     this.discovery = "";
     this.discoveryUntil = 0;
     this.ground = scene.add.graphics().setDepth(-3800);
-    this.air = scene.add.graphics().setDepth(5002);
-    this.eyes = scene.add.graphics().setDepth(7200);
-    this.tint = scene.add.graphics().setScrollFactor(0).setDepth(6000);
-    this.glow = scene.add.graphics().setDepth(5001);
+    this.air = scene.add.graphics().setDepth(LAYERS.air);
+    this.eyes = scene.add.graphics().setDepth(LAYERS.eyes);
+    this.tint = scene.add.graphics().setScrollFactor(0).setDepth(LAYERS.tint);
+    this.glow = scene.add.graphics().setDepth(LAYERS.glow);
     this.animals = this.wildlife.animals.map((a) => ({
       body: a,
       image: scene.addImage(`animals.${a.type}.0`, a.x, a.y),
@@ -42,7 +45,7 @@ export class Atmosphere {
       const pond = this.core.world.pond;
       const point =
         i === 7
-          ? this.core.world.landmarks.find((p) => p.type === "spring")
+          ? this.core.world.landmarks.find((p) => p.type === "spring") || pond
           : { x: pond.x - 110 + i * 34, y: pond.y - 48 + Math.sin(i * 2) * 55 };
       return {
         p: point,
@@ -50,7 +53,9 @@ export class Atmosphere {
         image: scene.addImage("ripples.0", point.x, point.y, -3900),
       };
     });
-    this.siteLabels = this.core.world.landmarks.map((p) => ({
+    this.siteLabels = (
+      this.core.world.regional ? [] : this.core.world.landmarks
+    ).map((p) => ({
       p,
       label: scene.text(p.name, p.x, p.y + 42, 11, "#e9e5be").setVisible(false),
     }));
@@ -64,25 +69,27 @@ export class Atmosphere {
           p,
           i,
           image: scene
-            .addImage("world.fog", p.x, p.y, 5000)
+            .addImage("world.fog", p.x, p.y, LAYERS.particles)
             .setScale(6)
             .setVisible(false),
         });
     this.smoke = Array.from({ length: 5 }, () =>
-      scene.addImage("world.smoke", 0, 0, 4999).setVisible(false),
+      scene.addImage("world.smoke", 0, 0, LAYERS.smoke).setVisible(false),
     );
-    this.clues = MYSTERY_CLUES.map((c) => ({
+    this.clues = this.clueData.map((c) => ({
       c,
       image: scene
         .addImage(
-          `world.${c.id === "tracks" ? "strangeTracks" : c.id === "note" ? "note" : "rune"}`,
+          `world.${c.id === "tracks" ? "strangeTracks" : c.id === "mark" ? "rune" : "note"}`,
           c.x,
           c.y,
         )
         .setInteractive({ pixelPerfect: true })
         .setData("clue", c),
     }));
-    this.prompt = scene.text("", 0, 0, 12, "#f1d994", 5003).setVisible(false);
+    this.prompt = scene
+      .text("", 0, 0, 12, "#f1d994", LAYERS.hints)
+      .setVisible(false);
     // This is only a low-resolution light mask, not a Canvas rendering of the game.
     // Texture upload is capped at 10 Hz (6 Hz in light mode), with cached soft stamps.
     if (scene.textures.exists("night-mask"))
@@ -93,7 +100,7 @@ export class Atmosphere {
       .image(0, 0, "night-mask")
       .setOrigin(0)
       .setScrollFactor(0)
-      .setDepth(7000)
+      .setDepth(LAYERS.night)
       .setVisible(false);
     this.stamp = document.createElement("canvas");
     this.stamp.width = this.stamp.height = 128;
@@ -109,7 +116,7 @@ export class Atmosphere {
       to: this.core.forestRadius(),
       age: 18,
     };
-    this.rings = scene.add.graphics().setDepth(4901);
+    this.rings = scene.add.graphics().setDepth(LAYERS.border);
   }
   setQuality(value) {
     this.quality = value;
@@ -123,8 +130,7 @@ export class Atmosphere {
       t = this.core.elapsed;
     return [
       { x: p.x, y: p.y - 24, r: nightSight(s.lanternLevel) },
-      { x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 115 },
-      { x: CAMP.merchant.x + 75, y: CAMP.merchant.y + 20, r: 110 },
+      ...this.lanterns(),
       ...(s.campLevel > 0
         ? [{ x: 1600, y: 1592, r: 220 + Math.sin(t * 8) * 8 }]
         : []),
@@ -136,15 +142,34 @@ export class Atmosphere {
         : []),
     ];
   }
+  lanterns() {
+    return [
+      { x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 115 },
+      ...(this.accessible(this.merchantSite)
+        ? [{ x: this.merchantSite.x + 75, y: this.merchantSite.y + 20, r: 110 }]
+        : []),
+    ];
+  }
   accessible(p) {
-    return Math.hypot(p.x - 1600, p.y - 1600) < this.core.forestRadius() - 20;
+    return this.core.accessible(p);
   }
   nearestClue() {
-    return MYSTERY_CLUES.find(
+    const note = this.clueData.find(
       (c) =>
         this.accessible(c) &&
         Math.hypot(c.x - this.core.player.x, c.y - this.core.player.y) < 130,
     );
+    if (note) return note;
+    for (const list of this.scene.regionView?.objects.values() || [])
+      for (const image of list) {
+        const clue = image.getData("clue");
+        if (
+          clue &&
+          Math.hypot(clue.x - this.core.player.x, clue.y - this.core.player.y) <
+            130
+        )
+          return clue;
+      }
   }
   update(dt) {
     if (this.core.paused) return;
@@ -166,7 +191,8 @@ export class Atmosphere {
       view: v,
       lights: this.lights(),
       center: CENTER,
-      radius: c.forestRadius(),
+      radius: c.regions ? 10000 : c.forestRadius(),
+      accessible: (p) => this.accessible(p),
     });
     this.reveal.age += dt;
     for (const p of c.world.landmarks)
@@ -332,7 +358,7 @@ export class Atmosphere {
                 : 0),
           ),
         )
-        .setDepth(b.z > 5 ? 5000 : b.y)
+        .setDepth(b.z > 5 ? LAYERS.particles : b.y)
         .setFlipX(Math.cos(b.angle) < 0)
         .setAlpha(b.state === "sleep" ? 0.7 : 1)
         .setVisible(visible);
@@ -349,11 +375,12 @@ export class Atmosphere {
     scene.merchant
       .setPosition(
         snap(
-          CAMP.merchant.x + (life.action === "look" ? Math.sin(t * 3) * 2 : 0),
+          this.merchantSite.x +
+            (life.action === "look" ? Math.sin(t * 3) * 2 : 0),
         ),
-        snap(CAMP.merchant.y + (life.offset ?? 36)),
+        snap(this.merchantSite.y + (life.offset ?? 36)),
       )
-      .setDepth(CAMP.merchant.y + (life.offset ?? 36));
+      .setDepth(this.merchantSite.y + (life.offset ?? 36));
     for (const { image, p: decor } of scene.campDecor)
       if (decor.type === "clothes")
         this.assets.setFrame(image, `world.clothes.${Math.floor(t * 1.4) % 2}`);
@@ -380,7 +407,7 @@ export class Atmosphere {
             near(CAMP.hut.x, CAMP.hut.y, 400),
         );
     }
-    for (const l of this.lights().slice(1, 3)) {
+    for (const l of this.lanterns()) {
       a.fillStyle(0x644b30)
         .fillRect(snap(l.x) - 2, snap(l.y) - 8, 4, 30)
         .fillStyle(0x4a4931)
@@ -463,7 +490,7 @@ export class Atmosphere {
         .fillStyle(0x29414f, profile.rain * 0.09)
         .fillRect(0, 0, scene.scale.width, scene.scale.height);
     this.rings.clear();
-    if (this.reveal.age < 18)
+    if (!c.regions && this.reveal.age < 18)
       this.rings
         .lineStyle(6, 0xf8dc8d, Math.min(1, (18 - this.reveal.age) / 3) * 0.8)
         .strokeCircle(1600, 1600, this.radius)

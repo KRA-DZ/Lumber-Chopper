@@ -1,3 +1,5 @@
+import { createRegions } from "./regions.js";
+import { createRegionWorld } from "./region-world.js";
 import {
   createInitialState,
   CENTER,
@@ -14,9 +16,10 @@ import {
   constructionCollisionKey,
 } from "../construction.js";
 // Симуляция не зависит от Canvas, Phaser, DOM, кадров анимации или хранилища.
-export function createSimulation({ emit = () => {} } = {}) {
+export function createSimulation({ emit = () => {}, regional = false } = {}) {
   const gameState = createInitialState(),
-    world = createWorldModel(),
+    regions = regional ? createRegions(gameState) : null,
+    world = regional ? createRegionWorld(regions) : createWorldModel(),
     { trees } = world;
   const stages = STAGES,
     keys = new Set(),
@@ -54,7 +57,11 @@ export function createSimulation({ emit = () => {} } = {}) {
     emit("notice", { text });
   }
   const forestRadius = () => RADII[gameState.campLevel];
-  const treeAccessible = (t) => distance(t, CENTER) < forestRadius() - 45;
+  const accessible = (p) =>
+    regions ? regions.isOpen(p) : distance(p, CENTER) < forestRadius() - 20;
+  const treeAccessible = (t) =>
+    regions ? regions.isOpen(t) : distance(t, CENTER) < forestRadius() - 45;
+  const tutorial = { cut: false, sold: false };
   const dayPhase = () => gameState.worldTime / DAY_SECONDS;
   const nightAmount = () =>
     Math.max(
@@ -115,6 +122,7 @@ export function createSimulation({ emit = () => {} } = {}) {
     emit("hit", { tree, damage });
     if (tree.hp === 0) {
       const count = forestry.fell(tree, dayNumber);
+      tutorial.cut = true;
       rebuildObstacles();
       emit("fell", { tree, count });
       floatingText(tree.x, tree.y - 50, `+${count} бревна`);
@@ -234,6 +242,28 @@ export function createSimulation({ emit = () => {} } = {}) {
     if (dt <= 0) return;
     transferTimer = Math.max(0, transferTimer - dt);
     if (transferTimer > 0 || gameState.wood === 0) return;
+    const gate = regions?.frontiers().find((g) => distance(player, g) < 50);
+    if (gate) {
+      const result = regions.deposit(gate.region.id);
+      if (result) {
+        forestry.takeCargo();
+        transferTimer = 0.18;
+        visualEffects.transfer(
+          "region",
+          { x: player.x, y: player.y - 4 },
+          { x: gate.x, y: gate.y - 25 },
+        );
+        if (result.opened) {
+          world.generate(result.region);
+          rebuildObstacles();
+          emit("region-open", { region: result.region });
+          showNotice(`Открыта новая территория: ${result.region.name}`, 8);
+          player.celebration = 2;
+        }
+        updateUI();
+        return;
+      }
+    }
     const building =
       distance(player, build) < build.radius &&
       gameState.campLevel < stages.length;
@@ -257,9 +287,11 @@ export function createSimulation({ emit = () => {} } = {}) {
         gameState.buildWood = 0;
         const oldRadius = forestRadius();
         gameState.campLevel++;
-        expansion.open(oldRadius, forestRadius());
+        if (!regions) expansion.open(oldRadius, forestRadius());
         showNotice(
-          `Открыта новая территория! Радиус леса: ${forestRadius()}`,
+          regions
+            ? `${stage.name}: готово! Новые регионы открываются у пограничных указателей.`
+            : `Открыта новая территория! Радиус леса: ${forestRadius()}`,
           8,
         );
         player.celebration = 2.2;
@@ -268,7 +300,9 @@ export function createSimulation({ emit = () => {} } = {}) {
         floatingText(
           CENTER.x,
           CENTER.y - 90,
-          `${stage.name}: готово! Лес расширен`,
+          regions
+            ? `${stage.name}: готово!`
+            : `${stage.name}: готово! Лес расширен`,
         );
       }
     } else {
@@ -288,6 +322,7 @@ export function createSimulation({ emit = () => {} } = {}) {
       });
       player.celebration = 1.4;
       gameState.coins += value;
+      tutorial.sold = true;
       floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
     }
     if (
@@ -369,7 +404,16 @@ export function createSimulation({ emit = () => {} } = {}) {
         updateUI();
       }
     }
-    const nearest = trees
+    const nearest = (
+      world.treesNear
+        ? world.treesNear({
+            x: player.x - 80,
+            y: player.y - 80,
+            width: 160,
+            height: 160,
+          })
+        : trees
+    )
       .filter((t) => treeAccessible(t) && t.hp > 0 && distance(player, t) < 72)
       .sort((a, b) => distance(player, a) - distance(player, b))[0];
     if (
@@ -401,6 +445,18 @@ export function createSimulation({ emit = () => {} } = {}) {
     activeBuyer,
     forestRadius,
     treeAccessible,
+    accessible,
+    regions,
+    tutorial,
+    get tutorialStep() {
+      return !tutorial.cut
+        ? 0
+        : !tutorial.sold
+          ? 1
+          : gameState.carryLevel === 0
+            ? 2
+            : 3;
+    },
     nightAmount,
     setDestination,
     clearKeys,

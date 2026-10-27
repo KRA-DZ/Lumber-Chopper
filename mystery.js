@@ -32,7 +32,10 @@ export function createMystery() {
   function lit(x, y, lights) {
     return lights.some((l) => Math.hypot(x - l.x, y - l.y) < l.r * 0.9);
   }
-  function update(dt, { darkness, player, view, lights, center, radius }) {
+  function update(
+    dt,
+    { darkness, player, view, lights, center, radius, accessible = () => true },
+  ) {
     if (dt <= 0) return;
     clock += dt;
     if (darkness < 0.45) {
@@ -67,7 +70,8 @@ export function createMystery() {
         y < view.y + 22 ||
         y > view.y + view.height - 22 ||
         Math.hypot(x - center.x, y - center.y) > radius - 25 ||
-        lit(x, y, lights)
+        lit(x, y, lights) ||
+        !accessible({ x, y })
       )
         continue;
       eyes.push({ x, y, age: 0, life: 2.2 + rnd() * 2.4, phase: rnd() * 6 });

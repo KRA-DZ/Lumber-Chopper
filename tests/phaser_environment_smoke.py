@@ -163,7 +163,7 @@ try:
             )
             q.wait_for_function('oldAudio.state==="closed"')
             assert q.evaluate(
-                'lumberPhaser.core.state.campLevel===0&&!lumberPhaser.scene.audio.enabled&&lumberPhaser.scene.boundaryRadius===900&&document.querySelector("#effectsBtn").getAttribute("aria-pressed")==="false"'
+                'lumberPhaser.core.state.campLevel===0&&!lumberPhaser.scene.audio.enabled&&lumberPhaser.core.state.unlockedRegions.length===1&&document.querySelector("#effectsBtn").getAttribute("aria-pressed")==="false"'
             )
             assert not errors, errors
             print(

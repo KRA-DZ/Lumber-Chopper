@@ -243,6 +243,38 @@
       padding: 20px;
       margin: 0;
     }
+    [data-regions] {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    [data-regions] button {
+      min-height: 82px;
+      padding: 7px 3px;
+      font: 11px monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      overflow-wrap: anywhere;
+    }
+    [data-regions] small {
+      color: inherit;
+      font-size: 10px;
+    }
+    [data-regions] .region-open {
+      background: #719264;
+      color: #162e24;
+    }
+    [data-regions] .region-adjacent {
+      background: #c3ad73;
+      color: #293c2b;
+    }
+    [data-regions] .region-unknown {
+      background: #344d40;
+      color: #a2b198;
+      opacity: 0.6;
+    }
     .versions {
       display: flex;
       flex-wrap: wrap;
@@ -292,13 +324,16 @@
         <p>
           WASD / стрелки или нажатие на землю — движение. Рядом с деревом рубка
           идёт автоматически.<br />Нажимайте на дерево рядом, чтобы рубить
-          быстрее. После рубки остаётся пень. Золотая площадка — продажа
-          покупателям. Голубая — строительство лагеря. Лавка открывается по
-          нажатию на прилавок или палатку торговца. E — изучить находку рядом.
+          быстрее. M — карта леса. Соседние регионы открываются за брёвна:
+          встаньте на площадку у пограничного указателя. После рубки остаётся
+          пень. Золотая площадка — продажа покупателям. Голубая — строительство
+          лагеря. Лавка открывается по нажатию на прилавок или палатку торговца.
+          E — изучить находку рядом.
         </p>
       </div>
       <div>
         <button id="shopButton" type="button">Лавка</button>
+        <button id="mapButton" type="button">Карта леса · M</button>
         <button id="sound" type="button" aria-pressed="false">
           Включить звуки леса
         </button>
@@ -336,6 +371,21 @@
     <h2 id="clueTitle"></h2>
     <p id="clueText"></p>
     <button type="button" id="clueClose">Убрать находку</button>
+  </dialog>
+  <dialog id="mapDialog" aria-labelledby="mapTitle">
+    <div class="dialog-top">
+      <div>
+        <small>БОЛЬШОЙ ЛЕС</small>
+        <h2 id="mapTitle">Карта регионов</h2>
+        <b data-explored></b>
+      </div>
+      <button type="button" data-map-close>Закрыть</button>
+    </div>
+    <p>
+      Выберите участок, чтобы проложить путь. Открывайте соседние регионы
+      брёвнами на пограничных площадках.
+    </p>
+    <div data-regions></div>
   </dialog>
   <script src="./vendor/phaser/phaser.min.js"></script>
   <script type="module" src="./phaser/main.js"></script>

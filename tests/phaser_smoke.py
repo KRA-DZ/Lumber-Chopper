@@ -73,7 +73,7 @@ try:
                 'Phaser.VERSION==="3.90.0"&&g.renderer==="WebGL"&&w.player instanceof Phaser.GameObjects.Sprite&&w.treeObjects.values().next().value.image instanceof Phaser.GameObjects.Image'
             )
             assert q.evaluate(
-                'm.state.maxWood===2&&m.state.coins===0&&m.trees.length===231&&g.game.textures.get("forest").frameTotal>150'
+                'm.state.maxWood===2&&m.state.coins===0&&m.trees.length>70&&m.state.unlockedRegions.length===1&&g.game.textures.get("forest").frameTotal>150'
             )
             assert q.evaluate(
                 """()=>{const a=document.querySelector('canvas').getBoundingClientRect(),b=document.querySelector('#game-viewport').getBoundingClientRect();return Math.abs(a.x-b.x)<1&&Math.abs(a.width-b.width)<1&&document.documentElement.scrollWidth<=innerWidth;}"""
@@ -130,7 +130,9 @@ try:
             q.evaluate("g.step(5)")
             assert q.evaluate("m.state.worldTime") == before
             q.locator('[data-buy="carry"]').click()
-            assert q.evaluate("m.state.maxWood===4&&m.state.coins===0")
+            assert q.evaluate(
+                "m.state.maxWood===4&&m.state.coins===0&&m.tutorialStep===3"
+            )
             shot(q, "shop-mobile" if mobile else "shop")
             q.keyboard.press("Escape")
             q.wait_for_function("!m.paused")
@@ -155,7 +157,7 @@ try:
                 )
                 assert q.evaluate("m.state.campLevel") == level
             assert q.evaluate(
-                "w.hut.visible&&!w.tent.visible&&!m.nav.isWalkable(1680,1440)&&m.nav.isWalkable(630,1400)"
+                "w.hut.visible&&!w.tent.visible&&!m.nav.isWalkable(1680,1440)&&m.nav.isWalkable(700,1600)"
             )
             q.evaluate("m.player.x=1600;m.player.y=1690;m.player.path=[];g.step(0)")
             shot(q, "camp-mobile" if mobile else "camp")

@@ -1,3 +1,7 @@
+import { LAYERS } from "./layers.js";
+import { createRegionMap } from "./region-map.js";
+import { RegionView } from "./region-view.js";
+import { CampView } from "./camp-view.js";
 import { HeroView } from "./hero-view.js";
 import { ChoppingFeedback } from "./chopping-feedback.js";
 import { createSimulation } from "../game/simulation.js";
@@ -27,9 +31,11 @@ export class WorldScene extends Phaser.Scene {
     this.assets = createAtlas(this);
     this.anims.resumeAll();
     this.core = createSimulation({
+      regional: true,
       emit: (type, event) => this.onModelEvent(type, event),
     });
     this.playerModel = this.core.player;
+    this.merchantSite = this.core.world.merchant || CAMP.merchant;
     this.terrain = new TerrainLayer(this, this.core.world);
     this.staticObjects = [];
     this.treeObjects = new Map();
@@ -43,18 +49,21 @@ export class WorldScene extends Phaser.Scene {
     this.lastCampKey = "";
     const { art, worldArt } = this.assets,
       m = this.core.world;
-    this.dressing = createWorldDressing({
-      art,
-      sprites: worldArt,
-      trees: m.trees,
-      center: CENTER,
-      ancientTree: m.ancientTree,
-      nearTrail: m.nearTrail,
-      inWater: m.inWater,
-    });
+    this.dressing = m.regional
+      ? { campItems: m.campItems }
+      : createWorldDressing({
+          art,
+          sprites: worldArt,
+          trees: m.trees,
+          center: CENTER,
+          ancientTree: m.ancientTree,
+          nearTrail: m.nearTrail,
+          inWater: m.inWater,
+        });
     this.createScenery();
     this.createCamp();
     this.createActors();
+    this.campView = new CampView(this);
     this.chips = this.add
       .particles(0, 0, "forest", {
         frame: "chip",
@@ -66,7 +75,7 @@ export class WorldScene extends Phaser.Scene {
         emitting: false,
         maxAliveParticles: 64,
       })
-      .setDepth(5000);
+      .setDepth(LAYERS.particles);
     this.heroView = new HeroView(this);
     this.player = this.heroView.player;
     this.axe = this.heroView.axe;
@@ -74,14 +83,20 @@ export class WorldScene extends Phaser.Scene {
     this.hiddenCargo = new Set();
     this.camera = this.cameras.main;
     this.camera
-      .setBounds(0, 0, WORLD.width, WORLD.height)
+      .setBounds(
+        this.core.world.bounds?.x || 0,
+        this.core.world.bounds?.y || 0,
+        this.core.world.bounds?.width || WORLD.width,
+        this.core.world.bounds?.height || WORLD.height,
+      )
       .startFollow(this.playerModel, true, 1, 1, 0, 160);
     this.camera.roundPixels = true;
-    this.boundary = this.add.graphics().setDepth(4900);
+    this.boundary = this.add.graphics().setDepth(LAYERS.border);
     this.audio = createForestAudio();
     this.atmosphere = new Atmosphere(this);
     this.bindInput();
     this.bindDialogs();
+    this.regionMap = createRegionMap(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
     this.renderModel();
@@ -108,7 +123,7 @@ export class WorldScene extends Phaser.Scene {
   addImage(key, x, y, depth = y) {
     return this.assets.image(key, snap(x), snap(y), depth);
   }
-  text(text, x, y, size = 12, color = "#f0e1ad", depth = 4500) {
+  text(text, x, y, size = 12, color = "#f0e1ad", depth = LAYERS.labels) {
     return this.add
       .text(snap(x), snap(y), text, {
         fontFamily: "monospace",
@@ -128,6 +143,10 @@ export class WorldScene extends Phaser.Scene {
       : `details.${p.type}.${p.variant || 0}`;
   }
   createScenery() {
+    if (this.core.regions) {
+      this.regionView = new RegionView(this);
+      return;
+    }
     for (const group of [
       this.dressing.ground,
       this.dressing.plants,
@@ -193,15 +212,15 @@ export class WorldScene extends Phaser.Scene {
       .setData("shop", true);
     this.merchantTent = this.addImage(
       "merchantTent",
-      CAMP.merchant.x,
-      CAMP.merchant.y,
+      this.merchantSite.x,
+      this.merchantSite.y,
     )
       .setInteractive({ pixelPerfect: true })
       .setData("shop", true);
     this.merchant = this.addImage(
       "merchant",
-      CAMP.merchant.x,
-      CAMP.merchant.y + 36,
+      this.merchantSite.x,
+      this.merchantSite.y + 36,
     );
     this.ancient = this.addImage(
       "ancient",
@@ -245,10 +264,12 @@ export class WorldScene extends Phaser.Scene {
       [this.core.sale, "ПРОДАТЬ", 0xcbaa58],
       [this.core.build, "СТРОИТЬ", 0x82b3a4],
     ]) {
-      this.add
-        .rectangle(pad.x, pad.y, 98, 58, color)
-        .setStrokeStyle(4, 0x7a7148)
-        .setDepth(-1000);
+      this.addImage(
+        label === "ПРОДАТЬ" ? "camp.salePad" : "camp.buildPad",
+        pad.x,
+        pad.y,
+        -1000,
+      );
       this.text(label, pad.x, pad.y, 13, "#415235", -999);
     }
     this.saleLabel = this.text(
@@ -273,16 +294,17 @@ export class WorldScene extends Phaser.Scene {
       "#4c3928",
       CAMP.stall.y + 0.1,
     );
-    this.text(
+    this.merchantLabel = this.text(
       "ТОРГОВЕЦ",
-      CAMP.merchant.x,
-      CAMP.merchant.y - 222,
+      this.merchantSite.x,
+      this.merchantSite.y - 222,
       12,
       "#e9d89c",
-      CAMP.merchant.y + 0.2,
+      this.merchantSite.y + 0.2,
     );
   }
   createActors() {
+    if (this.core.regions) return;
     for (const tree of this.core.trees) {
       const key = `trees.${tree.type}.${tree.size}`,
         image = this.addImage(key, tree.x, tree.y)
@@ -308,13 +330,35 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (!this.core.paused && event.code === "KeyM") {
+        event.preventDefault();
+        this.regionMap.open();
+        return;
+      }
       if (!this.core.paused && event.code === "KeyE") {
         const clue = this.atmosphere.nearestClue();
         if (clue) this.openClue(clue);
         else if (
+          this.core.regions
+            ?.frontiers()
+            .some(
+              (g) =>
+                Math.hypot(g.x - this.playerModel.x, g.y - this.playerModel.y) <
+                130,
+            )
+        ) {
+          const gate = this.core.regions
+            .frontiers()
+            .find(
+              (g) =>
+                Math.hypot(g.x - this.playerModel.x, g.y - this.playerModel.y) <
+                130,
+            );
+          this.core.setDestination(gate.x, gate.y);
+        } else if (
           Math.hypot(
-            this.playerModel.x - CAMP.merchant.x,
-            this.playerModel.y - CAMP.merchant.y,
+            this.playerModel.x - this.merchantSite.x,
+            this.playerModel.y - this.merchantSite.y,
           ) < 150
         )
           this.shop.open();
@@ -344,10 +388,16 @@ export class WorldScene extends Phaser.Scene {
       const object =
         over.find((o) => o.getData("shop")) ||
         over.find((o) => o.getData("clue")) ||
+        over.find((o) => o.getData("regionGate")) ||
         nearby ||
         over.find((o) => o.getData("tree") || o.getData("ancient"));
       if (object?.getData("shop")) {
         this.shop.open();
+        return;
+      }
+      if (object?.getData("regionGate")) {
+        const gate = object.getData("regionGate");
+        this.core.setDestination(gate.x, gate.y);
         return;
       }
       if (object?.getData("clue")) {
@@ -466,6 +516,7 @@ export class WorldScene extends Phaser.Scene {
       this.chips?.resume();
       this.tweens.resumeAll();
       this.anims.resumeAll();
+      this.regionMap?.resume();
     }
   }
   onBlur() {
@@ -529,6 +580,7 @@ export class WorldScene extends Phaser.Scene {
     sprite.setFlipX(body.direction === "left").setDepth(body.y);
   }
   renderModel() {
+    this.camera?.preRender();
     const c = this.core,
       s = c.state,
       p = c.player,
@@ -570,7 +622,7 @@ export class WorldScene extends Phaser.Scene {
     for (const [image, x, y] of [
       [this.hut, CAMP.hut.x, CAMP.hut.y],
       [this.tent, CAMP.tent.x, CAMP.tent.y],
-      [this.merchantTent, CAMP.merchant.x, CAMP.merchant.y],
+      [this.merchantTent, this.merchantSite.x, this.merchantSite.y],
     ])
       image.setAlpha(
         p.y < y &&
@@ -595,6 +647,12 @@ export class WorldScene extends Phaser.Scene {
     this.camera?.preRender();
     this.refreshView();
     this.atmosphere.render();
+    this.campView.render();
+    const openMerchant = this.core.accessible(this.merchantSite);
+    this.merchantTent.setVisible(openMerchant);
+    this.merchant.setVisible(openMerchant);
+    this.merchantLabel?.setVisible(openMerchant);
+    this.ancient.setVisible(this.core.accessible(this.core.world.ancientTree));
     this.feedback.render();
     const hudKey = [
       s.wood,
@@ -603,6 +661,7 @@ export class WorldScene extends Phaser.Scene {
       s.campLevel,
       s.buildWood,
       c.notice,
+      c.regions?.revision,
     ].join(":");
     if (hudKey !== this.lastHudKey) {
       this.lastHudKey = hudKey;
@@ -610,8 +669,9 @@ export class WorldScene extends Phaser.Scene {
       document.querySelector("#coins").textContent = s.coins;
       document.querySelector("#shopButton").textContent =
         `Лавка · ${s.coins} монет`;
-      document.querySelector("#campInfo").textContent =
-        `Лагерь ${s.campLevel}/4 · Радиус леса: ${c.forestRadius()}`;
+      document.querySelector("#campInfo").textContent = c.regions
+        ? `Лагерь ${s.campLevel}/4 · Регионы ${s.unlockedRegions.length}/25`
+        : `Лагерь ${s.campLevel}/4 · Радиус леса: ${c.forestRadius()}`;
       document.querySelector("#status").textContent =
         c.notice ||
         (s.wood >= s.maxWood
@@ -620,6 +680,38 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   syncTrees() {
+    const cameraView = this.camera?.worldView;
+    if (this.core.regions && cameraView) {
+      const margin = 420,
+        view = {
+          x: cameraView.x - margin,
+          y: cameraView.y - margin,
+          width: cameraView.width + margin * 2,
+          height: cameraView.height + margin * 2,
+        },
+        wanted = new Set();
+      for (const tree of this.core.world.treesNear(view))
+        if (
+          tree.x >= view.x &&
+          tree.x <= view.x + view.width &&
+          tree.y >= view.y &&
+          tree.y <= view.y + view.height
+        ) {
+          wanted.add(tree.id);
+          if (!this.treeObjects.has(tree.id)) {
+            const key = `trees.${tree.type}.${tree.size}`,
+              image = this.addImage(key, tree.x, tree.y)
+                .setInteractive({ pixelPerfect: true })
+                .setData("tree", tree);
+            this.treeObjects.set(tree.id, { tree, key, image });
+          }
+        }
+      for (const [id, entry] of this.treeObjects)
+        if (!wanted.has(id)) {
+          entry.image.destroy();
+          this.treeObjects.delete(id);
+        }
+    }
     const p = this.playerModel,
       view = this.camera?.worldView;
     for (const { image, tree, key } of this.treeObjects.values()) {
@@ -653,7 +745,7 @@ export class WorldScene extends Phaser.Scene {
         );
       image.input.enabled = tree.hp > 0 && this.core.treeAccessible(tree);
       image
-        .setVisible(!view || this.nearView(tree, view, 270))
+        .setVisible(!view || this.nearView(tree, view, 420))
         .setAlpha(
           tree.hp > 0 &&
             p.y < tree.y &&
@@ -666,11 +758,19 @@ export class WorldScene extends Phaser.Scene {
   }
   syncPiles() {
     for (const [id, objects] of this.pileObjects)
-      if (!this.core.forestry.piles.has(id)) {
+      if (
+        !this.core.forestry.piles.has(id) ||
+        !this.nearView(
+          this.core.forestry.piles.get(id),
+          this.camera.worldView,
+          180,
+        )
+      ) {
         objects.forEach((o) => o.destroy());
         this.pileObjects.delete(id);
       }
     for (const [id, p] of this.core.forestry.piles) {
+      if (!this.nearView(p, this.camera.worldView, 160)) continue;
       if (!this.pileObjects.has(id))
         this.pileObjects.set(id, [
           this.addImage("log", p.x - 7, p.y, p.y),
@@ -694,6 +794,8 @@ export class WorldScene extends Phaser.Scene {
         a.cart?.destroy();
         a.logs.forEach((i) => i.destroy());
         a.label.destroy();
+        a.bubble.destroy();
+        a.orderIcon.destroy();
         this.customerObjects.delete(id);
       }
     for (const b of this.core.buyers) {
@@ -705,6 +807,10 @@ export class WorldScene extends Phaser.Scene {
             .setOrigin(0.5, 44 / 46)
             .setScale(2),
           logs: [],
+          bubble: this.add.graphics().setDepth(b.y + 0.15),
+          orderIcon: this.addImage("log", b.x, b.y - 114, b.y + 0.2).setScale(
+            0.45,
+          ),
           cart:
             b.kind === "cart"
               ? this.addImage("cart", b.x + 44, b.y + 10)
@@ -737,12 +843,35 @@ export class WorldScene extends Phaser.Scene {
           )
           .setDepth(b.y + 0.05 + i * 0.0001);
       }
+      const nearby =
+        Math.hypot(b.x - this.playerModel.x, b.y - this.playerModel.y) < 280 ||
+        b.slot === 0;
+      const greeting =
+        b.thanks > 0
+          ? "Спасибо!"
+          : b.action === "greet" && b.actionTimer > 0
+            ? "Привет!"
+            : "Заказ";
+      const y = b.y - (b.kind === "cart" ? 125 : 110);
+      a.bubble
+        .clear()
+        .setDepth(b.y + 0.15)
+        .setVisible(nearby);
+      if (nearby)
+        a.bubble
+          .fillStyle(0x344638, 0.95)
+          .fillRoundedRect(b.x - 52, y - 22, 104, 48, 5)
+          .lineStyle(2, 0xc3b780)
+          .strokeRoundedRect(b.x - 52, y - 22, 104, 48, 5);
+      a.orderIcon
+        .setPosition(b.x - 24, y + 7)
+        .setDepth(b.y + 0.2)
+        .setVisible(nearby);
       a.label
-        .setPosition(snap(b.x), snap(b.y + 28))
-        .setText(`${b.load}/${b.capacity}`)
-        .setVisible(
-          Math.hypot(b.x - this.playerModel.x, b.y - this.playerModel.y) < 180,
-        );
+        .setPosition(b.x, y - 10)
+        .setDepth(b.y + 0.2)
+        .setText(`${greeting}\n  ещё ${Math.max(0, b.capacity - b.load)}`)
+        .setVisible(nearby);
     }
   }
   syncCamp() {
@@ -802,6 +931,10 @@ export class WorldScene extends Phaser.Scene {
         this.nearView(p, v, 160) &&
           (!p.tree || p.tree.hp <= 0 || p.tree.legacyIndex % 2 !== 0),
       );
+    if (this.regionView) {
+      this.regionView.sync(v);
+      return;
+    }
     const radius = Math.round(this.atmosphere.radius / 2) * 2;
     if (radius !== this.boundaryRadius) {
       this.boundaryRadius = radius;
@@ -823,6 +956,11 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "region-open") {
+      this.regionView?.opened(e.region);
+      this.expansionBanner = { name: e.region.name };
+      return;
+    }
     if (type === "hit") {
       this.audio?.hit();
       this.heroView?.hit();
@@ -886,7 +1024,7 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.killTweensOf(old);
       old.destroy();
     }
-    const label = this.text(text, x, y, 14, color, 5100);
+    const label = this.text(text, x, y, 14, color, LAYERS.floating);
     this.labels.push(label);
     this.tweens.add({
       targets: label,
@@ -909,7 +1047,7 @@ export class WorldScene extends Phaser.Scene {
     const f = {
       ...event,
       progress: 0,
-      image: this.addImage("log", event.start.x, event.start.y, 5050),
+      image: this.addImage("log", event.start.x, event.start.y, LAYERS.flights),
     };
     this.flights.add(f);
     this.tweens.add({
@@ -978,6 +1116,7 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#clueClose")
       .removeEventListener("click", this.dismissClue);
     document.querySelector("#clueDialog").close();
+    this.regionMap?.destroy();
     this.audio.destroy();
     this.atmosphere.destroy();
     this.textures.remove("construction");

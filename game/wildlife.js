@@ -3,6 +3,7 @@ import { CAMP } from "../pixel-art.js";
 export function createWildlife(core) {
   const { player, nav, forestRadius, nightAmount } = core;
   const { pond } = core.world;
+  const merchant = core.world.merchant || CAMP.merchant;
   const {
     nearestGround,
     findPath,
@@ -34,7 +35,7 @@ export function createWildlife(core) {
         moving: false,
         z: 0,
       });
-      if (i < 3) {
+      if (i < 3 && (!core.accessible || core.accessible(pond))) {
         const a = animals.at(-1),
           bank = waterRestPoint(i + 1);
         a.x = bank.x;
@@ -55,8 +56,7 @@ export function createWildlife(core) {
     merchantLife.timer -= dt;
     merchantLife.greetCooldown = Math.max(0, merchantLife.greetCooldown - dt);
     if (
-      Math.hypot(player.x - CAMP.merchant.x, player.y - CAMP.merchant.y - 36) <
-        145 &&
+      Math.hypot(player.x - merchant.x, player.y - merchant.y - 36) < 145 &&
       merchantLife.greetCooldown <= 0
     ) {
       merchantLife.action = "greet";
@@ -126,7 +126,11 @@ export function createWildlife(core) {
           continue;
         } else if (a.state !== "sleep" && a.timer <= 0) {
           a.cycle = (a.cycle || 0) + 1;
-          if (a.id % 4 === 0 && a.cycle % 3 === 1) {
+          if (
+            a.id % 4 === 0 &&
+            a.cycle % 3 === 1 &&
+            (!core.accessible || core.accessible(pond))
+          ) {
             a.waterTarget = waterRestPoint(a.id);
             a.path = findPath(a, a.waterTarget);
             a.pathVersion = nav.version;

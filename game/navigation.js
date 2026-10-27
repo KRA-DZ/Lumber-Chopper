@@ -17,7 +17,10 @@ export function createNavigation(
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const forestRadius = () => RADII[gameState.campLevel];
+  const bounds = model.bounds || { x: 0, y: 0, width: 3200, height: 3200 };
+  const merchant = model.merchant || CAMP.merchant;
   function constrainPoint(x, y) {
+    if (model.regions) return model.regions.constrain(x, y, player.radius);
     const dx = x - CENTER.x,
       dy = y - CENTER.y,
       d = Math.hypot(dx, dy),
@@ -32,7 +35,7 @@ export function createNavigation(
     lastConstructionKey = "";
   const BUCKET = 128,
     NAV = 32,
-    GRID = 100;
+    GRID = Math.ceil(bounds.width / NAV);
   const FOOT_RADIUS = 10; // Физика учитывает ноги, а не ширину спрайта или рюкзака.
   function campFencePosts() {
     return partialFence(gameState, construction.plan).posts;
@@ -58,10 +61,12 @@ export function createNavigation(
         half: Math.max(0, (w - h) / 2),
       });
     for (const t of trees) if (t.hp > 0) circle(t.x, t.y - 3, 8);
-    circle(ancientTree.x, ancientTree.y - 12, 50);
+    if (!model.regions || model.regions.isOpen(ancientTree))
+      circle(ancientTree.x, ancientTree.y - 12, 50);
     // Пни, камни, сундуки, траву и стопки дров можно пересекать свободно.
     capsule(CAMP.stall.x - 80, CAMP.stall.y - 30, 160, 32);
-    capsule(CAMP.merchant.x - 82, CAMP.merchant.y - 24, 164, 28);
+    if (!model.regions || model.regions.isOpen(merchant))
+      capsule(merchant.x - 82, merchant.y - 24, 164, 28);
     if (gameState.campLevel >= 1 || gameState.buildWood > 0)
       circle(1600, 1600, 23);
     if (
@@ -85,14 +90,19 @@ export function createNavigation(
         b,
       });
     for (const site of landmarks) {
+      if (model.regions && !model.regions.isOpen(site)) continue;
       if (site.type === "camp") capsule(site.x - 57, site.y - 18, 100, 22);
       else if (site.type === "arch") {
         // У ворот остаётся проём: непроходимы только основания двух колонн.
         capsule(site.x - 82, site.y - 18, 30, 20);
         capsule(site.x + 56, site.y - 18, 30, 20);
-      } else if (site.type === "ruins")
-        capsule(site.x - 49, site.y - 18, 98, 22);
-      else if (site.type === "wagon") capsule(site.x - 40, site.y - 16, 80, 24);
+      } else if (site.type === "ruins") {
+        if (model.regions) {
+          for (const column of [0, 1, 2, 4, 5, 6])
+            capsule(site.x - 88 + column * 27, site.y - 18, 25, 20);
+        } else capsule(site.x - 49, site.y - 18, 98, 22);
+      } else if (site.type === "wagon")
+        capsule(site.x - 40, site.y - 16, 80, 24);
     }
     for (const o of obstacles) {
       const x0 = (o.a ? Math.min(o.a.x, o.b.x) : o.x - o.half) - o.r,
@@ -153,7 +163,9 @@ export function createNavigation(
   }
   function isWalkable(x, y, r = FOOT_RADIUS) {
     return (
-      Math.hypot(x - 1600, y - 1600) <= forestRadius() - r &&
+      (model.regions
+        ? model.regions.contains(x, y, r)
+        : Math.hypot(x - 1600, y - 1600) <= forestRadius() - r) &&
       !waterCollision(x, y, r) &&
       !obstacleContact(x, y, r)
     );
@@ -230,11 +242,11 @@ export function createNavigation(
     parent.fill(-1);
     const closed = new Uint8Array(GRID * GRID);
     const center = (id) => ({
-      x: (id % GRID) * NAV + NAV / 2,
-      y: Math.floor(id / GRID) * NAV + NAV / 2,
+      x: bounds.x + (id % GRID) * NAV + NAV / 2,
+      y: bounds.y + Math.floor(id / GRID) * NAV + NAV / 2,
     });
     const free = (id) => {
-      if (id < 0 || id >= 10000) return false;
+      if (id < 0 || id >= GRID * GRID) return false;
       if (!walkCache[id]) {
         const p = center(id);
         walkCache[id] = isWalkable(p.x, p.y) ? 1 : -1;
@@ -242,8 +254,8 @@ export function createNavigation(
       return walkCache[id] === 1;
     };
     function nearestCell(p) {
-      const cx = Math.floor(p.x / NAV),
-        cy = Math.floor(p.y / NAV);
+      const cx = Math.floor((p.x - bounds.x) / NAV),
+        cy = Math.floor((p.y - bounds.y) / NAV);
       for (let rad = 0; rad < 7; rad++) {
         let best = -1,
           dist = Infinity;
@@ -299,7 +311,7 @@ export function createNavigation(
     push(first, 0);
     let visits = 0,
       found = false;
-    while (heap.length && visits++ < 10000) {
+    while (heap.length && visits++ < (model.regions ? 20000 : 10000)) {
       const id = pop();
       if (closed[id]) continue;
       closed[id] = 1;
