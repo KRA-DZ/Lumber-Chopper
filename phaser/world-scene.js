@@ -2,7 +2,9 @@ import { createSimulation } from "../game/simulation.js";
 import { CENTER, WORLD, DAY_SECONDS } from "../game/config.js";
 import { CAMP } from "../pixel-art.js";
 import { createWorldDressing } from "../world.js";
-import { createConstruction } from "../construction.js";
+import { bakeConstruction } from "./construction-view.js";
+import { Atmosphere } from "./atmosphere.js";
+import { createForestAudio } from "./forest-audio.js";
 import { growthStage } from "../forestry.js";
 import { createShop } from "../shop.js";
 import { createAtlas } from "./atlas.js";
@@ -17,6 +19,9 @@ export class WorldScene extends Phaser.Scene {
   create() {
     this.manual = false;
     this.hudReady = false;
+    this.boundaryRadius = null;
+    this.expansionBanner = null;
+    this.lastHudKey = null;
     this.assets = createAtlas(this);
     this.anims.resumeAll();
     this.core = createSimulation({
@@ -62,7 +67,7 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(5000);
     this.player = this.add
       .sprite(1600, 1720, "forest", "characters.player.down.0")
-      .setOrigin(0.5, 34 / 36)
+      .setOrigin(0.5, 44 / 46)
       .setScale(2);
     this.axe = this.add
       .sprite(1620, 1704, "forest", "axes.0.0")
@@ -74,6 +79,8 @@ export class WorldScene extends Phaser.Scene {
       .startFollow(this.playerModel, true, 1, 1, 0, 160);
     this.camera.roundPixels = true;
     this.boundary = this.add.graphics().setDepth(4900);
+    this.audio = createForestAudio();
+    this.atmosphere = new Atmosphere(this);
     this.bindInput();
     this.bindDialogs();
     this.scene.launch("Hud", { world: this });
@@ -221,14 +228,13 @@ export class WorldScene extends Phaser.Scene {
     this.hut = this.addImage("house", CAMP.hut.x, CAMP.hut.y).setVisible(false);
     if (this.textures.exists("construction"))
       this.textures.remove("construction");
-    this.partialTexture = this.textures.createCanvas("construction", 128, 160);
+    this.partialTexture = this.textures.createCanvas("construction", 192, 192);
     this.partialTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.partial = this.add
       .image(0, 0, "construction")
-      .setOrigin(0.5, 140 / 160)
+      .setOrigin(0.5, 176 / 192)
       .setScale(2)
       .setVisible(false);
-    this.construction = createConstruction(this.assets.art, CENTER);
     this.campDecor = [];
     this.fences = [];
     for (const p of this.dressing.campItems)
@@ -271,7 +277,7 @@ export class WorldScene extends Phaser.Scene {
     this.text(
       "ТОРГОВЕЦ",
       CAMP.merchant.x,
-      CAMP.merchant.y - 160,
+      CAMP.merchant.y - 222,
       12,
       "#e9d89c",
       CAMP.merchant.y + 0.2,
@@ -303,6 +309,17 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (!this.core.paused && event.code === "KeyE") {
+        const clue = this.atmosphere.nearestClue();
+        if (clue) this.openClue(clue);
+        else if (
+          Math.hypot(
+            this.playerModel.x - CAMP.merchant.x,
+            this.playerModel.y - CAMP.merchant.y,
+          ) < 150
+        )
+          this.shop.open();
+      }
       if (!this.core.paused && event.code in this.keyMap)
         event.preventDefault();
     });
@@ -327,10 +344,21 @@ export class WorldScene extends Phaser.Scene {
         )[0];
       const object =
         over.find((o) => o.getData("shop")) ||
+        over.find((o) => o.getData("clue")) ||
         nearby ||
         over.find((o) => o.getData("tree") || o.getData("ancient"));
       if (object?.getData("shop")) {
         this.shop.open();
+        return;
+      }
+      if (object?.getData("clue")) {
+        const clue = object.getData("clue");
+        if (
+          Math.hypot(clue.x - this.playerModel.x, clue.y - this.playerModel.y) <
+          140
+        )
+          this.openClue(clue);
+        else this.core.setDestination(clue.x, clue.y + 24);
         return;
       }
       const p = this.camera.getWorldPoint(pointer.x, pointer.y),
@@ -373,8 +401,13 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#shopButton")
       .addEventListener("click", this.openShop);
     this.effectsLight = false;
+    document.querySelector("#effectsBtn").textContent = "Эффекты: полные";
+    document.querySelector("#effectsBtn").setAttribute("aria-pressed", "false");
+    document.querySelector("#sound").textContent = "Включить звуки леса";
+    document.querySelector("#sound").setAttribute("aria-pressed", "false");
     this.toggleEffects = () => {
       this.effectsLight = !this.effectsLight;
+      this.atmosphere.setQuality(this.effectsLight ? "light" : "full");
       const b = document.querySelector("#effectsBtn");
       b.textContent = this.effectsLight ? "Эффекты: лёгкие" : "Эффекты: полные";
       b.setAttribute("aria-pressed", String(this.effectsLight));
@@ -382,19 +415,56 @@ export class WorldScene extends Phaser.Scene {
     document
       .querySelector("#effectsBtn")
       .addEventListener("click", this.toggleEffects);
-    // Звук следующего этапа переноса не маскируется неработающей кнопкой.
-    document.querySelector("#sound")?.remove();
+    this.toggleSound = async () => {
+      const b = document.querySelector("#sound");
+      try {
+        await this.audio.toggle();
+        b.textContent = this.audio.enabled
+          ? "Звуки леса: вкл"
+          : "Включить звуки леса";
+        b.setAttribute("aria-pressed", String(this.audio.enabled));
+      } catch {
+        b.textContent = "Звук недоступен";
+      }
+    };
+    document
+      .querySelector("#sound")
+      .addEventListener("click", this.toggleSound);
+    this.closeClue = () => this.pause("clue", false);
+    this.dismissClue = () => document.querySelector("#clueDialog").close();
+    document
+      .querySelector("#clueDialog")
+      .addEventListener("close", this.closeClue);
+    document
+      .querySelector("#clueClose")
+      .addEventListener("click", this.dismissClue);
+  }
+  openClue(clue) {
+    this.atmosphere.mystery.read.add(clue.id);
+    document.querySelector("#clueTitle").textContent = clue.name;
+    document.querySelector("#clueText").textContent = clue.text;
+    this.pause("clue", true);
+    if (!document.querySelector("#clueDialog").open)
+      document.querySelector("#clueDialog").showModal();
   }
   pause(reason, active) {
     if (active) this.pauseReasons.add(reason);
     else this.pauseReasons.delete(reason);
     const paused = this.pauseReasons.size > 0;
     this.core.paused = paused;
+    const hud = this.scene.get("Hud");
+    if (hud?.tweens) {
+      if (paused) hud.tweens.pauseAll();
+      else hud.tweens.resumeAll();
+    }
+    this.audio?.setPaused(paused);
     this.input.keyboard.resetKeys();
     if (paused) {
+      this.chips?.pause();
       this.tweens.pauseAll();
       this.anims.pauseAll();
     } else {
+      this.chips?.resume();
       this.tweens.resumeAll();
       this.anims.resumeAll();
     }
@@ -417,6 +487,7 @@ export class WorldScene extends Phaser.Scene {
       for (const [name, key] of Object.entries(this.keyboard))
         if (key.isDown) this.core.keys.add(name);
     this.core.update(dt);
+    this.atmosphere.update(dt);
     this.renderModel();
   }
   update(time, delta) {
@@ -438,6 +509,23 @@ export class WorldScene extends Phaser.Scene {
     else {
       sprite.stop();
       sprite.setFrame(`${prefix}.0`);
+      if (
+        dir === "down" &&
+        mood === "neutral" &&
+        Math.floor(this.core.elapsed * 10 + (body.id ?? 0)) % 53 < 2
+      )
+        sprite.setFrame(`idle.${role}.blink`);
+      if (
+        (role !== "player" && body.thanks > 0) ||
+        (role === "player" && body.celebration > 0)
+      )
+        sprite.setFrame(`idle.${role}.cheer`);
+      else if (
+        role !== "player" &&
+        this.core.nightAmount() > 0.6 &&
+        Math.floor(this.core.elapsed + (body.id ?? 0)) % 17 < 2
+      )
+        sprite.setFrame(`idle.${role}.yawn`);
     }
     sprite.setFlipX(body.direction === "left").setDepth(body.y);
   }
@@ -504,6 +592,18 @@ export class WorldScene extends Phaser.Scene {
     this.syncBuyers();
     this.syncPiles();
     this.syncCamp();
+    for (const [image, x, y] of [
+      [this.hut, CAMP.hut.x, CAMP.hut.y],
+      [this.tent, CAMP.tent.x, CAMP.tent.y],
+      [this.merchantTent, CAMP.merchant.x, CAMP.merchant.y],
+    ])
+      image.setAlpha(
+        p.y < y &&
+          p.y > y - image.displayHeight &&
+          Math.abs(p.x - x) < image.displayWidth * 0.4
+          ? 0.48
+          : 1,
+      );
     const buyer = c.activeBuyer();
     this.saleLabel.setText(
       buyer
@@ -519,6 +619,7 @@ export class WorldScene extends Phaser.Scene {
     );
     this.camera?.preRender();
     this.refreshView();
+    this.atmosphere.render();
     const hudKey = [
       s.wood,
       s.maxWood,
@@ -552,7 +653,21 @@ export class WorldScene extends Phaser.Scene {
             ? "stump"
             : stage === 1
               ? `world.saplings.${tree.legacyIndex % 2}`
-              : key;
+              : stage === 3 &&
+                  !tree.shake &&
+                  tree.type !== "dead" &&
+                  !this.effectsLight
+                ? (() => {
+                    const phase = [0, 1, 0, -1][
+                      Math.floor(
+                        this.core.elapsed * 1.4 + tree.legacyIndex * 0.7,
+                      ) % 4
+                    ];
+                    return phase
+                      ? `wind.${tree.type}.${tree.size}.${phase}`
+                      : key;
+                  })()
+                : key;
       if (image.frame.name !== frame) this.assets.setFrame(image, frame);
       image
         .setScale(stage === 1 || stage === 2 ? 1 : 2)
@@ -566,8 +681,8 @@ export class WorldScene extends Phaser.Scene {
         .setAlpha(
           tree.hp > 0 &&
             p.y < tree.y &&
-            p.y > tree.y - 240 &&
-            Math.abs(p.x - tree.x) < 65
+            p.y > tree.y - image.displayHeight + 20 &&
+            Math.abs(p.x - tree.x) < image.displayWidth * 0.4
             ? 0.45
             : 1,
         );
@@ -611,7 +726,7 @@ export class WorldScene extends Phaser.Scene {
         a = {
           sprite: this.add
             .sprite(b.x, b.y, "forest", "characters.buyerA.down.0")
-            .setOrigin(0.5, 34 / 36)
+            .setOrigin(0.5, 44 / 46)
             .setScale(2),
           logs: [],
           cart:
@@ -665,15 +780,11 @@ export class WorldScene extends Phaser.Scene {
     this.hut.setVisible(s.campLevel === 4);
     this.partial.setVisible(s.buildWood > 0 && s.campLevel !== 2);
     if (this.partial.visible) {
-      const site =
-          s.campLevel === 0 ? CENTER : s.campLevel === 1 ? CAMP.tent : CAMP.hut,
-        ctx = this.partialTexture.getContext();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, 128, 160);
-      ctx.setTransform(0.5, 0, 0, 0.5, 64 - site.x * 0.5, 140 - site.y * 0.5);
-      this.construction.update(s, 0);
-      for (const e of this.construction.previewEntities(s)) e.draw(ctx);
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const site = bakeConstruction(
+        this.partialTexture.getContext(),
+        this.assets.art,
+        s,
+      );
       this.partialTexture.refresh();
       this.partial.setPosition(site.x, site.y).setDepth(site.y);
     }
@@ -715,7 +826,7 @@ export class WorldScene extends Phaser.Scene {
         this.nearView(p, v, 160) &&
           (!p.tree || p.tree.hp <= 0 || p.tree.legacyIndex % 2 !== 0),
       );
-    const radius = this.core.forestRadius();
+    const radius = Math.round(this.atmosphere.radius / 2) * 2;
     if (radius !== this.boundaryRadius) {
       this.boundaryRadius = radius;
       const g = this.boundary.clear().fillStyle(0x142f29, 0.91);
@@ -737,6 +848,7 @@ export class WorldScene extends Phaser.Scene {
   }
   onModelEvent(type, e) {
     if (type === "hit") {
+      this.audio?.hit();
       this.axe?.play(`chop.${this.core.state.axeLevel}`);
       this.chips?.explode(this.effectsLight ? 3 : 8, e.tree.x, e.tree.y - 12);
       this.float(`−${e.damage}`, e.tree.x, e.tree.y - 55, "#f5e3b8");
@@ -771,9 +883,14 @@ export class WorldScene extends Phaser.Scene {
       });
     } else if (type === "pickup")
       this.fly({ kind: "pickup", index: e.index, start: e.pile });
-    else if (type === "transfer") this.fly(e);
-    else if (type === "text") this.float(e.text, e.x, e.y, e.color);
-    else if (type === "expansion") this.expansionBanner = e;
+    else if (type === "transfer") {
+      this.fly(e);
+      if (e.kind === "sell") this.audio?.sale();
+    } else if (type === "text") this.float(e.text, e.x, e.y, e.color);
+    else if (type === "expansion") {
+      this.expansionBanner = e;
+      this.atmosphere?.expand(e);
+    }
   }
   float(text, x, y, color = "#f5e3b8") {
     if (this.labels.length >= 32) {
@@ -863,6 +980,19 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#effectsBtn")
       .removeEventListener("click", this.toggleEffects);
     document.querySelector("#shopDialog").close();
+    document
+      .querySelector("#sound")
+      .removeEventListener("click", this.toggleSound);
+    document
+      .querySelector("#clueDialog")
+      .removeEventListener("close", this.closeClue);
+    document
+      .querySelector("#clueClose")
+      .removeEventListener("click", this.dismissClue);
+    document.querySelector("#clueDialog").close();
+    this.audio.destroy();
+    this.atmosphere.destroy();
+    this.textures.remove("construction");
     this.shop.destroy();
     this.terrain.destroy();
     this.scene.stop("Hud");

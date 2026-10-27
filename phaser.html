@@ -265,7 +265,7 @@
   <main>
     <header>
       <div>
-        <small>ЛЕСНОЙ ПРОМЫСЕЛ · ПРОБНАЯ ВЕРСИЯ</small>
+        <small>ЛЕСНОЙ ПРОМЫСЕЛ · НОВОЕ ОФОРМЛЕНИЕ</small>
         <h1>Лесная смена</h1>
       </div>
       <div class="stats">
@@ -274,8 +274,8 @@
       </div>
     </header>
     <nav class="versions">
-      <a href="./index.html" data-legacy-link>Текущая полная версия</a
-      ><span>Phaser · пробная версия</span>
+      <a href="./index.html" data-legacy-link>← Исходная графика · Canvas</a
+      ><span>Новая графика · Phaser</span>
     </nav>
     <div id="game-frame">
       <div
@@ -294,7 +294,7 @@
           идёт автоматически.<br />Нажимайте на дерево рядом, чтобы рубить
           быстрее. После рубки остаётся пень. Золотая площадка — продажа
           покупателям. Голубая — строительство лагеря. Лавка открывается по
-          нажатию на прилавок или палатку торговца.
+          нажатию на прилавок или палатку торговца. E — изучить находку рядом.
         </p>
       </div>
       <div>
@@ -309,8 +309,8 @@
     </footer>
     <div id="campInfo" class="stat"></div>
     <p>
-      Пробная версия: ходьба, рубка, брёвна, покупатели, лавка и развитие
-      лагеря. Каждая загрузка начинает новую игру.
+      Новое пиксельное оформление, погода, животные и ночной лес. Сравните с
+      исходной версией по ссылке над игрой. Каждая загрузка начинает новую игру.
     </p>
     <div id="status" role="status" aria-live="polite"></div>
   </main>
@@ -331,6 +331,11 @@
     </p>
     <div data-items></div>
     <p data-message role="status" aria-live="polite"></p>
+  </dialog>
+  <dialog id="clueDialog" aria-labelledby="clueTitle">
+    <h2 id="clueTitle"></h2>
+    <p id="clueText"></p>
+    <button type="button" id="clueClose">Убрать находку</button>
   </dialog>
   <script src="./vendor/phaser/phaser.min.js"></script>
   <script type="module" src="./phaser/main.js"></script>

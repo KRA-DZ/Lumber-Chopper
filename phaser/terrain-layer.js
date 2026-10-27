@@ -1,8 +1,8 @@
-import { createTerrain } from "../terrain.js";
+import { createForestGround } from "./art/ground-art.js";
 export class TerrainLayer {
   constructor(scene, model) {
     this.scene = scene;
-    this.source = createTerrain({
+    this.source = createForestGround({
       ...model,
       center: { x: 1600, y: 1600 },
       clearings: model.landmarks,

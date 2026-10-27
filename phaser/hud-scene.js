@@ -24,6 +24,16 @@ export class HudScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0)
       .setVisible(false);
+    this.discovery = this.add
+      .text(0, 82, "", {
+        fontFamily: "monospace",
+        fontSize: "13px",
+        color: "#f4db9c",
+        backgroundColor: "#263e2b",
+        padding: { x: 10, y: 7 },
+      })
+      .setOrigin(0.5, 0)
+      .setVisible(false);
     this.mapZone = this.add.zone(0, 0, 144, 144).setOrigin(0).setInteractive();
     this.mapZone.on("pointerdown", (pointer, x, y, event) => {
       event.stopPropagation();
@@ -66,10 +76,14 @@ export class HudScene extends Phaser.Scene {
         .padStart(2, "0");
     g.clear()
       .fillStyle(0x243c2d, 0.93)
-      .fillRect(14, 12, 230, 56)
+      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 56)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
+    this.discovery
+      .setVisible(c.elapsed < this.world.atmosphere.discoveryUntil)
+      .setPosition(this.scale.width / 2, this.scale.width < 600 ? 135 : 82)
+      .setText(this.world.atmosphere.discovery);
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\nЛагерь ${c.state.campLevel}/4`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4`,
     );
     g.fillStyle(0x68a34e).fillCircle(
       left + size / 2,
@@ -86,6 +100,10 @@ export class HudScene extends Phaser.Scene {
     for (const t of c.trees)
       if (t.hp > 0 && c.treeAccessible(t))
         g.fillRect(left + t.x * scale, top + t.y * scale, 1, 1);
+    g.fillStyle(0xf4d394);
+    for (const p of c.world.landmarks)
+      if (this.world.atmosphere.discovered.has(p.id))
+        g.fillRect(left + p.x * scale - 1, top + p.y * scale - 1, 3, 3);
     const v = this.world.camera.worldView;
     g.lineStyle(1, 0xf0ecc0, 0.6).strokeRect(
       left + v.x * scale,

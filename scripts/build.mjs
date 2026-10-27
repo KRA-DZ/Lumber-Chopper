@@ -28,6 +28,9 @@ for (const file of [
   "construction.js",
   "terrain.js",
   "shop.js",
+  "weather.js",
+  "environment.js",
+  "mystery.js",
 ])
   await copyFile(new URL(file, root), new URL(file, out));
 for (const dir of ["game", "phaser", "vendor"])

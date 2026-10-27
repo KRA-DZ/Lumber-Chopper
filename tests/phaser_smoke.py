@@ -166,7 +166,7 @@ try:
                 'w.terrain.images.size<=28&&w.terrain.source.cachedChunks<=28&&g.game.textures.getTextureKeys().filter(k=>k.startsWith("terrain/")).length===w.terrain.images.size&&g.game.textures.getTextureKeys().length<128&&w.flights.size<=16'
             )
             # A scene restart must not duplicate shop cards/listeners or reuse old progress.
-            q.evaluate("window.oldCore=m;w.scene.restart()")
+            q.evaluate("window.oldCore=m;w.scene.restart();void 0")
             q.wait_for_function(
                 "window.lumberPhaser?.core!==oldCore&&window.lumberPhaser?.scene.hudReady"
             )
