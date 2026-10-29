@@ -110,7 +110,7 @@ export class HudScene extends Phaser.Scene {
       .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 76)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}\n♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {
@@ -160,11 +160,15 @@ export class HudScene extends Phaser.Scene {
       "3/3 · Откройте лавку и улучшите переноску.",
       "Отлично! Стройте лагерь или открывайте соседние регионы.",
     ];
+    const night = c.cycle.isNight;
+    const nightHint = night
+      ? `Ночь ${c.dayNumber + 1} · ${c.survival?.raiders.length ? `Налётчики: ${c.survival.raiders.length}. Топор — защита лагеря.` : "Смотритель неуязвим. Держитесь света лагеря."}`
+      : null;
     this.tutorial
       .setWordWrapWidth(this.scale.width - 64)
       .setPosition(this.scale.width / 2, this.scale.height - 12)
-      .setText(hints[step])
-      .setVisible(step < 3 || c.elapsed - this.doneAt < 6);
+      .setText(nightHint || hints[step])
+      .setVisible(night || step < 3 || c.elapsed - this.doneAt < 6);
     this.discovery
       .setVisible(
         c.elapsed < this.world.atmosphere.discoveryUntil &&

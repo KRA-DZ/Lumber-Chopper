@@ -131,9 +131,11 @@ export class Atmosphere {
     return [
       { x: p.x, y: p.y - 24, r: nightSight(s.lanternLevel) },
       ...this.lanterns(),
-      ...(s.campLevel > 0
-        ? [{ x: 1600, y: 1592, r: 220 + Math.sin(t * 8) * 8 }]
-        : []),
+      {
+        x: 1600,
+        y: 1600,
+        r: this.core.survival?.safeRadius() ?? (s.campLevel > 0 ? 220 : 0),
+      },
       ...(s.campLevel === 4
         ? [
             { x: CAMP.hut.x - 68, y: CAMP.hut.y - 68, r: 100 },

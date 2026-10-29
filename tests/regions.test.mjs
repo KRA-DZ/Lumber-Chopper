@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
 import { REGION_SIZE, REGIONS } from "../game/regions.js";
-const create = () => createSimulation({ regional: true });
+const create = () => createSimulation({ regional: true, survival: false });
 function open(g, id) {
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
   assert.ok(gate);
@@ -32,6 +32,7 @@ test("a border project keeps partial payments, consumes exactly the cost and add
   const events = [],
     g = createSimulation({
       regional: true,
+      survival: false,
       emit: (type, e) => events.push([type, e]),
     }),
     initial = g.trees.length,
@@ -70,7 +71,11 @@ test("camp stages improve buildings without opening regions, and tutorial follow
   const g = create(),
     t = g.trees.find((t) => t.type === "oak" && t.size === 2);
   assert.equal(g.tutorialStep, 0);
-  while (t.hp > 0) g.hitTree(t);
+  Object.assign(g.player, { x: t.x + 58, y: t.y, path: [] });
+  for (let n = 0; t.hp > 0 && n < 100; n++) {
+    g.hitTree(t);
+    g.update(0.2);
+  }
   assert.equal(g.tutorialStep, 1);
   for (let i = 0; i < 220; i++) g.update(0.1);
   Object.assign(g.player, { x: g.sale.x, y: g.sale.y, path: [] });

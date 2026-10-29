@@ -71,7 +71,7 @@ try:
                 ("down", 0, -58),
             ]:
                 q.evaluate(
-                    """([dx,dy])=>{m.player.x=tree.x+dx;m.player.y=tree.y+dy;m.player.path=[];m.hitTree(tree);g.step(0)}""",
+                    """([dx,dy])=>{m.player.x=tree.x+dx;m.player.y=tree.y+dy;m.player.path=[];m.player.clickTimer=0;m.hitTree(tree);g.step(0)}""",
                     [dx, dy],
                 )
                 assert q.evaluate(
@@ -91,13 +91,15 @@ try:
                 q.wait_for_timeout(200)
             # Capture a real early strike with a single health badge, then the finishing impact.
             q.evaluate(
-                "m.player.x=tree.x+58;m.player.y=tree.y;m.hitTree(tree);g.step(0)"
+                "m.player.x=tree.x+58;m.player.y=tree.y;m.player.clickTimer=0;m.hitTree(tree);g.step(0)"
             )
             q.wait_for_timeout(40)
             q.locator("#game-frame").screenshot(
                 path=str(ROOT / f'docs/chopping-{"mobile"if mobile else "hero"}.png')
             )
-            q.evaluate("while(tree.hp>0)m.hitTree(tree);g.step(0)")
+            q.evaluate(
+                "for(let n=0;tree.hp>0&&n<100;n++){m.hitTree(tree);g.step(.2)}g.step(0)"
+            )
             assert q.evaluate(
                 "!w.feedback.barVisible&&w.feedback.impacts.length>0&&m.forestry.piles.has(tree.id)"
             )
@@ -124,7 +126,7 @@ try:
             assert q.evaluate("w.feedback.highlightCount===0")
             # Genuine rapid cutting exercises caps; visual completion never awards additional resources.
             q.evaluate(
-                "m.forestry.piles.clear();for(const t of m.trees.filter(t=>m.treeAccessible(t)&&t.hp>0).slice(0,25))while(t.hp>0)m.hitTree(t);g.step(0)"
+                "m.forestry.piles.clear();for(const t of m.trees.filter(t=>m.treeAccessible(t)&&t.hp>0).slice(0,25)){m.player.x=t.x+58;m.player.y=t.y;m.player.path=[];for(let n=0;t.hp>0&&n<100;n++){m.hitTree(t);g.step(.2)}}g.step(0)"
             )
             assert q.evaluate(
                 "w.feedback.impacts.length<=4&&w.falls.length<=4&&w.labels.length<=32&&w.chips.getAliveParticleCount()<=64"

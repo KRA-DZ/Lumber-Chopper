@@ -1,0 +1,140 @@
+{
+  "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.update (simulation + view, GPU work excluded), frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
+  "samples": [
+    {
+      "version": "current",
+      "scenario": "day-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 124,
+        "median": 0.7,
+        "p95": 1.2,
+        "max": 1.6
+      },
+      "frameMs": {
+        "count": 124,
+        "median": 16.7,
+        "p95": 50,
+        "max": 50.1
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 299,
+      "textures": 38,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0
+    },
+    {
+      "version": "current",
+      "scenario": "rain-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 91,
+        "median": 0.8,
+        "p95": 5.7,
+        "max": 7
+      },
+      "frameMs": {
+        "count": 91,
+        "median": 33.3,
+        "p95": 66.6,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 300,
+      "textures": 38,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0
+    },
+    {
+      "version": "current",
+      "scenario": "night-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 85,
+        "median": 0.7,
+        "p95": 1.3,
+        "max": 19.7
+      },
+      "frameMs": {
+        "count": 85,
+        "median": 33.3,
+        "p95": 66.6,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 299,
+      "textures": 38,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0
+    },
+    {
+      "version": "current",
+      "scenario": "night-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 79,
+        "median": 0.6,
+        "p95": 1.1,
+        "max": 2.1
+      },
+      "frameMs": {
+        "count": 79,
+        "median": 33.3,
+        "p95": 83.4,
+        "max": 500
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 295,
+      "textures": 37,
+      "chunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0
+    },
+    {
+      "version": "current",
+      "scenario": "fifth-night-82",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 66,
+        "median": 1,
+        "p95": 4.4,
+        "max": 21.3
+      },
+      "frameMs": {
+        "count": 66,
+        "median": 50,
+        "p95": 83.3,
+        "max": 133.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 347,
+      "textures": 43,
+      "chunks": 12,
+      "cargo": 82,
+      "flights": 0,
+      "enemies": 4
+    }
+  ]
+}

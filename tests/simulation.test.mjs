@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
-import { buyUpgrade } from "../economy.js";
+
 import { growthStage } from "../forestry.js";
 const step = (g, n, dt = 0.1) => {
   for (let i = 0; i < n; i++) g.update(dt);
@@ -17,8 +17,12 @@ test("engine-independent simulation completes harvest, exact sale and first earn
         g.nav.isWalkable(t.x + 46, t.y + 38),
     );
   Object.assign(g.player, { x: t.x + 46, y: t.y + 38 });
-  while (t.hp > 0) g.hitTree(t);
-  assert.equal(g.forestry.piles.get(t.id).count, 3);
+  Object.assign(g.player, { x: t.x + 58, y: t.y, path: [] });
+  for (let n = 0; t.hp > 0 && n < 100; n++) {
+    g.hitTree(t);
+    g.update(0.2);
+  }
+  assert.equal(g.forestry.piles.get(t.id).count + g.state.wood, 3);
   step(g, 10);
   assert.equal(g.state.wood, 2);
   assert.equal(g.forestry.piles.get(t.id).count, 1);
@@ -29,7 +33,7 @@ test("engine-independent simulation completes harvest, exact sale and first earn
   assert.equal(g.state.coins, 20);
   assert.equal(g.state.wood, 0);
   assert.ok(events.some(([type]) => type === "transfer"));
-  assert.equal(buyUpgrade(g.state, "carry"), true);
+  assert.equal(g.purchaseUpgrade("carry"), true);
   assert.equal(g.state.maxWood, 4);
   assert.equal(g.state.coins, 0);
   Object.assign(g.player, { x: t.x + 46, y: t.y + 38 });
@@ -86,7 +90,11 @@ test("paused and zero-time updates cannot spend cargo or progress the calendar",
 test("calendar regrowth restores colliders and safely displaces a player on the stump", () => {
   const g = createSimulation(),
     t = g.trees.find((t) => g.treeAccessible(t));
-  while (t.hp > 0) g.hitTree(t);
+  Object.assign(g.player, { x: t.x + 58, y: t.y, path: [] });
+  for (let n = 0; t.hp > 0 && n < 100; n++) {
+    g.hitTree(t);
+    g.update(0.2);
+  }
   g.player.autoTimer = 1000;
   for (let day = 1; day <= 3; day++) {
     if (day === 3) Object.assign(g.player, { x: t.x, y: t.y, path: [] });

@@ -328,11 +328,15 @@
           встаньте на площадку у пограничного указателя. После рубки остаётся
           пень. Золотая площадка — продажа покупателям. Голубая — строительство
           лагеря. Лавка открывается по нажатию на прилавок или палатку торговца.
-          E — изучить находку рядом.
+          E — изучить находку рядом. J — дневник и письма. Ночью Смотритель
+          неуязвим: спасайтесь в круге света лагеря. На ночи 5, 10, 15 приходят
+          налётчики — их можно рубить топором. Повреждённый лагерь чинится
+          брёвнами на голубой площадке.
         </p>
       </div>
       <div>
         <button id="shopButton" type="button">Лавка</button>
+        <button id="journalButton" type="button">Дневник · J</button>
         <button id="mapButton" type="button">Карта леса · M</button>
         <button id="sound" type="button" aria-pressed="false">
           Включить звуки леса
@@ -386,6 +390,18 @@
       брёвнами на пограничных площадках.
     </p>
     <div data-regions></div>
+  </dialog>
+  <dialog id="journalDialog" aria-labelledby="journalTitle">
+    <div class="dialog-top">
+      <h2 id="journalTitle">Дневник лесоруба</h2>
+      <button type="button" data-journal-close>Закрыть</button>
+    </div>
+    <div data-journal></div>
+  </dialog>
+  <dialog id="deathDialog" aria-labelledby="deathTitle">
+    <h2 id="deathTitle">Лес погас</h2>
+    <p data-defeat></p>
+    <button type="button" data-restart>Начать заново</button>
   </dialog>
   <script src="./vendor/phaser/phaser.min.js"></script>
   <script type="module" src="./phaser/main.js"></script>

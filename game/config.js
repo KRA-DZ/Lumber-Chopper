@@ -12,6 +12,17 @@ export const STAGES = Object.freeze(
 );
 export function createInitialState() {
   const state = {
+    health: 100, // Три ошибки рядом со Смотрителем смертельны; рассвет восстанавливает здоровье.
+    maxHealth: 100,
+    campHealth: 200, // Налётчики повреждают лагерь; одно бревно на стройке чинит 20 HP.
+    maxCampHealth: 200,
+    gameOver: false,
+    defeatReason: "",
+    nightsSurvived: 0, // Увеличивается только на рассвете после прожитой ночи.
+    calendarDay: 0,
+    readClues: [],
+    unlockedLetters: [],
+    claimedQuests: [],
     wood: 0,
     maxWood: 2, // На старте две руки; сила переноски добавляет по два бревна.
     coins: 0,

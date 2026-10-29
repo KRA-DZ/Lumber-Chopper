@@ -1,3 +1,5 @@
+import { CAMP } from "./game/camp-layout.js";
+export { CAMP };
 import { AXE_TIERS } from "./economy.js";
 // Собственные спрайты: целые пиксели, ограниченная палитра, без сглаживания.
 export const PIXEL_SCALE = 2;
@@ -9,14 +11,6 @@ export const METRICS = Object.freeze({
   spruce: 109,
   house: 125,
   fence: 18,
-});
-export const CAMP = Object.freeze({
-  hut: { x: 1680, y: 1455 },
-  tent: { x: 1445, y: 1495 },
-  merchant: { x: 1945, y: 1465 },
-  stall: { x: 1420, y: 1618 },
-  fenceRX: 280,
-  fenceRY: 235,
 });
 const leafPalettes = {
   oak: ["#193b2b", "#245735", "#35743b", "#4b9240", "#70ac4b", "#a3c465"],

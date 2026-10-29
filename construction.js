@@ -1,4 +1,4 @@
-import { CAMP } from "./pixel-art.js";
+import { CAMP } from "./game/camp-layout.js";
 export const STAGE_COSTS = Object.freeze([10, 20, 35, 50]);
 export function stageRatio(state) {
   return Math.max(

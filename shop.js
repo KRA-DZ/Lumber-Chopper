@@ -1,6 +1,9 @@
 import { SHOP_IDS, upgradeOffer, buyUpgrade, AXE_TIERS } from "./economy.js";
 
-export function createShop(state, { onChange, onOpen }) {
+export function createShop(
+  state,
+  { onChange, onOpen, purchase = (id) => buyUpgrade(state, id) },
+) {
   const dialog = document.querySelector("#shopDialog"),
     balance = dialog.querySelector("[data-balance]"),
     items = dialog.querySelector("[data-items]"),
@@ -32,7 +35,7 @@ export function createShop(state, { onChange, onOpen }) {
     items.append(card);
     button.addEventListener("click", () => {
       const offer = upgradeOffer(state, id);
-      if (!buyUpgrade(state, id)) {
+      if (!purchase(id)) {
         refresh();
         return;
       }

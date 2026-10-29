@@ -1,4 +1,4 @@
-import { CAMP } from "../pixel-art.js";
+import { CAMP } from "./camp-layout.js";
 import {
   fencePlan,
   partialFence,

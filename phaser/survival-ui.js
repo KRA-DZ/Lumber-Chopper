@@ -1,0 +1,100 @@
+import { LETTERS, QUESTS } from "../game/lore.js";
+export function createSurvivalUi(scene) {
+  const journal = document.querySelector("#journalDialog"),
+    list = journal.querySelector("[data-journal]"),
+    button = document.querySelector("#journalButton"),
+    death = document.querySelector("#deathDialog");
+  function refreshBadge() {
+    button.textContent = `Дневник · ${scene.core.state.unlockedLetters.length} писем · J`;
+  }
+  function render() {
+    const c = scene.core,
+      s = c.state;
+    list.replaceChildren();
+    const append = (title, text) => {
+      const article = document.createElement("article"),
+        h = document.createElement("h3"),
+        p = document.createElement("p");
+      h.textContent = title;
+      p.textContent = text;
+      article.append(h, p);
+      list.append(article);
+      return article;
+    };
+    if (!s.unlockedLetters.length)
+      append(
+        "Пока нет писем",
+        "Письма появятся после пережитых ночей. Ищите записки на карте.",
+      );
+    for (const l of LETTERS.filter((l) => s.unlockedLetters.includes(l.id))) {
+      append(l.name, l.text);
+      c.lore.read(l);
+    }
+    for (const q of QUESTS.filter((q) =>
+      s.unlockedLetters.includes(q.letter),
+    )) {
+      const claimed = s.claimedQuests.includes(q.id),
+        a = append(q.name, `${q.description} Награда: ${q.reward} монет.`),
+        b = document.createElement("button");
+      b.type = "button";
+      b.dataset.quest = q.id;
+      b.textContent = claimed ? "Выполнено" : "Получить награду";
+      b.disabled = claimed || !q.ready(s);
+      b.addEventListener("click", () => {
+        if (c.lore.claim(q.id)) {
+          render();
+          scene.renderModel();
+        }
+      });
+      a.append(b);
+    }
+    for (const clue of c.world.clues || [])
+      if (s.readClues.includes(clue.id)) append(clue.name, clue.text);
+  }
+  function open() {
+    if (scene.core.state.gameOver) return;
+    render();
+    scene.pause("journal", true);
+    if (!journal.open) journal.showModal();
+  }
+  const close = () => scene.pause("journal", false),
+    dismiss = () => journal.close();
+  const restart = () => location.reload(),
+    prevent = (event) => event.preventDefault();
+  button.addEventListener("click", open);
+  journal.addEventListener("close", close);
+  journal
+    .querySelector("[data-journal-close]")
+    .addEventListener("click", dismiss);
+  death.querySelector("[data-restart]").addEventListener("click", restart);
+  death.addEventListener("cancel", prevent);
+  refreshBadge();
+  return {
+    open,
+    refreshBadge,
+    defeat(event) {
+      scene.pause("defeat", true);
+      for (const id of ["shopButton", "mapButton", "journalButton"])
+        document.querySelector("#" + id).disabled = true;
+      death.querySelector("[data-defeat]").textContent =
+        `${event.reason} Пережито ночей: ${event.nightsSurvived}.`;
+      if (!death.open) death.showModal();
+    },
+    destroy() {
+      button.removeEventListener("click", open);
+      journal.removeEventListener("close", close);
+      journal
+        .querySelector("[data-journal-close]")
+        .removeEventListener("click", dismiss);
+      death
+        .querySelector("[data-restart]")
+        .removeEventListener("click", restart);
+      death.removeEventListener("cancel", prevent);
+      journal.close();
+      death.close();
+      list.replaceChildren();
+      for (const id of ["shopButton", "mapButton", "journalButton"])
+        document.querySelector("#" + id).disabled = false;
+    },
+  };
+}

@@ -1,3 +1,8 @@
+import { StackView } from "./stack-view.js";
+import { BuyerView } from "./buyer-view.js";
+import { EnemyView } from "./enemy-view.js";
+import { createSurvivalUi } from "./survival-ui.js";
+import { stackOffset } from "../game/stack-layout.js";
 import { LAYERS } from "./layers.js";
 import { createRegionMap } from "./region-map.js";
 import { RegionView } from "./region-view.js";
@@ -24,6 +29,7 @@ export class WorldScene extends Phaser.Scene {
   }
   create() {
     this.manual = false;
+    this.accumulator = 0;
     this.hudReady = false;
     this.boundaryRadius = null;
     this.expansionBanner = null;
@@ -80,7 +86,10 @@ export class WorldScene extends Phaser.Scene {
     this.player = this.heroView.player;
     this.axe = this.heroView.axe;
     this.feedback = new ChoppingFeedback(this);
-    this.hiddenCargo = new Set();
+    this.stackView = new StackView(this);
+    this.cargo = this.stackView.logs;
+    this.buyerView = new BuyerView(this);
+    this.enemyView = new EnemyView(this);
     this.camera = this.cameras.main;
     this.camera
       .setBounds(
@@ -97,6 +106,7 @@ export class WorldScene extends Phaser.Scene {
     this.bindInput();
     this.bindDialogs();
     this.regionMap = createRegionMap(this);
+    this.survivalUi = createSurvivalUi(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
     this.renderModel();
@@ -333,6 +343,11 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (!this.core.paused && event.code === "KeyJ") {
+        event.preventDefault();
+        this.survivalUi.open();
+        return;
+      }
       if (!this.core.paused && event.code === "KeyM") {
         event.preventDefault();
         this.regionMap.open();
@@ -389,11 +404,27 @@ export class WorldScene extends Phaser.Scene {
             Math.hypot(b.x - this.playerModel.x, b.y - this.playerModel.y),
         )[0];
       const object =
+        over.find((o) => o.getData("enemy")) ||
         over.find((o) => o.getData("shop")) ||
         over.find((o) => o.getData("clue")) ||
         over.find((o) => o.getData("regionGate")) ||
         nearby ||
         over.find((o) => o.getData("tree") || o.getData("ancient"));
+      if (object?.getData("enemy")) {
+        const id = object.getData("enemy");
+        if (!this.core.tryAttack(id)) {
+          const enemy = this.core.survival?.raiders.find((e) => e.id === id);
+          if (
+            enemy &&
+            Math.hypot(
+              enemy.x - this.playerModel.x,
+              enemy.y - this.playerModel.y,
+            ) >= 72
+          )
+            this.core.setDestination(enemy.x, enemy.y);
+        }
+        return;
+      }
       if (object?.getData("shop")) {
         this.shop.open();
         return;
@@ -427,10 +458,7 @@ export class WorldScene extends Phaser.Scene {
         Math.hypot(tree.x - this.playerModel.x, tree.y - this.playerModel.y) <
           72
       ) {
-        if (this.playerModel.clickTimer <= 0) {
-          this.core.hitTree(tree);
-          this.playerModel.clickTimer = this.core.state.clickInterval;
-        }
+        this.core.tryChop(tree.id);
         return;
       }
       this.core.setDestination(tree ? tree.x : p.x, tree ? tree.y + 42 : p.y);
@@ -439,8 +467,8 @@ export class WorldScene extends Phaser.Scene {
   bindDialogs() {
     this.shop = createShop(this.core.state, {
       onOpen: () => this.pause("shop", true),
+      purchase: (id) => this.core.purchaseUpgrade(id),
       onChange: () => {
-        this.playerModel.speed = this.core.state.runSpeed;
         this.renderModel();
       },
     });
@@ -492,6 +520,7 @@ export class WorldScene extends Phaser.Scene {
       .addEventListener("click", this.dismissClue);
   }
   openClue(clue) {
+    this.core.lore.read(clue);
     this.atmosphere.mystery.read.add(clue.id);
     document.querySelector("#clueTitle").textContent = clue.name;
     document.querySelector("#clueText").textContent = clue.text;
@@ -502,7 +531,8 @@ export class WorldScene extends Phaser.Scene {
   pause(reason, active) {
     if (active) this.pauseReasons.add(reason);
     else this.pauseReasons.delete(reason);
-    const paused = this.pauseReasons.size > 0;
+    const paused = this.pauseReasons.size > 0 || this.core.state.gameOver;
+    if (paused) this.accumulator = 0;
     this.core.paused = paused;
     const hud = this.scene.get("Hud");
     if (hud?.tweens) {
@@ -534,18 +564,39 @@ export class WorldScene extends Phaser.Scene {
   onVisible() {
     this.pause("hidden", false);
   }
-  step(dt) {
+  readInput() {
     this.core.keys.clear();
     if (!this.core.paused)
       for (const [name, key] of Object.entries(this.keyboard))
         if (key.isDown) this.core.keys.add(name);
+  }
+  step(dt) {
+    this.readInput();
     this.core.update(dt);
     this.atmosphere.update(dt);
     this.renderModel();
   }
   update(time, delta) {
-    if (!this.manual) this.step(Math.min(delta / 1000, 0.05));
-    else this.renderModel();
+    if (this.manual) {
+      this.renderModel();
+      return;
+    }
+    if (this.core.paused) {
+      this.accumulator = 0;
+      this.renderModel();
+      return;
+    }
+    // 12 steps/frame absorbs a sustained 5 FPS without slowing the calendar.
+    // A two-second backlog cap avoids a spiral after a suspended browser frame.
+    this.accumulator = Math.min(2, this.accumulator + delta / 1000);
+    this.readInput();
+    let steps = 0;
+    while (this.accumulator >= 1 / 60 && steps++ < 12 && !this.core.paused) {
+      this.accumulator -= 1 / 60;
+      this.core.update(1 / 60);
+      this.atmosphere.update(1 / 60);
+    }
+    this.renderModel();
   }
   animatePerson(sprite, role, body, mood = "neutral") {
     const dir =
@@ -589,35 +640,8 @@ export class WorldScene extends Phaser.Scene {
       p = c.player,
       t = c.elapsed;
     this.heroView.render();
-    this.hiddenCargo.clear();
-    for (const f of this.flights)
-      if (f.kind === "pickup") this.hiddenCargo.add(f.index);
-    const count = Math.min(s.wood, 40);
-    while (this.cargo.length < count)
-      this.cargo.push(this.addImage("log", 0, 0));
-    for (let i = 0; i < this.cargo.length; i++) {
-      const hidden = this.hiddenCargo.has(i),
-        height = i / Math.max(1, count - 1),
-        load = Math.min(s.wood / 20, 1.5);
-      this.cargo[i]
-        .setVisible(i < count && !hidden)
-        .setPosition(
-          snap(
-            p.x +
-              (p.moving
-                ? Math.sin(t * 9 - height * 1.8) * (2 + height * 11) * load
-                : 0),
-          ),
-          snap(
-            p.y -
-              4 -
-              i * 9 +
-              this.heroView.bob +
-              (p.moving ? Math.sin(t * 12) * (1 + load) : 0),
-          ),
-        )
-        .setDepth(p.y + 0.04 + i * 0.0001);
-    }
+    this.stackView.render();
+    this.enemyView.render();
     this.syncTrees();
     this.syncBuyers();
     this.syncPiles();
@@ -643,9 +667,11 @@ export class WorldScene extends Phaser.Scene {
           : "Ждём покупателя",
     );
     this.buildLabel.setText(
-      c.stages[s.campLevel]
-        ? `${c.stages[s.campLevel].name} ${s.buildWood}/${c.stages[s.campLevel].cost}`
-        : "Лагерь построен",
+      s.campHealth < s.maxCampHealth
+        ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 20 HP/бревно`
+        : c.stages[s.campLevel]
+          ? `${c.stages[s.campLevel].name} ${s.buildWood}/${c.stages[s.campLevel].cost}`
+          : "Лагерь построен",
     );
     this.camera?.preRender();
     this.refreshView();
@@ -791,91 +817,7 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   syncBuyers() {
-    for (const [id, a] of this.customerObjects)
-      if (!this.core.buyers.some((b) => b.id === id)) {
-        a.sprite.destroy();
-        a.cart?.destroy();
-        a.logs.forEach((i) => i.destroy());
-        a.label.destroy();
-        a.bubble.destroy();
-        a.orderIcon.destroy();
-        this.customerObjects.delete(id);
-      }
-    for (const b of this.core.buyers) {
-      let a = this.customerObjects.get(b.id);
-      if (!a) {
-        a = {
-          sprite: this.add
-            .sprite(b.x, b.y, "forest", "characters.buyerA.down.0")
-            .setOrigin(0.5, 44 / 46)
-            .setScale(2),
-          logs: [],
-          bubble: this.add.graphics().setDepth(b.y + 0.15),
-          orderIcon: this.addImage("log", b.x, b.y - 114, b.y + 0.2).setScale(
-            0.45,
-          ),
-          cart:
-            b.kind === "cart"
-              ? this.addImage("cart", b.x + 44, b.y + 10)
-              : null,
-          label: this.text("", b.x, b.y + 28, 11),
-        };
-        this.customerObjects.set(b.id, a);
-      }
-      a.sprite.setPosition(snap(b.x), snap(b.y));
-      this.animatePerson(
-        a.sprite,
-        b.kind === "walker" ? "buyerA" : "buyerB",
-        b,
-        b.thanks > 0 ? "happy" : "neutral",
-      );
-      a.cart?.setPosition(snap(b.x + 44), snap(b.y + 10)).setDepth(b.y - 0.01);
-      while (a.logs.length < b.load) a.logs.push(this.addImage("log", 0, 0));
-      for (let i = 0; i < a.logs.length; i++) {
-        const hidden = [...this.flights].some(
-          (f) => f.target?.follow === b && f.target.slot === i,
-        );
-        a.logs[i]
-          .setVisible(i < b.load && !hidden)
-          .setPosition(
-            snap(b.x + (b.kind === "cart" ? 30 + (i % 2) * 24 : 0)),
-            snap(
-              b.y +
-                (b.kind === "cart" ? -28 - Math.floor(i / 2) * 9 : -4 - i * 9),
-            ),
-          )
-          .setDepth(b.y + 0.05 + i * 0.0001);
-      }
-      const nearby =
-        Math.hypot(b.x - this.playerModel.x, b.y - this.playerModel.y) < 280 ||
-        b.slot === 0;
-      const greeting =
-        b.thanks > 0
-          ? "Спасибо!"
-          : b.action === "greet" && b.actionTimer > 0
-            ? "Привет!"
-            : "Заказ";
-      const y = b.y - (b.kind === "cart" ? 125 : 110);
-      a.bubble
-        .clear()
-        .setDepth(b.y + 0.15)
-        .setVisible(nearby);
-      if (nearby)
-        a.bubble
-          .fillStyle(0x344638, 0.95)
-          .fillRoundedRect(b.x - 52, y - 22, 104, 48, 5)
-          .lineStyle(2, 0xc3b780)
-          .strokeRoundedRect(b.x - 52, y - 22, 104, 48, 5);
-      a.orderIcon
-        .setPosition(b.x - 24, y + 7)
-        .setDepth(b.y + 0.2)
-        .setVisible(nearby);
-      a.label
-        .setPosition(b.x, y - 10)
-        .setDepth(b.y + 0.2)
-        .setText(`${greeting}\n  ещё ${Math.max(0, b.capacity - b.load)}`)
-        .setVisible(nearby);
-    }
+    this.buyerView.render();
   }
   syncCamp() {
     const s = this.core.state,
@@ -959,6 +901,25 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "attack") {
+      this.audio?.hit();
+      this.heroView?.hit();
+      this.float(`−${e.damage}`, e.enemy.x, e.enemy.y - 70, "#e8bc8d");
+      return;
+    }
+    if (type === "game-over") {
+      this.survivalUi?.defeat(e);
+      return;
+    }
+    if (type === "letter-received") {
+      this.survivalUi?.refreshBadge();
+      return;
+    }
+    if (type === "wave-started") {
+      this.core?.showNotice?.(`Налётчики: ${e.count}`);
+      return;
+    }
+
     if (type === "region-open") {
       this.regionView?.opened(e.region);
       this.expansionBanner = { name: e.region.name };
@@ -1058,20 +1019,13 @@ export class WorldScene extends Phaser.Scene {
       progress: 1,
       duration: event.kind === "pickup" ? 780 : 550,
       onUpdate: () => {
+        const slot = stackOffset(
+          Math.min(Math.max(0, this.core.state.wood - 1), event.index ?? 0),
+          this.core.state.wood,
+        );
         const target =
           event.kind === "pickup"
-            ? {
-                x: this.playerModel.x,
-                y:
-                  this.playerModel.y -
-                  4 -
-                  Math.min(
-                    39,
-                    Math.max(0, this.core.state.wood - 1),
-                    event.index,
-                  ) *
-                    9,
-              }
+            ? { x: this.playerModel.x + slot.x, y: this.playerModel.y + slot.y }
             : event.target.follow
               ? {
                   x: event.target.follow.x + event.target.dx,
@@ -1119,6 +1073,7 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#clueClose")
       .removeEventListener("click", this.dismissClue);
     document.querySelector("#clueDialog").close();
+    this.survivalUi?.destroy();
     this.regionMap?.destroy();
     this.audio.destroy();
     this.atmosphere.destroy();

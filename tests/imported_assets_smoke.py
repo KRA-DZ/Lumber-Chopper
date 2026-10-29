@@ -64,7 +64,9 @@ try:
             x, y = point(q, q.evaluate("tree.x"), q.evaluate("tree.y-18"))
             q.mouse.click(x, y)
             assert q.evaluate("tree.hp===hp-1")
-            q.evaluate("while(tree.hp>0)m.hitTree(tree);g.step(0)")
+            q.evaluate(
+                "for(let n=0;tree.hp>0&&n<100;n++){m.hitTree(tree);g.step(.2)}g.step(0)"
+            )
             assert q.evaluate(
                 'w.treeObjects.get(tree.id).image.frame.name==="stump"&&m.forestry.piles.has(tree.id)'
             )

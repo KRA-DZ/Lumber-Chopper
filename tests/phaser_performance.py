@@ -41,7 +41,7 @@ for label, root in ([("baseline", args.baseline)] if args.baseline else []) + [
     servers.append(server)
     sources.append((label, url))
 report = {
-    "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.step only, frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
+    "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.update (simulation + view, GPU work excluded), frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
     "samples": [],
 }
 try:
@@ -65,14 +65,19 @@ try:
             q.goto(url)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=30000)
             q.evaluate(
-                """()=>{window.g=lumberPhaser;window.w=g.scene;window.m=g.core;const original=w.step.bind(w);window.samples={cpu:[],frames:[],on:false};w.step=dt=>{const t=performance.now();original(dt);if(samples.on&&samples.cpu.length<2000)samples.cpu.push(performance.now()-t)};let last=performance.now();function frame(now){if(samples.on&&samples.frames.length<2000)samples.frames.push(now-last);last=now;requestAnimationFrame(frame)}requestAnimationFrame(frame);m.state.maxWood=40;while(m.state.wood<40)m.forestry.addCargo(10);m.player.x=1600;m.player.y=1760;window.destination=1740;w.events.on('postupdate',()=>{if(Math.abs(m.player.x-destination)<12)destination=destination===1740?1580:1740;if(!m.player.path.length)m.setDestination(destination,1760)})}"""
+                """()=>{window.g=lumberPhaser;window.w=g.scene;window.m=g.core;const original=w.sys.sceneUpdate.bind(w);window.samples={cpu:[],frames:[],on:false};w.sys.sceneUpdate=(time,delta)=>{const t=performance.now();original(time,delta);if(samples.on&&samples.cpu.length<2000)samples.cpu.push(performance.now()-t)};let last=performance.now();function frame(now){if(samples.on&&samples.frames.length<2000)samples.frames.push(now-last);last=now;requestAnimationFrame(frame)}requestAnimationFrame(frame);m.state.maxWood=40;while(m.state.wood<40)m.forestry.addCargo(10);m.player.x=1600;m.player.y=1760;window.destination=1740;w.events.on('postupdate',()=>{if(Math.abs(m.player.x-destination)<12)destination=destination===1740?1580:1740;if(!m.player.path.length)m.setDestination(destination,1760)})}"""
             )
             for name, time, light in [
                 ("day-cargo", 120, False),
                 ("rain-cargo", 220, False),
                 ("night-cargo", 450, False),
                 ("night-light", 450, True),
+                ("fifth-night-82", 450, False),
             ]:
+                if name == "fifth-night-82":
+                    q.evaluate(
+                        "m.state.maxWood=82;while(m.state.wood<82)m.forestry.addCargo(10);m.state.calendarDay=4;m.state.worldTime=299.95;g.step(.1);g.step(16.1)"
+                    )
                 q.evaluate(
                     """([time,light])=>{samples.on=false;m.state.worldTime=time;if(w.effectsLight!==light)document.querySelector('#effectsBtn').click()}""",
                     [time, light],
@@ -81,7 +86,7 @@ try:
                 q.evaluate("samples.cpu=[];samples.frames=[];samples.on=true")
                 q.wait_for_timeout(3000)
                 result = q.evaluate(
-                    """()=>{samples.on=false;const stats=a=>{a=a.slice().sort((a,b)=>a-b);return {count:a.length,median:Math.round(a[Math.floor(a.length*.5)]*100)/100,p95:Math.round(a[Math.floor(a.length*.95)]*100)/100,max:Math.round(a.at(-1)*100)/100}};const atlas=w.textures.get('forest').getSourceImage();return {renderer:g.renderer,cpuMs:stats(samples.cpu),frameMs:stats(samples.frames),atlas:[atlas.width,atlas.height],objects:w.children.length,textures:w.textures.getTextureKeys().length,chunks:w.terrain.images.size,cargo:w.cargo.length,flights:w.flights.size}}"""
+                    """()=>{samples.on=false;if(!samples.cpu.length)throw new Error("No CPU samples from scene update");const stats=a=>{a=a.slice().sort((a,b)=>a-b);return {count:a.length,median:Math.round(a[Math.floor(a.length*.5)]*100)/100,p95:Math.round(a[Math.floor(a.length*.95)]*100)/100,max:Math.round(a.at(-1)*100)/100}};const atlas=w.textures.get('forest').getSourceImage();return {renderer:g.renderer,cpuMs:stats(samples.cpu),frameMs:stats(samples.frames),atlas:[atlas.width,atlas.height],objects:w.children.length,textures:w.textures.getTextureKeys().length,chunks:w.terrain.images.size,cargo:w.cargo.length,flights:w.flights.size,enemies:w.enemyView?.objects.size||0}}"""
                 )
                 assert not errors, errors
                 entry = {"version": label, "scenario": name, **result}
