@@ -231,7 +231,10 @@ export class WorldScene extends Phaser.Scene {
       .setData("ancient", true);
     this.fire = this.add
       .sprite(CENTER.x, CENTER.y, "forest", "unlitFire")
-      .setOrigin(0.5, 34 / 40)
+      .setOrigin(
+        this.assets.meta.get("unlitFire").originX,
+        this.assets.meta.get("unlitFire").originY,
+      )
       .setScale(2)
       .setDepth(CENTER.y + 8);
     this.anims.create({

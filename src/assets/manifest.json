@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "source": {
+    "file": "camp-sheet.png",
+    "sha256": "bd589705836df3abeac656ac9d80a90e16972ca62e10b85400c6cfdac0c41047",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "processing": {
+    "layout": "grid",
+    "columns": 3,
+    "background": "all",
+    "tolerance": 12,
+    "minArea": 8,
+    "padding": 2,
+    "defringe": 1
+  },
+  "assets": {
+    "tent": {
+      "file": "tent.png",
+      "width": 463,
+      "height": 366,
+      "anchor": {
+        "x": 0.582073,
+        "y": 0.993169
+      },
+      "sourceBox": [
+        36,
+        89,
+        495,
+        451
+      ]
+    },
+    "shop": {
+      "file": "shop.png",
+      "width": 455,
+      "height": 449,
+      "anchor": {
+        "x": 0.554945,
+        "y": 0.994432
+      },
+      "sourceBox": [
+        569,
+        23,
+        1020,
+        468
+      ]
+    },
+    "merchant": {
+      "file": "merchant.png",
+      "width": 154,
+      "height": 261,
+      "anchor": {
+        "x": 0.561688,
+        "y": 0.990421
+      },
+      "sourceBox": [
+        1250,
+        184,
+        1400,
+        441
+      ]
+    },
+    "spruce": {
+      "file": "spruce.png",
+      "width": 338,
+      "height": 484,
+      "anchor": {
+        "x": 0.492604,
+        "y": 0.994835
+      },
+      "sourceBox": [
+        105,
+        502,
+        439,
+        982
+      ]
+    },
+    "birch": {
+      "file": "birch.png",
+      "width": 328,
+      "height": 449,
+      "anchor": {
+        "x": 0.483232,
+        "y": 0.994432
+      },
+      "sourceBox": [
+        631,
+        523,
+        955,
+        968
+      ]
+    },
+    "campfire": {
+      "file": "campfire.png",
+      "width": 267,
+      "height": 199,
+      "anchor": {
+        "x": 0.518727,
+        "y": 0.987437
+      },
+      "sourceBox": [
+        1176,
+        725,
+        1439,
+        920
+      ]
+    }
+  }
+}

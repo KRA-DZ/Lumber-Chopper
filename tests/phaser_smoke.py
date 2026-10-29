@@ -183,7 +183,7 @@ try:
             q.evaluate('w.pause("shop",false)')
             assert q.evaluate("!m.paused")
             assert all(
-                r.startswith(url) or r.startswith("data:") for r in requests
+                r.startswith(url) or r.startswith("blob:"+url) or r.startswith("data:") for r in requests
             ), requests
             assert not errors, errors
             print(

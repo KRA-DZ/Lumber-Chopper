@@ -1,3 +1,4 @@
+import { applyImportedArt, IMPORTED_ASSETS } from "./imported-art.js";
 import { createCampArt } from "./art/camp-art.js";
 import { HERO_WALK_FRAMES, STRIKE_MS } from "./art/hero-motion.js";
 import { createForestArt } from "./art/forest-art.js";
@@ -9,7 +10,7 @@ import { createWorldArt } from "../world-art.js";
 // Каждый кадр атласа доступен как обычный Phaser Image/Sprite.
 export function createAtlas(scene) {
   if (scene.textures.exists("forest")) scene.textures.remove("forest");
-  const art = createForestArt(),
+  const art = applyImportedArt(scene, createForestArt()),
     worldArt = createWorldArt(),
     sources = new Map(),
     meta = new Map();
@@ -139,6 +140,11 @@ export function createAtlas(scene) {
   }
   texture.refresh();
   texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  // Keep decoded PNG images in the registry for scene restarts, release the six
+  // original GPU textures after their scaled pixels have entered the one atlas.
+  for (const name of IMPORTED_ASSETS)
+    if (scene.textures.exists(`import.${name}`))
+      scene.textures.remove(`import.${name}`);
   function image(key, x, y, depth = y) {
     const m = meta.get(key);
     return scene.add

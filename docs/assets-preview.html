@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Лесная смена · PNG-ассеты</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #203b2b;
+      color: #efdfb4;
+      font:
+        15px system-ui,
+        sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: auto;
+    }
+    h1 {
+      font-size: 25px;
+    }
+    a {
+      color: #edcf8a;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+    figure {
+      margin: 0;
+      border: 2px solid #81905c;
+      background: #304c3a;
+    }
+    .picture {
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: repeating-conic-gradient(#324b40 0% 25%, #3c5549 0% 50%)
+        50%/24px 24px;
+    }
+    .picture img {
+      max-height: 94%;
+      max-width: 94%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+    figcaption {
+      padding: 10px;
+    }
+    small {
+      color: #c0cdb0;
+    }
+    @media (max-width: 650px) {
+      body {
+        padding: 14px;
+      }
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .picture {
+        height: 230px;
+      }
+    }
+  </style>
+  <main>
+    <h1>Шесть PNG-ассетов на прозрачном фоне</h1>
+    <p>
+      <a href="../art/source/camp-sheet.png" download>Скачать исходный лист</a>
+      · <a href="../phaser.html">Открыть игру</a>
+    </p>
+    <p>
+      <small
+        >Шахматный фон страницы показывает прозрачность. Объекты сохранены
+        отдельными PNG; в игре они масштабируются один раз при сборке
+        атласа.</small
+      >
+    </p>
+    <div class="grid">
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/tent.png" alt="Туристическая палатка" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/tent.png" download>tent.png</a> · палатка
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/shop.png" alt="Дом торговца" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/shop.png" download>shop.png</a> · дом торговца
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/merchant.png" alt="Торговец в капюшоне" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/merchant.png" download>merchant.png</a> ·
+          торговец
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/spruce.png" alt="Ель" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/spruce.png" download>spruce.png</a> · ель
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/birch.png" alt="Берёза" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/birch.png" download>birch.png</a> · берёза
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="picture">
+          <img src="../src/assets/campfire.png" alt="Кострище без огня" />
+        </div>
+        <figcaption>
+          <a href="../src/assets/campfire.png" download>campfire.png</a> ·
+          кострище
+        </figcaption>
+      </figure>
+    </div>
+  </main>
+</html>

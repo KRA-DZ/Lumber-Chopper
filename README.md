@@ -10,6 +10,8 @@
 
 Новые снимки: [лагерь](docs/forest-day.png), [ночь](docs/forest-night.png), [дождь](docs/forest-rain.png), [телефон](docs/forest-mobile.png).
 
+**PNG-ассеты:** палатка, дом торговца, торговец в капюшоне, ель, берёза и кострище загружаются из `src/assets/`. [Каталог PNG](docs/assets-preview.html) · [исходный лист](art/source/camp-sheet.png) · [Python-нарезка и автоматическая публикация](docs/ASSET-PIPELINE.md). Обычный `phaser.html` использует PNG, `phaser.html?art=procedural` — прежний набор для сравнения.
+
 **Новая карта Phaser:** 25 крупных квадратных регионов по 1920×1920. Соседи открываются за брёвна у пограничных указателей; карта доступна кнопкой «Карта леса» или M. Древний дуб, пруд, крепость с сундуками и загадочный торговец находятся в отдельных регионах. Лагерь получил заказы покупателей, указатели, постепенный декор и три стартовые подсказки. [Правила и архитектура](docs/REGIONS.md) · [карта](docs/regions-map.png) · [лагерь](docs/regions-camp.png).
 
 Примеры: [лавка](docs/progression-shop.png), [ночь и глаза в темноте](docs/progression-night.png), [брёвна на земле](docs/progression-ground.png), [лавка на телефоне](docs/progression-shop-mobile.png), [новое кольцо леса](docs/living-expansion.png), [сравнение размеров спрайтов](docs/pixel-scale.png).

@@ -33,7 +33,7 @@ for (const file of [
   "mystery.js",
 ])
   await copyFile(new URL(file, root), new URL(file, out));
-for (const dir of ["game", "phaser", "vendor"])
+for (const dir of ["game", "phaser", "vendor", "src/assets"])
   await cp(new URL(dir, root), new URL(dir, out), { recursive: true });
 const html = (await readFile(new URL("phaser.html", root), "utf8")).replace(
   /<a[^>]*data-legacy-link[^>]*>[^<]*<\/a\s*>/,
