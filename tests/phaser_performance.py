@@ -73,12 +73,19 @@ try:
                 ("night-cargo", 450, False),
                 ("night-light", 450, True),
                 ("fifth-night-82", 450, False),
+                ("raid-defense-82", 450, False),
                 ("watcher-chase", 450, False),
                 ("watcher-chase-warm", 450, False),
             ]:
                 if name == "fifth-night-82":
                     q.evaluate(
                         "m.state.maxWood=82;while(m.state.wood<82)m.forestry.addCargo(10);m.state.calendarDay=4;m.state.worldTime=299.95;g.step(.1);g.step(16.1)"
+                    )
+                if name == "raid-defense-82":
+                    if not q.evaluate("!!m.defenses"):
+                        continue
+                    q.evaluate(
+                        "m.state.worldTime=599.99;g.step(.02);m.state.campLevel=3;m.nav.rebuildObstacles();for(const s of m.defenses.all())if(s.kind!=='fence')for(let i=0;i<s.cost;i++)m.defenses.deposit(s.id);m.state.maxWood=82;while(m.state.wood<82)m.forestry.addCargo(10);m.player.autoTimer=1000;m.state.calendarDay=29;m.state.worldTime=299.99;g.step(.02);g.step(12.1)"
                     )
                 if name.startswith("watcher-chase") and not q.evaluate(
                     "!!m.survival?.hear"

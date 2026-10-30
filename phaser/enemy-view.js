@@ -1,3 +1,4 @@
+import { RAIDER_ROLES } from "../game/raiders.js";
 import { CENTER } from "../game/config.js";
 import { WATCHER_LABELS } from "../game/watcher.js";
 import { LAYERS } from "./layers.js";
@@ -71,7 +72,11 @@ export class EnemyView {
       }
       const visible = s.nearView(e, s.camera.worldView, 250),
         frame = e.moving ? Math.floor(c.elapsed * 5) % 2 : 0;
-      let key = `survival.${e.kind}${frame}`;
+      const role = RAIDER_ROLES[e.role || "attacker"];
+      let key =
+        e.kind === "raider" && e.role && e.role !== "attacker"
+          ? `survival.raider.${e.role}${frame}`
+          : `survival.${e.kind}${frame}`;
       if (e.invulnerable) {
         if (["notice", "windup", "strike", "repelled"].includes(e.phase))
           key = `survival.watcher.${e.phase}`;
@@ -79,6 +84,17 @@ export class EnemyView {
           key = "survival.watcher.search";
       }
       s.assets.setFrame(o.image, key);
+      o.image.setScale(e.role === "breaker" ? 2.25 : 2);
+      if (e.flash > 0) o.image.setTintFill(0xffedc0);
+      else o.image.clearTint();
+      const selected = c.selectedEnemyId === e.id;
+      if (selected && visible) {
+        g.lineStyle(3, 0xffe5a2, 0.95).strokeEllipse(e.x, e.y, 48, 24);
+        g.fillStyle(0x302f29, 0.95)
+          .fillRect(e.x - 26, e.y - 101, 52, 6)
+          .fillStyle(role.color)
+          .fillRect(e.x - 25, e.y - 100, (50 * e.hp) / e.maxHP, 4);
+      }
       o.image
         .setPosition(Math.round(e.x / 2) * 2, Math.round(e.y / 2) * 2)
         .setDepth(e.y)
@@ -89,9 +105,22 @@ export class EnemyView {
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `Налётчик · ${e.hp} HP`,
+            : `${selected ? "▾ " : ""}${role.name} · ${e.hp} HP${
+                e.fleeing
+                  ? `
+Убегает · ${e.stolen} монет`
+                  : ""
+              }`,
         )
         .setVisible(visible);
+      const color = e.invulnerable
+        ? "#e9c598"
+        : selected
+          ? "#ffe5a2"
+          : `#${role.color.toString(16).padStart(6, "0")}`;
+      // Text.setColor redraws its canvas/GPU texture even when the color is unchanged.
+      if (o.label.style.color !== color) o.label.setColor(color);
+      /* ground telegraphs below */
       if (e.invulnerable && e.phase === "windup" && e.attack) {
         const a = e.attack,
           t = Math.min(1, e.windup / (e.attack.duration || 1.2));

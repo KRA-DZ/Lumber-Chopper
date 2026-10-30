@@ -83,40 +83,63 @@ export function createSurvivalArt() {
   const out = {};
   for (let frame = 0; frame < 2; frame++) {
     out[`watcher${frame}`] = watcherSprite("walk", frame);
-    out[`raider${frame}`] = sprite(34, 49, 17, 46, (p) => {
-      p.rect(10, 38, 6, 9, "#28332e");
-      p.rect(20, 38, 5, 9, "#28332e");
-      p.poly(
-        [
-          [12, 14],
-          [24, 14],
-          [29, 36],
-          [24, 41],
-          [8, 40],
-          [6, 31],
-        ],
-        "#423d49",
-      );
-      p.poly(
-        [
-          [13, 3],
-          [23, 4],
-          [29, 17],
-          [25, 25],
-          [7, 24],
-          [5, 15],
-        ],
-        "#313747",
-      );
-      p.rect(11, 13, 12, 9, "#17262c");
-      p.rect(12, 16, 3, 2, "#dfac78");
-      p.rect(20, 16, 3, 2, "#dfac78");
-      p.line(12, 27, 10, 37, "#74675e", 3);
-      p.line(23, 27, 26, 35, "#74675e", 3);
-      p.line(28, 24 + frame * 2, 28, 43, "#9b7c52", 2);
-      p.rect(25, 23 + frame * 2, 8, 5, "#a4a996");
-      p.rect(13, 32, 10, 2, "#95866a");
-    });
+    for (const role of ["attacker", "thief", "breaker"]) {
+      const key =
+        role === "attacker" ? `raider${frame}` : `raider.${role}${frame}`;
+      out[key] = sprite(34, 49, 17, 46, (p) => {
+        p.rect(10, 38, 6, 9, "#28332e");
+        p.rect(20, 38, 5, 9, "#28332e");
+        p.poly(
+          [
+            [12, 14],
+            [24, 14],
+            [29, 36],
+            [24, 41],
+            [8, 40],
+            [6, 31],
+          ],
+          role === "thief"
+            ? "#3c6557"
+            : role === "breaker"
+              ? "#884a3f"
+              : "#423d49",
+        );
+        p.poly(
+          [
+            [13, 3],
+            [23, 4],
+            [29, 17],
+            [25, 25],
+            [7, 24],
+            [5, 15],
+          ],
+          role === "thief"
+            ? "#294f49"
+            : role === "breaker"
+              ? "#634645"
+              : "#313747",
+        );
+        p.rect(11, 13, 12, 9, "#17262c");
+        p.rect(12, 16, 3, 2, "#dfac78");
+        p.rect(20, 16, 3, 2, "#dfac78");
+        p.line(12, 27, 10, 37, "#74675e", 3);
+        p.line(23, 27, 26, 35, "#74675e", 3);
+        p.line(28, 24 + frame * 2, 28, 43, "#9b7c52", 2);
+        p.rect(25, 23 + frame * 2, 8, 5, "#a4a996");
+        p.rect(13, 32, 10, 2, "#95866a");
+        if (role === "thief") {
+          p.border(0, 24, 10, 17, "#344a38", "#ad9662");
+          p.line(4, 24, 17, 30, "#dbc08b", 2);
+          p.rect(28, 23 + frame * 2, 4, 6, "#c5cbbb");
+        }
+        if (role === "breaker") {
+          p.rect(6, 25, 9, 7, "#a47a55");
+          p.rect(21, 25, 9, 7, "#a47a55");
+          p.border(22, 18 + frame * 2, 12, 9, "#403f3c", "#9a9f95");
+          p.rect(12, 6, 12, 3, "#ad8b67");
+        }
+      });
+    }
   }
   for (const mode of ["search", "notice", "windup", "strike", "repelled"])
     out[`watcher.${mode}`] = watcherSprite(mode);

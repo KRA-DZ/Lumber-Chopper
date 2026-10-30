@@ -1,3 +1,4 @@
+import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
 import { createWatcher } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
@@ -8,8 +9,6 @@ export const SURVIVAL = Object.freeze({
   warningSeconds: 12,
   waveEvery: RAID_INTERVAL,
   maxRaiders: 8,
-  raiderSpeed: 82,
-  raiderDamage: 12,
   repairPerLog: 20,
 });
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -21,6 +20,7 @@ export function createSurvival({
   accessible,
   emit,
   defeat,
+  defenses,
 }) {
   const raiders = [];
   let monster = null,
@@ -29,7 +29,8 @@ export function createSurvival({
     warningTimer = 0,
     pathCooldown = 0,
     hitCooldown = 0,
-    pathCursor = 0;
+    pathCursor = 0,
+    wave = null;
   const safeRadius = () => (state.campLevel > 0 ? 310 : 210);
   const isSafe = (p) => distance(p, CENTER) < safeRadius();
   function spawnPoint(around, radius, phase = 0) {
@@ -81,6 +82,17 @@ export function createSurvival({
           phaseTime: 0,
         }
       : null;
+    wave =
+      night % SURVIVAL.waveEvery === 0
+        ? {
+            night,
+            status: "warning",
+            spawned: 0,
+            killed: 0,
+            escaped: 0,
+            reward: 0,
+          }
+        : null;
     pending =
       night % SURVIVAL.waveEvery === 0
         ? Math.min(SURVIVAL.maxRaiders, 2 + night / SURVIVAL.waveEvery)
@@ -92,6 +104,10 @@ export function createSurvival({
     });
   }
   function dawn() {
+    if (wave && ["warning", "active"].includes(wave.status)) {
+      wave.status = "withdrawn";
+      emit("wave-ended", { ...wave });
+    }
     if (monster) emit("watcher-left", {});
     watcher.reset();
     monster = null;
@@ -118,17 +134,68 @@ export function createSurvival({
           : "Налётчики настигли вас.",
       );
   }
-  function hit(id, damage) {
+  function finishWave() {
+    if (!wave || wave.status !== "active" || raiders.length) return;
+    wave.status =
+      wave.spawned > 0 && wave.killed === wave.spawned ? "won" : "escaped";
+    const base = 40 + 20 * (wave.night / SURVIVAL.waveEvery);
+    wave.reward = wave.spawned
+      ? Math.floor((base * wave.killed) / wave.spawned)
+      : 0;
+    state.coins += wave.reward;
+    if (wave.status === "won") state.raidsWon++;
+    emit("wave-ended", { ...wave });
+  }
+  function escaped(actor) {
+    const index = raiders.indexOf(actor);
+    if (index < 0) return;
+    raiders.splice(index, 1);
+    if (wave) wave.escaped++;
+    emit("enemy-escaped", { id: actor.id, coins: actor.stolen || 0 });
+    finishWave();
+  }
+  function hit(id, damage, knockback = true) {
     const target = raiders.find((r) => r.id === id);
-    if (!target || target.hp <= 0) return false;
+    if (!target || target.hp <= 0 || !Number.isFinite(damage) || damage <= 0)
+      return false;
     target.hp = Math.max(0, target.hp - damage);
+    target.flash = 0.16;
+    if (knockback) {
+      const d = Math.max(1, distance(player, target));
+      nav.moveBody?.(
+        target,
+        ((target.x - player.x) / d) * 10,
+        ((target.y - player.y) / d) * 10,
+      );
+      target.stun = 0.15;
+      target.windup = 0;
+      target.path = [];
+      target.repath = 0;
+    }
     emit("enemy-hit", { enemy: target, damage });
     if (!target.hp) {
       raiders.splice(raiders.indexOf(target), 1);
-      emit("enemy-defeated", { id });
+      if (wave) wave.killed++;
+      if (target.stolen) {
+        state.coins += target.stolen;
+        emit("supplies-recovered", { enemy: target, coins: target.stolen });
+      }
+      emit("enemy-defeated", { id, x: target.x, y: target.y });
+      finishWave();
     }
     return true;
   }
+  const raiderAI = createRaiderAI({
+    state,
+    player,
+    nav,
+    defenses,
+    emit,
+    hurtPlayer,
+    defeat,
+    hit,
+    escaped,
+  });
   function update(dt) {
     if (dt <= 0 || state.gameOver) return;
     hitCooldown = Math.max(0, hitCooldown - dt);
@@ -138,21 +205,31 @@ export function createSurvival({
     if (pending && warningTimer <= 0) {
       for (let i = 0; i < pending; i++) {
         const p = spawnPoint(CENTER, 530, sequence + i * 1.7);
-        if (p)
+        if (p) {
+          const role = ["attacker", "thief", "breaker"][i % 3];
           raiders.push({
             ...p,
             id: `raider-${sequence++}`,
             kind: "raider",
-            hp: 4 + Math.floor(state.calendarDay / 10),
+            role,
+            home: { ...p },
+            hp: RAIDER_ROLES[role].hp + Math.floor(state.calendarDay / 10),
+            maxHP: RAIDER_ROLES[role].hp + Math.floor(state.calendarDay / 10),
             path: [],
             repath: 0,
             windup: 0,
             cooldown: 0,
             moving: false,
           });
+        }
       }
       pending = 0;
+      if (wave) {
+        wave.spawned = raiders.length;
+        wave.status = "active";
+      }
       emit("wave-started", { count: raiders.length });
+      finishWave();
     }
     if (monster) watcher.tick(dt, monster, SURVIVAL.monsterSpeed);
     if (state.gameOver) return;
@@ -194,60 +271,16 @@ export function createSurvival({
         }
         continue;
       }
-      const playerTarget = distance(actor, player) < 180;
-      const target = playerTarget ? player : CENTER;
-      const inRange =
-        distance(actor, target) < (playerTarget ? 64 : 75) &&
-        nav.clearSegment(actor, target);
-      // The fire is a solid nav obstacle. Raiders attack its perimeter instead.
-      const atCamp = !playerTarget && distance(actor, CENTER) < 90;
-      if (inRange || atCamp) {
-        if (actor.cooldown > 0) {
-          actor.windup = 0;
-          continue;
-        }
-        actor.windup += dt;
-        if (actor.windup >= 0.9) {
-          actor.windup = 0;
-          actor.cooldown = 2.2;
-          if (playerTarget) hurtPlayer(20);
-          else {
-            state.campHealth = Math.max(
-              0,
-              state.campHealth - SURVIVAL.raiderDamage,
-            );
-            emit("camp-hurt", { health: state.campHealth });
-            if (!state.campHealth) defeat("Налётчики разрушили лагерь.");
-          }
-        }
-      } else {
-        actor.windup = 0;
-        if (actor === pathCandidate) {
-          const goal = playerTarget
-            ? target
-            : {
-                x:
-                  CENTER.x +
-                  ((actor.x - CENTER.x) /
-                    Math.max(1, distance(actor, CENTER))) *
-                    65,
-                y:
-                  CENTER.y +
-                  ((actor.y - CENTER.y) /
-                    Math.max(1, distance(actor, CENTER))) *
-                    65,
-              };
-          actor.path = nav.findPath(actor, goal);
-          actor.repath = 1.2;
-          pathCooldown = 0.25;
-        }
-        actor.moving = nav.followPath(actor, dt, SURVIVAL.raiderSpeed) > 0.01;
-      }
+      if (raiderAI.tick(actor, dt, actor === pathCandidate))
+        pathCooldown = 0.25;
       if (state.gameOver) break;
     }
   }
   return {
     hear: watcher.hear,
+    get wave() {
+      return wave;
+    },
     raiders,
     get monster() {
       return monster;

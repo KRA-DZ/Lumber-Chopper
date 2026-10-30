@@ -1,6 +1,8 @@
 import { shopAdvice } from "../game/first-days.js";
 import { StackView } from "./stack-view.js";
 import { BuyerView } from "./buyer-view.js";
+import { DefenseView } from "./defense-view.js";
+import { createDefenseUi } from "./defense-ui.js";
 import { EnemyView } from "./enemy-view.js";
 import { createSurvivalUi } from "./survival-ui.js";
 import { stackOffset } from "../game/stack-layout.js";
@@ -91,6 +93,7 @@ export class WorldScene extends Phaser.Scene {
     this.cargo = this.stackView.logs;
     this.buyerView = new BuyerView(this);
     this.enemyView = new EnemyView(this);
+    this.defenseView = new DefenseView(this);
     this.camera = this.cameras.main;
     this.camera
       .setBounds(
@@ -112,6 +115,7 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#campButton")
       .addEventListener("click", this.returnCamp);
     this.survivalUi = createSurvivalUi(this);
+    this.defenseUi = createDefenseUi(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
     this.renderModel();
@@ -348,6 +352,11 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (!this.core.paused && event.code === "KeyB") {
+        event.preventDefault();
+        this.defenseUi.open();
+        return;
+      }
       if (!this.core.paused && event.code === "KeyJ") {
         event.preventDefault();
         this.survivalUi.open();
@@ -411,23 +420,21 @@ export class WorldScene extends Phaser.Scene {
       const object =
         over.find((o) => o.getData("enemy")) ||
         over.find((o) => o.getData("shop")) ||
+        over.find((o) => o.getData("defense")) ||
         over.find((o) => o.getData("clue")) ||
         over.find((o) => o.getData("regionGate")) ||
         nearby ||
         over.find((o) => o.getData("tree") || o.getData("ancient"));
       if (object?.getData("enemy")) {
         const id = object.getData("enemy");
-        if (!this.core.tryAttack(id)) {
-          const enemy = this.core.survival?.raiders.find((e) => e.id === id);
-          if (
-            enemy &&
-            Math.hypot(
-              enemy.x - this.playerModel.x,
-              enemy.y - this.playerModel.y,
-            ) >= 72
-          )
-            this.core.setDestination(enemy.x, enemy.y);
-        }
+        this.core.selectEnemy(id);
+        this.core.tryAttack(id);
+        return;
+      }
+      if (object?.getData("defense")) {
+        const id = object.getData("defense");
+        if (!this.core.orderDefense(id))
+          this.core.showNotice("Укрепление цело.");
         return;
       }
       if (object?.getData("shop")) {
@@ -652,6 +659,7 @@ export class WorldScene extends Phaser.Scene {
     this.syncBuyers();
     this.syncPiles();
     this.syncCamp();
+    this.defenseView.render();
     for (const [image, x, y] of [
       [this.hut, CAMP.hut.x, CAMP.hut.y],
       [this.tent, CAMP.tent.x, CAMP.tent.y],
@@ -827,7 +835,7 @@ export class WorldScene extends Phaser.Scene {
   }
   syncCamp() {
     const s = this.core.state,
-      key = `${s.campLevel}:${s.buildWood}`;
+      key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}`;
     if (key === this.lastCampKey) return;
     this.lastCampKey = key;
     this.fire.setVisible(s.campLevel > 0);
@@ -907,6 +915,44 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "wave-ended") {
+      const text =
+        e.status === "won"
+          ? `Налёт отражён! +${e.reward} монет`
+          : e.status === "withdrawn"
+            ? "Рассвет: враги отступили. Награды за налёт нет."
+            : `Налёт завершён · сбежало: ${e.escaped} · +${e.reward} монет`;
+      this.core?.showNotice(text, 9);
+      if (e.reward)
+        this.float(`+${e.reward} монет`, CENTER.x, CENTER.y - 90, "#ffe296");
+      return;
+    }
+    if (type === "supplies-stolen" || type === "supplies-recovered") {
+      this.core?.showNotice(
+        type === "supplies-stolen"
+          ? `Вор убегает! Унёс ${e.coins} монет. Догоните его!`
+          : `Украденное возвращено: ${e.coins} монет`,
+        6,
+      );
+      return;
+    }
+    if (type === "enemy-escaped") {
+      this.core?.showNotice(`Вор скрылся. Потеряно ${e.coins} монет.`, 6);
+      return;
+    }
+    if (type === "trap-triggered") {
+      this.float("Ловушка! −3", e.trap.x, e.trap.y - 40, "#c6dba5");
+      return;
+    }
+    if (type === "defense-changed" && e.topology) {
+      this.float(
+        e.section.hp ? "Укрепление готово" : "Пролом!",
+        e.section.x,
+        e.section.y - 45,
+        "#eac08e",
+      );
+      return;
+    }
     if (type === "night-warning") {
       this.audio?.watcherCue("waking", 0, 0);
       return;
@@ -1110,6 +1156,7 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#campButton")
       .removeEventListener("click", this.returnCamp);
     this.survivalUi?.destroy();
+    this.defenseUi?.destroy();
     this.regionMap?.destroy();
     this.audio.destroy();
     this.atmosphere.destroy();

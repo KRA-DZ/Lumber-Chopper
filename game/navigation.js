@@ -41,7 +41,10 @@ export function createNavigation(
     return partialFence(gameState, construction.plan).posts;
   }
   function campFenceSegments() {
-    return partialFence(gameState, construction.plan).segments;
+    return (
+      model.defenses?.fenceSegments() ||
+      partialFence(gameState, construction.plan).segments
+    );
   }
   function rebuildObstacles() {
     obstacles = [];
@@ -89,6 +92,9 @@ export function createNavigation(
         a,
         b,
       });
+    for (const site of model.defenses?.all() || [])
+      if (site.kind === "barricade" && site.hp > 0)
+        capsule(site.x - 32, site.y - 6, 64, 12);
     for (const site of landmarks) {
       if (model.regions && !model.regions.isOpen(site)) continue;
       if (site.type === "camp") capsule(site.x - 57, site.y - 18, 100, 22);

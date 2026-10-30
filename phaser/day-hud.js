@@ -77,7 +77,11 @@ export class DayHud {
         ? "Налёт начинается · ночь " + time.day
         : c.survival?.raiders.length
           ? `Налёт · осталось врагов: ${c.survival.raiders.length}`
-          : "Налёт отражён · ждите рассвета"
+          : c.survival?.wave?.status === "won"
+            ? `Налёт отражён · +${c.survival.wave.reward} монет`
+            : c.survival?.wave?.status === "escaped"
+              ? `Налёт завершён · +${c.survival.wave.reward} монет`
+              : "Налётчики отступили"
       : `Налёт · ночь ${time.nextRaid} · через ${countdown(time.raidSeconds)}`;
     this.raid.setText(text).setColor(time.raidTonight ? "#f1b595" : "#cbd4ad");
     const warn = c.sunsetWarning;

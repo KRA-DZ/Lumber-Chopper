@@ -1,4 +1,5 @@
 import { firstDaysGuide, guideDestination } from "./first-days.js";
+import { createDefenses } from "./defenses.js";
 import { createBuyers } from "./buyers.js";
 import { buyUpgrade } from "../economy.js";
 import { createCycleManager } from "./cycle.js";
@@ -56,7 +57,12 @@ export function createSimulation({
     revision = 0,
     paused = false,
     transferTimer = 0,
-    sunsetWarning = null;
+    sunsetWarning = null,
+    defenseOrder = null,
+    selectedEnemyId = null,
+    pursueEnemy = false,
+    pursuitTimer = 0,
+    defenseRouteTimer = 0;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   function updateUI() {
     revision++;
@@ -84,6 +90,29 @@ export function createSimulation({
       0,
       Math.min(1, (0.25 - Math.sin(dayPhase() * Math.PI * 2)) / 1.25),
     );
+  const defenses = hazards
+    ? createDefenses(gameState, ({ section, topology }) => {
+        if (topology) {
+          nav.rebuildObstacles();
+          for (const body of [
+            player,
+            ...buyers,
+            ...(survival?.raiders || []),
+            ...(survival?.monster ? [survival.monster] : []),
+          ]) {
+            if ("repath" in body) {
+              body.repath = 0;
+              body.path = [];
+            }
+            if (!nav.isWalkable(body.x, body.y))
+              Object.assign(body, nav.nearestGround(body.x, body.y));
+          }
+        }
+        revision++;
+        emit("defense-changed", { section, topology });
+      })
+    : null;
+  if (defenses) world.defenses = defenses;
   const nav = createNavigation(world, gameState, player, showNotice);
   const {
     isWalkable,
@@ -195,6 +224,7 @@ export function createSimulation({
         accessible,
         emit,
         defeat,
+        defenses,
       })
     : null;
   const cycle = createCycleManager(gameState, (type, event) => {
@@ -225,6 +255,42 @@ export function createSimulation({
     revision++;
     emit(type, event);
   });
+  function selectEnemy(id) {
+    if (!canAct() || !survival?.raiders.some((e) => e.id === id)) return false;
+    selectedEnemyId = id;
+    defenseOrder = null;
+    pursueEnemy = true;
+    pursuitTimer = 0;
+    return true;
+  }
+  function navigateTo(x, y) {
+    defenseOrder = null;
+    selectedEnemyId = null;
+    pursueEnemy = false;
+    setDestination(x, y);
+  }
+  function routeDefense(section) {
+    const d = Math.max(1, distance(player, section));
+    const goal = nearestGround(
+      section.x + ((player.x - section.x) / d) * 48,
+      section.y + ((player.y - section.y) / d) * 48,
+    );
+    setDestination(goal.x, goal.y);
+    defenseRouteTimer = 1.2;
+  }
+  function orderDefense(id) {
+    const section = defenses?.get(id);
+    if (!canAct() || !section || section.hp >= section.maxHP) return false;
+    selectedEnemyId = null;
+    pursueEnemy = false;
+    defenseOrder = id;
+    routeDefense(section);
+    showNotice(
+      `${section.name}: принесите брёвна. Один взнос — одно бревно.`,
+      5,
+    );
+    return true;
+  }
   function tryAttack(id, mode = "active") {
     const enemy =
       survival?.raiders.find((e) => e.id === id) ||
@@ -265,6 +331,21 @@ export function createSimulation({
       x: player.x + slotPosition.x,
       y: player.y + slotPosition.y,
     };
+    const section = defenses?.get(target || defenseOrder);
+    if (section && distance(player, section) < 78) {
+      if (!defenses.deposit(section.id)) return false;
+      forestry.takeCargo();
+      transferTimer = 0.3;
+      visualEffects.transfer("repair", start, {
+        x: section.x,
+        y: section.y - 16,
+      });
+      if (defenses.get(section.id).hp === section.maxHP) defenseOrder = null;
+      updateUI();
+      return true;
+    }
+    // An explicit repair order never spends cargo on a different nearby platform.
+    if (defenseOrder || (target && defenses?.get(target))) return false;
     const gate = regions?.frontiers().find((g) => distance(player, g) < 50);
     if (gate && (!target || target === gate.region.id)) {
       const result = regions.deposit(gate.region.id);
@@ -398,6 +479,8 @@ export function createSimulation({
       oldX = player.x,
       oldY = player.y;
     if (keyboard) {
+      defenseOrder = null;
+      pursueEnemy = false;
       player.path = [];
       const d = Math.hypot(kx, ky);
       if (d) {
@@ -430,6 +513,29 @@ export function createSimulation({
             : "down";
     }
 
+    defenseRouteTimer = Math.max(0, defenseRouteTimer - dt);
+    const work = defenses?.get(defenseOrder);
+    if (
+      work &&
+      !keyboard &&
+      !player.path.length &&
+      distance(player, work) >= 78 &&
+      defenseRouteTimer <= 0
+    )
+      routeDefense(work);
+    const focused = survival?.raiders.find((e) => e.id === selectedEnemyId);
+    if (selectedEnemyId && !focused) {
+      selectedEnemyId = null;
+      pursueEnemy = false;
+    }
+    pursuitTimer = Math.max(0, pursuitTimer - dt);
+    if (focused && pursueEnemy && !keyboard && pursuitTimer <= 0) {
+      if (distance(player, focused) > 62 && distance(player, focused) < 700) {
+        setDestination(focused.x, focused.y);
+        pursuitTimer = 0.6;
+      } else player.path = [];
+    }
+
     buyerSystem.update(dt);
     updatePlatforms(dt);
 
@@ -453,9 +559,13 @@ export function createSimulation({
     )
       .filter((t) => treeAccessible(t) && t.hp > 0 && distance(player, t) < 72)
       .sort((a, b) => distance(player, a) - distance(player, b))[0];
-    const enemy = survival?.raiders
-      .filter((e) => distance(player, e) < 72)
-      .sort((a, b) => distance(player, a) - distance(player, b))[0];
+    const reachable =
+      survival?.raiders.filter(
+        (e) => distance(player, e) < 72 && nav.clearSegment(player, e),
+      ) || [];
+    const enemy =
+      reachable.find((e) => e.id === selectedEnemyId) ||
+      reachable.sort((a, b) => distance(player, a) - distance(player, b))[0];
     if (dt > 0 && enemy && player.autoTimer <= 0) tryAttack(enemy.id, "auto");
     if (
       dt > 0 &&
@@ -511,9 +621,18 @@ export function createSimulation({
         showNotice("Здесь пока нет доступной цели.");
         return false;
       }
-      setDestination(target.x, target.y);
+      navigateTo(target.x, target.y);
       return true;
     },
+    get selectedEnemyId() {
+      return selectedEnemyId;
+    },
+    get defenseOrder() {
+      return defenseOrder;
+    },
+    defenses,
+    selectEnemy,
+    orderDefense,
     tryChop,
     tryAttack,
     purchaseUpgrade,
@@ -552,7 +671,7 @@ export function createSimulation({
             : 3;
     },
     nightAmount,
-    setDestination,
+    setDestination: navigateTo,
     clearKeys,
     get elapsed() {
       return elapsed;
