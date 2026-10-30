@@ -1,0 +1,330 @@
+{
+  "version": 1,
+  "approvedVariant": 1,
+  "atlas": "trees.png",
+  "size": [
+    1024,
+    512
+  ],
+  "sources": [
+    {
+      "file": "trees-mature-sheet.png",
+      "sha256": "a53a817a5a3f420e7e092b186948459d8c2b559924f59f0096edfde7e0cca5ab",
+      "size": [
+        2172,
+        724
+      ],
+      "columns": 4,
+      "rows": 1,
+      "boxes": {
+        "oak.mature": [
+          83,
+          84,
+          620,
+          646
+        ],
+        "spruce.mature": [
+          660,
+          39,
+          1087,
+          652
+        ],
+        "birch.mature": [
+          1142,
+          76,
+          1588,
+          652
+        ],
+        "dead.mature": [
+          1635,
+          97,
+          2077,
+          649
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "trees-growth-sheet.png",
+      "sha256": "d38b72361669a45ebb668e40ffce7b64be1d0b3b6fc23f4861f1c3df4344aed1",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 4,
+      "rows": 3,
+      "boxes": {
+        "oak.stump": [
+          109,
+          130,
+          327,
+          285
+        ],
+        "spruce.stump": [
+          479,
+          132,
+          660,
+          287
+        ],
+        "birch.stump": [
+          798,
+          136,
+          976,
+          279
+        ],
+        "dead.stump": [
+          1123,
+          111,
+          1330,
+          291
+        ],
+        "oak.sprout": [
+          136,
+          395,
+          291,
+          577
+        ],
+        "spruce.sprout": [
+          500,
+          396,
+          638,
+          569
+        ],
+        "birch.sprout": [
+          830,
+          393,
+          967,
+          575
+        ],
+        "dead.sprout": [
+          1200,
+          404,
+          1310,
+          576
+        ],
+        "oak.young": [
+          52,
+          633,
+          381,
+          1008
+        ],
+        "spruce.young": [
+          427,
+          633,
+          697,
+          1007
+        ],
+        "birch.young": [
+          745,
+          638,
+          1028,
+          1004
+        ],
+        "dead.young": [
+          1098,
+          631,
+          1398,
+          1011
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "tree-ancient-sheet.png",
+      "sha256": "21b90cc1b582836bd3583ce796dc9f03ee74fe295a8f4f4b440a9feabe1670a3",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 1,
+      "rows": 1,
+      "boxes": {
+        "ancient": [
+          54,
+          20,
+          1481,
+          999
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "frames": {
+    "ancient": {
+      "x": 2,
+      "y": 2,
+      "width": 364,
+      "height": 251,
+      "anchor": [
+        184,
+        249
+      ]
+    },
+    "spruce.mature": {
+      "x": 368,
+      "y": 2,
+      "width": 128,
+      "height": 182,
+      "anchor": [
+        62,
+        180
+      ]
+    },
+    "oak.mature": {
+      "x": 498,
+      "y": 2,
+      "width": 165,
+      "height": 172,
+      "anchor": [
+        82,
+        169
+      ]
+    },
+    "birch.mature": {
+      "x": 665,
+      "y": 2,
+      "width": 134,
+      "height": 172,
+      "anchor": [
+        64,
+        169
+      ]
+    },
+    "dead.mature": {
+      "x": 801,
+      "y": 2,
+      "width": 123,
+      "height": 152,
+      "anchor": [
+        62,
+        150
+      ]
+    },
+    "oak.young": {
+      "x": 926,
+      "y": 2,
+      "width": 78,
+      "height": 88,
+      "anchor": [
+        41,
+        86
+      ]
+    },
+    "spruce.young": {
+      "x": 2,
+      "y": 255,
+      "width": 65,
+      "height": 88,
+      "anchor": [
+        34,
+        86
+      ]
+    },
+    "birch.young": {
+      "x": 69,
+      "y": 255,
+      "width": 69,
+      "height": 88,
+      "anchor": [
+        33,
+        86
+      ]
+    },
+    "dead.young": {
+      "x": 140,
+      "y": 255,
+      "width": 70,
+      "height": 88,
+      "anchor": [
+        40,
+        86
+      ]
+    },
+    "oak.stump": {
+      "x": 212,
+      "y": 255,
+      "width": 35,
+      "height": 26,
+      "anchor": [
+        18,
+        23
+      ]
+    },
+    "spruce.stump": {
+      "x": 249,
+      "y": 255,
+      "width": 30,
+      "height": 26,
+      "anchor": [
+        14,
+        23
+      ]
+    },
+    "birch.stump": {
+      "x": 281,
+      "y": 255,
+      "width": 31,
+      "height": 26,
+      "anchor": [
+        16,
+        23
+      ]
+    },
+    "dead.stump": {
+      "x": 314,
+      "y": 255,
+      "width": 29,
+      "height": 26,
+      "anchor": [
+        14,
+        23
+      ]
+    },
+    "oak.sprout": {
+      "x": 345,
+      "y": 255,
+      "width": 23,
+      "height": 26,
+      "anchor": [
+        12,
+        23
+      ]
+    },
+    "spruce.sprout": {
+      "x": 370,
+      "y": 255,
+      "width": 22,
+      "height": 26,
+      "anchor": [
+        11,
+        23
+      ]
+    },
+    "birch.sprout": {
+      "x": 394,
+      "y": 255,
+      "width": 21,
+      "height": 26,
+      "anchor": [
+        10,
+        23
+      ]
+    },
+    "dead.sprout": {
+      "x": 417,
+      "y": 255,
+      "width": 18,
+      "height": 26,
+      "anchor": [
+        8,
+        23
+      ]
+    }
+  },
+  "processing": {
+    "backgroundRemoval": false,
+    "alphaThreshold": 128,
+    "filter": "nearest",
+    "padding": 2
+  }
+}

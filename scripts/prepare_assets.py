@@ -86,6 +86,9 @@ def components(mask: Image.Image) -> list[Component]:
 
 def remove_background(image: Image.Image, tolerance=12, mode="edge") -> Image.Image:
     rgba = image.convert("RGBA")
+    # Trust a supplied alpha channel. White clothing/bark is object color, not a key.
+    if rgba.getchannel("A").getextrema()[0] < 255:
+        return rgba
     rgb = rgba.convert("RGB")
     channels = [
         c.point(lambda value: 255 if value >= 255 - tolerance else 0)
@@ -123,6 +126,57 @@ def clean_mask(alpha, min_area):
     return mask
 
 
+def unmatte_white(image, radius=2):
+    """Recover colored boundary pixels contaminated by an old opaque white matte.
+
+    Only a narrow silhouette band is considered. A pixel must match a mixture
+    of white and a nearby darker interior color; pale interiors are left intact.
+    Native transparent sources should bypass this legacy repair entirely.
+    """
+    image = image.convert("RGBA")
+    alpha = image.getchannel("A")
+    interior = alpha.filter(ImageFilter.MinFilter(radius * 2 + 1))
+    band = ImageChops.subtract(alpha, interior)
+    src, solid, edge = image.load(), interior.load(), band.load()
+    result = image.copy()
+    dest = result.load()
+    for y in range(image.height):
+        for x in range(image.width):
+            r, g, b, a = src[x, y]
+            if not edge[x, y] or min(r, g, b) < 160 or max(r, g, b) - min(r, g, b) > 75:
+                continue
+            candidates = []
+            for dy in range(-radius - 1, radius + 2):
+                for dx in range(-radius - 1, radius + 2):
+                    xx, yy = x + dx, y + dy
+                    if (
+                        0 <= xx < image.width
+                        and 0 <= yy < image.height
+                        and solid[xx, yy] >= 240
+                    ):
+                        candidates.append((dx * dx + dy * dy, src[xx, yy][:3]))
+            for _, color in sorted(candidates, key=lambda c: c[0]):
+                if sum((r, g, b)) - sum(color) < 105:
+                    continue
+                direction = [255 - c for c in color]
+                norm = sum(c * c for c in direction)
+                coverage = sum(
+                    (255 - c) * d for c, d in zip((r, g, b), direction)
+                ) / max(1, norm)
+                error = max(
+                    abs(c - (255 - coverage * d)) for c, d in zip((r, g, b), direction)
+                )
+                if 0 < coverage < 0.9 and error <= 18:
+                    dest[x, y] = (*color, round(a * coverage))
+                    break
+    # Zero hidden RGB too: future exports/filtering must not resurrect a white border.
+    data = bytearray(result.tobytes())
+    for i in range(0, len(data), 4):
+        if data[i + 3] == 0:
+            data[i : i + 3] = b"\0\0\0"
+    return Image.frombytes("RGBA", result.size, bytes(data))
+
+
 def foot_anchor(alpha):
     """Use the lower silhouette, not the image centre (important for curved birches)."""
     width, height = alpha.size
@@ -158,8 +212,9 @@ def prepare(
     with Image.open(source) as raw:
         if raw.width * raw.height > MAX_PIXELS:
             raise ValueError("Sheet is too large; limit is 16 million pixels.")
+        native_alpha = raw.convert("RGBA").getchannel("A").getextrema()[0] < 255
         image = remove_background(raw, tolerance, background)
-    for _ in range(defringe):
+    for _ in range(0 if native_alpha else defringe):
         alpha = image.getchannel("A")
         near = ImageChops.invert(alpha).filter(ImageFilter.MaxFilter(3))
         pixels = image.load()
@@ -174,6 +229,8 @@ def prepare(
                     and max(red, green, blue) - min(red, green, blue) <= 20
                 ):
                     pixels[x, y] = (red, green, blue, 0)
+    if defringe and not native_alpha:
+        image = unmatte_white(image, radius=2)
     mask = clean_mask(image.getchannel("A"), min_area)
     image.putalpha(ImageChops.darker(image.getchannel("A"), mask))
     rows = (len(names) + columns - 1) // columns
@@ -243,11 +300,12 @@ def prepare(
         "processing": {
             "layout": layout,
             "columns": columns,
-            "background": background,
+            "background": "alpha" if native_alpha else background,
             "tolerance": tolerance,
             "minArea": min_area,
             "padding": padding,
             "defringe": defringe,
+            "whiteMatteRepair": bool(defringe and not native_alpha),
         },
         "assets": {},
     }

@@ -1,9 +1,9 @@
 import { createBiomeEnemies } from "./biome-enemies.js";
 import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
-import { createWatcher } from "./watcher.js";
+import { createWatcher, WATCHER } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
-  monsterSpeed: 132,
+  monsterSpeed: 160, // Faster pursuit; the starting hero still runs at 200.
   monsterDamage: 40,
   monsterWindup: 1.2,
   playerInvulnerability: 1.4,
@@ -275,7 +275,7 @@ export function createSurvival({
         if (actor.goal) {
           if (actor === pathCandidate) {
             actor.path = nav.findPath(actor, actor.goal);
-            actor.repath = 1.2;
+            actor.repath = WATCHER.repathInterval;
             pathCooldown = 0.25;
           }
           const old = { x: actor.x, y: actor.y };

@@ -1,4 +1,5 @@
 import { preloadPeople, retainPeople } from "./people-assets.js";
+import { preloadTrees, retainTrees } from "./tree-assets.js";
 import { selectHero } from "./hero-selection.js";
 import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
@@ -16,6 +17,7 @@ class BootScene extends Phaser.Scene {
     this.usePng =
       new URLSearchParams(location.search).get("art") !== "procedural";
     if (!this.usePng) return;
+    preloadTrees(this);
     this.load.json("import.manifest", "./src/assets/manifest.json");
     for (const name of IMPORTED_ASSETS)
       this.load.image(`import.${name}`, `./src/assets/${name}.png`);
@@ -24,6 +26,7 @@ class BootScene extends Phaser.Scene {
     retainBiomeAssets(this);
     retainPeople(this);
     if (this.usePng) {
+      retainTrees(this);
       const manifest = this.cache.json.get("import.manifest");
       if (
         !manifest ||

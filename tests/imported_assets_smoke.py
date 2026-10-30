@@ -50,10 +50,18 @@ try:
             )
             context = b.new_context(viewport={"width": 1360, "height": 1050})
             q = context.new_page()
+            q.set_default_timeout(60000)
             errors = []
-            q.on("pageerror", lambda e: errors.append(e.stack))
+            q.on(
+                "pageerror",
+                lambda e: (
+                    errors.append(e.stack),
+                    print("PAGE ERROR imported", e.stack, flush=True),
+                ),
+            )
             q.goto(url + ("dist/" if canvas else "phaser.html"))
             ready(q)
+            print("READY imported", "Canvas" if canvas else "WebGL", flush=True)
             assert q.evaluate(
                 'w.assets.art.style==="generated-camp-png"&&Object.keys(g.game.registry.get("importedPack").images).length===6&&g.game.textures.getTextureKeys().every(k=>!k.startsWith("import."))'
             )
@@ -72,7 +80,7 @@ try:
                 "for(let n=0;tree.hp>0&&n<100;n++){m.hitTree(tree);g.step(.2)}g.step(0)"
             )
             assert q.evaluate(
-                'w.treeObjects.get(tree.id).image.frame.name==="stump"&&m.forestry.piles.has(tree.id)'
+                'w.treeObjects.get(tree.id).image.frame.name==="growth.birch.stump"&&m.forestry.piles.has(tree.id)'
             )
             q.evaluate(
                 "m.state.campLevel=2;m.state.buildWood=0;m.nav.rebuildObstacles();m.player.x=1640;m.player.y=1680;m.player.path=[];g.step(0)"

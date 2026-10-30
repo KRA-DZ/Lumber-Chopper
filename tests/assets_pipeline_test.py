@@ -19,6 +19,44 @@ spec.loader.exec_module(prep)
 
 
 class AssetPipelineTest(unittest.TestCase):
+    def test_native_alpha_never_keys_out_white_bark_or_applies_legacy_repair(self):
+        image = Image.new("RGBA", (40, 50), (255, 255, 255, 0))
+        g = ImageDraw.Draw(image)
+        g.rectangle((10, 5, 30, 45), fill=(255, 255, 255, 255))
+        path = self.root / "transparent.png"
+        image.save(path)
+        prep.prepare(
+            path,
+            self.root / "native",
+            names=("birch",),
+            columns=1,
+            background="all",
+            defringe=2,
+        )
+        result = Image.open(self.root / "native/birch.png")
+        self.assertEqual(result.getpixel((3, 3)), (255, 255, 255, 255))
+        self.assertEqual(result.getpixel((0, 0)), (0, 0, 0, 0))
+        meta = json.loads((self.root / "native/manifest.json").read_text())
+        self.assertEqual(meta["processing"]["background"], "alpha")
+        self.assertFalse(meta["processing"]["whiteMatteRepair"])
+
+    def test_white_matte_recovery_preserves_pale_interiors(self):
+        image = Image.new("RGBA", (21, 21))
+        g = ImageDraw.Draw(image)
+        g.rectangle((3, 3, 17, 17), fill=(200, 205, 195, 255))
+        g.rectangle((4, 4, 16, 16), fill=(40, 55, 25, 255))
+        g.rectangle((7, 7, 13, 13), fill=(245, 244, 230, 255))
+        result = prep.unmatte_white(image)
+        r, green, b, alpha = result.getpixel((3, 10))
+        self.assertEqual((r, green, b), (40, 55, 25))
+        self.assertGreater(alpha, 0)
+        self.assertLess(alpha, 100)
+        self.assertEqual(result.getpixel((10, 10)), (245, 244, 230, 255))
+        for background in [(15, 35, 20), (0, 0, 0)]:
+            composite = Image.new("RGBA", image.size, (*background, 255))
+            composite.alpha_composite(result)
+            self.assertLess(max(composite.getpixel((3, 10))[:3]), 65)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)

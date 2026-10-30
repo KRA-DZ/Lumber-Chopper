@@ -1,13 +1,14 @@
 import { CENTER } from "./config.js";
 export const WATCHER = Object.freeze({
-  sight: 300,
+  sight: 330,
   hearing: 190,
   chopHearing: 420,
-  notice: 0.8,
+  notice: 0.5,
   memory: 4,
   searchSeconds: 6,
   patrolSpeed: 68,
-  senseInterval: 0.2,
+  senseInterval: 0.15,
+  repathInterval: 0.8,
   attackRadius: 54,
   strikeSeconds: 0.18,
   recovery: 2,

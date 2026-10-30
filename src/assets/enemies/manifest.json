@@ -15,7 +15,8 @@
     "tolerance": 12,
     "minArea": 8,
     "padding": 2,
-    "defringe": 1
+    "defringe": 1,
+    "whiteMatteRepair": true
   },
   "assets": {
     "doll-idle": {

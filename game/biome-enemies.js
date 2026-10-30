@@ -7,7 +7,7 @@ export const BIOME_ENEMIES = Object.freeze({
   perRegion: 2,
   sense: 280,
   damage: 12,
-  hp: 4,
+  hp: 40, // Regional mini-bosses: ten times the old health; waves have separate stats.
   speed: 80,
   windup: 1.1,
   range: 54,

@@ -814,28 +814,34 @@ export class WorldScene extends Phaser.Scene {
     for (const { image, tree, key } of this.treeObjects.values()) {
       const stage = growthStage(tree, this.core.dayNumber),
         frame =
-          stage === 0
-            ? "stump"
-            : stage === 1
-              ? `world.saplings.${tree.legacyIndex % 2}`
-              : stage === 3 &&
-                  !tree.shake &&
-                  tree.type !== "dead" &&
-                  !this.effectsLight
-                ? (() => {
-                    const phase = [0, 1, 0, -1][
-                      Math.floor(
-                        this.core.elapsed * 1.4 + tree.legacyIndex * 0.7,
-                      ) % 4
-                    ];
-                    return phase
-                      ? `wind.${tree.type}.${tree.size}.${phase}`
-                      : key;
-                  })()
-                : key;
+          this.assets.art.generatedTrees && stage < 3
+            ? `growth.${tree.type}.${["stump", "sprout", "young"][stage]}`
+            : stage === 0
+              ? "stump"
+              : stage === 1
+                ? `world.saplings.${tree.legacyIndex % 2}`
+                : stage === 3 &&
+                    !tree.shake &&
+                    tree.type !== "dead" &&
+                    !this.effectsLight
+                  ? (() => {
+                      const phase = [0, 1, 0, -1][
+                        Math.floor(
+                          this.core.elapsed * 1.4 + tree.legacyIndex * 0.7,
+                        ) % 4
+                      ];
+                      return phase
+                        ? `wind.${tree.type}.${tree.size}.${phase}`
+                        : key;
+                    })()
+                  : key;
       if (image.frame.name !== frame) this.assets.setFrame(image, frame);
       image
-        .setScale(stage === 1 || stage === 2 ? 1 : 2)
+        .setScale(
+          !this.assets.art.generatedTrees && (stage === 1 || stage === 2)
+            ? 1
+            : 2,
+        )
         .setPosition(
           snap(tree.x + (tree.shake ? Math.sin(tree.shake * 90) * 4 : 0)),
           snap(tree.y),

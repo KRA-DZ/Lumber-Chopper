@@ -4,6 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createWatcher, WATCHER, watcherThreat } from "../game/watcher.js";
 import { createSimulation } from "../game/simulation.js";
+import { SURVIVAL } from "../game/survival.js";
 function fixture() {
   const player = { x: 2200, y: 1600, moving: false },
     m = {
@@ -36,7 +37,8 @@ function fixture() {
     windupSeconds: 1.2,
   });
   function tick(seconds) {
-    for (let i = 0; i < Math.round(seconds * 20); i++) ai.tick(0.05, m, 132);
+    for (let i = 0; i < Math.round(seconds * 20); i++)
+      ai.tick(0.05, m, SURVIVAL.monsterSpeed);
   }
   function until(phase) {
     for (let i = 0; i < 100 && m.phase !== phase; i++) tick(0.05);
@@ -44,10 +46,23 @@ function fixture() {
   }
   return { player, m, result, ai, tick, until };
 }
+test("watcher notices the player at the new distance and pursues sooner at the new speed", () => {
+  const f = fixture();
+  f.m.x = f.player.x + 320;
+  f.until("notice");
+  f.tick(0.4);
+  assert.equal(f.m.phase, "notice");
+  f.tick(0.15);
+  assert.equal(f.m.phase, "chase");
+  f.tick(0.05);
+  assert.equal(f.m.speed, 160);
+  assert.deepEqual(f.m.goal, { x: f.player.x, y: f.player.y });
+  assert.equal(f.result.health, 100);
+});
 test("detection pauses before chase; locked strike can be dodged and recovery cannot track or hit", () => {
   const f = fixture();
   f.until("notice");
-  f.tick(0.5);
+  f.tick(0.25);
   assert.equal(f.m.phase, "notice");
   assert.equal(f.result.health, 100);
   f.until("windup");

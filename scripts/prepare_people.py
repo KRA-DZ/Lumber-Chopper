@@ -5,8 +5,8 @@ from pathlib import Path
 import hashlib
 import json
 import math
-from PIL import Image
-from prepare_assets import components, remove_background, clean_mask
+from PIL import Image, ImageChops
+from prepare_assets import components, remove_background, clean_mask, unmatte_white
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRS = ("down", "up", "side")
@@ -51,6 +51,8 @@ def sheet(name, roles, action, rows, columns=6):
                 for direction in DIRS
             )
     rgba = remove_background(image, mode="all")
+    if image.getchannel("A").getextrema()[0] == 255:
+        rgba = unmatte_white(rgba)
     found = components(clean_mask(rgba.getchannel("A"), 12))
     grid_rows = 4 if name == "buyers-a-walk" else rows
     groups = [[] for _ in names]
@@ -77,7 +79,7 @@ def sheet(name, roles, action, rows, columns=6):
             for yy, left, right in part.runs:
                 alpha.paste(255, (left, yy, right, yy + 1))
         isolated = rgba.copy()
-        isolated.putalpha(alpha)
+        isolated.putalpha(ImageChops.darker(alpha, rgba.getchannel("A")))
         crop = isolated.crop((x0, y0, x1, y1))
         padded = Image.new("RGBA", (crop.width + 4, crop.height + 4))
         padded.alpha_composite(crop, (2, 2))

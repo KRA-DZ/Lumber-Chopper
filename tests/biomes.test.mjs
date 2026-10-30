@@ -185,6 +185,27 @@ test("defeated residents do not respawn until a new night or grant wave rewards"
   f.step(3);
   assert.equal(JSON.stringify(f.model.actors), snap);
 });
+test("regional mini-bosses withstand repeated axe hits and retain damage between scans", () => {
+  for (const biome of Object.keys(ids)) {
+    const f = fixture(biome);
+    f.step(4);
+    const e = f.model.actors[0];
+    assert.equal(e.maxHP, 40);
+    for (let i = 0; i < 4; i++) assert.ok(f.model.hit(e.id, 9, false));
+    assert.equal(e.hp, 4);
+    f.step(3);
+    assert.ok(f.model.actors.includes(e));
+    assert.equal(e.hp, 4);
+    for (let i = 0; i < 3; i++) assert.ok(f.model.hit(e.id, 1, false));
+    assert.equal(e.hp, 1);
+    assert.ok(f.model.hit(e.id, 1, false));
+    assert.ok(!f.model.actors.includes(e));
+    assert.equal(
+      f.events.filter(([type]) => type === "enemy-defeated").length,
+      1,
+    );
+  }
+});
 test("local enemies are bounded separately from every-fifth-night camp waves; pause freezes the whole system", () => {
   const g = createSimulation({ regional: true });
   for (const r of REGIONS) {
@@ -229,7 +250,9 @@ test("player selection and guarded axe commands damage residents without contrib
   assert.ok(g.selectEnemy(enemy.id));
   g.player.path = [];
   const coins = g.state.coins;
+  g.state.axePower = 9; // Fully upgraded axe still needs five hits on a mini-boss.
   assert.ok(g.tryAttack(enemy.id));
+  assert.equal(enemy.hp, 31);
   assert.equal(g.tryAttack(enemy.id), false);
   g.paused = true;
   assert.equal(g.tryAttack(enemy.id), false);
