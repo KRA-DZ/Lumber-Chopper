@@ -1,3 +1,4 @@
+import { workerAppearance } from "./appearances.js";
 import { NIGHT_START } from "./cycle.js";
 
 export const WORKERS = Object.freeze({
@@ -68,6 +69,7 @@ export function createWorkers({
     crew.push({
       id,
       name: ["Фома", "Марта", "Лука"][id],
+      appearance: workerAppearance(id),
       ...p,
       phase: "resting",
       path: [],

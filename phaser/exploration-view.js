@@ -24,7 +24,7 @@ export class ExplorationView {
     this.ripples.clear();
     this.line.clear();
     this.rod.setVisible(!!f);
-    this.scene.axe.setVisible(!f);
+    this.scene.axe.setVisible(!f && !this.scene.heroView.bakedTool);
     if (f) {
       const site = c.exploration.get(f.siteId),
         x = site.x - 130,

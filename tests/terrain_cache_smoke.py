@@ -1,5 +1,7 @@
 """A return trip reuses GPU chunks; a longer trip evicts old hidden images at the cap."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -37,6 +39,7 @@ try:
                 f"http://127.0.0.1:{s.server_port}/"
                 + ("dist/" if canvas else "phaser.html")
             )
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
             data = q.evaluate(
                 """()=>{const w=lumberPhaser.scene;w.manual=true;const t=w.terrain,a={x:1000,y:1320,width:960,height:688},b={...a,x:1256};let loads=0;const source=t.source.getChunk.bind(t.source);t.source.getChunk=(...args)=>{loads++;return source(...args)};t.update(a);const key='terrain/3/5',image=t.images.get(key);t.update(b);const before=loads;t.update(a);const reused=t.images.get(key)===image&&loads===before;for(let i=1;i<=8;i++)t.update({...a,x:a.x+i*256});const bounded=t.images.size<=24&&t.source.cachedChunks<=28,visible=[...t.images.values()].filter(i=>i.visible).length,evicted=!w.textures.exists(key);return {reused,bounded,visible,evicted,cache:t.images.size,textures:w.textures.getTextureKeys().filter(k=>k.startsWith('terrain/')).length}}"""

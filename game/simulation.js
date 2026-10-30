@@ -30,9 +30,10 @@ import {
 export function createSimulation({
   emit = () => {},
   regional = false,
+  appearance = "traveler",
   survival: hazards = regional,
 } = {}) {
-  const gameState = createInitialState(),
+  const gameState = createInitialState({ appearance }),
     regions = regional ? createRegions(gameState) : null,
     world = regional ? createRegionWorld(regions) : createWorldModel(),
     { trees } = world;

@@ -20,7 +20,7 @@ export class BuyerView {
       if (!a) {
         a = {
           sprite: scene.add
-            .sprite(b.x, b.y, "forest", "characters.buyerA.down.0")
+            .sprite(b.x, b.y, "forest", "person.buyer1-walk-down-0")
             .setOrigin(0.5, 44 / 46)
             .setScale(2),
           logs: [],
@@ -39,7 +39,7 @@ export class BuyerView {
       a.sprite.setPosition(snap(b.x), snap(b.y));
       scene.animatePerson(
         a.sprite,
-        b.kind === "walker" ? "buyerA" : "buyerB",
+        b.appearance,
         b,
         b.thanks > 0 ? "happy" : "neutral",
       );

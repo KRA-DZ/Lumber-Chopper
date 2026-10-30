@@ -1,5 +1,7 @@
 """Phaser watcher: visible states, locked ground area, real dodge, light, audio and dawn."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -21,6 +23,7 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def ready(q):
+    choose_hero(q)
     q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
     q.evaluate(
         'window.g=lumberPhaser;window.w=g.scene;window.m=g.core;window.h=w.scene.get("Hud");w.manual=true;g.step(0)'

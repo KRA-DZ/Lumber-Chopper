@@ -1,3 +1,4 @@
+import { buyerAppearance } from "./appearances.js";
 import { DAY_SECONDS } from "./config.js";
 export function createBuyers({ state: gameState, player, nav, getElapsed }) {
   const dayPhase = () => gameState.worldTime / DAY_SECONDS;
@@ -33,6 +34,7 @@ export function createBuyers({ state: gameState, player, nav, getElapsed }) {
       path: [],
       routeKey: "",
     };
+    b.appearance = buyerAppearance(b.id);
     buyers.push(b);
     return b;
   }

@@ -1,3 +1,4 @@
+import { normalizeAppearance } from "./appearances.js";
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
 export const DAY_SECONDS = 600;
@@ -11,8 +12,9 @@ export const STAGES = Object.freeze(
     cost: STAGE_COSTS[i],
   })),
 );
-export function createInitialState() {
+export function createInitialState({ appearance = "traveler" } = {}) {
   const state = {
+    appearance: normalizeAppearance(appearance), // Только внешний вид: вариант 2 или 3, характеристики одинаковы.
     health: 100, // Три ошибки рядом со Смотрителем смертельны; рассвет восстанавливает здоровье.
     maxHealth: 100,
     campHealth: 200, // Налётчики повреждают лагерь; одно бревно на стройке чинит 20 HP.

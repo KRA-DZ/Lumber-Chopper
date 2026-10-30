@@ -1,5 +1,7 @@
 """PNG loader/atlas integration, alpha hit testing, fire anchors, restart/fallback."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -21,6 +23,7 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def ready(q):
+    choose_hero(q)
     q.wait_for_function("!!window.lumberPhaser?.scene.hudReady")
     q.evaluate("window.g=lumberPhaser;window.w=g.scene;window.m=g.core;w.manual=true")
 
@@ -57,8 +60,9 @@ try:
             assert q.evaluate(
                 """()=>{const a=w.assets.art.sprites;return a.trees.birch.every(s=>s.mask.some(a=>a===0)&&s.mask.some(a=>a===255))&&a.fire.every(s=>s.height===a.unlitFire.height&&s.ay===a.unlitFire.ay)}"""
             )
+            # A large tree leaves one log after the two starting hands fill.
             q.evaluate(
-                'window.tree=m.trees.find(t=>t.type==="birch"&&m.nav.isWalkable(t.x+46,t.y+38));m.player.x=tree.x+46;m.player.y=tree.y+38;m.player.path=[];m.player.clickTimer=0;m.player.autoTimer=1;window.hp=tree.hp;g.step(0)'
+                'window.tree=m.trees.find(t=>t.type==="birch"&&t.size===2&&m.nav.isWalkable(t.x+46,t.y+38));m.player.x=tree.x+46;m.player.y=tree.y+38;m.player.path=[];m.player.clickTimer=0;m.player.autoTimer=1;window.hp=tree.hp;g.step(0)'
             )
             q.wait_for_timeout(50)
             x, y = point(q, q.evaluate("tree.x"), q.evaluate("tree.y-18"))
@@ -108,7 +112,12 @@ try:
                 assert q.evaluate(
                     'w.assets.art.style==="forest-ledger"&&!g.game.registry.get("importedPack")'
                 )
-                assert not any("/src/assets/" in r for r in requests)
+                # This switch replaces the original six camp/tree PNGs only.
+                # Shared generated biome/people packs stay active in both modes.
+                assert not any(
+                    "/src/assets/" in r and "/" not in r.split("/src/assets/", 1)[1]
+                    for r in requests
+                )
             assert not errors, errors
             print(
                 "PASS imported PNGs",

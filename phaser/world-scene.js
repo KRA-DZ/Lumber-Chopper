@@ -1,3 +1,4 @@
+import { renderGeneratedPerson } from "./people-assets.js";
 import { WorkerView } from "./worker-view.js";
 import { createWorkerUi } from "./worker-ui.js";
 import { createExplorationUi } from "./exploration-ui.js";
@@ -45,6 +46,7 @@ export class WorldScene extends Phaser.Scene {
     this.anims.resumeAll();
     this.core = createSimulation({
       regional: true,
+      appearance: this.registry.get("heroAppearance"),
       emit: (type, event) => this.onModelEvent(type, event),
     });
     this.playerModel = this.core.player;
@@ -658,6 +660,7 @@ export class WorldScene extends Phaser.Scene {
     this.renderModel();
   }
   animatePerson(sprite, role, body, mood = "neutral") {
+    if (renderGeneratedPerson(this, sprite, role, body, mood)) return;
     const dir =
       body.direction === "up"
         ? "up"

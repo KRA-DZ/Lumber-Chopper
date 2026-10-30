@@ -282,6 +282,53 @@
       box-shadow: none;
       aspect-ratio: auto;
     }
+    .hero-choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      border: 0;
+      padding: 0;
+      margin: 16px 0;
+    }
+    .hero-choices legend {
+      padding: 0 0 10px;
+    }
+    .hero-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid #61734b;
+      padding: 12px 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .hero-card:has(input:checked) {
+      border-color: #f0d58c;
+      background: #354f35;
+    }
+    .hero-card:focus-within {
+      outline: 2px solid #f0d58c;
+      outline-offset: 3px;
+    }
+    .hero-card input {
+      width: 20px;
+      height: 20px;
+      accent-color: #d9b66d;
+    }
+    .hero-card img {
+      object-fit: contain;
+      image-rendering: pixelated;
+      max-width: 100%;
+    }
+    .hero-card span {
+      font-size: 12px;
+      color: #bacd9d;
+    }
+    [data-hero-start] {
+      width: 100%;
+      min-height: 48px;
+    }
     #loading {
       position: absolute;
       inset: 0;
@@ -499,6 +546,38 @@
     <h2 id="deathTitle">Лес погас</h2>
     <p data-defeat></p>
     <button type="button" data-restart>Начать заново</button>
+  </dialog>
+  <dialog id="heroDialog" aria-labelledby="heroTitle">
+    <form>
+      <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
+      <h2 id="heroTitle">Кто отправится в лес?</h2>
+      <p>Выберите героя. У обоих одинаковые сила, скорость и вместимость.</p>
+      <fieldset class="hero-choices">
+        <legend>Персонаж</legend>
+        <label class="hero-card">
+          <input type="radio" name="appearance" value="traveler" checked />
+          <img
+            src="./src/assets/people/hero2-portrait.png"
+            alt="Путешественник в бирюзовой куртке"
+            width="110"
+            height="160"
+          />
+          <b>Путешественник</b><span>Вариант 2</span>
+        </label>
+        <label class="hero-card">
+          <input type="radio" name="appearance" value="woodcutter" />
+          <img
+            src="./src/assets/people/hero3-portrait.png"
+            alt="Лесорубка с косой и зелёным шарфом"
+            width="110"
+            height="160"
+          />
+          <b>Лесорубка</b><span>Вариант 3</span>
+        </label>
+      </fieldset>
+      <p data-hero-error role="alert"></p>
+      <button type="submit" data-hero-start>Начать смену</button>
+    </form>
   </dialog>
   <script src="./vendor/phaser/phaser.min.js"></script>
   <script type="module" src="./phaser/main.js"></script>

@@ -1,5 +1,7 @@
 """Generated PNG terrain, six regional creatures and strict territory in WebGL/Canvas."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -46,6 +48,7 @@ try:
                 f"http://127.0.0.1:{server.server_port}/"
                 + ("dist/" if mode == "canvas" else "phaser.html")
             )
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
             q.evaluate(
                 "window.g=lumberPhaser;window.m=g.core;window.w=g.scene;w.manual=true;m.player.autoTimer=10000;g.step(0)"

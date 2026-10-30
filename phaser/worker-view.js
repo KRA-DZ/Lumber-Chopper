@@ -45,10 +45,9 @@ export class WorkerView {
       if (!a) {
         a = {
           sprite: scene.add
-            .sprite(w.x, w.y, "forest", "characters.buyerB.down.0")
+            .sprite(w.x, w.y, "forest", "person.worker3-walk-down-0")
             .setOrigin(0.5, 44 / 46)
-            .setScale(2)
-            .setTint([0xd2dfa9, 0xe2beaa, 0xb5d3d7][w.id]),
+            .setScale(2),
           axe: scene.addImage("axes.0.0", w.x, w.y),
           logs: Array.from({ length: 8 }, () => scene.addImage("log", 0, 0)),
           label: scene.text(w.name, w.x, w.y + 20, 11),
@@ -57,7 +56,7 @@ export class WorkerView {
       }
       const nearby = scene.nearView(w, scene.camera.worldView, 180);
       a.sprite.setVisible(nearby);
-      a.axe.setVisible(nearby && w.phase === "cutting");
+      a.axe.setVisible(nearby && w.phase === "cutting" && !scene.assets.people);
       a.label.setVisible(nearby);
       a.logs.forEach((log, i) => {
         log.setVisible(nearby && i < w.cargo.length);
@@ -81,12 +80,7 @@ export class WorkerView {
       const bob =
         w.moving && Math.floor(scene.core.elapsed * 12) % 4 < 2 ? -2 : 0;
       a.sprite.setPosition(snap(w.x), snap(w.y + bob));
-      scene.animatePerson(
-        a.sprite,
-        "buyerB",
-        w,
-        w.cargo.length ? "happy" : "neutral",
-      );
+      scene.animatePerson(a.sprite, w.appearance, w, "neutral");
       a.axe
         .setPosition(snap(w.x + 18), snap(w.y - 34))
         .setRotation(w.swing > 0 ? -1 : 0.3)

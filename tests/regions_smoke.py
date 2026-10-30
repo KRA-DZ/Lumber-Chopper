@@ -1,5 +1,7 @@
 """Real regional navigation/deposits, streamed objects, camp comfort and story clues."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -54,6 +56,7 @@ try:
             errors = []
             q.on("pageerror", lambda e: errors.append(e.stack))
             q.goto(url + ("dist/" if mobile else "phaser.html"))
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady")
             q.evaluate(
                 "window.g=lumberPhaser;window.m=g.core;window.w=g.scene;w.manual=true;window.startTrees=m.trees.length;void 0"

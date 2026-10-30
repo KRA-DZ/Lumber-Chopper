@@ -1,3 +1,4 @@
+import { applyPeopleFrames } from "./people-assets.js";
 import { biomeEnemyFrames } from "./biome-assets.js";
 import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
@@ -119,6 +120,7 @@ export function createAtlas(scene) {
   );
   for (const [key, frame] of Object.entries(biomeEnemyFrames(scene)))
     sources.set(key, frame);
+  const people = applyPeopleFrames(scene, sources);
   let x = 2,
     y = 2,
     row = 0;
@@ -220,5 +222,5 @@ export function createAtlas(scene) {
         })),
         duration: STRIKE_MS,
       });
-  return { art, worldArt, meta, image, setFrame };
+  return { art, worldArt, meta, image, setFrame, people };
 }

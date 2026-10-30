@@ -1,5 +1,7 @@
 """Worker hiring, actual trips, stock/sales, sunset safety and restart on three renderers."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -21,6 +23,7 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def ready(q):
+    choose_hero(q)
     q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
     q.evaluate(
         "window.g=lumberPhaser;window.m=g.core;window.w=g.scene;w.manual=true;g.step(0)"
@@ -136,7 +139,7 @@ try:
             q.evaluate("m.setDestination(3420,1800)")
             until(q, "!m.player.path.length", 20)
             assert q.evaluate(
-                "w.workerView.objects.size===3&&w.workerView.objects.get(0).sprite.frame.name.includes('buyerB')"
+                "w.workerView.objects.size===3&&w.workerView.objects.get(0).sprite.frame.name.startsWith('person.worker3-')&&w.workerView.objects.get(1).sprite.frame.name.startsWith('person.worker4-')"
             )
             until(q, "m.workers.crew.every(n=>n.cargo.length>=4)", 15)
             q.evaluate("g.step(0)")

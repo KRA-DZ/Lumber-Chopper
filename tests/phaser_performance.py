@@ -3,6 +3,8 @@ python tests/phaser_performance.py --baseline /path/to/previous-checkout
 Headless WebGL uses software rendering. Viewport emulation is not a real phone.
 """
 
+from helpers.browser_start import choose_hero
+
 import argparse
 import json
 from functools import partial
@@ -63,6 +65,7 @@ try:
             errors = []
             q.on("pageerror", lambda e: errors.append(str(e)))
             q.goto(url)
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=30000)
             q.evaluate(
                 """()=>{window.g=lumberPhaser;window.w=g.scene;window.m=g.core;const original=w.sys.sceneUpdate.bind(w);window.samples={cpu:[],frames:[],phases:new Set(),on:false};w.sys.sceneUpdate=(time,delta)=>{const t=performance.now();original(time,delta);if(samples.on&&samples.cpu.length<2000)samples.cpu.push(performance.now()-t);if(samples.on&&m.survival?.monster)samples.phases.add(m.survival.monster.phase)};let last=performance.now();function frame(now){if(samples.on&&samples.frames.length<2000)samples.frames.push(now-last);last=now;requestAnimationFrame(frame)}requestAnimationFrame(frame);m.state.maxWood=40;while(m.state.wood<40)m.forestry.addCargo(10);m.player.x=1600;m.player.y=1760;window.route={a:1580,b:1740,y:1760};window.destination=route.b;w.events.on('postupdate',()=>{if(Math.abs(m.player.x-destination)<12)destination=destination===route.b?route.a:route.b;if(!m.player.path.length)m.setDestination(destination,route.y)})}"""

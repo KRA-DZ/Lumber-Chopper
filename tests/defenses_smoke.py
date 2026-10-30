@@ -1,5 +1,7 @@
 """Real Phaser input and defense transactions in desktop/mobile WebGL and Canvas build."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -21,6 +23,7 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def ready(q):
+    choose_hero(q)
     q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
     q.evaluate(
         "window.g=lumberPhaser;window.m=g.core;window.w=g.scene;w.manual=true;g.step(0)"

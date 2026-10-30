@@ -2,6 +2,8 @@
 Run after npm run build. Preview fixtures use development state, not saved games.
 """
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -56,6 +58,7 @@ try:
             errors = []
             q.on("pageerror", lambda e: errors.append(str(e)))
             q.goto(url + ("dist/" if canvas else "phaser.html"))
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=30000)
             q.evaluate(
                 "window.g=lumberPhaser;window.w=g.scene;window.m=g.core;w.manual=true;window.a=w.atmosphere;void 0"

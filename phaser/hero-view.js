@@ -53,7 +53,9 @@ export class HeroView {
       this.player.stop();
       scene.assets.setFrame(
         this.player,
-        `hero.strike.${this.strikeDir}.${phase}`,
+        scene.assets.people
+          ? `hero.strike.${s.axeLevel}.${this.strikeDir}.${phase}`
+          : `hero.strike.${this.strikeDir}.${phase}`,
       );
       const [hx, hy] = STRIKE_HANDS[this.strikeDir][phase],
         sign = this.strikeFlip ? -1 : 1;
@@ -100,6 +102,9 @@ export class HeroView {
           snap(p.y - 20 + this.bob),
         );
     }
+    this.bakedTool = Boolean(scene.assets.people && striking);
+    const origin = scene.assets.meta.get(this.player.frame.name);
+    if (origin) this.player.setOrigin(origin.originX, origin.originY);
     this.axe
       .setFlipX(striking ? this.strikeFlip : p.direction === "left")
       .setDepth(p.y + (striking && this.strikeDir === "up" ? -0.02 : 0.03));

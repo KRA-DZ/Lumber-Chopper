@@ -1,3 +1,5 @@
+import { preloadPeople, retainPeople } from "./people-assets.js";
+import { selectHero } from "./hero-selection.js";
 import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
 import { WorldScene } from "./world-scene.js";
@@ -10,6 +12,7 @@ class BootScene extends Phaser.Scene {
   }
   preload() {
     preloadBiomeAssets(this);
+    preloadPeople(this);
     this.usePng =
       new URLSearchParams(location.search).get("art") !== "procedural";
     if (!this.usePng) return;
@@ -19,6 +22,7 @@ class BootScene extends Phaser.Scene {
   }
   create() {
     retainBiomeAssets(this);
+    retainPeople(this);
     if (this.usePng) {
       const manifest = this.cache.json.get("import.manifest");
       if (
@@ -42,7 +46,7 @@ class BootScene extends Phaser.Scene {
         ),
       });
     }
-    this.scene.start("World");
+    selectHero(this, () => this.scene.start("World"));
   }
 }
 const mobile = () => window.innerWidth < 600;

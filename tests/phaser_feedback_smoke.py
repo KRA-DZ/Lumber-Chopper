@@ -1,5 +1,7 @@
 """Hero motion, directional chopping, focused feedback and bounded visual objects."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -39,6 +41,7 @@ try:
             errors = []
             q.on("pageerror", lambda e: errors.append(str(e)))
             q.goto(url + "phaser.html")
+            choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady")
             q.evaluate(
                 "window.g=lumberPhaser;window.w=g.scene;window.m=g.core;w.manual=true"

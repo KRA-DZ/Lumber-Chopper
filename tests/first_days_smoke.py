@@ -1,5 +1,7 @@
 """Use the native guide buttons to earn carry, build a fire and survive the first night."""
 
+from helpers.browser_start import choose_hero
+
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -21,6 +23,7 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def ready(q):
+    choose_hero(q)
     q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=60000)
     q.evaluate(
         'window.g=lumberPhaser;window.m=g.core;window.w=g.scene;window.h=w.scene.get("Hud");w.manual=true;g.step(0)'
