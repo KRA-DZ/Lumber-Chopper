@@ -1,3 +1,4 @@
+import { renderStoryJournal } from "./story-journal.js";
 import { firstDaysPlan } from "../game/first-days.js";
 import { LETTERS, QUESTS } from "../game/lore.js";
 export function createSurvivalUi(scene) {
@@ -5,8 +6,23 @@ export function createSurvivalUi(scene) {
     list = journal.querySelector("[data-journal]"),
     button = document.querySelector("#journalButton"),
     death = document.querySelector("#deathDialog");
+  let pendingRoute = null;
   function refreshBadge() {
-    button.textContent = `Дневник · ${scene.core.state.unlockedLetters.length} писем · J`;
+    const s = scene.core.state;
+    const unread =
+      s.unlockedLetters.filter((id) => !s.readClues.includes(id)).length +
+      (scene.core.story?.unread || 0);
+    button.textContent = unread
+      ? `Дневник · ${unread} новых · J`
+      : "Дневник · J";
+    button.dataset.unread = String(unread);
+  }
+  function resume() {
+    if (pendingRoute && !scene.core.paused) {
+      const target = pendingRoute;
+      pendingRoute = null;
+      scene.core.navigateStory(target);
+    }
   }
   function render() {
     const c = scene.core,
@@ -22,6 +38,10 @@ export function createSurvivalUi(scene) {
       list.append(article);
       return article;
     };
+    renderStoryJournal(scene, list, (target) => {
+      pendingRoute = target;
+      journal.close();
+    });
     const heading = document.createElement("h3");
     heading.textContent = "План первых четырёх дней";
     list.append(heading);
@@ -69,6 +89,7 @@ export function createSurvivalUi(scene) {
     }
     for (const clue of c.world.clues || [])
       if (s.readClues.includes(clue.id)) append(clue.name, clue.text);
+    refreshBadge();
   }
   function open() {
     if (scene.core.state.gameOver) return;
@@ -76,7 +97,10 @@ export function createSurvivalUi(scene) {
     scene.pause("journal", true);
     if (!journal.open) journal.showModal();
   }
-  const close = () => scene.pause("journal", false),
+  const close = () => {
+      scene.pause("journal", false);
+      resume();
+    },
     dismiss = () => journal.close();
   const restart = () => location.reload(),
     prevent = (event) => event.preventDefault();
@@ -90,6 +114,7 @@ export function createSurvivalUi(scene) {
   refreshBadge();
   return {
     open,
+    resume,
     refreshBadge,
     defeat(event) {
       scene.pause("defeat", true);
@@ -107,6 +132,7 @@ export function createSurvivalUi(scene) {
       if (!death.open) death.showModal();
     },
     destroy() {
+      pendingRoute = null;
       button.removeEventListener("click", open);
       journal.removeEventListener("close", close);
       journal

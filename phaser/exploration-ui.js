@@ -51,6 +51,8 @@ export function createExplorationUi(scene) {
           "Тёплая еда восстанавливает здоровье героя. Для приготовления нужна одна рыба.",
       };
       paragraph(descriptions[site.kind]);
+      const conversation = scene.core.story?.conversation(site.id);
+      if (conversation) paragraph(conversation).dataset.storyDialogue = site.id;
       for (const offer of m.offers(siteId)) {
         const row = document.createElement("article");
         row.className = "activity-card";
@@ -68,7 +70,9 @@ export function createExplorationUi(scene) {
               return;
             }
             render();
-            message.textContent = "Готово.";
+            message.textContent = offer.action.startsWith("story:")
+              ? scene.core.story.conversation(siteId)
+              : "Готово.";
             scene.renderModel();
           },
           row,
@@ -91,6 +95,11 @@ export function createExplorationUi(scene) {
         list.append(li);
       }
       content.append(list);
+      const evidence = scene.core.story?.evidence.filter((e) => e.found) || [];
+      if (evidence.length)
+        paragraph(
+          `Сюжетные находки: ${evidence.map((e) => e.name).join(", ")}. Хранятся в дневнике.`,
+        );
       const heal = button(
         `Использовать мазь · +${EXPLORATION.salveHeal} HP`,
         () => {

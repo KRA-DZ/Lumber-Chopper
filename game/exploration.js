@@ -29,6 +29,7 @@ export function createExploration({
   nav,
   forestry,
   canAct,
+  getStory = () => null,
   navigate,
   emit = () => {},
 }) {
@@ -245,7 +246,7 @@ export function createExploration({
             : "",
       );
     }
-    return rows;
+    return [...rows, ...(getStory()?.offers(s) || [])];
   }
   function perform(id, action) {
     const s = get(id),
@@ -253,6 +254,8 @@ export function createExploration({
     // A paused inspection allows its quoted transaction, never remote or forged actions.
     if (state.gameOver || context !== id || !near(s) || !offer?.enabled)
       return false;
+    if (action.startsWith("story:"))
+      return getStory()?.performAt(s, action) || false;
     let event = { site: s, action };
     if (action === "buy-rod") {
       state.coins -= EXPLORATION.rodPrice;
@@ -346,6 +349,7 @@ export function createExploration({
     }
     bag.fish++;
     data.fishToday++;
+    data.totalFishCaught++;
     fishing = null;
     changed("fish-caught", { count: bag.fish });
     return true;

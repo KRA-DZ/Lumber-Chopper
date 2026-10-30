@@ -64,7 +64,10 @@ export function createLore(state, emit = () => {}) {
     },
     read(clue) {
       if (!clue?.id) return false;
-      if (!state.readClues.includes(clue.id)) state.readClues.push(clue.id);
+      if (!state.readClues.includes(clue.id)) {
+        state.readClues.push(clue.id);
+        emit("clue-read", { id: clue.id });
+      }
       return true;
     },
     claim(id) {

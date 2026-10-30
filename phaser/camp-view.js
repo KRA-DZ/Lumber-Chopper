@@ -5,6 +5,9 @@ export class CampView {
     this.scene = scene;
     this.g = scene.add.graphics().setDepth(-850);
     this.props = [];
+    this.storySeal = scene
+      .addImage("story.campSeal", 1666, 1670)
+      .setVisible(false);
     for (const [key, x, y, min] of [
       ["dishes", 1530, 1605, 1],
       ["mat", CAMP.tent.x, CAMP.tent.y + 23, 2],
@@ -38,6 +41,8 @@ export class CampView {
       s = c.state,
       p = c.player,
       g = this.g.clear();
+    this.storySeal.setVisible(!!s.story?.completed);
+    this.storySeal.setTint(s.story?.ending === "named" ? 0xffedbd : 0xc6ded1);
     for (const prop of this.props) {
       prop.image.setVisible(s.campLevel >= prop.min);
       if (prop.key === "mat")

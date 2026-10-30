@@ -1,3 +1,4 @@
+import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
@@ -63,9 +64,11 @@ export function createSimulation({
     selectedEnemyId = null,
     pursueEnemy = false,
     pursuitTimer = 0,
-    defenseRouteTimer = 0;
+    defenseRouteTimer = 0,
+    story = null;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   function updateUI() {
+    story?.sync();
     revision++;
   }
   function showNotice(text, duration = 4) {
@@ -141,8 +144,10 @@ export function createSimulation({
         nav,
         forestry,
         canAct,
+        getStory: () => story,
         navigate: navigateTo,
         emit: (type, event) => {
+          story?.sync();
           revision++;
           emit(type, event);
         },
@@ -237,9 +242,20 @@ export function createSimulation({
     emit("game-over", { reason, nightsSurvived: gameState.nightsSurvived });
   }
   const lore = createLore(gameState, (type, event) => {
+    story?.sync();
     revision++;
     emit(type, event);
   });
+  story = regional
+    ? createStory({
+        state: gameState,
+        exploration,
+        emit: (type, event) => {
+          revision++;
+          emit(type, event);
+        },
+      })
+    : null;
   const survival = hazards
     ? createSurvival({
         state: gameState,
@@ -274,6 +290,7 @@ export function createSimulation({
     } else {
       survival?.dawn();
       lore.onDawn();
+      story?.sync();
       showNotice(`Рассвет. Пережито ночей: ${gameState.nightsSurvived}`, 6);
     }
     revision++;
@@ -663,6 +680,57 @@ export function createSimulation({
     defenses,
     selectEnemy,
     orderDefense,
+    story,
+    navigateStory(target = story?.overview().target) {
+      if (!story || !canAct() || !target) return false;
+      if (target.kind === "camp") return core.navigateGuide("camp");
+      if (target.kind === "build") {
+        navigateTo(build.x, build.y);
+        return true;
+      }
+      const point =
+        target.kind === "clue"
+          ? world.clues.find((c) => c.id === target.id)
+          : exploration?.get(target.id);
+      if (!point) return false;
+      if (!accessible(point)) {
+        const region = regions.all.find(
+          (r) =>
+            r.x <= point.x &&
+            point.x < r.x + r.width &&
+            r.y <= point.y &&
+            point.y < r.y + r.height,
+        );
+        const gate = regions
+          .frontiers()
+          .find((g) => g.region.id === region?.id);
+        if (!gate) {
+          showNotice("Сначала откройте соседний регион на карте.");
+          return false;
+        }
+        navigateTo(gate.x, gate.y);
+        showNotice(
+          `Откройте ${region.name}: ${region.cost} брёвен у указателя.`,
+          6,
+        );
+        return true;
+      }
+      if (target.kind === "site") return exploration.request(point.id);
+      navigateTo(point.x, point.y + 32);
+      return true;
+    },
+    readClue(id) {
+      const clue = world.clues?.find((c) => c.id === id);
+      if (
+        !canAct() ||
+        !clue ||
+        !accessible(clue) ||
+        distance(player, clue) >= 140 ||
+        !nav.hasLineOfSight(player, clue)
+      )
+        return false;
+      return lore.read(clue);
+    },
     tryChop,
     tryAttack,
     purchaseUpgrade,

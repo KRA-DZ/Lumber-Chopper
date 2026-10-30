@@ -52,6 +52,7 @@ export class HudScene extends Phaser.Scene {
       .on("pointerdown", (p, x, y, event) => event.stopPropagation());
     this.doneAt = null;
     this.guideWidth = null;
+    this.storyGuide = false;
     this.dayHud = new DayHud(this);
     this.watcherHud = new WatcherHud(this);
     this.guideButton = this.add
@@ -72,6 +73,10 @@ export class HudScene extends Phaser.Scene {
       if (fishing) {
         if (fishing.phase === "bite") c.exploration.reel();
         else c.exploration.cancelFishing();
+        return;
+      }
+      if (this.storyGuide) {
+        c.navigateStory();
         return;
       }
       const action = c.guide.action;
@@ -188,6 +193,13 @@ export class HudScene extends Phaser.Scene {
     );
     this.dayHud.refresh();
     const fishing = c.exploration?.fishing;
+    this.storyGuide =
+      !fishing &&
+      c.guide.id === "free" &&
+      !!c.story &&
+      !c.story.overview().completed &&
+      c.story.overview().phase > 0;
+    const storyGoal = this.storyGuide ? c.story.overview() : null;
     const guide = fishing
       ? {
           title:
@@ -204,7 +216,14 @@ export class HudScene extends Phaser.Scene {
               : "Убрать снасти",
           action: "fishing",
         }
-      : c.guide;
+      : storyGoal
+        ? {
+            title: storyGoal.chapter,
+            text: `${storyGoal.title}. ${storyGoal.text}`,
+            button: "К цели главы",
+            action: "story",
+          }
+        : c.guide;
     if (this.guideWidth !== this.scale.width) {
       this.guideWidth = this.scale.width;
       this.tutorial

@@ -565,7 +565,7 @@ export class WorldScene extends Phaser.Scene {
       .addEventListener("click", this.dismissClue);
   }
   openClue(clue) {
-    this.core.lore.read(clue);
+    if (!this.core.readClue(clue.id)) return;
     this.atmosphere.mystery.read.add(clue.id);
     document.querySelector("#clueTitle").textContent = clue.name;
     document.querySelector("#clueText").textContent = clue.text;
@@ -694,6 +694,7 @@ export class WorldScene extends Phaser.Scene {
     this.defenseView.render();
     this.explorationView.render();
     this.explorationUi?.refresh();
+    this.survivalUi?.resume();
     for (const [image, x, y] of [
       [this.hut, CAMP.hut.x, CAMP.hut.y],
       [this.tent, CAMP.tent.x, CAMP.tent.y],
@@ -949,6 +950,23 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type.startsWith("story-")) {
+      this.survivalUi?.refreshBadge();
+      if (type === "story-completed") {
+        this.core.showNotice(
+          `Глава «Чужой огонь» завершена! +${e.reward} монет.`,
+          9,
+        );
+        this.float(`+${e.reward} монет`, CENTER.x, CENTER.y - 95, "#ffe296");
+      } else if (type === "story-evidence")
+        this.core.showNotice(
+          `Найдена сюжетная улика: ${e.name}. Запись в дневнике.`,
+          6,
+        );
+      else if (type === "story-progress")
+        this.core.showNotice(`Чужой огонь · ${e.title}. Подробности — J.`, 6);
+      return;
+    }
     if (type === "site-ready") {
       this.explorationUi?.openSite(e.site);
       return;

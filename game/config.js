@@ -31,7 +31,19 @@ export function createInitialState() {
       offeringDay: -1, // 3 бревна -> 1 смола раз в календарный день, только при дневном свете.
       fishDay: -1,
       fishToday: 0, // До четырёх успешных уловов в день; промах не тратит квоту.
+      totalFishCaught: 0, // Счётчик успешных уловов: сюжет не зависит от продажи или готовки рыбы.
       casts: 0, // Чередует ожидание поклёвки 4–6 с, окно подсечки 2,2 с.
+    },
+    story: {
+      phase: 0, // Глава I: 0 — до первого рассвета, 1–5 — цели, 6 — завершена.
+      evidence: { seal: false, scale: false, imprint: false }, // Личные находки не занимают сумку и не продаются.
+      traderTopic: "",
+      contract: false,
+      ending: "",
+      completed: false,
+      pages: [],
+      readPages: [], // Полученные записи и явные отметки прочтения.
+      rewardClaimed: false, // 120 монет за финал ровно один раз, без изменения ночной опасности.
     },
     readClues: [],
     unlockedLetters: [],
