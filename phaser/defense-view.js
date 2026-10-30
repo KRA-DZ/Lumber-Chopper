@@ -15,7 +15,7 @@ export class DefenseView {
       for (const o of this.objects) {
         o.g.destroy();
         o.zone.destroy();
-        o.label.destroy();
+        o.label?.destroy();
       }
       this.objects = [];
       for (const d of c.defenses?.all() || []) {
@@ -71,11 +71,16 @@ export class DefenseView {
           d.kind === "fence"
             ? `Ремонт · ${d.hp}/${d.maxHP}`
             : `${d.name}\n${d.hp ? (d.kind === "trap" ? "Взведена · 1 заряд" : `${d.hp}/${d.maxHP} HP`) : `${d.wood}/${d.cost} брёвен`}`;
-        const label = s.text(text, d.x, d.y + 18, 11, "#e4c994", LAYERS.hints);
+        // Intact fence labels are never visible; don't allocate their canvas textures.
+        const label =
+          d.kind !== "fence" || d.hp < d.maxHP
+            ? s.text(text, d.x, d.y + 18, 11, "#e4c994", LAYERS.hints)
+            : null;
         this.objects.push({ d, g, zone, label });
       }
     }
     for (const { d, label } of this.objects) {
+      if (!label) continue;
       const selected = c.defenseOrder === d.id;
       label.setVisible(
         (selected || Math.hypot(c.player.x - d.x, c.player.y - d.y) < 135) &&

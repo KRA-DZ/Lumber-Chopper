@@ -114,7 +114,7 @@ try:
             assert q.evaluate('w.enemyView.objects.get(a.id).label.text.includes("▾")')
             # Stable labels must not regenerate canvas/GPU text textures every render.
             q.evaluate(
-                "window.textUpdates=0;for(const label of [...w.defenseView.objects.map(o=>o.label),...Array.from(w.enemyView.objects.values(),o=>o.label)]){const update=label.updateText.bind(label);label.updateText=(...args)=>{textUpdates++;return update(...args)}};g.step(0);g.step(0)"
+                "window.textUpdates=0;for(const label of [...w.defenseView.objects.map(o=>o.label).filter(Boolean),...Array.from(w.enemyView.objects.values(),o=>o.label)]){const update=label.updateText.bind(label);label.updateText=(...args)=>{textUpdates++;return update(...args)}};g.step(0);g.step(0)"
             )
             assert q.evaluate("textUpdates") == 0
             # Input to the ground cancels targeting and work orders.

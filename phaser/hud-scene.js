@@ -68,6 +68,12 @@ export class HudScene extends Phaser.Scene {
       event.stopPropagation();
       const c = this.world.core;
       if (c.paused) return;
+      const fishing = c.exploration?.fishing;
+      if (fishing) {
+        if (fishing.phase === "bite") c.exploration.reel();
+        else c.exploration.cancelFishing();
+        return;
+      }
       const action = c.guide.action;
       if (action === "shop") this.world.shop.open();
       else if (action === "journal") this.world.survivalUi.open();
@@ -181,7 +187,24 @@ export class HudScene extends Phaser.Scene {
       3,
     );
     this.dayHud.refresh();
-    const guide = c.guide;
+    const fishing = c.exploration?.fishing;
+    const guide = fishing
+      ? {
+          title:
+            fishing.phase === "bite"
+              ? `Клюёт! · ${Math.max(0, fishing.timer).toFixed(1)} с`
+              : `Рыбалка · поклёвка через ${Math.ceil(fishing.timer)} с`,
+          text:
+            fishing.phase === "bite"
+              ? "Нажмите «Подсечь», E или пробел. Время продолжает идти."
+              : "Ждите движения поплавка. Ходьба или ночь прервут ловлю.",
+          button:
+            fishing.phase === "bite"
+              ? "Подсечь! · E / пробел"
+              : "Убрать снасти",
+          action: "fishing",
+        }
+      : c.guide;
     if (this.guideWidth !== this.scale.width) {
       this.guideWidth = this.scale.width;
       this.tutorial

@@ -99,6 +99,7 @@ export function createSurvivalUi(scene) {
         "journalButton",
         "campButton",
         "defenseButton",
+        "bagButton",
       ])
         document.querySelector("#" + id).disabled = true;
       death.querySelector("[data-defeat]").textContent =
@@ -124,6 +125,7 @@ export function createSurvivalUi(scene) {
         "journalButton",
         "campButton",
         "defenseButton",
+        "bagButton",
       ])
         document.querySelector("#" + id).disabled = false;
     },

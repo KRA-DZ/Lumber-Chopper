@@ -25,11 +25,13 @@ export class RegionView {
       if (p.type === "chest") {
         image("camp.chest", p.x, p.y)
           .setInteractive({ pixelPerfect: true })
-          .setData("clue", {
-            ...p,
-            text: "Печать на крышке ещё цела. Внутри что-то тихо перекатывается. Сундук пока нельзя открыть.",
-          });
-        result.push(this.scene.text("Запечатан", p.x, p.y + 30, 11, "#d3cda8"));
+          .setData("site", p.id)
+          .setData("chest", p.id);
+        result.push(
+          this.scene
+            .text("Запечатан", p.x, p.y + 30, 11, "#d3cda8")
+            .setData("chestLabel", p.id),
+        );
       } else if (p.type === "ruins") {
         const g = this.scene.add.graphics().setDepth(p.y);
         result.push(g);
@@ -88,21 +90,9 @@ export class RegionView {
         );
       image("camp.gateSign", p.x + 265, p.y + 175)
         .setInteractive({ pixelPerfect: true })
-        .setData("clue", {
-          id: "fishing",
-          name: "Старый причал",
-          x: p.x + 265,
-          y: p.y + 175,
-          text: "Здесь когда-то ловили рыбу. На досках остались следы мокрых сапог. Рыбалка появится позднее.",
-        });
+        .setData("site", "fishing");
       result.push(
-        this.scene.text(
-          "Тихие воды · будущая рыбалка",
-          p.x,
-          p.y + 235,
-          12,
-          "#dce2ba",
-        ),
+        this.scene.text("Тихие воды · рыбалка", p.x, p.y + 235, 12, "#dce2ba"),
       );
     }
     return result;
@@ -134,7 +124,14 @@ export class RegionView {
       for (const a of this.gates.values())
         a.objects.forEach((o) => o.destroy());
       this.gates.clear();
-      for (const gate of regions.frontiers()) {
+    }
+    // Stream border signs too. Keep a wider release margin to avoid edge flicker.
+    const wantedGates = new Set();
+    for (const gate of regions.frontiers()) {
+      if (!this.scene.nearView(gate, view, this.gates.has(gate.id) ? 520 : 360))
+        continue;
+      wantedGates.add(gate.id);
+      if (!this.gates.has(gate.id)) {
         const pad = this.scene.addImage(
           "camp.gatePad",
           gate.x,
@@ -168,6 +165,11 @@ export class RegionView {
         });
       }
     }
+    for (const [id, entry] of this.gates)
+      if (!wantedGates.has(id)) {
+        entry.objects.forEach((o) => o.destroy());
+        this.gates.delete(id);
+      }
     for (const { gate, label, objects } of this.gates.values()) {
       const near = this.scene.nearView(gate, view, 240);
       objects.forEach((o) => o.setVisible(near));
@@ -177,6 +179,22 @@ export class RegionView {
     }
     for (const list of this.objects.values())
       for (const image of list) {
+        const chest = image.getData("chest"),
+          label = image.getData("chestLabel");
+        if (chest) {
+          const key = this.scene.core.state.exploration.openedChests.includes(
+            chest,
+          )
+            ? "exploration.chestOpen"
+            : "camp.chest";
+          if (image.frame.name !== key) this.scene.assets.setFrame(image, key);
+        }
+        if (label)
+          image.setText(
+            this.scene.core.state.exploration.openedChests.includes(label)
+              ? "Пусто"
+              : "Нужен ключ",
+          );
         const p = image.getData("plant");
         if (!p || p.type === "rock" || !this.scene.nearView(p, view, 90))
           continue;

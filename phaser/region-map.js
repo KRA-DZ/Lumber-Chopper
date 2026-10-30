@@ -36,7 +36,7 @@ export function createRegionMap(scene) {
         detail = document.createElement("small");
       title.textContent = opened || gate ? region.name : "Неизведано";
       detail.textContent = opened
-        ? "Открыто"
+        ? c.exploration.regionSummary(region.id)
         : gate
           ? `${c.state.regionWood[region.id] || 0}/${region.cost} брёвен`
           : "—";
@@ -45,7 +45,7 @@ export function createRegionMap(scene) {
         "click",
         () => {
           pending = opened
-            ? { x: region.cx, y: region.cy }
+            ? c.exploration.regionDestination(region)
             : { x: gate.x, y: gate.y };
           dialog.close();
         },

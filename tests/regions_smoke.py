@@ -59,9 +59,11 @@ try:
                 "window.g=lumberPhaser;window.m=g.core;window.w=g.scene;w.manual=true;window.startTrees=m.trees.length;void 0"
             )
             assert q.evaluate(
-                "m.state.unlockedRegions.length===1&&m.world.decorBins.size===1&&w.regionView.gates.size===4&&!w.ancient.visible&&!w.merchant.visible&&g.game.scale.width===(innerWidth<600?512:960)"
+                "m.state.unlockedRegions.length===1&&m.world.decorBins.size===1&&m.regions.frontiers().length===4&&w.regionView.gates.size<=4&&!w.ancient.visible&&!w.merchant.visible&&g.game.scale.width===(innerWidth<600?512:960)"
             )
-            assert q.evaluate('w.scene.get("Hud").tutorial.text.startsWith("1/3")')
+            assert q.evaluate(
+                'm.guide.id === "cut" && w.scene.get("Hud").tutorial.text.includes("Первые брёвна")'
+            )
             assert q.evaluate(
                 "Array.from(w.regionView.gates.values()).every(g=>g.objects[0].depth < -3200 && g.label.depth > 6400)"
             )
@@ -161,6 +163,8 @@ try:
             )
             assert q.evaluate(
                 "w.treeObjects.size<170&&w.regionView.objects.size<=4&&g.game.textures.getTextureKeys().length<100"
+            ), q.evaluate(
+                "({trees:w.treeObjects.size,regions:w.regionView.objects.size,textures:g.game.textures.getTextureKeys().length,chunks:w.terrain.images.size})"
             )
             if not mobile:
                 q.evaluate(

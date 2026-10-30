@@ -156,22 +156,25 @@ export class Atmosphere {
     return this.core.accessible(p);
   }
   nearestClue() {
-    const note = this.clueData.find(
-      (c) =>
-        this.accessible(c) &&
-        Math.hypot(c.x - this.core.player.x, c.y - this.core.player.y) < 130,
-    );
-    if (note) return note;
+    const player = this.core.player,
+      candidates = this.clueData.filter(
+        (c) =>
+          this.accessible(c) &&
+          Math.hypot(c.x - player.x, c.y - player.y) < 130,
+      );
     for (const list of this.scene.regionView?.objects.values() || [])
       for (const image of list) {
         const clue = image.getData("clue");
-        if (
-          clue &&
-          Math.hypot(clue.x - this.core.player.x, clue.y - this.core.player.y) <
-            130
-        )
-          return clue;
+        if (clue && Math.hypot(clue.x - player.x, clue.y - player.y) < 130)
+          candidates.push(clue);
       }
+    const site = this.core.exploration?.nearest();
+    if (site) candidates.push(site);
+    return candidates.sort(
+      (a, b) =>
+        Math.hypot(a.x - player.x, a.y - player.y) -
+        Math.hypot(b.x - player.x, b.y - player.y),
+    )[0];
   }
   update(dt) {
     if (this.core.paused) return;
@@ -389,7 +392,7 @@ export class Atmosphere {
     for (const { c: clue, image } of this.clues)
       image.setVisible(this.accessible(clue) && near(clue.x, clue.y));
     const clue = this.nearestClue();
-    this.prompt.setVisible(!!clue);
+    this.prompt.setVisible(!!clue && !this.core.exploration?.fishing);
     if (clue)
       this.prompt
         .setPosition(clue.x, clue.y + 28)

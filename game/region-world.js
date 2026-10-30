@@ -57,13 +57,12 @@ export function createRegionWorld(regions) {
       ])
         landmarks.push({
           id: `chest:${r.id}:${i}`,
-          name: "Запечатанный сундук",
+          name: "Сундук крепости",
           type: "chest",
           x: r.cx + dx,
           y: r.cy + dy,
           clearing: 90,
           regionId: r.id,
-          future: true,
         });
     // Wide, continuous cross-roads keep all four borders and their signs reachable.
     trails.push(
@@ -162,6 +161,8 @@ export function createRegionWorld(regions) {
     return (
       nearTrail({ x, y }, 90) ||
       waterCollision(x, y, 75) ||
+      (r.activity === "pond" &&
+        Math.hypot(x - (pond.x + 225), y - (pond.y + 175)) < 250) ||
       (r.id === "0:0" && Math.hypot(x - CENTER.x, y - CENTER.y) < 520) ||
       Math.hypot(x - ancientTree.x, y - ancientTree.y) < 290 ||
       Math.hypot(x - merchant.x, y - merchant.y) < 220 ||

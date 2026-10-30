@@ -1,3 +1,5 @@
+import { createExplorationUi } from "./exploration-ui.js";
+import { ExplorationView } from "./exploration-view.js";
 import { shopAdvice } from "../game/first-days.js";
 import { StackView } from "./stack-view.js";
 import { BuyerView } from "./buyer-view.js";
@@ -94,6 +96,7 @@ export class WorldScene extends Phaser.Scene {
     this.buyerView = new BuyerView(this);
     this.enemyView = new EnemyView(this);
     this.defenseView = new DefenseView(this);
+    this.explorationView = new ExplorationView(this);
     this.camera = this.cameras.main;
     this.camera
       .setBounds(
@@ -116,6 +119,7 @@ export class WorldScene extends Phaser.Scene {
       .addEventListener("click", this.returnCamp);
     this.survivalUi = createSurvivalUi(this);
     this.defenseUi = createDefenseUi(this);
+    this.explorationUi = createExplorationUi(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
     this.renderModel();
@@ -235,19 +239,22 @@ export class WorldScene extends Phaser.Scene {
       this.merchantSite.y,
     )
       .setInteractive({ pixelPerfect: true })
-      .setData("shop", true);
+      .setData("site", "mysterious-merchant");
     this.merchant = this.addImage(
       "merchant",
       this.merchantSite.x,
       this.merchantSite.y + 36,
-    );
+    )
+      .setInteractive({ pixelPerfect: true })
+      .setData("site", "mysterious-merchant");
     this.ancient = this.addImage(
       "ancient",
       this.core.world.ancientTree.x,
       this.core.world.ancientTree.y,
     )
       .setInteractive({ pixelPerfect: true })
-      .setData("ancient", true);
+      .setData("ancient", true)
+      .setData("site", "ancient-roots");
     this.fire = this.add
       .sprite(CENTER.x, CENTER.y, "forest", "unlitFire")
       .setOrigin(
@@ -336,6 +343,9 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   bindInput() {
+    this.fire
+      .setInteractive({ pixelPerfect: true })
+      .setData("site", "camp-kitchen");
     this.input.setTopOnly(false);
     const codes = Phaser.Input.Keyboard.KeyCodes;
     this.keyMap = {
@@ -352,6 +362,20 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (
+        !this.core.paused &&
+        this.core.exploration.fishing &&
+        ["KeyE", "Space"].includes(event.code)
+      ) {
+        event.preventDefault();
+        this.core.exploration.reel();
+        return;
+      }
+      if (!this.core.paused && event.code === "KeyI") {
+        event.preventDefault();
+        this.explorationUi.openBag();
+        return;
+      }
       if (!this.core.paused && event.code === "KeyB") {
         event.preventDefault();
         this.defenseUi.open();
@@ -369,8 +393,11 @@ export class WorldScene extends Phaser.Scene {
       }
       if (!this.core.paused && event.code === "KeyE") {
         const clue = this.atmosphere.nearestClue();
-        if (clue) this.openClue(clue);
-        else if (
+        if (clue) {
+          if (this.core.exploration.get(clue.id))
+            this.core.exploration.request(clue.id);
+          else this.openClue(clue);
+        } else if (
           this.core.regions
             ?.frontiers()
             .some(
@@ -393,7 +420,7 @@ export class WorldScene extends Phaser.Scene {
             this.playerModel.y - this.merchantSite.y,
           ) < 150
         )
-          this.shop.open();
+          this.core.exploration.request("mysterious-merchant");
       }
       if (!this.core.paused && event.code in this.keyMap)
         event.preventDefault();
@@ -420,6 +447,7 @@ export class WorldScene extends Phaser.Scene {
       const object =
         over.find((o) => o.getData("enemy")) ||
         over.find((o) => o.getData("shop")) ||
+        over.find((o) => o.getData("site")) ||
         over.find((o) => o.getData("defense")) ||
         over.find((o) => o.getData("clue")) ||
         over.find((o) => o.getData("regionGate")) ||
@@ -429,6 +457,10 @@ export class WorldScene extends Phaser.Scene {
         const id = object.getData("enemy");
         this.core.selectEnemy(id);
         this.core.tryAttack(id);
+        return;
+      }
+      if (object?.getData("site")) {
+        this.core.exploration.request(object.getData("site"));
         return;
       }
       if (object?.getData("defense")) {
@@ -660,6 +692,8 @@ export class WorldScene extends Phaser.Scene {
     this.syncPiles();
     this.syncCamp();
     this.defenseView.render();
+    this.explorationView.render();
+    this.explorationUi?.refresh();
     for (const [image, x, y] of [
       [this.hut, CAMP.hut.x, CAMP.hut.y],
       [this.tent, CAMP.tent.x, CAMP.tent.y],
@@ -915,6 +949,47 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "site-ready") {
+      this.explorationUi?.openSite(e.site);
+      return;
+    }
+    if (type === "fish-caught") {
+      this.explorationView?.caught();
+      this.core.showNotice(
+        "Окунь в сумке! Продайте торговцу или приготовьте у костра.",
+        5,
+      );
+      return;
+    }
+    if (type === "fishing-ended") {
+      this.core.showNotice(e.reason, 4);
+      return;
+    }
+    if (type === "fish-bite") {
+      this.core.showNotice("Клюёт! Нажмите «Подсечь», E или пробел.", 3);
+      return;
+    }
+    if (type === "activity-completed") {
+      if (e.action === "open-chest") {
+        this.float(
+          `+${e.loot.coins} монет · +1 реликвия`,
+          e.site.x,
+          e.site.y - 60,
+          "#ffe296",
+        );
+        this.core.showNotice(
+          "Печать снята. Сундук пуст; реликвию купит торговец на юге.",
+          6,
+        );
+      } else if (e.action === "offer-logs") {
+        this.float("+1 смола", e.site.x, e.site.y - 60, "#c3dfab");
+        this.core.showNotice(
+          "Корни приняли дар. Смола пригодится торговцу для лесной мази.",
+          5,
+        );
+      }
+      return;
+    }
     if (type === "wave-ended") {
       const text =
         e.status === "won"
@@ -1157,6 +1232,7 @@ export class WorldScene extends Phaser.Scene {
       .removeEventListener("click", this.returnCamp);
     this.survivalUi?.destroy();
     this.defenseUi?.destroy();
+    this.explorationUi?.destroy();
     this.regionMap?.destroy();
     this.audio.destroy();
     this.atmosphere.destroy();

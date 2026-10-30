@@ -1,3 +1,4 @@
+import { createExploration } from "./exploration.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
 import { createBuyers } from "./buyers.js";
@@ -131,6 +132,22 @@ export function createSimulation({
       emit("pickup", { pile: { ...pile }, index });
     },
   });
+  const exploration = regional
+    ? createExploration({
+        state: gameState,
+        player,
+        world,
+        regions,
+        nav,
+        forestry,
+        canAct,
+        navigate: navigateTo,
+        emit: (type, event) => {
+          revision++;
+          emit(type, event);
+        },
+      })
+    : null;
   const visualEffects = {
     transfer: (kind, start, target) =>
       emit("transfer", { kind, start, target }),
@@ -167,6 +184,7 @@ export function createSimulation({
     if (
       !["auto", "active"].includes(mode) ||
       !canAct() ||
+      exploration?.fishing ||
       !tree ||
       tree.workerOnly ||
       !treeAccessible(tree) ||
@@ -178,6 +196,11 @@ export function createSimulation({
       return false;
     player[timer] =
       mode === "auto" ? gameState.autoInterval : gameState.clickInterval;
+    if (mode === "active") {
+      const approaching = exploration?.pending;
+      exploration?.cancelAll();
+      if (approaching) clearKeys();
+    }
     const damage = Math.min(tree.hp, gameState.axePower);
     tree.hp -= damage;
     survival?.hear(player);
@@ -206,6 +229,7 @@ export function createSimulation({
   }
   function defeat(reason) {
     if (gameState.gameOver) return;
+    exploration?.cancelAll();
     gameState.gameOver = true;
     gameState.defeatReason = reason;
     clearKeys();
@@ -257,6 +281,7 @@ export function createSimulation({
   });
   function selectEnemy(id) {
     if (!canAct() || !survival?.raiders.some((e) => e.id === id)) return false;
+    exploration?.cancelAll();
     selectedEnemyId = id;
     defenseOrder = null;
     pursueEnemy = true;
@@ -264,6 +289,7 @@ export function createSimulation({
     return true;
   }
   function navigateTo(x, y) {
+    exploration?.cancelAll();
     defenseOrder = null;
     selectedEnemyId = null;
     pursueEnemy = false;
@@ -281,6 +307,7 @@ export function createSimulation({
   function orderDefense(id) {
     const section = defenses?.get(id);
     if (!canAct() || !section || section.hp >= section.maxHP) return false;
+    exploration?.cancelAll();
     selectedEnemyId = null;
     pursueEnemy = false;
     defenseOrder = id;
@@ -479,6 +506,7 @@ export function createSimulation({
       oldX = player.x,
       oldY = player.y;
     if (keyboard) {
+      exploration?.cancelAll();
       defenseOrder = null;
       pursueEnemy = false;
       player.path = [];
@@ -536,6 +564,8 @@ export function createSimulation({
       } else player.path = [];
     }
 
+    exploration?.update(dt);
+    if (paused) return; // Opening an inspection can pause synchronously at arrival.
     buyerSystem.update(dt);
     updatePlatforms(dt);
 
@@ -639,6 +669,7 @@ export function createSimulation({
     transferOneLog,
     cycle,
     lore,
+    exploration,
     survival,
     showNotice,
     state: gameState,
