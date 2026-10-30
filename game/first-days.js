@@ -114,6 +114,15 @@ export function firstDaysGuide(c) {
                 : 7;
   // Night safety takes precedence without consuming or skipping tutorial objectives.
   if (time.night && c.survival) {
+    if (!safe && c.survival.monster?.phase === "windup")
+      return {
+        step,
+        id: "dodge",
+        title: "Готовится удар · выйдите из круга!",
+        text: "Красный круг показывает место удара. Смотритель замер и не двигает эту область. Уходите в сторону или бегите к свету.",
+        action: "camp",
+        button: "К свету лагеря",
+      };
     if (c.survival.pending || c.survival.raiders.length)
       return {
         step,
@@ -128,7 +137,10 @@ export function firstDaysGuide(c) {
         step,
         id: "return",
         title: "Опасность · вернитесь к свету",
-        text: "Смотритель неуязвим. Бегите в светлый круг лагеря. Кнопка только прокладывает путь — в дороге вы уязвимы.",
+        text:
+          c.survival.monster?.phase === "search"
+            ? "Смотритель ищет след. Стволы закрывают прямой обзор, но шаги рядом и рубка выдают вас. Возвращайтесь к свету."
+            : "Смотритель неуязвим и медленнее героя. Бегите к свету лагеря. Кнопка только прокладывает путь — в дороге вы уязвимы.",
         action: "camp",
         button: "К свету лагеря",
       };

@@ -1,4 +1,5 @@
 import { createForestGround } from "./art/ground-art.js";
+export const TERRAIN_TEXTURE_LIMIT = 24; // 1.5 MiB RGBA at 128², bounded reuse across camera edges.
 export class TerrainLayer {
   constructor(scene, model) {
     this.scene = scene;
@@ -23,7 +24,13 @@ export class TerrainLayer {
       ) {
         const key = `terrain/${x}/${y}`;
         wanted.add(key);
-        if (this.images.has(key)) continue;
+        if (this.images.has(key)) {
+          const image = this.images.get(key);
+          image.setVisible(true);
+          this.images.delete(key);
+          this.images.set(key, image);
+          continue;
+        }
         const texture = this.scene.textures.addCanvas(
           key,
           this.source.getChunk(x, y),
@@ -38,13 +45,17 @@ export class TerrainLayer {
             .setDepth(-10000),
         );
       }
-    for (const [key, image] of this.images)
-      if (!wanted.has(key)) {
-        image.destroy();
-        this.scene.textures.remove(key);
-        this.images.delete(key);
-      }
+    for (const [key, image] of this.images) image.setVisible(wanted.has(key));
+    // Preserve nearby GPU textures for return trips; evict only old hidden chunks.
+    for (const [key, image] of this.images) {
+      if (this.images.size <= TERRAIN_TEXTURE_LIMIT) break;
+      if (wanted.has(key)) continue;
+      image.destroy();
+      this.scene.textures.remove(key);
+      this.images.delete(key);
+    }
   }
+
   destroy() {
     for (const [key, image] of this.images) {
       image.destroy();

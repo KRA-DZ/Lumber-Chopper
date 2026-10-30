@@ -1,0 +1,234 @@
+{
+  "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.update (simulation + view, GPU work excluded), frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
+  "samples": [
+    {
+      "version": "current",
+      "scenario": "day-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 84,
+        "median": 0.8,
+        "p95": 3.1,
+        "max": 21.9
+      },
+      "frameMs": {
+        "count": 84,
+        "median": 33.3,
+        "p95": 66.6,
+        "max": 116.7
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 299,
+      "textures": 43,
+      "chunks": 12,
+      "visibleChunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0,
+      "watcher": null,
+      "observedWatcher": [],
+      "health": 100
+    },
+    {
+      "version": "current",
+      "scenario": "rain-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 62,
+        "median": 1.3,
+        "p95": 8.8,
+        "max": 18.3
+      },
+      "frameMs": {
+        "count": 62,
+        "median": 50,
+        "p95": 83.4,
+        "max": 100
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 301,
+      "textures": 43,
+      "chunks": 12,
+      "visibleChunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0,
+      "watcher": null,
+      "observedWatcher": [],
+      "health": 100
+    },
+    {
+      "version": "current",
+      "scenario": "night-cargo",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 66,
+        "median": 1.1,
+        "p95": 3.4,
+        "max": 29.5
+      },
+      "frameMs": {
+        "count": 66,
+        "median": 33.4,
+        "p95": 83.4,
+        "max": 200
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 299,
+      "textures": 43,
+      "chunks": 12,
+      "visibleChunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0,
+      "watcher": null,
+      "observedWatcher": [],
+      "health": 100
+    },
+    {
+      "version": "current",
+      "scenario": "night-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 78,
+        "median": 1,
+        "p95": 4.2,
+        "max": 21
+      },
+      "frameMs": {
+        "count": 78,
+        "median": 33.4,
+        "p95": 66.6,
+        "max": 83.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 296,
+      "textures": 42,
+      "chunks": 12,
+      "visibleChunks": 12,
+      "cargo": 40,
+      "flights": 0,
+      "enemies": 0,
+      "watcher": null,
+      "observedWatcher": [],
+      "health": 100
+    },
+    {
+      "version": "current",
+      "scenario": "fifth-night-82",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 63,
+        "median": 1.4,
+        "p95": 7.7,
+        "max": 15
+      },
+      "frameMs": {
+        "count": 63,
+        "median": 50,
+        "p95": 66.7,
+        "max": 99.9
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 347,
+      "textures": 47,
+      "chunks": 12,
+      "visibleChunks": 12,
+      "cargo": 82,
+      "flights": 0,
+      "enemies": 4,
+      "watcher": "search",
+      "observedWatcher": [
+        "repelled",
+        "search"
+      ],
+      "health": 100
+    },
+    {
+      "version": "current",
+      "scenario": "watcher-chase",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 64,
+        "median": 1.7,
+        "p95": 6.9,
+        "max": 103.5
+      },
+      "frameMs": {
+        "count": 64,
+        "median": 50,
+        "p95": 66.7,
+        "max": 149.9
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 340,
+      "textures": 54,
+      "chunks": 23,
+      "visibleChunks": 12,
+      "cargo": 82,
+      "flights": 0,
+      "enemies": 1,
+      "watcher": "recover",
+      "observedWatcher": [
+        "windup",
+        "strike",
+        "recover"
+      ],
+      "health": 60
+    },
+    {
+      "version": "current",
+      "scenario": "watcher-chase-warm",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 63,
+        "median": 1.3,
+        "p95": 5.3,
+        "max": 6.6
+      },
+      "frameMs": {
+        "count": 63,
+        "median": 50,
+        "p95": 100,
+        "max": 116.7
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 339,
+      "textures": 54,
+      "chunks": 23,
+      "visibleChunks": 12,
+      "cargo": 82,
+      "flights": 0,
+      "enemies": 1,
+      "watcher": "windup",
+      "observedWatcher": [
+        "windup",
+        "strike",
+        "recover",
+        "chase"
+      ],
+      "health": 60
+    }
+  ]
+}

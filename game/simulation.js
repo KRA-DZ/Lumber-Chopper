@@ -151,6 +151,7 @@ export function createSimulation({
       mode === "auto" ? gameState.autoInterval : gameState.clickInterval;
     const damage = Math.min(tree.hp, gameState.axePower);
     tree.hp -= damage;
+    survival?.hear(player);
     tree.shake = 0.25;
     player.swing = 0.32;
     faceTarget(tree);
@@ -246,6 +247,7 @@ export function createSimulation({
     }
     player.swing = 0.32;
     faceTarget(enemy);
+    survival?.hear(player);
     emit("attack", { enemy, damage: gameState.axePower });
     return survival.hit(id, gameState.axePower);
   }

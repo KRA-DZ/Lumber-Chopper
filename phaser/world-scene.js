@@ -907,6 +907,29 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "night-warning") {
+      this.audio?.watcherCue("waking", 0, 0);
+      return;
+    }
+    if (type === "watcher-state") {
+      const p = this.core.player,
+        pan = Math.max(-0.85, Math.min(0.85, (e.x - p.x) / 400));
+      this.audio?.watcherCue(
+        e.phase,
+        pan,
+        Math.hypot(e.x - p.x, e.y - p.y),
+        e.duration,
+      );
+      return;
+    }
+    if (type === "watcher-strike") {
+      this.enemyView?.strike(e.area);
+      return;
+    }
+    if (type === "watcher-left") {
+      this.audio?.watcherCue("dawn", 0, 0);
+      return;
+    }
     if (type === "sunset-warning") {
       this.audio?.warning();
       return;

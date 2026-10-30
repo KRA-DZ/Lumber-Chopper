@@ -1,3 +1,4 @@
+import { WatcherHud } from "./watcher-hud.js";
 import { DayHud } from "./day-hud.js";
 import { DAY_SECONDS } from "../game/config.js";
 import { regionAt } from "../game/regions.js";
@@ -52,6 +53,7 @@ export class HudScene extends Phaser.Scene {
     this.doneAt = null;
     this.guideWidth = null;
     this.dayHud = new DayHud(this);
+    this.watcherHud = new WatcherHud(this);
     this.guideButton = this.add
       .text(0, 0, "", {
         fontFamily: "monospace",
@@ -198,7 +200,13 @@ export class HudScene extends Phaser.Scene {
         this.scale.height - this.tutorial.height - 20,
       )
       .setVisible(!!guide.action && !c.state.gameOver);
-    this.banner.setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168);
+    this.watcherHud.refresh();
+    const messageY = c.sunsetWarning
+      ? 250
+      : this.watcherHud.label.visible
+        ? this.watcherHud.bottom + 12
+        : 168;
+    this.banner.setPosition(this.scale.width / 2, messageY);
     this.discovery
       .setVisible(
         c.elapsed < this.world.atmosphere.discoveryUntil &&
@@ -206,13 +214,13 @@ export class HudScene extends Phaser.Scene {
           !this.world.expansionBanner &&
           !c.sunsetWarning,
       )
-      .setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168)
+      .setPosition(this.scale.width / 2, messageY)
       .setText(this.world.atmosphere.discovery);
     if (this.world.expansionBanner) {
       const e = this.world.expansionBanner;
       this.world.expansionBanner = null;
       this.banner
-        .setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168)
+        .setPosition(this.scale.width / 2, messageY)
         .setText(`Открыта новая территория\n${e.name}`)
         .setVisible(true)
         .setAlpha(1);

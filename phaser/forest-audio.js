@@ -8,10 +8,20 @@ export function createForestAudio() {
     enabled = false,
     paused = false,
     timer = 1,
-    fireTimer = 0;
+    fireTimer = 0,
+    threatTimer = 0,
+    windupVoice = null;
+  const voices = new Set();
   const safe = (promise) => promise?.catch(() => {});
-  function tone(freq, duration, volume, slide = 1) {
-    if (!context || !enabled || paused || context.state !== "running") return;
+  function tone(freq, duration, volume, slide = 1, pan = 0) {
+    if (
+      !context ||
+      !enabled ||
+      paused ||
+      context.state !== "running" ||
+      voices.size >= 12
+    )
+      return;
     const o = context.createOscillator(),
       g = context.createGain(),
       t = context.currentTime;
@@ -21,16 +31,39 @@ export function createForestAudio() {
     g.gain.setValueAtTime(volume, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
     o.connect(g);
-    g.connect(master);
+    const panner = context.createStereoPanner?.();
+    if (panner) {
+      panner.pan.value = pan;
+      g.connect(panner);
+      panner.connect(master);
+    } else g.connect(master);
+    const voice = {
+      stop: () => {
+        try {
+          o.stop();
+        } catch {}
+      },
+    };
+    voices.add(voice);
     o.start(t);
     o.stop(t + duration);
     o.onended = () => {
       o.disconnect();
       g.disconnect();
+      panner?.disconnect();
+      voices.delete(voice);
     };
+    return voice;
   }
   function crackle(volume) {
-    if (!context || !enabled || paused || context.state !== "running") return;
+    if (
+      !context ||
+      !enabled ||
+      paused ||
+      context.state !== "running" ||
+      voices.size >= 12
+    )
+      return;
     const source = context.createBufferSource(),
       filter = context.createBiquadFilter(),
       g = context.createGain(),
@@ -43,12 +76,21 @@ export function createForestAudio() {
     source.connect(filter);
     filter.connect(g);
     g.connect(master);
+    const voice = {
+      stop: () => {
+        try {
+          source.stop();
+        } catch {}
+      },
+    };
+    voices.add(voice);
     source.start(t);
     source.stop(t + 0.09);
     source.onended = () => {
       source.disconnect();
       filter.disconnect();
       g.disconnect();
+      voices.delete(voice);
     };
   }
   return {
@@ -86,6 +128,11 @@ export function createForestAudio() {
         }
       }
       enabled = !enabled;
+      if (!enabled) {
+        for (const voice of voices) voice.stop();
+        voices.clear();
+        windupVoice = null;
+      }
       await (enabled && !paused ? context.resume() : context.suspend());
       return enabled;
     },
@@ -104,7 +151,22 @@ export function createForestAudio() {
       );
       timer -= dt;
       fireTimer -= dt;
-      if (timer <= 0) {
+      const m = core.survival?.monster;
+      const range = m
+        ? Math.hypot(m.x - core.player.x, m.y - core.player.y)
+        : Infinity;
+      const danger =
+        m &&
+        ["notice", "chase", "windup", "strike"].includes(m.phase) &&
+        range < 400 &&
+        !core.survival.isSafe(core.player);
+      threatTimer -= dt;
+      if (danger && threatTimer <= 0) {
+        tone(64, 0.16, 0.025, 0.6);
+        threatTimer = 0.9;
+      }
+      if (!danger) threatTimer = 0;
+      if (timer <= 0 && !danger) {
         const night = core.nightAmount() > 0.5;
         tone(
           night ? 3600 : 1800 + Math.random() * 900,
@@ -124,6 +186,21 @@ export function createForestAudio() {
         fireTimer = 0.15 + Math.random() * 0.3;
       }
     },
+    watcherCue(phase, pan = 0, range = 0, duration = 1.2) {
+      windupVoice?.stop();
+      windupVoice = null;
+      if (range > 650) return;
+      if (phase === "waking") tone(88, 0.8, 0.03, 0.65, pan);
+      if (phase === "notice") tone(115, 0.45, 0.05, 0.7, pan);
+      if (phase === "chase") tone(165, 0.5, 0.04, 0.5, pan);
+      if (phase === "windup")
+        windupVoice = tone(240, duration, 0.055, 1.8, pan);
+      if (phase === "strike") tone(70, 0.22, 0.07, 0.45, pan);
+      if (phase === "repelled") tone(190, 0.35, 0.025, 1.5, pan);
+    },
+    get activeVoices() {
+      return voices.size;
+    },
     warning() {
       tone(440, 0.6, 0.045, 0.5);
     },
@@ -135,6 +212,9 @@ export function createForestAudio() {
     },
     destroy() {
       enabled = false;
+      for (const voice of voices) voice.stop();
+      voices.clear();
+      windupVoice = null;
       if (context) safe(context.close());
       context = null;
     },

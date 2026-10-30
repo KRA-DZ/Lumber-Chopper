@@ -1,3 +1,4 @@
+import { createWatcher } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 132,
@@ -47,7 +48,19 @@ export function createSurvival({
     }
     return null;
   }
+  const watcher = createWatcher({
+    player,
+    nav,
+    accessible,
+    isSafe,
+    safeRadius,
+    emit,
+    hurt: hurtPlayer,
+    damage: SURVIVAL.monsterDamage,
+    windupSeconds: SURVIVAL.monsterWindup,
+  });
   function nightStarted({ night }) {
+    watcher.reset();
     raiders.length = 0;
     warningTimer = SURVIVAL.warningSeconds;
     const p =
@@ -64,6 +77,8 @@ export function createSurvival({
           cooldown: 0,
           warning: SURVIVAL.warningSeconds,
           moving: false,
+          phase: "waking",
+          phaseTime: 0,
         }
       : null;
     pending =
@@ -77,6 +92,8 @@ export function createSurvival({
     });
   }
   function dawn() {
+    if (monster) emit("watcher-left", {});
+    watcher.reset();
     monster = null;
     raiders.length = 0;
     pending = 0;
@@ -84,12 +101,22 @@ export function createSurvival({
     hitCooldown = 0;
     state.health = state.maxHealth;
   }
-  function hurtPlayer(amount) {
-    if (hitCooldown > 0 || state.gameOver) return;
+  function hurtPlayer(amount, source = "raider") {
+    if (
+      hitCooldown > 0 ||
+      state.gameOver ||
+      (source === "watcher" && isSafe(player))
+    )
+      return;
     state.health = Math.max(0, state.health - amount);
     hitCooldown = SURVIVAL.playerInvulnerability;
-    emit("player-hurt", { health: state.health, damage: amount });
-    if (!state.health) defeat("Смотритель или налётчики настигли вас.");
+    emit("player-hurt", { health: state.health, damage: amount, source });
+    if (!state.health)
+      defeat(
+        source === "watcher"
+          ? "Смотритель настиг вас. Бегите к свету и выходите из круга удара."
+          : "Налётчики настигли вас.",
+      );
   }
   function hit(id, damage) {
     const target = raiders.find((r) => r.id === id);
@@ -127,17 +154,15 @@ export function createSurvival({
       pending = 0;
       emit("wave-started", { count: raiders.length });
     }
+    if (monster) watcher.tick(dt, monster, SURVIVAL.monsterSpeed);
+    if (state.gameOver) return;
     const actors = [...raiders, ...(monster ? [monster] : [])];
     let pathCandidate = null;
     if (pathCooldown <= 0 && actors.length) {
       for (let i = 0; i < actors.length; i++) {
         const index = (pathCursor + i) % actors.length,
           a = actors[index];
-        if (
-          a.repath <= dt &&
-          !(a.warning > 0) &&
-          !(a.invulnerable && isSafe(player))
-        ) {
+        if (a.repath <= dt && !(a.warning > 0) && (!a.invulnerable || a.goal)) {
           pathCandidate = a;
           pathCursor = (index + 1) % actors.length;
           break;
@@ -149,12 +174,29 @@ export function createSurvival({
       actor.repath -= dt;
       actor.moving = false;
       if (actor.warning > 0) continue;
-      const watcher = actor.invulnerable;
-      const playerTarget = watcher || distance(actor, player) < 180;
+      if (actor.invulnerable) {
+        if (actor.goal) {
+          if (actor === pathCandidate) {
+            actor.path = nav.findPath(actor, actor.goal);
+            actor.repath = 1.2;
+            pathCooldown = 0.25;
+          }
+          const old = { x: actor.x, y: actor.y };
+          actor.moving = nav.followPath(actor, dt, actor.speed) > 0.01;
+          if (
+            isSafe(actor) &&
+            Math.hypot(actor.x - CENTER.x, actor.y - CENTER.y) <
+              Math.hypot(old.x - CENTER.x, old.y - CENTER.y)
+          ) {
+            Object.assign(actor, old);
+            actor.path = [];
+          }
+        }
+        continue;
+      }
+      const playerTarget = distance(actor, player) < 180;
       const target = playerTarget ? player : CENTER;
-      const blocked = watcher && isSafe(player);
       const inRange =
-        !blocked &&
         distance(actor, target) < (playerTarget ? 64 : 75) &&
         nav.clearSegment(actor, target);
       // The fire is a solid nav obstacle. Raiders attack its perimeter instead.
@@ -165,10 +207,10 @@ export function createSurvival({
           continue;
         }
         actor.windup += dt;
-        if (actor.windup >= (watcher ? SURVIVAL.monsterWindup : 0.9)) {
+        if (actor.windup >= 0.9) {
           actor.windup = 0;
-          actor.cooldown = watcher ? 2 : 2.2;
-          if (playerTarget) hurtPlayer(watcher ? SURVIVAL.monsterDamage : 20);
+          actor.cooldown = 2.2;
+          if (playerTarget) hurtPlayer(20);
           else {
             state.campHealth = Math.max(
               0,
@@ -180,10 +222,6 @@ export function createSurvival({
         }
       } else {
         actor.windup = 0;
-        if (blocked) {
-          actor.path = [];
-          continue;
-        }
         if (actor === pathCandidate) {
           const goal = playerTarget
             ? target
@@ -203,22 +241,13 @@ export function createSurvival({
           actor.repath = 1.2;
           pathCooldown = 0.25;
         }
-        const old = { x: actor.x, y: actor.y };
-        actor.moving =
-          nav.followPath(
-            actor,
-            dt,
-            watcher ? SURVIVAL.monsterSpeed : SURVIVAL.raiderSpeed,
-          ) > 0.01;
-        if (watcher && isSafe(actor)) {
-          Object.assign(actor, old);
-          actor.path = [];
-        }
+        actor.moving = nav.followPath(actor, dt, SURVIVAL.raiderSpeed) > 0.01;
       }
       if (state.gameOver) break;
     }
   }
   return {
+    hear: watcher.hear,
     raiders,
     get monster() {
       return monster;

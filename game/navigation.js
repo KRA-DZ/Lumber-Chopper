@@ -181,6 +181,20 @@ export function createNavigation(
       }
     return { x: 1600, y: 1720 };
   }
+  // Sight is independent of walkability: water is transparent; solid bases and locked fog are not.
+  function hasLineOfSight(a, b) {
+    const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 4));
+    for (let i = 0; i <= steps; i++) {
+      const x = a.x + ((b.x - a.x) * i) / steps,
+        y = a.y + ((b.y - a.y) * i) / steps;
+      if (
+        (model.regions && !model.regions.isOpen({ x, y })) ||
+        obstacleContact(x, y, 0)
+      )
+        return false;
+    }
+    return true;
+  }
   function clearSegment(a, b, r = FOOT_RADIUS) {
     const d = Math.hypot(b.x - a.x, b.y - a.y),
       steps = Math.max(1, Math.ceil(d / 7));
@@ -399,6 +413,7 @@ export function createNavigation(
     isWalkable,
     nearestGround,
     clearSegment,
+    hasLineOfSight,
     moveBody,
     findPath,
     setDestination,
