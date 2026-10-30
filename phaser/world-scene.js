@@ -1,3 +1,5 @@
+import { WorkerView } from "./worker-view.js";
+import { createWorkerUi } from "./worker-ui.js";
 import { createExplorationUi } from "./exploration-ui.js";
 import { ExplorationView } from "./exploration-view.js";
 import { shopAdvice } from "../game/first-days.js";
@@ -97,6 +99,7 @@ export class WorldScene extends Phaser.Scene {
     this.enemyView = new EnemyView(this);
     this.defenseView = new DefenseView(this);
     this.explorationView = new ExplorationView(this);
+    this.workerView = new WorkerView(this);
     this.camera = this.cameras.main;
     this.camera
       .setBounds(
@@ -120,6 +123,7 @@ export class WorldScene extends Phaser.Scene {
     this.survivalUi = createSurvivalUi(this);
     this.defenseUi = createDefenseUi(this);
     this.explorationUi = createExplorationUi(this);
+    this.workerUi = createWorkerUi(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
     this.renderModel();
@@ -376,6 +380,11 @@ export class WorldScene extends Phaser.Scene {
         this.explorationUi.openBag();
         return;
       }
+      if (!this.core.paused && event.code === "KeyH") {
+        event.preventDefault();
+        this.workerUi.open();
+        return;
+      }
       if (!this.core.paused && event.code === "KeyB") {
         event.preventDefault();
         this.defenseUi.open();
@@ -447,12 +456,17 @@ export class WorldScene extends Phaser.Scene {
       const object =
         over.find((o) => o.getData("enemy")) ||
         over.find((o) => o.getData("shop")) ||
+        over.find((o) => o.getData("workers")) ||
         over.find((o) => o.getData("site")) ||
         over.find((o) => o.getData("defense")) ||
         over.find((o) => o.getData("clue")) ||
         over.find((o) => o.getData("regionGate")) ||
         nearby ||
         over.find((o) => o.getData("tree") || o.getData("ancient"));
+      if (object?.getData("workers")) {
+        this.workerUi.open();
+        return;
+      }
       if (object?.getData("enemy")) {
         const id = object.getData("enemy");
         this.core.selectEnemy(id);
@@ -693,6 +707,8 @@ export class WorldScene extends Phaser.Scene {
     this.syncCamp();
     this.defenseView.render();
     this.explorationView.render();
+    this.workerView.render();
+    this.workerUi?.resume();
     this.explorationUi?.refresh();
     this.survivalUi?.resume();
     for (const [image, x, y] of [
@@ -950,6 +966,13 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "worker-hired") {
+      this.core.showNotice(
+        "Помощник нанят! Днём он добывает брёвна у древнего дуба. Управление командой — H.",
+        7,
+      );
+      return;
+    }
     if (type.startsWith("story-")) {
       this.survivalUi?.refreshBadge();
       if (type === "story-completed") {
@@ -1251,6 +1274,7 @@ export class WorldScene extends Phaser.Scene {
     this.survivalUi?.destroy();
     this.defenseUi?.destroy();
     this.explorationUi?.destroy();
+    this.workerUi?.destroy();
     this.regionMap?.destroy();
     this.audio.destroy();
     this.atmosphere.destroy();

@@ -1,3 +1,4 @@
+import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
 import { createExplorationArt } from "./art/exploration-art.js";
 import { createSurvivalArt } from "./art/survival-art.js";
@@ -69,6 +70,7 @@ export function createAtlas(scene) {
   collect(createSurvivalArt(), "survival");
   collect(createExplorationArt(), "exploration");
   collect(createStoryArt(), "story");
+  collect(createWorkerArt(), "workers");
   for (const role of ["player", "buyerA", "buyerB"])
     for (const mood of role === "player"
       ? ["happy", "tired", "focused"]

@@ -1,3 +1,4 @@
+import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
@@ -65,7 +66,8 @@ export function createSimulation({
     pursueEnemy = false,
     pursuitTimer = 0,
     defenseRouteTimer = 0,
-    story = null;
+    story = null,
+    workers = null;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   function updateUI() {
     story?.sync();
@@ -101,6 +103,7 @@ export function createSimulation({
           for (const body of [
             player,
             ...buyers,
+            ...(workers?.crew || []),
             ...(survival?.raiders || []),
             ...(survival?.monster ? [survival.monster] : []),
           ]) {
@@ -368,6 +371,23 @@ export function createSimulation({
     getElapsed: () => elapsed,
   });
   const { buyers, activeBuyer } = buyerSystem;
+  workers = regional
+    ? createWorkers({
+        state: gameState,
+        player,
+        world,
+        regions,
+        nav,
+        forestry,
+        activeBuyer,
+        sale,
+        getSurvival: () => survival,
+        emit: (type, event) => {
+          revision++;
+          emit(type, event);
+        },
+      })
+    : null;
   function transferOneLog(target = null) {
     if (!canAct() || transferTimer > 0 || !gameState.cargo.length) return false;
     const slotPosition = stackOffset(gameState.wood - 1, gameState.wood);
@@ -488,6 +508,12 @@ export function createSimulation({
       constructionCollisionKey(gameState, construction.plan)
     )
       rebuildObstacles();
+    for (const body of workers?.crew || [])
+      if (!isWalkable(body.x, body.y)) {
+        Object.assign(body, nearestGround(body.x, body.y));
+        body.path = [];
+        body.repath = 0;
+      }
     updateUI();
     return true;
   }
@@ -503,7 +529,7 @@ export function createSimulation({
     cycle.update(dt);
     if (forestry.updateGrowth(trees, cycle.dayNumber)) {
       rebuildObstacles();
-      for (const body of [player, ...buyers])
+      for (const body of [player, ...buyers, ...(workers?.crew || [])])
         if (!isWalkable(body.x, body.y)) {
           const safe = nearestGround(body.x, body.y);
           body.x = safe.x;
@@ -625,6 +651,7 @@ export function createSimulation({
     }
     if (forestry.collect(dt, player)) updateUI();
     survival?.update(dt);
+    if (!gameState.gameOver) workers?.update(dt);
     if (
       !gameState.gameOver &&
       !tutorial.sheltered &&
@@ -678,6 +705,12 @@ export function createSimulation({
       return defenseOrder;
     },
     defenses,
+    workers,
+    navigateWorkers() {
+      if (!workers || !canAct()) return false;
+      navigateTo(WORKERS.depot.x, WORKERS.depot.y);
+      return true;
+    },
     selectEnemy,
     orderDefense,
     story,

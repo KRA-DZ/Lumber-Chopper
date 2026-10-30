@@ -400,6 +400,7 @@
         </button>
         <button id="shopButton" type="button">Лавка</button>
         <button id="defenseButton" type="button">Оборона · B</button>
+        <button id="workerButton" type="button">Помощники · H</button>
         <button id="bagButton" type="button">Находки · I</button>
         <button id="journalButton" type="button">Дневник · J</button>
         <button id="mapButton" type="button">Карта леса · M</button>
@@ -482,6 +483,17 @@
     </div>
     <div data-activity-content></div>
     <p data-activity-message role="status" aria-live="polite"></p>
+  </dialog>
+  <dialog id="workerDialog" aria-labelledby="workerTitle">
+    <div class="dialog-top">
+      <h2 id="workerTitle">Команда лесорубов</h2>
+      <button type="button" data-worker-close>Закрыть</button>
+    </div>
+    <p>
+      Работники рубят только древний дуб, несут брёвна на склад и уходят к
+      костру перед ночью. Пока меню открыто, время остановлено.
+    </p>
+    <div data-workers></div>
   </dialog>
   <dialog id="deathDialog" aria-labelledby="deathTitle">
     <h2 id="deathTitle">Лес погас</h2>
