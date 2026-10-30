@@ -1,3 +1,4 @@
+import { BIOMES } from "../game/biomes.js";
 import { RAIDER_ROLES } from "../game/raiders.js";
 import { CENTER } from "../game/config.js";
 import { WATCHER_LABELS } from "../game/watcher.js";
@@ -26,7 +27,11 @@ export class EnemyView {
       g = this.signals.clear();
     if (!d) return;
     this.starterLight.setVisible(c.state.campLevel === 0);
-    const actors = [...d.raiders, ...(d.monster ? [d.monster] : [])],
+    const actors = [
+        ...d.raiders,
+        ...(d.residents || []),
+        ...(d.monster ? [d.monster] : []),
+      ],
       ids = new Set(actors.map((e) => e.id));
     for (const [id, o] of this.objects)
       if (!ids.has(id)) {
@@ -63,7 +68,13 @@ export class EnemyView {
       if (!o) {
         o = {
           image: s
-            .addImage(`survival.${e.kind}0`, e.x, e.y)
+            .addImage(
+              e.kind === "resident"
+                ? `enemy.${e.family}.idle`
+                : `survival.${e.kind}0`,
+              e.x,
+              e.y,
+            )
             .setInteractive({ pixelPerfect: true })
             .setData("enemy", e.id),
           label: s.text("", e.x, e.y - 210, 11, "#e9c598", LAYERS.hints),
@@ -77,12 +88,15 @@ export class EnemyView {
         e.kind === "raider" && e.role && e.role !== "attacker"
           ? `survival.raider.${e.role}${frame}`
           : `survival.${e.kind}${frame}`;
+      if (e.kind === "raider" && e.windup > 0) key = "survival.raider.attack";
       if (e.invulnerable) {
         if (["notice", "windup", "strike", "repelled"].includes(e.phase))
           key = `survival.watcher.${e.phase}`;
         else if (e.phase === "search" && Math.floor(c.elapsed) % 2)
           key = "survival.watcher.search";
       }
+      if (e.kind === "resident")
+        key = `enemy.${e.family}.${e.windup > 0 ? "attack" : frame ? "walk" : "idle"}`;
       s.assets.setFrame(o.image, key);
       o.image.setScale(e.role === "breaker" ? 2.25 : 2);
       if (e.flash > 0) o.image.setTintFill(0xffedc0);
@@ -98,14 +112,18 @@ export class EnemyView {
       o.image
         .setPosition(Math.round(e.x / 2) * 2, Math.round(e.y / 2) * 2)
         .setDepth(e.y)
-        .setAlpha(e.warning > 0 ? 0.3 + (1 - e.warning / 12) * 0.4 : 1)
+        .setAlpha(
+          e.warning > 0
+            ? 0.3 + (1 - e.warning / (e.kind === "resident" ? 3 : 12)) * 0.4
+            : 1,
+        )
         .setVisible(visible);
       o.label
         .setPosition(e.x, e.y - (e.invulnerable ? 208 : 110))
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${role.name} · ${e.hp} HP${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? BIOMES[e.biome].creature : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · просыпается" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`
@@ -138,6 +156,9 @@ export class EnemyView {
             -Math.PI / 2 + Math.PI * 2 * t,
           )
           .strokePath();
+      } else if (e.kind === "resident" && e.attack) {
+        g.fillStyle(0xb44834, 0.15).fillCircle(e.attack.x, e.attack.y, 54);
+        g.lineStyle(2, 0xf0a087, 0.9).strokeCircle(e.attack.x, e.attack.y, 54);
       } else if (!e.invulnerable && e.windup > 0)
         g.lineStyle(3, 0xd56f62, 0.9).strokeCircle(
           e.x,

@@ -1,3 +1,4 @@
+import { BIOMES } from "../game/biomes.js";
 import { WatcherHud } from "./watcher-hud.js";
 import { DayHud } from "./day-hud.js";
 import { DAY_SECONDS } from "../game/config.js";
@@ -158,15 +159,7 @@ export class HudScene extends Phaser.Scene {
         y = top + (r.y - b.y) * scale,
         w = r.width * scale;
       g.fillStyle(
-        open
-          ? r.activity === "mystery"
-            ? 0x696778
-            : r.activity === "pond"
-              ? 0x568b86
-              : 0x6d9459
-          : adjacent.has(r.id)
-            ? 0x425d4c
-            : 0x263f35,
+        open ? BIOMES[r.biome].color : adjacent.has(r.id) ? 0x425d4c : 0x263f35,
       ).fillRect(x, y, w - 1, w - 1);
       if (open) g.lineStyle(1, 0xe1d099, 0.8).strokeRect(x, y, w - 1, w - 1);
       else if (adjacent.has(r.id))

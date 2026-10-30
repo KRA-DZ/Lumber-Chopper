@@ -1,3 +1,4 @@
+import { biomeEnemyFrames } from "./biome-assets.js";
 import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
 import { createExplorationArt } from "./art/exploration-art.js";
@@ -28,6 +29,7 @@ export function createAtlas(scene) {
       collect(value, path ? `${path}.${key}` : key);
   }
   collect(art.sprites);
+
   // Wind is baked once as integer row shifts; trunks and collision stay fixed.
   const sway = createEnvironment(art);
   for (const type of ["oak", "birch", "spruce", "dead"])
@@ -115,19 +117,27 @@ export function createAtlas(scene) {
     "chip",
     sprite(4, 2, 2, 1, (p) => p.rect(0, 0, 4, 2, "#d9ae72")),
   );
+  for (const [key, frame] of Object.entries(biomeEnemyFrames(scene)))
+    sources.set(key, frame);
   let x = 2,
     y = 2,
     row = 0;
-  const frames = [];
+  const frames = [],
+    packed = new Map();
   for (const [key, s] of [...sources].sort(
     (a, b) => b[1].height - a[1].height,
   )) {
+    if (packed.has(s.bitmap)) {
+      frames.push({ ...packed.get(s.bitmap), key });
+      continue;
+    }
     if (x + s.width + 2 > 2048) {
       x = 2;
       y += row + 2;
       row = 0;
     }
     frames.push({ key, s, x, y });
+    packed.set(s.bitmap, { s, x, y });
     x += s.width + 2;
     row = Math.max(row, s.height);
   }

@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "source": {
+    "file": "watcher-masked-sheet.png",
+    "sha256": "50dc39a7cbbe708e6863547476d2248a94893234e90066f2dba9fa7ae8c3115a",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "processing": {
+    "layout": "grid",
+    "columns": 3,
+    "background": "all",
+    "tolerance": 12,
+    "minArea": 8,
+    "padding": 2,
+    "defringe": 1
+  },
+  "assets": {
+    "idle": {
+      "file": "idle.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        161,
+        26,
+        409,
+        474
+      ]
+    },
+    "walk": {
+      "file": "walk.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        631,
+        36,
+        939,
+        474
+      ]
+    },
+    "notice": {
+      "file": "notice.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        1142,
+        35,
+        1421,
+        480
+      ]
+    },
+    "windup": {
+      "file": "windup.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        88,
+        495,
+        443,
+        991
+      ]
+    },
+    "strike": {
+      "file": "strike.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        536,
+        556,
+        1003,
+        982
+      ]
+    },
+    "repelled": {
+      "file": "repelled.png",
+      "width": 112,
+      "height": 112,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9464285714285714
+      },
+      "sourceBox": [
+        1156,
+        538,
+        1449,
+        988
+      ]
+    }
+  }
+}

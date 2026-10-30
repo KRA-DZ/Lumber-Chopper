@@ -1,3 +1,4 @@
+import { BIOMES } from "../game/biomes.js";
 export function createRegionMap(scene) {
   const dialog = document.querySelector("#mapDialog"),
     grid = dialog.querySelector("[data-regions]");
@@ -34,7 +35,10 @@ export function createRegionMap(scene) {
       button.disabled = !opened && !gate;
       const title = document.createElement("span"),
         detail = document.createElement("small");
-      title.textContent = opened || gate ? region.name : "Неизведано";
+      title.textContent =
+        opened || gate
+          ? `${region.name} · ${BIOMES[region.biome].name}`
+          : "Неизведано";
       detail.textContent = opened
         ? c.exploration.regionSummary(region.id)
         : gate

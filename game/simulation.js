@@ -105,6 +105,7 @@ export function createSimulation({
             ...buyers,
             ...(workers?.crew || []),
             ...(survival?.raiders || []),
+            ...(survival?.residents || []),
             ...(survival?.monster ? [survival.monster] : []),
           ]) {
             if ("repath" in body) {
@@ -268,6 +269,7 @@ export function createSimulation({
         emit,
         defeat,
         defenses,
+        regions,
       })
     : null;
   const cycle = createCycleManager(gameState, (type, event) => {
@@ -300,7 +302,13 @@ export function createSimulation({
     emit(type, event);
   });
   function selectEnemy(id) {
-    if (!canAct() || !survival?.raiders.some((e) => e.id === id)) return false;
+    if (
+      !canAct() ||
+      ![...(survival?.raiders || []), ...(survival?.residents || [])].some(
+        (e) => e.id === id,
+      )
+    )
+      return false;
     exploration?.cancelAll();
     selectedEnemyId = id;
     defenseOrder = null;
@@ -340,8 +348,9 @@ export function createSimulation({
   }
   function tryAttack(id, mode = "active") {
     const enemy =
-      survival?.raiders.find((e) => e.id === id) ||
-      (survival?.monster?.id === id ? survival.monster : null);
+      [...(survival?.raiders || []), ...(survival?.residents || [])].find(
+        (e) => e.id === id,
+      ) || (survival?.monster?.id === id ? survival.monster : null);
     const timer = mode === "auto" ? "autoTimer" : "clickTimer";
     if (
       !canAct() ||
@@ -594,7 +603,10 @@ export function createSimulation({
       defenseRouteTimer <= 0
     )
       routeDefense(work);
-    const focused = survival?.raiders.find((e) => e.id === selectedEnemyId);
+    const focused = [
+      ...(survival?.raiders || []),
+      ...(survival?.residents || []),
+    ].find((e) => e.id === selectedEnemyId);
     if (selectedEnemyId && !focused) {
       selectedEnemyId = null;
       pursueEnemy = false;
@@ -633,7 +645,7 @@ export function createSimulation({
       .filter((t) => treeAccessible(t) && t.hp > 0 && distance(player, t) < 72)
       .sort((a, b) => distance(player, a) - distance(player, b))[0];
     const reachable =
-      survival?.raiders.filter(
+      [...(survival?.raiders || []), ...(survival?.residents || [])].filter(
         (e) => distance(player, e) < 72 && nav.clearSegment(player, e),
       ) || [];
     const enemy =

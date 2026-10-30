@@ -5,6 +5,7 @@ export class TerrainLayer {
     this.scene = scene;
     this.source = createForestGround({
       ...model,
+      materials: scene.registry.get("biomePack")?.materials,
       center: { x: 1600, y: 1600 },
       clearings: model.landmarks,
     });

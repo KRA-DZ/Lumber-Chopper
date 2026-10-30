@@ -1,3 +1,4 @@
+import { biomeWeights, sampleMaterial } from "../../game/biome-terrain.js";
 import { pixelHash, CAMP } from "../../pixel-art.js";
 const SIZE = 128,
   WORLD_CHUNK = SIZE * 2,
@@ -11,15 +12,16 @@ export function createForestGround({
   clearings = [],
   merchant = CAMP.merchant,
   biomeAt = () => "forest",
+  materials = null,
 }) {
   const cache = new Map();
   function bake(cx, cy) {
     const bitmap = document.createElement("canvas");
     bitmap.width = bitmap.height = SIZE;
     const mask = document.createElement("canvas");
-    mask.width = mask.height = SIZE;
+    mask.width = mask.height = SIZE + 8;
     const g = mask.getContext("2d", { willReadFrequently: true });
-    g.setTransform(0.5, 0, 0, 0.5, -cx * SIZE, -cy * SIZE);
+    g.setTransform(0.5, 0, 0, 0.5, -cx * SIZE + 4, -cy * SIZE + 4);
     const oval = (x, y, rx, ry) => {
       g.beginPath();
       g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
@@ -49,7 +51,7 @@ export function createForestGround({
       g.fillStyle = "#0000ff";
       g.fill();
     }
-    const source = g.getImageData(0, 0, SIZE, SIZE).data,
+    const source = g.getImageData(0, 0, SIZE + 8, SIZE + 8).data,
       out = bitmap.getContext("2d"),
       image = out.createImageData(SIZE, SIZE),
       data = image.data;
@@ -63,7 +65,64 @@ export function createForestGround({
           n = pixelHash(wx, wy),
           dust = n % 101;
         let r, gr, b;
-        const marked = source[i + 3] > 120;
+        const j = ((y + 4) * (SIZE + 8) + x + 4) * 4;
+        const marked = source[j + 3] > 120;
+        const water =
+          marked && source[j + 2] > source[j] && source[j + 2] > source[j + 1];
+        const bank = marked && !water && source[j + 1] > source[j];
+        if (materials) {
+          if (marked)
+            [r, gr, b] = sampleMaterial(
+              materials,
+              water ? "water" : bank ? "shore" : "dirt",
+              wx,
+              wy,
+            );
+          else {
+            r = 0;
+            gr = 0;
+            b = 0;
+            for (const [name, weight] of Object.entries(
+              biomeWeights(wx * 2, wy * 2),
+            )) {
+              const sample = sampleMaterial(materials, name, wx, wy);
+              r += sample[0] * weight;
+              gr += sample[1] * weight;
+              b += sample[2] * weight;
+            }
+          }
+          // A broken pixel edge merges paths with grass without blurring the image.
+          if (marked && !water && !bank) {
+            const edge = [
+              [-3, 0],
+              [3, 0],
+              [0, -3],
+              [0, 3],
+            ].some(([dx, dy]) => {
+              const xx = x + dx,
+                yy = y + dy;
+              return (
+                xx >= -3 &&
+                xx < SIZE + 3 &&
+                yy >= -3 &&
+                yy < SIZE + 3 &&
+                source[((yy + 4) * (SIZE + 8) + xx + 4) * 4 + 3] < 60
+              );
+            });
+            if (edge && n % 3 === 0)
+              [r, gr, b] = sampleMaterial(
+                materials,
+                biomeAt(wx * 2, wy * 2),
+                wx,
+                wy,
+              );
+          }
+          data[i] = r;
+          data[i + 1] = gr;
+          data[i + 2] = b;
+          data[i + 3] = 255;
+          continue;
+        }
         // Coherent patches and sparse clusters: detail without per-pixel static.
         const nx = wx / 36,
           ny = wy / 36,
@@ -83,9 +142,6 @@ export function createForestGround({
         const cell = pixelHash(Math.floor(wx / 9), Math.floor(wy / 8));
         const px = (((wx + (cell % 5)) % 9) + 9) % 9,
           py = (((wy + ((cell >>> 5) % 5)) % 8) + 8) % 8;
-        const water =
-          marked && source[i + 2] > source[i] && source[i + 2] > source[i + 1];
-        const bank = marked && !water && source[i + 1] > source[i];
         if (water) {
           [r, gr, b] = [
             [52, 102, 111],
@@ -119,11 +175,11 @@ export function createForestGround({
             const xx = x + dx,
               yy = y + dy;
             return (
-              xx >= 0 &&
-              xx < SIZE &&
-              yy >= 0 &&
-              yy < SIZE &&
-              source[(yy * SIZE + xx) * 4 + 3] < 60
+              xx >= -3 &&
+              xx < SIZE + 3 &&
+              yy >= -3 &&
+              yy < SIZE + 3 &&
+              source[((yy + 4) * (SIZE + 8) + xx + 4) * 4 + 3] < 60
             );
           });
           if (
@@ -154,11 +210,11 @@ export function createForestGround({
             [r, gr, b] = [205, 194, 130];
         }
         const biome = biomeAt(wx * 2, wy * 2);
-        if (!marked && biome === "mystery") {
+        if (!materials && !marked && biome === "mystery") {
           r = Math.round(r * 0.88);
           gr = Math.round(gr * 0.68);
           b = Math.round(b * 1.15);
-        } else if (!marked && biome === "ruins") {
+        } else if (!materials && !marked && biome === "ruins") {
           r = Math.round(r * 0.9);
           gr = Math.round(gr * 0.9);
           b = Math.round(b * 1.06);

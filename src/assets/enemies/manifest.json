@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "source": {
+    "file": "biome-enemies-sheet.png",
+    "sha256": "cbfa788ebd43d4b269ddbb0cfa5a94e441375ec45966483afe169481475116e8",
+    "size": [
+      1774,
+      887
+    ]
+  },
+  "processing": {
+    "layout": "grid",
+    "columns": 6,
+    "background": "all",
+    "tolerance": 12,
+    "minArea": 8,
+    "padding": 2,
+    "defringe": 1
+  },
+  "assets": {
+    "doll-idle": {
+      "file": "doll-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        86,
+        90,
+        238,
+        303
+      ]
+    },
+    "cosmic-idle": {
+      "file": "cosmic-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        341,
+        119,
+        552,
+        304
+      ]
+    },
+    "wood-idle": {
+      "file": "wood-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        648,
+        81,
+        830,
+        304
+      ]
+    },
+    "drowned-idle": {
+      "file": "drowned-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        939,
+        79,
+        1121,
+        307
+      ]
+    },
+    "spider-idle": {
+      "file": "spider-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1212,
+        121,
+        1452,
+        309
+      ]
+    },
+    "masked-idle": {
+      "file": "masked-idle.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1539,
+        73,
+        1702,
+        307
+      ]
+    },
+    "doll-walk": {
+      "file": "doll-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        77,
+        345,
+        236,
+        568
+      ]
+    },
+    "cosmic-walk": {
+      "file": "cosmic-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        338,
+        366,
+        548,
+        568
+      ]
+    },
+    "wood-walk": {
+      "file": "wood-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        648,
+        345,
+        831,
+        566
+      ]
+    },
+    "drowned-walk": {
+      "file": "drowned-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        932,
+        345,
+        1116,
+        568
+      ]
+    },
+    "spider-walk": {
+      "file": "spider-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1212,
+        374,
+        1449,
+        580
+      ]
+    },
+    "masked-walk": {
+      "file": "masked-walk.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1541,
+        345,
+        1701,
+        577
+      ]
+    },
+    "doll-attack": {
+      "file": "doll-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        51,
+        608,
+        274,
+        831
+      ]
+    },
+    "cosmic-attack": {
+      "file": "cosmic-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        327,
+        605,
+        572,
+        844
+      ]
+    },
+    "wood-attack": {
+      "file": "wood-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        625,
+        601,
+        849,
+        832
+      ]
+    },
+    "drowned-attack": {
+      "file": "drowned-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        905,
+        597,
+        1144,
+        847
+      ]
+    },
+    "spider-attack": {
+      "file": "spider-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1198,
+        625,
+        1470,
+        829
+      ]
+    },
+    "masked-attack": {
+      "file": "masked-attack.png",
+      "width": 64,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9375
+      },
+      "sourceBox": [
+        1514,
+        617,
+        1728,
+        844
+      ]
+    }
+  },
+  "preparedFrames": {
+    "width": 64,
+    "height": 64,
+    "anchor": [
+      32,
+      60
+    ],
+    "families": [
+      "doll",
+      "cosmic",
+      "wood",
+      "drowned",
+      "spider",
+      "masked"
+    ],
+    "poses": [
+      "idle",
+      "walk",
+      "attack"
+    ]
+  }
+}

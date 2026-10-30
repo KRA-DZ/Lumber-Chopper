@@ -19,8 +19,23 @@ export class RegionView {
       result.push(a);
       return a;
     };
-    for (const p of w.decorBins.get(region.id) || [])
-      image(`details.${p.type}.${p.variant}`, p.x, p.y).setData("plant", p);
+    for (const [index, p] of (w.decorBins.get(region.id) || []).entries())
+      if (index % 3 === 0)
+        image(`biomeprop.${region.biome}`, p.x, p.y).setScale(
+          region.biome === "web" ? 1.6 : 1,
+        );
+      else
+        image(`details.${p.type}.${p.variant}`, p.x, p.y).setData("plant", p);
+    if (region.biome === "web")
+      for (const tree of w.trees.filter(
+        (t) => t.regionId === region.id && t.legacyIndex % 3 === 0,
+      ))
+        image(
+          "biomeprop.web",
+          tree.x + 16,
+          tree.y - 32,
+          tree.y + 0.01,
+        ).setScale(1.8);
     for (const p of w.landmarks.filter((p) => p.regionId === region.id)) {
       if (p.type === "chest") {
         image("camp.chest", p.x, p.y)

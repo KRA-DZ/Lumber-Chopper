@@ -1,3 +1,4 @@
+import { biomeFor } from "./biomes.js";
 import { CENTER } from "./config.js";
 
 export const REGION_SIZE = 1920;
@@ -50,6 +51,7 @@ export const REGIONS = Object.freeze(
       gy,
       name,
       activity,
+      biome: biomeFor(id, activity),
       x: ORIGIN + gx * REGION_SIZE,
       y: ORIGIN + gy * REGION_SIZE,
       width: REGION_SIZE,

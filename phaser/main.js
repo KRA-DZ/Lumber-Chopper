@@ -1,3 +1,4 @@
+import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
 import { WorldScene } from "./world-scene.js";
 import { HudScene } from "./hud-scene.js";
@@ -8,6 +9,7 @@ class BootScene extends Phaser.Scene {
     super("Boot");
   }
   preload() {
+    preloadBiomeAssets(this);
     this.usePng =
       new URLSearchParams(location.search).get("art") !== "procedural";
     if (!this.usePng) return;
@@ -16,6 +18,7 @@ class BootScene extends Phaser.Scene {
       this.load.image(`import.${name}`, `./src/assets/${name}.png`);
   }
   create() {
+    retainBiomeAssets(this);
     if (this.usePng) {
       const manifest = this.cache.json.get("import.manifest");
       if (

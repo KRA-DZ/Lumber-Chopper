@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "source": {
+    "file": "biome-props-sheet.png",
+    "sha256": "144d49800f79abb13a601a2a66556e035f182fb8b084cea824072bc543c3c3f1",
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  "processing": {
+    "layout": "grid",
+    "columns": 3,
+    "background": "all",
+    "tolerance": 12,
+    "minArea": 8,
+    "padding": 2,
+    "defringe": 1
+  },
+  "assets": {
+    "field": {
+      "file": "field.png",
+      "width": 64,
+      "height": 48,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9583333333333334
+      },
+      "sourceBox": [
+        59,
+        104,
+        494,
+        426
+      ]
+    },
+    "swamp": {
+      "file": "swamp.png",
+      "width": 59,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96875
+      },
+      "sourceBox": [
+        599,
+        73,
+        940,
+        443
+      ]
+    },
+    "forest": {
+      "file": "forest.png",
+      "width": 64,
+      "height": 47,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9574468085106383
+      },
+      "sourceBox": [
+        1044,
+        116,
+        1487,
+        442
+      ]
+    },
+    "shore": {
+      "file": "shore.png",
+      "width": 52,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96875
+      },
+      "sourceBox": [
+        71,
+        492,
+        431,
+        938
+      ]
+    },
+    "web": {
+      "file": "web.png",
+      "width": 55,
+      "height": 64,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.96875
+      },
+      "sourceBox": [
+        563,
+        478,
+        972,
+        958
+      ]
+    },
+    "ruins": {
+      "file": "ruins.png",
+      "width": 64,
+      "height": 55,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.9636363636363636
+      },
+      "sourceBox": [
+        1061,
+        580,
+        1487,
+        946
+      ]
+    }
+  }
+}

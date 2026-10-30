@@ -1,3 +1,4 @@
+import { createBiomeEnemies } from "./biome-enemies.js";
 import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
 import { createWatcher } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
@@ -21,6 +22,7 @@ export function createSurvival({
   emit,
   defeat,
   defenses,
+  regions = null,
 }) {
   const raiders = [];
   let monster = null,
@@ -33,6 +35,17 @@ export function createSurvival({
     wave = null;
   const safeRadius = () => (state.campLevel > 0 ? 310 : 210);
   const isSafe = (p) => distance(p, CENTER) < safeRadius();
+  const residents = regions
+    ? createBiomeEnemies({
+        state,
+        player,
+        regions,
+        nav,
+        isSafe,
+        hurtPlayer,
+        emit,
+      })
+    : null;
   function spawnPoint(around, radius, phase = 0) {
     for (let i = 0; i < 16; i++) {
       const a = phase + i * 2.399,
@@ -104,6 +117,7 @@ export function createSurvival({
     });
   }
   function dawn() {
+    residents?.dawn();
     if (wave && ["warning", "active"].includes(wave.status)) {
       wave.status = "withdrawn";
       emit("wave-ended", { ...wave });
@@ -131,7 +145,9 @@ export function createSurvival({
       defeat(
         source === "watcher"
           ? "Смотритель настиг вас. Бегите к свету и выходите из круга удара."
-          : "Налётчики настигли вас.",
+          : source === "resident"
+            ? "Ночной обитатель биома настиг вас. Вернитесь к свету или покиньте его территорию."
+            : "Налётчики настигли вас.",
       );
   }
   function finishWave() {
@@ -155,6 +171,8 @@ export function createSurvival({
     finishWave();
   }
   function hit(id, damage, knockback = true) {
+    if (residents?.actors.some((r) => r.id === id))
+      return residents.hit(id, damage, knockback);
     const target = raiders.find((r) => r.id === id);
     if (!target || target.hp <= 0 || !Number.isFinite(damage) || damage <= 0)
       return false;
@@ -198,6 +216,8 @@ export function createSurvival({
   });
   function update(dt) {
     if (dt <= 0 || state.gameOver) return;
+    residents?.update(dt);
+    if (state.gameOver) return;
     hitCooldown = Math.max(0, hitCooldown - dt);
     pathCooldown = Math.max(0, pathCooldown - dt);
     warningTimer = Math.max(0, warningTimer - dt);
@@ -282,6 +302,9 @@ export function createSurvival({
       return wave;
     },
     raiders,
+    get residents() {
+      return residents?.actors || [];
+    },
     get monster() {
       return monster;
     },

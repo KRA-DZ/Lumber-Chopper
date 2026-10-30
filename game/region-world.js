@@ -186,7 +186,11 @@ export function createRegionWorld(regions) {
       for (let gx = 0; gx < 12; gx++) {
         const x = region.x + 80 + gx * 150 + (rnd() - 0.5) * 75,
           y = region.y + 80 + gy * 150 + (rnd() - 0.5) * 75;
-        if (reserved(x, y, region)) continue;
+        if (
+          reserved(x, y, region) ||
+          (region.biome === "field" && rnd() < 0.55)
+        )
+          continue;
         const index = (region.gy + 2) * 5 + region.gx + 2,
           legacyIndex = index * 200 + gy * 12 + gx,
           type = types[Math.floor(rnd() * 4)],
@@ -263,7 +267,7 @@ export function createRegionWorld(regions) {
     generate,
     treesNear,
     decorBins,
-    biomeAt: (x, y) => regionAt(x, y)?.activity,
+    biomeAt: (x, y) => regionAt(x, y)?.biome || "forest",
     campItems: [
       { type: "tools", x: 1640, y: 1645, min: 0 },
       { type: "bench", x: 1510, y: 1672, min: 1 },

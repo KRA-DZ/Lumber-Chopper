@@ -171,7 +171,7 @@ try:
                     "while(m.regions.unlocked.size<25)openRegion(m.regions.frontiers()[0].region.id)"
                 )
                 assert q.evaluate(
-                    "m.world.decorBins.size===25&&m.trees.length>2200&&w.treeObjects.size<170&&w.terrain.images.size<=28"
+                    "m.world.decorBins.size===25&&m.trees.length>1800&&w.treeObjects.size<170&&w.terrain.images.size<=28"
                 )
                 q.evaluate(
                     "window.southTree=m.trees.find(t=>t.hp>1&&t.y>5200);m.player.x=southTree.x+58;m.player.y=southTree.y;m.player.path=[];m.hitTree(southTree);g.step(0)"

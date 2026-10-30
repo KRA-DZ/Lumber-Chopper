@@ -209,6 +209,7 @@ export function createWorkers({
     const threats = getSurvival(),
       danger = [
         ...(threats?.raiders || []),
+        ...(threats?.residents || []),
         ...(threats?.monster ? [threats.monster] : []),
       ];
     // Rotate consideration, never more than one A* every 0.3 active seconds.

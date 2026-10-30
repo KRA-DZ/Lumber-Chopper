@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "source": "biome-terrain-sheet.png",
+  "sha256": "b6f04e67b3f35142c0163ecc1e5f7a1adbf0ef963fe3ff709297a80df4acf777",
+  "size": 64,
+  "materials": [
+    "forest",
+    "field",
+    "swamp",
+    "shore",
+    "web",
+    "ruins",
+    "dirt",
+    "water"
+  ],
+  "edgeBlend": 8
+}
