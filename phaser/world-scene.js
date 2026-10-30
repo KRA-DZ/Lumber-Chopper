@@ -1,3 +1,4 @@
+import { shopAdvice } from "../game/first-days.js";
 import { StackView } from "./stack-view.js";
 import { BuyerView } from "./buyer-view.js";
 import { EnemyView } from "./enemy-view.js";
@@ -106,6 +107,10 @@ export class WorldScene extends Phaser.Scene {
     this.bindInput();
     this.bindDialogs();
     this.regionMap = createRegionMap(this);
+    this.returnCamp = () => this.core.navigateGuide("camp");
+    document
+      .querySelector("#campButton")
+      .addEventListener("click", this.returnCamp);
     this.survivalUi = createSurvivalUi(this);
     this.scene.launch("Hud", { world: this });
     document.querySelector("#loading")?.remove();
@@ -468,6 +473,7 @@ export class WorldScene extends Phaser.Scene {
     this.shop = createShop(this.core.state, {
       onOpen: () => this.pause("shop", true),
       purchase: (id) => this.core.purchaseUpgrade(id),
+      recommendation: () => shopAdvice(this.core.state),
       onChange: () => {
         this.renderModel();
       },
@@ -901,6 +907,10 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (type === "sunset-warning") {
+      this.audio?.warning();
+      return;
+    }
     if (type === "attack") {
       this.audio?.hit();
       this.heroView?.hit();
@@ -1073,6 +1083,9 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#clueClose")
       .removeEventListener("click", this.dismissClue);
     document.querySelector("#clueDialog").close();
+    document
+      .querySelector("#campButton")
+      .removeEventListener("click", this.returnCamp);
     this.survivalUi?.destroy();
     this.regionMap?.destroy();
     this.audio.destroy();

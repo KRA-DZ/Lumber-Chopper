@@ -124,6 +124,9 @@ export function createForestAudio() {
         fireTimer = 0.15 + Math.random() * 0.3;
       }
     },
+    warning() {
+      tone(440, 0.6, 0.045, 0.5);
+    },
     hit() {
       tone(165, 0.08, 0.055, 0.45);
     },

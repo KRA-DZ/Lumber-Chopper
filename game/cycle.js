@@ -1,4 +1,4 @@
-import { DAY_SECONDS } from "./config.js";
+import { DAY_SECONDS, RAID_INTERVAL } from "./config.js";
 export const NIGHT_START = DAY_SECONDS / 2; // 18:00; рассвет — 06:00 на границе суток.
 export function createCycleManager(state, emit = () => {}) {
   let observedNight = state.worldTime >= NIGHT_START;
@@ -14,12 +14,25 @@ export function createCycleManager(state, emit = () => {}) {
       while (dt > 1e-9) {
         const night = state.worldTime >= NIGHT_START;
         if (night) observedNight = true;
-        const boundary = night ? DAY_SECONDS : NIGHT_START;
+        const boundary = night
+          ? DAY_SECONDS
+          : state.worldTime < NIGHT_START - 60
+            ? NIGHT_START - 60
+            : state.worldTime < NIGHT_START - 15
+              ? NIGHT_START - 15
+              : NIGHT_START;
         const step = Math.min(dt, boundary - state.worldTime);
         state.worldTime += step;
         dt -= step;
         if (state.worldTime < boundary - 1e-9) break;
-        if (night) {
+        if (!night && boundary < NIGHT_START) {
+          state.worldTime = boundary;
+          emit("sunset-warning", {
+            night: state.calendarDay + 1,
+            seconds: NIGHT_START - boundary,
+            raid: (state.calendarDay + 1) % RAID_INTERVAL === 0,
+          });
+        } else if (night) {
           state.worldTime = 0;
           state.calendarDay++;
           if (observedNight) state.nightsSurvived++;

@@ -1,3 +1,4 @@
+import { firstDaysPlan } from "../game/first-days.js";
 import { LETTERS, QUESTS } from "../game/lore.js";
 export function createSurvivalUi(scene) {
   const journal = document.querySelector("#journalDialog"),
@@ -21,6 +22,24 @@ export function createSurvivalUi(scene) {
       list.append(article);
       return article;
     };
+    const heading = document.createElement("h3");
+    heading.textContent = "План первых четырёх дней";
+    list.append(heading);
+    const intro = document.createElement("p");
+    intro.textContent =
+      "Ориентиры можно выполнять заранее и в своём порядке. Награды писем находятся ниже.";
+    list.append(intro);
+    for (const plan of firstDaysPlan(c)) {
+      const done = plan.goals.filter(([, ready]) => ready).length;
+      const article = append(
+        `День ${plan.day} · ${plan.title} · ${done}/${plan.goals.length}`,
+        plan.goals
+          .map(([text, ready]) => `${ready ? "✓" : "○"} ${text}`)
+          .join("\n"),
+      );
+      article.dataset.planDay = plan.day;
+      article.lastElementChild.style.whiteSpace = "pre-line";
+    }
     if (!s.unlockedLetters.length)
       append(
         "Пока нет писем",
@@ -74,7 +93,12 @@ export function createSurvivalUi(scene) {
     refreshBadge,
     defeat(event) {
       scene.pause("defeat", true);
-      for (const id of ["shopButton", "mapButton", "journalButton"])
+      for (const id of [
+        "shopButton",
+        "mapButton",
+        "journalButton",
+        "campButton",
+      ])
         document.querySelector("#" + id).disabled = true;
       death.querySelector("[data-defeat]").textContent =
         `${event.reason} Пережито ночей: ${event.nightsSurvived}.`;
@@ -93,7 +117,12 @@ export function createSurvivalUi(scene) {
       journal.close();
       death.close();
       list.replaceChildren();
-      for (const id of ["shopButton", "mapButton", "journalButton"])
+      for (const id of [
+        "shopButton",
+        "mapButton",
+        "journalButton",
+        "campButton",
+      ])
         document.querySelector("#" + id).disabled = false;
     },
   };

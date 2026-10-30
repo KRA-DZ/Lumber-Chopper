@@ -1,6 +1,7 @@
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
 export const DAY_SECONDS = 600;
+export const RAID_INTERVAL = 5; // Общий интервал налётов для календаря, директора и интерфейса.
 export const WORLD = Object.freeze({ width: 3200, height: 3200 });
 export const CENTER = Object.freeze({ x: 1600, y: 1600 });
 export const RADII = Object.freeze([900, 1040, 1180, 1320, 1450]);

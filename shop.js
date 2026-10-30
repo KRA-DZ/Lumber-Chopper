@@ -2,7 +2,12 @@ import { SHOP_IDS, upgradeOffer, buyUpgrade, AXE_TIERS } from "./economy.js";
 
 export function createShop(
   state,
-  { onChange, onOpen, purchase = (id) => buyUpgrade(state, id) },
+  {
+    onChange,
+    onOpen,
+    purchase = (id) => buyUpgrade(state, id),
+    recommendation = () => null,
+  },
 ) {
   const dialog = document.querySelector("#shopDialog"),
     balance = dialog.querySelector("[data-balance]"),
@@ -43,12 +48,14 @@ export function createShop(
       onChange(id);
       refresh();
     });
-    cards.set(id, { title, description, detail, button, icon });
+    cards.set(id, { card, title, description, detail, button, icon });
   }
   function refresh() {
     balance.textContent = `Монеты: ${state.coins}`;
+    const advice = recommendation();
     for (const [id, c] of cards) {
       const offer = upgradeOffer(state, id);
+      c.card.dataset.recommended = String(advice?.id === id);
       c.title.textContent = offer.name;
       c.description.textContent = offer.description;
       c.icon.style.color = offer.color;
@@ -58,6 +65,8 @@ export function createShop(
           : id === "carry"
             ? "Цена растёт на 55% за покупку"
             : `Уровень ${offer.level}`;
+      if (advice?.id === id)
+        c.detail.textContent = `Совет: ${advice.text}${offer.canBuy ? "" : ` Не хватает ${offer.price - state.coins} монет.`}`;
       c.button.textContent = offer.maxed ? "Куплено" : `${offer.price} монет`;
       c.button.disabled = !offer.canBuy;
       c.button.setAttribute(

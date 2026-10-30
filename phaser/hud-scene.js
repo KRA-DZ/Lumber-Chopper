@@ -1,3 +1,4 @@
+import { DayHud } from "./day-hud.js";
 import { DAY_SECONDS } from "../game/config.js";
 import { regionAt } from "../game/regions.js";
 export class HudScene extends Phaser.Scene {
@@ -45,7 +46,32 @@ export class HudScene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5, 1);
+    this.tutorial
+      .setInteractive()
+      .on("pointerdown", (p, x, y, event) => event.stopPropagation());
     this.doneAt = null;
+    this.guideWidth = null;
+    this.dayHud = new DayHud(this);
+    this.guideButton = this.add
+      .text(0, 0, "", {
+        fontFamily: "monospace",
+        fontSize: "12px",
+        color: "#2c3c2d",
+        backgroundColor: "#d9b66d",
+        padding: { x: 12, y: 8 },
+      })
+      .setOrigin(0.5, 1)
+      .setInteractive({ useHandCursor: true });
+    this.guideButton.on("pointerdown", (pointer, x, y, event) => {
+      event.stopPropagation();
+      const c = this.world.core;
+      if (c.paused) return;
+      const action = c.guide.action;
+      if (action === "shop") this.world.shop.open();
+      else if (action === "journal") this.world.survivalUi.open();
+      else if (action === "map") this.world.regionMap.open();
+      else c.navigateGuide(action);
+    });
     this.mapZone = this.add.zone(0, 0, 144, 144).setOrigin(0).setInteractive();
     this.mapZone.on("pointerdown", (pointer, x, y, event) => {
       event.stopPropagation();
@@ -107,7 +133,7 @@ export class HudScene extends Phaser.Scene {
         .padStart(2, "0");
     g.clear()
       .fillStyle(0x243c2d, 0.95)
-      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 76)
+      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     this.clock.setText(
       `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}\n♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
@@ -152,36 +178,41 @@ export class HudScene extends Phaser.Scene {
       3,
       3,
     );
-    const step = c.tutorialStep;
-    if (step === 3 && this.doneAt === null) this.doneAt = c.elapsed;
-    const hints = [
-      "1/3 · Срубите дерево: подойдите к стволу.",
-      "2/3 · Продайте брёвна на золотой площадке.",
-      "3/3 · Откройте лавку и улучшите переноску.",
-      "Отлично! Стройте лагерь или открывайте соседние регионы.",
-    ];
-    const night = c.cycle.isNight;
-    const nightHint = night
-      ? `Ночь ${c.dayNumber + 1} · ${c.survival?.raiders.length ? `Налётчики: ${c.survival.raiders.length}. Топор — защита лагеря.` : "Смотритель неуязвим. Держитесь света лагеря."}`
-      : null;
+    this.dayHud.refresh();
+    const guide = c.guide;
+    if (this.guideWidth !== this.scale.width) {
+      this.guideWidth = this.scale.width;
+      this.tutorial
+        .setFontSize(this.scale.width < 600 ? 14 : 12)
+        .setWordWrapWidth(this.scale.width - 64);
+      this.guideButton.setFontSize(this.scale.width < 600 ? 14 : 12);
+    }
     this.tutorial
-      .setWordWrapWidth(this.scale.width - 64)
       .setPosition(this.scale.width / 2, this.scale.height - 12)
-      .setText(nightHint || hints[step])
-      .setVisible(night || step < 3 || c.elapsed - this.doneAt < 6);
+      .setText(`${guide.title}\n${guide.text}`)
+      .setVisible(true);
+    this.guideButton
+      .setText(guide.button || "")
+      .setPosition(
+        this.scale.width / 2,
+        this.scale.height - this.tutorial.height - 20,
+      )
+      .setVisible(!!guide.action && !c.state.gameOver);
+    this.banner.setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168);
     this.discovery
       .setVisible(
         c.elapsed < this.world.atmosphere.discoveryUntil &&
           !this.banner.visible &&
-          !this.world.expansionBanner,
+          !this.world.expansionBanner &&
+          !c.sunsetWarning,
       )
-      .setPosition(this.scale.width / 2, this.scale.width < 600 ? 135 : 100)
+      .setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168)
       .setText(this.world.atmosphere.discovery);
     if (this.world.expansionBanner) {
       const e = this.world.expansionBanner;
       this.world.expansionBanner = null;
       this.banner
-        .setPosition(this.scale.width / 2, this.scale.width < 600 ? 155 : 100)
+        .setPosition(this.scale.width / 2, c.sunsetWarning ? 250 : 168)
         .setText(`Открыта новая территория\n${e.name}`)
         .setVisible(true)
         .setAlpha(1);

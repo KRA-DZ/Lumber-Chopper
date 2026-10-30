@@ -1,11 +1,11 @@
-import { CENTER } from "./config.js";
+import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 132,
   monsterDamage: 40,
   monsterWindup: 1.2,
   playerInvulnerability: 1.4,
   warningSeconds: 12,
-  waveEvery: 5,
+  waveEvery: RAID_INTERVAL,
   maxRaiders: 8,
   raiderSpeed: 82,
   raiderDamage: 12,

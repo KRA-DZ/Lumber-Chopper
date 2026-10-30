@@ -1,3 +1,4 @@
+import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createBuyers } from "./buyers.js";
 import { buyUpgrade } from "../economy.js";
 import { createCycleManager } from "./cycle.js";
@@ -54,7 +55,8 @@ export function createSimulation({
     noticeTimer = 0,
     revision = 0,
     paused = false,
-    transferTimer = 0;
+    transferTimer = 0,
+    sunsetWarning = null;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   function updateUI() {
     revision++;
@@ -70,7 +72,12 @@ export function createSimulation({
     regions ? regions.isOpen(p) : distance(p, CENTER) < forestRadius() - 20;
   const treeAccessible = (t) =>
     regions ? regions.isOpen(t) : distance(t, CENTER) < forestRadius() - 45;
-  const tutorial = { cut: false, sold: false };
+  const tutorial = {
+    cut: false,
+    sold: false,
+    safeSeconds: 0,
+    sheltered: false,
+  };
   const dayPhase = () => gameState.worldTime / DAY_SECONDS;
   const nightAmount = () =>
     Math.max(
@@ -190,10 +197,21 @@ export function createSimulation({
       })
     : null;
   const cycle = createCycleManager(gameState, (type, event) => {
-    if (type === "night-started") {
+    if (type === "sunset-warning") {
+      sunsetWarning = { ...event, until: elapsed + 7 };
+      showNotice(
+        event.seconds === 60
+          ? event.raid
+            ? "Через минуту налёт! Подготовьте топор и вернитесь к лагерю."
+            : "До заката одна минута. Закончите продажу и возвращайтесь к свету."
+          : "До темноты 15 секунд. Вернитесь в светлый круг лагеря!",
+        7,
+      );
+    } else if (type === "night-started") {
+      sunsetWarning = null;
       survival?.nightStarted(event);
       showNotice(
-        event.night % 5 === 0 && survival
+        event.night % SURVIVAL.waveEvery === 0 && survival
           ? `Ночь ${event.night}: налёт! Вернитесь к лагерю. Смотритель неуязвим.`
           : "Ночь. Смотритель ищет тех, кто покинул свет лагеря.",
         9,
@@ -448,6 +466,21 @@ export function createSimulation({
     }
     if (forestry.collect(dt, player)) updateUI();
     survival?.update(dt);
+    if (
+      !gameState.gameOver &&
+      !tutorial.sheltered &&
+      survival &&
+      cycle.isNight
+    ) {
+      tutorial.safeSeconds = survival.isSafe(player)
+        ? tutorial.safeSeconds + dt
+        : 0;
+      if (tutorial.safeSeconds >= 3) {
+        tutorial.sheltered = true;
+        revision++;
+        emit("guide-progress", { id: "shelter" });
+      }
+    }
   }
 
   // Substeps preserve timers and collision at low FPS and in deterministic tests.
@@ -460,7 +493,25 @@ export function createSimulation({
       dt -= step;
     }
   }
-  return {
+  const core = {
+    get guide() {
+      return firstDaysGuide(core);
+    },
+    get sunsetWarning() {
+      return sunsetWarning && elapsed < sunsetWarning.until
+        ? sunsetWarning
+        : null;
+    },
+    navigateGuide(action) {
+      if (!canAct()) return false;
+      const target = guideDestination(core, action);
+      if (!target) {
+        showNotice("Здесь пока нет доступной цели.");
+        return false;
+      }
+      setDestination(target.x, target.y);
+      return true;
+    },
     tryChop,
     tryAttack,
     purchaseUpgrade,
@@ -488,6 +539,7 @@ export function createSimulation({
     accessible,
     regions,
     tutorial,
+    // Legacy three-step counter; the current seven-step HUD uses core.guide.
     get tutorialStep() {
       return !tutorial.cut
         ? 0
@@ -520,4 +572,5 @@ export function createSimulation({
       if (paused) clearKeys();
     },
   };
+  return core;
 }

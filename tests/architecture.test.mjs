@@ -97,17 +97,17 @@ test("cycle emits each edge once including a large delta and counts nights only 
     events = [],
     cycle = createCycleManager(s, (type, e) => events.push([type, e]));
   cycle.update(180);
-  assert.equal(events[0][0], "night-started");
+  assert.equal(events.filter(([type]) => type === "night-started").length, 1);
   assert.equal(s.nightsSurvived, 0);
   cycle.update(0);
-  assert.equal(events.length, 1);
+  assert.equal(events.length, 3);
   cycle.update(300);
   assert.equal(s.nightsSurvived, 1);
   assert.equal(s.calendarDay, 1);
   cycle.update(1200);
   assert.equal(s.nightsSurvived, 3);
   assert.deepEqual(
-    events.map((e) => e[0]),
+    events.filter(([type]) => type !== "sunset-warning").map((e) => e[0]),
     [
       "night-started",
       "day-started",
