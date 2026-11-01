@@ -2,6 +2,7 @@ import { applyPeopleFrames } from "./people-assets.js";
 import { applyTreeArt } from "./tree-assets.js";
 import { applyCampArt, applyCampFrames } from "./camp-assets.js";
 import { applyItemArt } from "./item-assets.js";
+import { applyDecorArt, applyDecorFrames } from "./decor-assets.js";
 import { biomeEnemyFrames } from "./biome-assets.js";
 import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
@@ -27,6 +28,7 @@ export function createAtlas(scene) {
     sources = new Map(),
     meta = new Map();
   const items = applyItemArt(scene, art, worldArt);
+  const decor = applyDecorArt(scene, art, worldArt);
   function collect(object, path = "") {
     if (object?.bitmap) {
       sources.set(path, object);
@@ -129,6 +131,7 @@ export function createAtlas(scene) {
     sources.set(key, frame);
   const people = applyPeopleFrames(scene, sources);
   const camp = applyCampFrames(art, sources);
+  applyDecorFrames(decor, sources);
   let x = 2,
     y = 2,
     row = 0;
@@ -236,5 +239,5 @@ export function createAtlas(scene) {
         })),
         duration: STRIKE_MS,
       });
-  return { art, worldArt, meta, image, setFrame, people, camp, items };
+  return { art, worldArt, meta, image, setFrame, people, camp, items, decor };
 }

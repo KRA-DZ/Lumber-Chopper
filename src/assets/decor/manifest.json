@@ -1,0 +1,300 @@
+{
+  "version": 1,
+  "approvedVariant": 3,
+  "atlas": "decor.png",
+  "size": [
+    256,
+    128
+  ],
+  "sources": [
+    {
+      "file": "decor-camp-sheet.png",
+      "sha256": "bc17a4048fa196ccd597e00b3334066838a32df0aa7d0da7689768189fc51c41",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "crate": [
+          48,
+          68,
+          426,
+          449
+        ],
+        "barrel": [
+          478,
+          71,
+          790,
+          447
+        ],
+        "sack": [
+          862,
+          101,
+          1194,
+          451
+        ],
+        "mat": [
+          1231,
+          220,
+          1732,
+          471
+        ],
+        "lantern": [
+          143,
+          475,
+          373,
+          845
+        ],
+        "kettle": [
+          532,
+          508,
+          858,
+          831
+        ],
+        "mug": [
+          989,
+          612,
+          1205,
+          817
+        ],
+        "flowerpot": [
+          1348,
+          520,
+          1608,
+          841
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "decor-forest-sheet.png",
+      "sha256": "58041301e127b75038755784fbac2ee89df47e160de6f3f3ab4235e8d89b9108",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "rock.0": [
+          93,
+          195,
+          425,
+          415
+        ],
+        "fern.0": [
+          500,
+          85,
+          935,
+          431
+        ],
+        "mushroom.0": [
+          1025,
+          178,
+          1249,
+          420
+        ],
+        "flowers.0": [
+          1399,
+          118,
+          1690,
+          420
+        ],
+        "rock.1": [
+          79,
+          629,
+          442,
+          818
+        ],
+        "fern.1": [
+          512,
+          547,
+          973,
+          846
+        ],
+        "mushroom.1": [
+          1025,
+          590,
+          1266,
+          824
+        ],
+        "flowers.1": [
+          1377,
+          530,
+          1701,
+          829
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "frames": {
+    "flowerpot": {
+      "x": 2,
+      "y": 2,
+      "width": 28,
+      "height": 35,
+      "anchor": [
+        14,
+        31
+      ]
+    },
+    "barrel": {
+      "x": 32,
+      "y": 2,
+      "width": 28,
+      "height": 34,
+      "anchor": [
+        14,
+        30
+      ]
+    },
+    "lantern": {
+      "x": 62,
+      "y": 2,
+      "width": 26,
+      "height": 34,
+      "anchor": [
+        13,
+        30
+      ]
+    },
+    "rock.0": {
+      "x": 90,
+      "y": 2,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "fern.0": {
+      "x": 124,
+      "y": 2,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "mushroom.0": {
+      "x": 158,
+      "y": 2,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "flowers.0": {
+      "x": 192,
+      "y": 2,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "rock.1": {
+      "x": 2,
+      "y": 39,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "fern.1": {
+      "x": 36,
+      "y": 39,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "mushroom.1": {
+      "x": 70,
+      "y": 39,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "flowers.1": {
+      "x": 104,
+      "y": 39,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        27
+      ]
+    },
+    "crate": {
+      "x": 138,
+      "y": 39,
+      "width": 36,
+      "height": 30,
+      "anchor": [
+        18,
+        26
+      ]
+    },
+    "sack": {
+      "x": 176,
+      "y": 39,
+      "width": 26,
+      "height": 30,
+      "anchor": [
+        13,
+        26
+      ]
+    },
+    "kettle": {
+      "x": 204,
+      "y": 39,
+      "width": 28,
+      "height": 26,
+      "anchor": [
+        14,
+        22
+      ]
+    },
+    "mat": {
+      "x": 2,
+      "y": 73,
+      "width": 44,
+      "height": 18,
+      "anchor": [
+        22,
+        10
+      ]
+    },
+    "mug": {
+      "x": 48,
+      "y": 73,
+      "width": 16,
+      "height": 18,
+      "anchor": [
+        8,
+        14
+      ]
+    }
+  },
+  "processing": {
+    "backgroundRemoval": false,
+    "alphaThreshold": 128,
+    "filter": "nearest"
+  }
+}
