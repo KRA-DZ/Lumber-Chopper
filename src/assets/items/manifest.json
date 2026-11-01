@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "approvedVariant": 3,
+  "atlas": "items.png",
+  "size": [
+    256,
+    128
+  ],
+  "sources": [
+    {
+      "file": "items-logs-sheet.png",
+      "sha256": "0de52d5a0d1a401a0332ee3d8c32abe23425d8958a69288df591655b391366cc",
+      "size": [
+        2172,
+        724
+      ],
+      "columns": 3,
+      "rows": 1,
+      "boxes": {
+        "log": [
+          51,
+          224,
+          732,
+          561
+        ],
+        "pile": [
+          844,
+          174,
+          1423,
+          574
+        ],
+        "bundle": [
+          1524,
+          177,
+          2142,
+          583
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "items-axes-sheet.png",
+      "sha256": "7f6febb524e86da72134963aa855eb7e34450a4da06ae0e8746c1c9a2393e7f1",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 3,
+      "rows": 2,
+      "boxes": {
+        "axe.0": [
+          74,
+          48,
+          501,
+          484
+        ],
+        "axe.1": [
+          555,
+          48,
+          981,
+          484
+        ],
+        "axe.2": [
+          1067,
+          48,
+          1493,
+          484
+        ],
+        "axe.3": [
+          75,
+          529,
+          501,
+          964
+        ],
+        "axe.4": [
+          555,
+          528,
+          981,
+          964
+        ],
+        "axe.5": [
+          1067,
+          528,
+          1493,
+          964
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "frames": {
+    "pile": {
+      "x": 2,
+      "y": 2,
+      "width": 44,
+      "height": 36,
+      "anchor": [
+        22,
+        32
+      ]
+    },
+    "bundle": {
+      "x": 48,
+      "y": 2,
+      "width": 44,
+      "height": 36,
+      "anchor": [
+        22,
+        32
+      ]
+    },
+    "axe.0": {
+      "x": 94,
+      "y": 2,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "axe.1": {
+      "x": 132,
+      "y": 2,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "axe.2": {
+      "x": 170,
+      "y": 2,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "axe.3": {
+      "x": 208,
+      "y": 2,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "axe.4": {
+      "x": 2,
+      "y": 40,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "axe.5": {
+      "x": 40,
+      "y": 40,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        12,
+        28
+      ]
+    },
+    "log": {
+      "x": 78,
+      "y": 40,
+      "width": 42,
+      "height": 22,
+      "anchor": [
+        21,
+        17
+      ]
+    }
+  },
+  "processing": {
+    "backgroundRemoval": false,
+    "alphaThreshold": 128,
+    "filter": "nearest"
+  },
+  "icons": [
+    "wood-pile",
+    "wood-bundle",
+    "axe-0",
+    "axe-1",
+    "axe-2",
+    "axe-3",
+    "axe-4",
+    "axe-5"
+  ]
+}

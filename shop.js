@@ -7,6 +7,7 @@ export function createShop(
     onOpen,
     purchase = (id) => buyUpgrade(state, id),
     recommendation = () => null,
+    iconFor = () => null,
   },
 ) {
   const dialog = document.querySelector("#shopDialog"),
@@ -59,6 +60,15 @@ export function createShop(
       c.title.textContent = offer.name;
       c.description.textContent = offer.description;
       c.icon.style.color = offer.color;
+      const src = iconFor(id, offer);
+      if (src && c.icon.dataset.src !== src) {
+        const image = document.createElement("img");
+        image.src = src;
+        image.alt = "";
+        image.width = image.height = 32;
+        c.icon.replaceChildren(image);
+        c.icon.dataset.src = src;
+      }
       c.detail.textContent =
         id === "axe" && !offer.maxed
           ? `Урон ${state.axePower} → ${AXE_TIERS[offer.level + 1].power}; замах ${state.autoInterval.toFixed(2)} → ${AXE_TIERS[offer.level + 1].interval.toFixed(2)} с`

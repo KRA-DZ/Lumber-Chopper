@@ -1,6 +1,7 @@
 import { preloadPeople, retainPeople } from "./people-assets.js";
 import { preloadTrees, retainTrees } from "./tree-assets.js";
 import { preloadCamp, retainCamp } from "./camp-assets.js";
+import { preloadItems, retainItems } from "./item-assets.js";
 import { selectHero } from "./hero-selection.js";
 import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
@@ -20,6 +21,7 @@ class BootScene extends Phaser.Scene {
     if (!this.usePng) return;
     preloadTrees(this);
     preloadCamp(this);
+    preloadItems(this);
     this.load.json("import.manifest", "./src/assets/manifest.json");
     for (const name of IMPORTED_ASSETS)
       this.load.image(`import.${name}`, `./src/assets/${name}.png`);
@@ -30,6 +32,7 @@ class BootScene extends Phaser.Scene {
     if (this.usePng) {
       retainTrees(this);
       retainCamp(this);
+      retainItems(this);
       const manifest = this.cache.json.get("import.manifest");
       if (
         !manifest ||

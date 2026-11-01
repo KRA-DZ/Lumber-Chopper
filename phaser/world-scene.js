@@ -23,6 +23,7 @@ import { CAMP } from "../pixel-art.js";
 import { createWorldDressing } from "../world.js";
 import { bakeConstruction } from "./construction-view.js";
 import { campDamageState } from "./camp-assets.js";
+import { itemShopIcon } from "./item-assets.js";
 import { Atmosphere } from "./atmosphere.js";
 import { createForestAudio } from "./forest-audio.js";
 import { growthStage } from "../forestry.js";
@@ -528,6 +529,7 @@ export class WorldScene extends Phaser.Scene {
   }
   bindDialogs() {
     this.shop = createShop(this.core.state, {
+      iconFor: this.assets.items ? itemShopIcon : undefined,
       onOpen: () => this.pause("shop", true),
       purchase: (id) => this.core.purchaseUpgrade(id),
       recommendation: () => shopAdvice(this.core.state),
