@@ -1,5 +1,6 @@
 import { LAYERS } from "./layers.js";
 import { REGION_SIZE } from "../game/regions.js";
+import { LocationView } from "./location-view.js";
 
 // Stream only nearby decoration and trees. Locked tiles remain geometry + names.
 export class RegionView {
@@ -10,6 +11,7 @@ export class RegionView {
     this.lastRevision = -1;
     this.border = scene.add.graphics().setDepth(LAYERS.border);
     this.banner = null;
+    this.locations = new LocationView(scene);
   }
   createDecor(region) {
     const w = this.scene.core.world,
@@ -48,6 +50,7 @@ export class RegionView {
             .setData("chestLabel", p.id),
         );
       } else if (p.type === "ruins") {
+        if (w.locations?.some((l) => l.regionId === region.id)) continue;
         const g = this.scene.add.graphics().setDepth(p.y);
         result.push(g);
         for (let col = 0; col < 7; col++)
@@ -113,6 +116,7 @@ export class RegionView {
     return result;
   }
   sync(view) {
+    this.locations.sync(view);
     const c = this.scene.core,
       regions = c.regions,
       margin = 360,

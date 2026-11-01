@@ -5,6 +5,7 @@ import {
   constructionCollisionKey,
 } from "../construction.js";
 import { CENTER, RADII } from "./config.js";
+import { passageOpen } from "./locations.js";
 // Круглые стволы, скруглённые основания, скольжение и A* сохранены при смене движка.
 export function createNavigation(
   model,
@@ -103,12 +104,28 @@ export function createNavigation(
         capsule(site.x - 82, site.y - 18, 30, 20);
         capsule(site.x + 56, site.y - 18, 30, 20);
       } else if (site.type === "ruins") {
+        if (model.locations?.some((l) => l.regionId === site.regionId))
+          continue;
         if (model.regions) {
           for (const column of [0, 1, 2, 4, 5, 6])
             capsule(site.x - 88 + column * 27, site.y - 18, 25, 20);
         } else capsule(site.x - 49, site.y - 18, 98, 22);
       } else if (site.type === "wagon")
         capsule(site.x - 40, site.y - 16, 80, 24);
+    }
+    for (const location of model.locations || []) {
+      if (!model.regions.isOpen(location.entrance)) continue;
+      for (const wall of location.walls) {
+        if (wall.passage && passageOpen(gameState, wall.passage)) continue;
+        obstacles.push({
+          x: (wall.a.x + wall.b.x) / 2,
+          y: (wall.a.y + wall.b.y) / 2,
+          half: 0,
+          r: wall.r,
+          a: wall.a,
+          b: wall.b,
+        });
+      }
     }
     for (const o of obstacles) {
       const x0 = (o.a ? Math.min(o.a.x, o.b.x) : o.x - o.half) - o.r,

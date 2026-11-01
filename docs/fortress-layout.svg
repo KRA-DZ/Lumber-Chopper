@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1250" viewBox="0 0 1280 1250">
+<title>Забытая крепость — план игрового прототипа</title>
+<desc>Вход снизу. Западные комнаты с записками, восточные коридоры к архиву. Пунктиром отмечен короткий путь, открываемый из архива.</desc>
+<rect width="1280" height="1250" fill="#172922"/>
+<g font-family="sans-serif" fill="#e8ddaf">
+<text x="64" y="45" font-size="27">Забытая крепость · игровой прототип</text>
+<text x="64" y="78" font-size="18">1152 × 960 · северный регион · широкие проходы · временные текстуры</text>
+<g transform="translate(-960,952)">
+<rect x="1024" y="-832" width="1152" height="960" fill="#304438"/>
+<rect x="1440" y="-768" width="320" height="832" fill="#465948"/>
+<text x="1600" y="-733" font-size="22" text-anchor="middle">Двор</text>
+<rect x="1056" y="-800" width="320" height="512" fill="#465948"/>
+<text x="1216" y="-765" font-size="22" text-anchor="middle">Караульная</text>
+<rect x="1056" y="-224" width="320" height="320" fill="#465948"/>
+<text x="1216" y="-189" font-size="22" text-anchor="middle">Склад</text>
+<rect x="1824" y="-800" width="320" height="320" fill="#465948"/>
+<text x="1984" y="-765" font-size="22" text-anchor="middle">Архив</text>
+<path d="M1024,-832L2176,-832" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1024,-832L1024,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M2176,-832L2176,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1024,128L1504,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1696,128L2176,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1408,-832L1408,-512" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1408,-352L1408,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1024,-256L1280,-256" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1792,-832L1792,-704" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1792,-704L1792,-576" fill="none" stroke="#e8b95b" stroke-width="24" stroke-linecap="round" stroke-dasharray="18 12"/>
+<path d="M1792,-576L1792,-256" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1792,-96L1792,128" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1792,-448L1984,-448" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M2112,-448L2176,-448" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<path d="M1984,-448L1984,-64" fill="none" stroke="#a2ad87" stroke-width="24" stroke-linecap="round" />
+<circle cx="1488" cy="32" r="20" fill="#c2b16b" stroke="#172922" stroke-width="3"/>
+<text x="1488" y="38" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">1</text>
+<circle cx="1168" cy="-752" r="20" fill="#c2b16b" stroke="#172922" stroke-width="3"/>
+<text x="1168" y="-746" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">2</text>
+<circle cx="1168" cy="-48" r="20" fill="#c2b16b" stroke="#172922" stroke-width="3"/>
+<text x="1168" y="-42" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">3</text>
+<circle cx="2080" cy="-560" r="20" fill="#c2b16b" stroke="#172922" stroke-width="3"/>
+<text x="2080" y="-554" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">4</text>
+<circle cx="1168" cy="-624" r="20" fill="#a97541" stroke="#172922" stroke-width="3"/>
+<text x="1168" y="-618" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">5</text>
+<circle cx="2000" cy="-704" r="20" fill="#a97541" stroke="#172922" stroke-width="3"/>
+<text x="2000" y="-698" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">6</text>
+<circle cx="1872" cy="-640" r="20" fill="#a97541" stroke="#172922" stroke-width="3"/>
+<text x="1872" y="-634" text-anchor="middle" fill="#101d17" font-size="19" font-weight="bold">7</text>
+<text x="1600" y="100" font-size="22" text-anchor="middle">↑ Вход</text>
+</g>
+<text x="64" y="1120" font-size="17">1. План караульного</text>
+<text x="464" y="1120" font-size="17">2. Дневник смотрителя</text>
+<text x="864" y="1120" font-size="17">3. Складская ведомость</text>
+<text x="64" y="1153" font-size="17">4. Последний дозор</text>
+<text x="464" y="1153" font-size="17">5. Сундук караульной</text>
+<text x="864" y="1153" font-size="17">6. Сундук архива</text>
+<text x="64" y="1186" font-size="17">7. Лебёдка боковой решётки</text>
+<text x="64" y="1230" font-size="16">Пунктир: решётка. Сундук архива требует складскую ведомость и ключ южного торговца.</text>
+</g></svg>

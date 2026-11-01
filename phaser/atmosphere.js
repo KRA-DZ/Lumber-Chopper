@@ -160,7 +160,8 @@ export class Atmosphere {
       candidates = this.clueData.filter(
         (c) =>
           this.accessible(c) &&
-          Math.hypot(c.x - player.x, c.y - player.y) < 130,
+          Math.hypot(c.x - player.x, c.y - player.y) < 130 &&
+          this.core.nav.hasLineOfSight(player, c),
       );
     for (const list of this.scene.regionView?.objects.values() || [])
       for (const image of list) {

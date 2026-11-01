@@ -1081,6 +1081,11 @@ export class WorldScene extends Phaser.Scene {
           "Печать снята. Сундук пуст; реликвию купит торговец на юге.",
           6,
         );
+      } else if (e.action === "open-passage") {
+        this.core.showNotice(
+          "Боковая решётка поднята. Из архива открыт короткий путь во двор.",
+          6,
+        );
       } else if (e.action === "offer-logs") {
         this.float("+1 смола", e.site.x, e.site.y - 60, "#c3dfab");
         this.core.showNotice(

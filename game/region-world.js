@@ -1,6 +1,7 @@
 import { CENTER } from "./config.js";
 import { CAMP, random, pixelHash } from "../pixel-art.js";
 import { REGIONS, REGION_BOUNDS, REGION_SIZE, regionAt } from "./regions.js";
+import { FORTRESS, insideLocation } from "./locations.js";
 
 export function createRegionWorld(regions) {
   const trees = [],
@@ -76,6 +77,13 @@ export function createRegionWorld(regions) {
       ],
     );
   }
+  const locations = [FORTRESS];
+  // Relocate existing IDs: rewards, story evidence and journal routes stay valid.
+  for (const chest of FORTRESS.chests)
+    Object.assign(
+      landmarks.find((p) => p.id === chest.id),
+      chest,
+    );
   const clues = [
     {
       id: "note",
@@ -127,6 +135,12 @@ export function createRegionWorld(regions) {
       text: "«Пять рядов, пять столбцов. В середине — огонь. Не все границы были поставлены людьми.»",
     },
   ];
+  const diary = clues.find((c) => c.id === "ruins-note");
+  Object.assign(
+    diary,
+    FORTRESS.clues.find((c) => c.id === diary.id),
+  );
+  clues.push(...FORTRESS.clues.filter((c) => c.id !== diary.id));
   function inWater(x, y) {
     const dx = (x - pond.x) / pond.rx,
       dy = (y - pond.y) / pond.ry;
@@ -159,6 +173,9 @@ export function createRegionWorld(regions) {
   }
   function reserved(x, y, r) {
     return (
+      locations.some(
+        (l) => l.regionId === r.id && insideLocation(l, x, y, 72),
+      ) ||
       nearTrail({ x, y }, 90) ||
       waterCollision(x, y, 75) ||
       (r.activity === "pond" &&
@@ -217,6 +234,9 @@ export function createRegionWorld(regions) {
       const x = region.x + 40 + rnd() * (REGION_SIZE - 80),
         y = region.y + 40 + rnd() * (REGION_SIZE - 80);
       if (
+        locations.some(
+          (l) => l.regionId === region.id && insideLocation(l, x, y, 32),
+        ) ||
         waterCollision(x, y, 20) ||
         nearTrail({ x, y }, 45) ||
         (region.id === "0:0" && Math.hypot(x - 1600, y - 1600) < 310)
@@ -252,6 +272,7 @@ export function createRegionWorld(regions) {
     regions,
     trees,
     landmarks,
+    locations,
     trails,
     ancientTree,
     merchant,

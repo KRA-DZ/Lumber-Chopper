@@ -1,4 +1,5 @@
 import { CENTER, DAY_SECONDS } from "./config.js";
+import { passageOpen } from "./locations.js";
 
 export const EXPLORATION = Object.freeze({
   range: 125,
@@ -71,6 +72,7 @@ export function createExploration({
     ...world.landmarks
       .filter((p) => p.type === "chest")
       .map((p) => ({ ...p, kind: "chest" })),
+    ...(world.locations || []).flatMap((l) => l.sites),
   ];
   const byId = new Map(sites.map((p) => [p.id, p]));
   let context = null,
@@ -198,11 +200,20 @@ export function createExploration({
         `Внутри: ${loot.coins} монет и реликвия. Каждый сундук открывается один раз.`,
         data.openedChests.includes(id)
           ? "Уже открыт"
-          : bag.key < 1
-            ? "Ключ продаёт торговец на юге"
-            : bag.relic >= ITEMS.relic.limit
-              ? "Сначала освободите место для реликвии"
-              : "",
+          : s.requiredClue && !state.readClues.includes(s.requiredClue)
+            ? "Знак печати неизвестен. Ищите складскую ведомость в западном крыле"
+            : bag.key < 1
+              ? "Ключ продаёт торговец на юге"
+              : bag.relic >= ITEMS.relic.limit
+                ? "Сначала освободите место для реликвии"
+                : "",
+      );
+    } else if (s.kind === "passage") {
+      add(
+        "open-passage",
+        "Поднять боковую решётку",
+        s.description,
+        passageOpen(state, s.passage) ? "Короткий путь уже открыт" : "",
       );
     } else if (s.kind === "pond") {
       add(
@@ -282,6 +293,9 @@ export function createExploration({
       state.coins += loot.coins;
       data.openedChests.push(id);
       event.loot = loot;
+    } else if (action === "open-passage") {
+      data.openedPassages.push(s.passage);
+      nav.rebuildObstacles();
     } else if (action === "offer-logs") {
       for (let i = 0; i < EXPLORATION.offeringLogs; i++) forestry.takeCargo();
       data.offeringDay = state.calendarDay;
