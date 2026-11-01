@@ -12,6 +12,8 @@
 
 Подключены [брёвна и топоры №3](docs/ITEM-ART.md): PNG ресурсов, инструментов в покое и иконок лавки. [Стопка из 82 брёвен](docs/items-stack.png) · [на телефоне](docs/items-stack-mobile.png) · [лавка](docs/items-shop.png).
 
+На согласовании — [мелкий декор: четыре варианта](docs/decor-style-collage.png). [Состав набора](docs/DECOR-ART.md).
+
 Доработаны ходьба и переноска героя, направленный замах, прочность текущего дерева и подсказки подбора. [Превью рубки](docs/chopping-hero.png) · [замеры нагрузки](docs/PERFORMANCE.md).
 
 Новые снимки: [лагерь](docs/forest-day.png), [ночь](docs/forest-night.png), [дождь](docs/forest-rain.png), [телефон](docs/forest-mobile.png).
