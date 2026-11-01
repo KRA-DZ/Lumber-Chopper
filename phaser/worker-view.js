@@ -8,8 +8,10 @@ export class WorkerView {
     this.objects = new Map();
     this.depot = scene
       .addImage("workers.depot", WORKERS.depot.x, WORKERS.depot.y)
-      .setInteractive({ pixelPerfect: true })
       .setData("workers", true);
+    // The generated empty rack has holes; its whole small frame stays clickable.
+    if (scene.assets.camp) this.depot.setInteractive();
+    else this.depot.setInteractive({ pixelPerfect: true });
     this.label = scene.text("", WORKERS.depot.x, WORKERS.depot.y + 26, 11);
     this.stock = Array.from({ length: 6 }, () =>
       scene.addImage("log", 0, 0).setScale(0.65),

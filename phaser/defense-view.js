@@ -19,8 +19,19 @@ export class DefenseView {
       }
       this.objects = [];
       for (const d of c.defenses?.all() || []) {
-        const g = s.add.graphics().setDepth(d.y + 2);
-        if (d.kind === "barricade") {
+        const generated = s.assets.camp && d.kind !== "fence";
+        const g = generated
+          ? s.addImage(
+              `camp.defense.${d.kind}.${d.hp > 0 ? "ready" : "broken"}`,
+              d.x,
+              d.y,
+              d.y + 2,
+            )
+          : s.add.graphics().setDepth(d.y + 2);
+        if (generated) {
+          if (!d.hp && !Object.hasOwn(c.state.defenseHP, d.id))
+            g.setAlpha(0.35 + 0.15 * d.wood);
+        } else if (d.kind === "barricade") {
           if (d.hp > 0) {
             for (const x of [-26, 0, 26])
               g.fillStyle(0x483626)
@@ -47,7 +58,7 @@ export class DefenseView {
           for (let i = -12; i <= 12; i += 8)
             g.lineBetween(d.x + i, d.y - 10, d.x + i + 4, d.y + 10);
           if (d.hp) g.fillStyle(0xe5cd9a).fillRect(d.x - 4, d.y - 4, 8, 8);
-        } else if (d.hp < d.maxHP) {
+        } else if (!s.assets.camp && d.hp < d.maxHP) {
           g.lineStyle(3, d.hp ? 0xe2a368 : 0xa47a55, 0.8).lineBetween(
             d.a.x,
             d.a.y - 6,

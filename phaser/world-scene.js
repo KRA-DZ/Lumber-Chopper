@@ -22,6 +22,7 @@ import { CENTER, WORLD, DAY_SECONDS } from "../game/config.js";
 import { CAMP } from "../pixel-art.js";
 import { createWorldDressing } from "../world.js";
 import { bakeConstruction } from "./construction-view.js";
+import { campDamageState } from "./camp-assets.js";
 import { Atmosphere } from "./atmosphere.js";
 import { createForestAudio } from "./forest-audio.js";
 import { growthStage } from "../forestry.js";
@@ -305,7 +306,8 @@ export class WorldScene extends Phaser.Scene {
         pad.y,
         -1000,
       );
-      this.text(label, pad.x, pad.y, 13, "#415235", -999);
+      if (!this.assets.camp)
+        this.text(label, pad.x, pad.y, 13, "#415235", -999);
     }
     this.saleLabel = this.text(
       "",
@@ -894,8 +896,20 @@ export class WorldScene extends Phaser.Scene {
     this.buyerView.render();
   }
   syncCamp() {
-    const s = this.core.state,
-      key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}`;
+    const s = this.core.state;
+    if (this.assets.camp && this.lastHousingHealth !== s.campHealth) {
+      this.lastHousingHealth = s.campHealth;
+      const damaged = s.campHealth < s.maxCampHealth;
+      this.assets.setFrame(
+        this.tent,
+        damaged ? "campStates.tent.damaged" : "tent",
+      );
+      this.assets.setFrame(
+        this.hut,
+        damaged ? "campStates.hut.damaged" : "house",
+      );
+    }
+    const key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}`;
     if (key === this.lastCampKey) return;
     this.lastCampKey = key;
     this.fire.setVisible(s.campLevel > 0);
@@ -914,22 +928,56 @@ export class WorldScene extends Phaser.Scene {
     }
     for (const f of this.fences) f.destroy();
     this.fences = [];
-    for (const [a, b] of this.core.nav.campFenceSegments()) {
-      const g = this.add.graphics().setDepth((a.y + b.y) / 2);
-      for (const rise of [23, 11])
-        g.lineStyle(6, 0x5c432b)
-          .lineBetween(snap(a.x), snap(a.y - rise), snap(b.x), snap(b.y - rise))
-          .lineStyle(2, 0xcba064)
-          .lineBetween(
-            snap(a.x),
-            snap(a.y - rise),
-            snap(b.x),
-            snap(b.y - rise),
-          );
-      this.fences.push(g);
+    if (this.assets.camp) {
+      const sections = this.core.defenses
+        .all()
+        .filter((d) => d.kind === "fence");
+      for (const d of sections)
+        this.fences.push(
+          this.addImage(
+            `camp.rail.${d.a.id}.${campDamageState(d.hp, d.maxHP)}`,
+            d.a.x,
+            d.a.y,
+            d.y,
+          ),
+        );
+      for (const p of this.core.nav.campFencePosts()) {
+        const adjacent = sections.filter(
+          (d) => d.a.id === p.id || d.b.id === p.id,
+        );
+        const broken = adjacent.length > 0 && adjacent.every((d) => d.hp <= 0);
+        this.fences.push(
+          this.addImage(
+            broken ? "camp.post.broken" : "fence",
+            p.x,
+            p.y,
+            p.y + 1,
+          ),
+        );
+      }
+    } else {
+      for (const [a, b] of this.core.nav.campFenceSegments()) {
+        const g = this.add.graphics().setDepth((a.y + b.y) / 2);
+        for (const rise of [23, 11])
+          g.lineStyle(6, 0x5c432b)
+            .lineBetween(
+              snap(a.x),
+              snap(a.y - rise),
+              snap(b.x),
+              snap(b.y - rise),
+            )
+            .lineStyle(2, 0xcba064)
+            .lineBetween(
+              snap(a.x),
+              snap(a.y - rise),
+              snap(b.x),
+              snap(b.y - rise),
+            );
+        this.fences.push(g);
+      }
+      for (const p of this.core.nav.campFencePosts())
+        this.fences.push(this.addImage("fence", p.x, p.y, p.y + 1));
     }
-    for (const p of this.core.nav.campFencePosts())
-      this.fences.push(this.addImage("fence", p.x, p.y, p.y + 1));
     for (const { image, p } of this.campDecor)
       image.setVisible(s.campLevel >= p.min && s.campLevel <= (p.max ?? 4));
   }

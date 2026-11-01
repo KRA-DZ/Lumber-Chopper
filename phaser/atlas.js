@@ -1,5 +1,6 @@
 import { applyPeopleFrames } from "./people-assets.js";
 import { applyTreeArt } from "./tree-assets.js";
+import { applyCampArt, applyCampFrames } from "./camp-assets.js";
 import { biomeEnemyFrames } from "./biome-assets.js";
 import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
@@ -17,7 +18,10 @@ import { createWorldArt } from "../world-art.js";
 // Каждый кадр атласа доступен как обычный Phaser Image/Sprite.
 export function createAtlas(scene) {
   if (scene.textures.exists("forest")) scene.textures.remove("forest");
-  const art = applyTreeArt(scene, applyImportedArt(scene, createForestArt())),
+  const art = applyCampArt(
+      scene,
+      applyTreeArt(scene, applyImportedArt(scene, createForestArt())),
+    ),
     worldArt = createWorldArt(),
     sources = new Map(),
     meta = new Map();
@@ -122,6 +126,7 @@ export function createAtlas(scene) {
   for (const [key, frame] of Object.entries(biomeEnemyFrames(scene)))
     sources.set(key, frame);
   const people = applyPeopleFrames(scene, sources);
+  const camp = applyCampFrames(art, sources);
   let x = 2,
     y = 2,
     row = 0;
@@ -229,5 +234,5 @@ export function createAtlas(scene) {
         })),
         duration: STRIKE_MS,
       });
-  return { art, worldArt, meta, image, setFrame, people };
+  return { art, worldArt, meta, image, setFrame, people, camp };
 }

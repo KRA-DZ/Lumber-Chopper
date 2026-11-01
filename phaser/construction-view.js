@@ -25,6 +25,11 @@ export function bakeConstruction(ctx, art, state) {
         h,
       );
   };
+  if (art.generatedCamp && (stage === 1 || stage === 3)) {
+    const kind = stage === 1 ? "tent" : "hut";
+    draw(art.sprites.campStates[kind][ratio < 0.5 ? "early" : "late"]);
+    return site;
+  }
   if (stage === 0) {
     const s = art.sprites.unlitFire;
     ctx.save();

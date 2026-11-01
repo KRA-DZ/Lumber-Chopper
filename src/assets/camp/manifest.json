@@ -1,0 +1,515 @@
+{
+  "version": 1,
+  "approvedVariant": 4,
+  "atlas": "camp.png",
+  "size": [
+    1024,
+    512
+  ],
+  "sources": [
+    {
+      "file": "camp-tent-states-sheet.png",
+      "sha256": "39c9d89a10e1357017451f7feb22664257a7170e8d96e7cf1fd59305af466fdc",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 2,
+      "rows": 2,
+      "boxes": {
+        "tent.early": [
+          133,
+          108,
+          686,
+          527
+        ],
+        "tent.late": [
+          762,
+          96,
+          1375,
+          523
+        ],
+        "tent.ready": [
+          134,
+          568,
+          736,
+          999
+        ],
+        "tent.damaged": [
+          788,
+          571,
+          1369,
+          999
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "camp-hut-states-sheet.png",
+      "sha256": "713ce3f0bdf89ffd7eef21ec85e4dca56be25e3527b2a18b5be77eea44c53239",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 2,
+      "rows": 2,
+      "boxes": {
+        "hut.early": [
+          176,
+          141,
+          730,
+          479
+        ],
+        "hut.late": [
+          837,
+          54,
+          1398,
+          494
+        ],
+        "hut.ready": [
+          180,
+          511,
+          741,
+          977
+        ],
+        "hut.damaged": [
+          842,
+          511,
+          1414,
+          982
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "camp-fire-states-sheet.png",
+      "sha256": "2edb45a154261b9065981a3eddb066563fd2fb729450ffff7b918a944793fae9",
+      "size": [
+        1448,
+        1086
+      ],
+      "columns": 2,
+      "rows": 2,
+      "boxes": {
+        "fire.cold": [
+          233,
+          227,
+          657,
+          520
+        ],
+        "fire.0": [
+          791,
+          183,
+          1234,
+          526
+        ],
+        "fire.1": [
+          233,
+          588,
+          667,
+          992
+        ],
+        "fire.2": [
+          792,
+          637,
+          1239,
+          1002
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "camp-economy-assets-sheet.png",
+      "sha256": "21f45d06a93744258d7fc82909ee72c5e0f6ef3a681200732664908980e7ef0a",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 3,
+      "rows": 2,
+      "boxes": {
+        "stall": [
+          26,
+          139,
+          579,
+          611
+        ],
+        "depot": [
+          576,
+          189,
+          1073,
+          640
+        ],
+        "cart": [
+          1064,
+          321,
+          1506,
+          630
+        ],
+        "salePad": [
+          88,
+          716,
+          503,
+          973
+        ],
+        "buildPad": [
+          598,
+          719,
+          1002,
+          977
+        ],
+        "sign": [
+          1164,
+          705,
+          1462,
+          967
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "camp-fence-assets-sheet.png",
+      "sha256": "78d0e0a8d829be995992e2cc45ef3fff02637100096fb3025b737b93ac3b2d34",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 3,
+      "rows": 3,
+      "boxes": {
+        "rail.ready": [
+          99,
+          141,
+          486,
+          298
+        ],
+        "rail.damaged": [
+          585,
+          141,
+          968,
+          292
+        ],
+        "rail.broken": [
+          1083,
+          184,
+          1426,
+          321
+        ],
+        "post.ready": [
+          245,
+          404,
+          349,
+          641
+        ],
+        "barricade.ready": [
+          608,
+          387,
+          966,
+          645
+        ],
+        "trap.ready": [
+          1127,
+          455,
+          1423,
+          628
+        ],
+        "post.broken": [
+          233,
+          752,
+          353,
+          951
+        ],
+        "barricade.broken": [
+          577,
+          734,
+          982,
+          957
+        ],
+        "trap.broken": [
+          1123,
+          785,
+          1415,
+          942
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "frames": {
+    "hut.early": {
+      "x": 2,
+      "y": 2,
+      "width": 136,
+      "height": 148,
+      "anchor": [
+        68,
+        140
+      ]
+    },
+    "hut.late": {
+      "x": 140,
+      "y": 2,
+      "width": 136,
+      "height": 148,
+      "anchor": [
+        68,
+        140
+      ]
+    },
+    "hut.ready": {
+      "x": 278,
+      "y": 2,
+      "width": 136,
+      "height": 148,
+      "anchor": [
+        68,
+        140
+      ]
+    },
+    "hut.damaged": {
+      "x": 416,
+      "y": 2,
+      "width": 136,
+      "height": 148,
+      "anchor": [
+        68,
+        140
+      ]
+    },
+    "tent.early": {
+      "x": 554,
+      "y": 2,
+      "width": 128,
+      "height": 120,
+      "anchor": [
+        64,
+        112
+      ]
+    },
+    "tent.late": {
+      "x": 684,
+      "y": 2,
+      "width": 128,
+      "height": 120,
+      "anchor": [
+        64,
+        112
+      ]
+    },
+    "tent.ready": {
+      "x": 814,
+      "y": 2,
+      "width": 128,
+      "height": 120,
+      "anchor": [
+        64,
+        112
+      ]
+    },
+    "tent.damaged": {
+      "x": 2,
+      "y": 152,
+      "width": 128,
+      "height": 120,
+      "anchor": [
+        64,
+        112
+      ]
+    },
+    "stall": {
+      "x": 132,
+      "y": 152,
+      "width": 128,
+      "height": 116,
+      "anchor": [
+        64,
+        108
+      ]
+    },
+    "fire.cold": {
+      "x": 262,
+      "y": 152,
+      "width": 64,
+      "height": 80,
+      "anchor": [
+        32,
+        74
+      ]
+    },
+    "fire.0": {
+      "x": 328,
+      "y": 152,
+      "width": 64,
+      "height": 80,
+      "anchor": [
+        32,
+        74
+      ]
+    },
+    "fire.1": {
+      "x": 394,
+      "y": 152,
+      "width": 64,
+      "height": 80,
+      "anchor": [
+        32,
+        74
+      ]
+    },
+    "fire.2": {
+      "x": 460,
+      "y": 152,
+      "width": 64,
+      "height": 80,
+      "anchor": [
+        32,
+        74
+      ]
+    },
+    "depot": {
+      "x": 526,
+      "y": 152,
+      "width": 72,
+      "height": 68,
+      "anchor": [
+        36,
+        62
+      ]
+    },
+    "cart": {
+      "x": 600,
+      "y": 152,
+      "width": 80,
+      "height": 64,
+      "anchor": [
+        40,
+        58
+      ]
+    },
+    "sign": {
+      "x": 682,
+      "y": 152,
+      "width": 66,
+      "height": 48,
+      "anchor": [
+        33,
+        44
+      ]
+    },
+    "salePad": {
+      "x": 750,
+      "y": 152,
+      "width": 72,
+      "height": 46,
+      "anchor": [
+        36,
+        23
+      ]
+    },
+    "buildPad": {
+      "x": 824,
+      "y": 152,
+      "width": 72,
+      "height": 46,
+      "anchor": [
+        36,
+        23
+      ]
+    },
+    "barricade.ready": {
+      "x": 898,
+      "y": 152,
+      "width": 56,
+      "height": 44,
+      "anchor": [
+        28,
+        40
+      ]
+    },
+    "barricade.broken": {
+      "x": 956,
+      "y": 152,
+      "width": 56,
+      "height": 44,
+      "anchor": [
+        28,
+        40
+      ]
+    },
+    "rail.ready": {
+      "x": 2,
+      "y": 274,
+      "width": 64,
+      "height": 32,
+      "anchor": [
+        32,
+        30
+      ]
+    },
+    "rail.damaged": {
+      "x": 68,
+      "y": 274,
+      "width": 64,
+      "height": 32,
+      "anchor": [
+        32,
+        30
+      ]
+    },
+    "rail.broken": {
+      "x": 134,
+      "y": 274,
+      "width": 64,
+      "height": 32,
+      "anchor": [
+        32,
+        30
+      ]
+    },
+    "post.ready": {
+      "x": 200,
+      "y": 274,
+      "width": 20,
+      "height": 32,
+      "anchor": [
+        10,
+        30
+      ]
+    },
+    "post.broken": {
+      "x": 222,
+      "y": 274,
+      "width": 20,
+      "height": 32,
+      "anchor": [
+        10,
+        30
+      ]
+    },
+    "trap.ready": {
+      "x": 244,
+      "y": 274,
+      "width": 36,
+      "height": 28,
+      "anchor": [
+        18,
+        24
+      ]
+    },
+    "trap.broken": {
+      "x": 282,
+      "y": 274,
+      "width": 36,
+      "height": 28,
+      "anchor": [
+        18,
+        24
+      ]
+    }
+  },
+  "processing": {
+    "backgroundRemoval": false,
+    "alphaThreshold": 128,
+    "filter": "nearest"
+  }
+}
