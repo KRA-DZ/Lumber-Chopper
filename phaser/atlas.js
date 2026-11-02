@@ -3,6 +3,7 @@ import { applyTreeArt } from "./tree-assets.js";
 import { applyCampArt, applyCampFrames } from "./camp-assets.js";
 import { applyItemArt } from "./item-assets.js";
 import { applyDecorArt, applyDecorFrames } from "./decor-assets.js";
+import { applyFortressFrames } from "./fortress-assets.js";
 import { biomeEnemyFrames } from "./biome-assets.js";
 import { createWorkerArt } from "./art/worker-art.js";
 import { createStoryArt } from "./art/story-art.js";
@@ -132,6 +133,7 @@ export function createAtlas(scene) {
   const people = applyPeopleFrames(scene, sources);
   const camp = applyCampFrames(art, sources);
   applyDecorFrames(decor, sources);
+  const fortress = applyFortressFrames(scene, sources);
   let x = 2,
     y = 2,
     row = 0;
@@ -239,5 +241,16 @@ export function createAtlas(scene) {
         })),
         duration: STRIKE_MS,
       });
-  return { art, worldArt, meta, image, setFrame, people, camp, items, decor };
+  return {
+    art,
+    worldArt,
+    meta,
+    image,
+    setFrame,
+    people,
+    camp,
+    items,
+    decor,
+    fortress,
+  };
 }

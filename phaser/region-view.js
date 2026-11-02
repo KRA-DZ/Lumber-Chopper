@@ -40,9 +40,12 @@ export class RegionView {
         ).setScale(1.8);
     for (const p of w.landmarks.filter((p) => p.regionId === region.id)) {
       if (p.type === "chest") {
-        image("camp.chest", p.x, p.y)
-          .setInteractive({ pixelPerfect: true })
+        const generated =
+          this.scene.assets.fortress?.manifest.regionId === region.id;
+        image(generated ? "fortress.chest.closed" : "camp.chest", p.x, p.y)
+          .setInteractive()
           .setData("site", p.id)
+          .setData("fortressChest", generated)
           .setData("chest", p.id);
         result.push(
           this.scene
@@ -201,11 +204,13 @@ export class RegionView {
         const chest = image.getData("chest"),
           label = image.getData("chestLabel");
         if (chest) {
-          const key = this.scene.core.state.exploration.openedChests.includes(
-            chest,
-          )
-            ? "exploration.chestOpen"
-            : "camp.chest";
+          const opened =
+            this.scene.core.state.exploration.openedChests.includes(chest);
+          const key = image.getData("fortressChest")
+            ? `fortress.chest.${opened ? "open" : "closed"}`
+            : opened
+              ? "exploration.chestOpen"
+              : "camp.chest";
           if (image.frame.name !== key) this.scene.assets.setFrame(image, key);
         }
         if (label)

@@ -1,0 +1,624 @@
+{
+  "version": 1,
+  "approvedVariant": 4,
+  "regionId": "0:-1",
+  "atlas": "fortress.png",
+  "size": [
+    512,
+    256
+  ],
+  "frames": {
+    "gate.closed": {
+      "x": 2,
+      "y": 2,
+      "width": 48,
+      "height": 112,
+      "anchor": [
+        24,
+        76
+      ]
+    },
+    "gate.open": {
+      "x": 52,
+      "y": 2,
+      "width": 48,
+      "height": 112,
+      "anchor": [
+        24,
+        76
+      ]
+    },
+    "wall.v.0": {
+      "x": 102,
+      "y": 2,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.1": {
+      "x": 136,
+      "y": 2,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.2": {
+      "x": 170,
+      "y": 2,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.3": {
+      "x": 204,
+      "y": 2,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "secret.closed": {
+      "x": 238,
+      "y": 2,
+      "width": 112,
+      "height": 60,
+      "anchor": [
+        40,
+        48
+      ]
+    },
+    "secret.open": {
+      "x": 352,
+      "y": 2,
+      "width": 112,
+      "height": 60,
+      "anchor": [
+        40,
+        48
+      ]
+    },
+    "corner.nw": {
+      "x": 466,
+      "y": 2,
+      "width": 40,
+      "height": 56,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "corner.ne": {
+      "x": 2,
+      "y": 116,
+      "width": 40,
+      "height": 56,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "corner.sw": {
+      "x": 44,
+      "y": 116,
+      "width": 40,
+      "height": 56,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "corner.se": {
+      "x": 86,
+      "y": 116,
+      "width": 40,
+      "height": 56,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "barricade": {
+      "x": 128,
+      "y": 116,
+      "width": 64,
+      "height": 52,
+      "anchor": [
+        32,
+        44
+      ]
+    },
+    "wall.h.0": {
+      "x": 194,
+      "y": 116,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.1": {
+      "x": 236,
+      "y": 116,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.2": {
+      "x": 278,
+      "y": 116,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.3": {
+      "x": 320,
+      "y": 116,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "end.n": {
+      "x": 362,
+      "y": 116,
+      "width": 32,
+      "height": 48,
+      "anchor": [
+        16,
+        40
+      ]
+    },
+    "end.e": {
+      "x": 396,
+      "y": 116,
+      "width": 32,
+      "height": 48,
+      "anchor": [
+        16,
+        40
+      ]
+    },
+    "end.s": {
+      "x": 430,
+      "y": 116,
+      "width": 32,
+      "height": 48,
+      "anchor": [
+        16,
+        40
+      ]
+    },
+    "end.w": {
+      "x": 464,
+      "y": 116,
+      "width": 32,
+      "height": 48,
+      "anchor": [
+        16,
+        40
+      ]
+    },
+    "winch": {
+      "x": 2,
+      "y": 174,
+      "width": 32,
+      "height": 48,
+      "anchor": [
+        16,
+        40
+      ]
+    },
+    "supplies": {
+      "x": 36,
+      "y": 174,
+      "width": 52,
+      "height": 48,
+      "anchor": [
+        26,
+        40
+      ]
+    },
+    "coldFire": {
+      "x": 90,
+      "y": 174,
+      "width": 64,
+      "height": 44,
+      "anchor": [
+        32,
+        34
+      ]
+    },
+    "chest.closed": {
+      "x": 156,
+      "y": 174,
+      "width": 46,
+      "height": 42,
+      "anchor": [
+        23,
+        34
+      ]
+    },
+    "chest.open": {
+      "x": 204,
+      "y": 174,
+      "width": 46,
+      "height": 42,
+      "anchor": [
+        23,
+        34
+      ]
+    },
+    "tracks": {
+      "x": 252,
+      "y": 174,
+      "width": 32,
+      "height": 40,
+      "anchor": [
+        16,
+        32
+      ]
+    },
+    "keepsake": {
+      "x": 286,
+      "y": 174,
+      "width": 36,
+      "height": 34,
+      "anchor": [
+        18,
+        28
+      ]
+    },
+    "token": {
+      "x": 324,
+      "y": 174,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        28
+      ]
+    },
+    "note": {
+      "x": 358,
+      "y": 174,
+      "width": 28,
+      "height": 32,
+      "anchor": [
+        14,
+        24
+      ]
+    },
+    "diary": {
+      "x": 388,
+      "y": 174,
+      "width": 36,
+      "height": 30,
+      "anchor": [
+        18,
+        22
+      ]
+    },
+    "latch": {
+      "x": 426,
+      "y": 174,
+      "width": 48,
+      "height": 24,
+      "anchor": [
+        24,
+        18
+      ]
+    }
+  },
+  "floors": {
+    "courtyard": {
+      "x": 0,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "room": {
+      "x": 64,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "archive": {
+      "x": 128,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    }
+  },
+  "sources": [
+    {
+      "file": "fortress-walls-sheet.png",
+      "sha256": "23e168b0a28fd5b86359b02462921b6759581e3e90cf7c59a822e68abb57a697",
+      "size": [
+        1262,
+        1246
+      ],
+      "columns": 4,
+      "rows": 4,
+      "boxes": {
+        "wall.h.0": [
+          64,
+          98,
+          298,
+          218
+        ],
+        "wall.h.1": [
+          362,
+          100,
+          598,
+          218
+        ],
+        "wall.h.2": [
+          661,
+          100,
+          896,
+          218
+        ],
+        "wall.h.3": [
+          962,
+          100,
+          1200,
+          219
+        ],
+        "wall.v.0": [
+          136,
+          321,
+          219,
+          567
+        ],
+        "wall.v.1": [
+          431,
+          322,
+          514,
+          564
+        ],
+        "wall.v.2": [
+          737,
+          321,
+          821,
+          563
+        ],
+        "wall.v.3": [
+          1034,
+          319,
+          1121,
+          564
+        ],
+        "corner.nw": [
+          65,
+          642,
+          280,
+          874
+        ],
+        "corner.ne": [
+          382,
+          640,
+          589,
+          875
+        ],
+        "corner.ne.alt": [
+          664,
+          639,
+          893,
+          874
+        ],
+        "corner.sw": [
+          990,
+          640,
+          1202,
+          874
+        ],
+        "end.n": [
+          105,
+          982,
+          245,
+          1144
+        ],
+        "end.e": [
+          436,
+          966,
+          522,
+          1147
+        ],
+        "end.s": [
+          707,
+          990,
+          846,
+          1143
+        ],
+        "end.w": [
+          1018,
+          967,
+          1107,
+          1147
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "fortress-passages-sheet.png",
+      "sha256": "4ee8daa86326b1712e389b60470774a1390e69807acbb4563b627a68e9f5e701",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "gate.closed": [
+          117,
+          51,
+          328,
+          426
+        ],
+        "gate.open": [
+          560,
+          51,
+          772,
+          426
+        ],
+        "secret.closed": [
+          930,
+          154,
+          1283,
+          335
+        ],
+        "secret.open": [
+          1374,
+          154,
+          1727,
+          335
+        ],
+        "winch": [
+          114,
+          544,
+          369,
+          796
+        ],
+        "latch": [
+          485,
+          616,
+          838,
+          715
+        ],
+        "chest.closed": [
+          991,
+          559,
+          1222,
+          770
+        ],
+        "chest.open": [
+          1439,
+          524,
+          1666,
+          785
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "fortress-findings-sheet.png",
+      "sha256": "b8ccaf91aeae980fb4268e89af9393a5855df991bbe6dd431ee8bf284259771b",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "keepsake": [
+          112,
+          147,
+          346,
+          350
+        ],
+        "token": [
+          561,
+          138,
+          772,
+          358
+        ],
+        "note": [
+          974,
+          104,
+          1205,
+          366
+        ],
+        "diary": [
+          1377,
+          144,
+          1708,
+          351
+        ],
+        "tracks": [
+          125,
+          544,
+          332,
+          793
+        ],
+        "barricade": [
+          496,
+          536,
+          835,
+          786
+        ],
+        "coldFire": [
+          937,
+          558,
+          1265,
+          786
+        ],
+        "supplies": [
+          1373,
+          544,
+          1726,
+          793
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "fortress-floors-sheet.png",
+      "sha256": "8a1d1bf4f2223aad8c17ba60fcdab7de7549420ab543fd7ff42d2393befa747b",
+      "size": [
+        2172,
+        724
+      ],
+      "columns": 3,
+      "rows": 1,
+      "boxes": {
+        "courtyard": [
+          45,
+          42,
+          662,
+          662
+        ],
+        "room": [
+          778,
+          42,
+          1395,
+          662
+        ],
+        "archive": [
+          1510,
+          42,
+          2127,
+          662
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "processing": {
+    "alphaThreshold": 128,
+    "backgroundRemoval": false,
+    "filter": "nearest",
+    "cornerSE": "horizontal mirror of corner.sw",
+    "floorEdgeBand": 4,
+    "openPassages": "clear walkable bases; secret panel parked outside doorway"
+  }
+}

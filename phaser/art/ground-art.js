@@ -13,6 +13,7 @@ export function createForestGround({
   merchant = CAMP.merchant,
   biomeAt = () => "forest",
   materials = null,
+  fortressFloor = null,
 }) {
   const cache = new Map();
   function bake(cx, cy) {
@@ -117,6 +118,8 @@ export function createForestGround({
                 wy,
               );
           }
+          const floor = fortressFloor?.(wx * 2, wy * 2, n);
+          if (floor) [r, gr, b] = floor;
           data[i] = r;
           data[i + 1] = gr;
           data[i + 2] = b;

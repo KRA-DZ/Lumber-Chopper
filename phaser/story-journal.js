@@ -80,6 +80,14 @@ export function renderStoryJournal(scene, list, route) {
         title = document.createElement("h4"),
         body = document.createElement("p");
       article.dataset.discovery = item.id;
+      if (item.id === "fortress-watch-token" && scene.assets.fortress) {
+        const image = document.createElement("img");
+        image.src = scene.assets.fortress.tokenIcon;
+        image.alt = item.name;
+        image.width = image.height = 64;
+        image.style.imageRendering = "pixelated";
+        article.append(image);
+      }
       title.textContent = item.name;
       body.textContent = item.text;
       article.append(title, body);

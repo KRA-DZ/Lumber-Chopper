@@ -5,6 +5,7 @@ import { createMystery, MYSTERY_CLUES, nightSight } from "../mystery.js";
 import { createWildlife } from "../game/wildlife.js";
 import { DAY_SECONDS, CENTER } from "../game/config.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
+import { fortressClueKey } from "./fortress-assets.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class Atmosphere {
@@ -79,12 +80,8 @@ export class Atmosphere {
     this.clues = this.clueData.map((c) => ({
       c,
       image: scene
-        .addImage(
-          `world.${c.id === "tracks" ? "strangeTracks" : c.id === "mark" ? "rune" : "note"}`,
-          c.x,
-          c.y,
-        )
-        .setInteractive({ pixelPerfect: true })
+        .addImage(fortressClueKey(this.assets, c), c.x, c.y)
+        .setInteractive()
         .setData("clue", c),
     }));
     this.prompt = scene

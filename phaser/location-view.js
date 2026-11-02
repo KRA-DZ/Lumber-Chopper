@@ -1,4 +1,5 @@
 import { passageOpen } from "../game/locations.js";
+import { fortressParts } from "./fortress-assets.js";
 
 // Playable layout preview with existing PNGs. Stream short wall pieces around
 // the camera; collision uses whole data segments, never these decorative images.
@@ -8,29 +9,52 @@ export class LocationView {
     this.objects = new Map();
     this.parts = [];
     for (const location of scene.core.world.locations || []) {
-      for (const wall of location.walls) {
-        const count = Math.ceil(
-          Math.hypot(wall.b.x - wall.a.x, wall.b.y - wall.a.y) / 48,
-        );
-        for (let i = 0; i <= count; i++)
-          this.parts.push({
-            id: `${location.id}/${wall.id}/${i}`,
-            regionId: location.regionId,
-            x: wall.a.x + ((wall.b.x - wall.a.x) * i) / count,
-            y: wall.a.y + ((wall.b.y - wall.a.y) * i) / count,
-            passage: wall.passage,
-            key: "biomeprop.ruins",
-            wall: true,
-          });
-      }
+      const generated =
+        scene.assets.fortress?.manifest.regionId === location.regionId;
+      if (generated) this.parts.push(...fortressParts(location));
+      else
+        for (const wall of location.walls) {
+          const count = Math.ceil(
+            Math.hypot(wall.b.x - wall.a.x, wall.b.y - wall.a.y) / 48,
+          );
+          for (let i = 0; i <= count; i++)
+            this.parts.push({
+              id: `${location.id}/${wall.id}/${i}`,
+              regionId: location.regionId,
+              x: wall.a.x + ((wall.b.x - wall.a.x) * i) / count,
+              y: wall.a.y + ((wall.b.y - wall.a.y) * i) / count,
+              passage: wall.passage,
+              key: "biomeprop.ruins",
+              wall: true,
+            });
+        }
+      const siteKeys = {
+        "fortress-winch": "winch",
+        "fortress-hidden-latch": "latch",
+        "fortress-watch-token": "keepsake",
+        "fortress-barricade": "barricade",
+        "fortress-last-fire": "coldFire",
+        "fortress-abandoned-supplies": "supplies",
+      };
       for (const site of location.sites)
         this.parts.push({
           ...site,
-          key: site.key || "world.rune",
+          key: generated
+            ? `fortress.${siteKeys[site.id]}`
+            : site.key || "world.rune",
           site: site.id,
         });
       for (const p of location.dressing || [])
-        this.parts.push({ ...p, id: `${location.id}/${p.id}` });
+        this.parts.push({
+          ...p,
+          id: `${location.id}/${p.id}`,
+          key:
+            generated && p.key === "world.strangeTracks"
+              ? "fortress.tracks"
+              : generated && p.id === "guard-crate"
+                ? "fortress.supplies"
+                : p.key,
+        });
       this.parts.push({
         id: `${location.id}/sign`,
         ...location.entrance,
@@ -49,14 +73,14 @@ export class LocationView {
         (p.requiredPassage && !passageOpen(s.core.state, p.requiredPassage)) ||
         (p.kind === "discovery" &&
           s.core.state.exploration.discoveries.includes(p.id)) ||
-        (p.passage && passageOpen(s.core.state, p.passage)) ||
-        !s.nearView(p, view, 100)
+        (p.passage && !p.drawOpened && passageOpen(s.core.state, p.passage)) ||
+        !s.nearView(p, view, 160)
       )
         continue;
       wanted.add(p.id);
       if (!this.objects.has(p.id)) {
         const image = s.addImage(p.key, p.x, p.y);
-        if (p.wall) image.setScale(1);
+        if (p.wall && !s.assets.fortress) image.setScale(1);
         if (p.site)
           // PNG frames have transparent foot padding; inspection must accept base taps too.
           image.setInteractive().setData("site", p.site);
@@ -66,11 +90,17 @@ export class LocationView {
       // Low broken walls fade locally when they cover the hero's upper body.
       const image = this.objects.get(p.id),
         player = s.core.player;
+      const key =
+        p.drawOpened && passageOpen(s.core.state, p.passage)
+          ? p.openKey
+          : p.key;
+      if (image.frame.name !== key) s.assets.setFrame(image, key);
+      const meta = s.assets.meta.get(key);
       image.setAlpha(
         p.wall &&
-          Math.abs(player.x - p.x) < 34 &&
-          player.y < p.y &&
-          player.y > p.y - 80
+          Math.abs(player.x - p.x) < (meta.width * image.scaleX) / 2 &&
+          player.y < p.y + (p.footSpan || 0) &&
+          player.y > p.y - meta.originY * meta.height * image.scaleY
           ? 0.4
           : 1,
       );

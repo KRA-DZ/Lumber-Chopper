@@ -1,4 +1,5 @@
 import { createForestGround } from "./art/ground-art.js";
+import { createFortressFloorSampler } from "./fortress-floor.js";
 export const TERRAIN_TEXTURE_LIMIT = 24; // 1.5 MiB RGBA at 128², bounded reuse across camera edges.
 export class TerrainLayer {
   constructor(scene, model) {
@@ -8,6 +9,10 @@ export class TerrainLayer {
       materials: scene.registry.get("biomePack")?.materials,
       center: { x: 1600, y: 1600 },
       clearings: model.landmarks,
+      fortressFloor: createFortressFloorSampler(
+        scene.registry.get("fortressPack"),
+        model.locations,
+      ),
     });
     this.images = new Map();
   }

@@ -75,6 +75,18 @@ try:
             )
             place(q, "({x:1600,y:-112})")
             assert q.evaluate(
+                """()=>{const pixel=(x,y)=>{const cx=Math.floor(x/256),cy=Math.floor(y/256);return [...w.terrain.source.getChunk(cx,cy).getContext('2d').getImageData((x-cx*256)/2,(y-cy*256)/2,1,1).data].join(',')};return pixel(1534,-700)===pixel(1536,-700)&&pixel(1552,-770)===pixel(1552,-768);} """
+            )
+            assert q.evaluate(
+                "w.assets.fortress.variant===4&&!w.textures.exists('fortress.source')&&!w.textures.exists('fortress.floors')"
+            )
+            assert q.evaluate(
+                """()=>{const pack=w.registry.get('fortressPack');for(const key of ['wall.h.0','wall.v.0','corner.ne','gate.closed','gate.open','chest.closed','diary']){const f=pack.manifest.frames[key],c=document.createElement('canvas');c.width=f.width;c.height=f.height;c.getContext('2d').drawImage(pack.image,f.x,f.y,f.width,f.height,0,0,f.width,f.height);const a=c.getContext('2d').getImageData(0,0,f.width,f.height).data,t=w.textures.getFrame('forest','fortress.'+key),b=w.textures.get('forest').getSourceImage().getContext('2d').getImageData(t.cutX,t.cutY,t.cutWidth,t.cutHeight).data;if(a.length!==b.length||!a.every((v,i)=>v===b[i]))return false;}return true;}"""
+            )
+            assert q.evaluate(
+                """()=>{const x=1600,y=-200,cx=Math.floor(x/256),cy=Math.floor(y/256),a=w.terrain.source.getChunk(cx,cy).getContext('2d').getImageData((x-cx*256)/2,(y-cy*256)/2,1,1).data,d=w.registry.get('fortressPack').floors.courtyard,ix=((x/2)%64+64)%64,iy=((y/2)%64+64)%64,i=(iy*64+ix)*4;return a[0]===d[i]&&a[1]===d[i+1]&&a[2]===d[i+2];}"""
+            )
+            assert q.evaluate(
                 "w.regionView.locations.objects.size>10&&w.regionView.locations.objects.size<180"
             )
             if not mobile:
@@ -89,6 +101,9 @@ try:
             q.keyboard.up("d")
             q.evaluate("g.step(0)")
             assert q.evaluate("m.player.x<1772")
+            assert q.evaluate(
+                "[...w.regionView.locations.objects.values()].some(im=>im.alpha<1)"
+            )
 
             # A native click/touch inspects the archive chest, with a clue requirement.
             place(q, "(()=>{const p=e.get('chest:0:-1:1');return{x:p.x,y:p.y+42}})()")
@@ -134,7 +149,7 @@ try:
             q.wait_for_function("!m.paused")
             q.evaluate("g.step(0)")
             assert q.evaluate(
-                "[...w.regionView.locations.objects.keys()].every(k=>!k.includes('/archive-shortcut/'))"
+                "w.regionView.locations.objects.get('forgotten-fortress/archive-shortcut/passage').frame.name==='fortress.gate.open'"
             )
             if not mobile:
                 q.locator("#game-frame").screenshot(
@@ -202,7 +217,7 @@ try:
             q.wait_for_function("!m.paused")
             q.evaluate("g.step(0)")
             assert q.evaluate(
-                "[...w.regionView.locations.objects.keys()].every(k=>!k.includes('/secret-door/'))&&w.regionView.locations.objects.has('fortress-watch-token')"
+                "w.regionView.locations.objects.get('forgotten-fortress/secret-door/passage').frame.name==='fortress.secret.open'&&w.regionView.locations.objects.has('fortress-watch-token')"
             )
 
             # Walk the actual open doorway before picking up the personal discovery.
@@ -233,6 +248,9 @@ try:
             q.locator("#journalButton").click()
             q.wait_for_function("document.querySelector('#journalDialog').open")
             entry = q.locator('[data-discovery="fortress-watch-token"]')
+            q.wait_for_function(
+                "(()=>{const im=document.querySelector('[data-discovery] img');return im?.complete&&im.naturalWidth===32})()"
+            )
             assert (
                 entry.count() == 1 and "Жетон последнего дозора" in entry.inner_text()
             )
@@ -254,6 +272,15 @@ try:
             assert q.evaluate(
                 "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.state.exploration.discoveries.length===0&&lumberPhaser.core.state.readClues.length===0&&lumberPhaser.core.state.coins===0"
             )
+            assert q.evaluate("lumberPhaser.scene.assets.fortress.variant===4")
+            if not mobile:
+                q.goto(
+                    f"http://127.0.0.1:{server.server_port}/phaser.html?art=procedural"
+                )
+                choose_hero(q)
+                assert q.evaluate(
+                    "!lumberPhaser.scene.assets.fortress&&!lumberPhaser.scene.registry.has('fortressPack')"
+                )
             assert not errors, errors
             print(
                 "PASS fortress",
