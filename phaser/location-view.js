@@ -24,7 +24,9 @@ export class LocationView {
               x: wall.a.x + ((wall.b.x - wall.a.x) * i) / count,
               y: wall.a.y + ((wall.b.y - wall.a.y) * i) / count,
               passage: wall.passage,
-              key: "biomeprop.ruins",
+              key: wall.key || "biomeprop.ruins",
+              timber: wall.key === "log",
+              angle: Math.atan2(wall.b.y - wall.a.y, wall.b.x - wall.a.x),
               wall: true,
             });
         }
@@ -39,15 +41,17 @@ export class LocationView {
       for (const site of location.sites)
         this.parts.push({
           ...site,
-          key: generated
-            ? `fortress.${siteKeys[site.id]}`
-            : site.key || "world.rune",
+          key:
+            generated && siteKeys[site.id]
+              ? `fortress.${siteKeys[site.id]}`
+              : site.key || "world.rune",
           site: site.id,
         });
       for (const p of location.dressing || [])
         this.parts.push({
           ...p,
           id: `${location.id}/${p.id}`,
+          regionId: location.regionId,
           key:
             generated && p.key === "world.strangeTracks"
               ? "fortress.tracks"
@@ -80,7 +84,9 @@ export class LocationView {
       wanted.add(p.id);
       if (!this.objects.has(p.id)) {
         const image = s.addImage(p.key, p.x, p.y);
-        if (p.wall && !s.assets.fortress) image.setScale(1);
+        if (p.timber)
+          image.setOrigin(0.5).setDisplaySize(64, 26).setRotation(p.angle);
+        if (p.wall && !p.timber && !s.assets.fortress) image.setScale(1);
         if (p.site)
           // PNG frames have transparent foot padding; inspection must accept base taps too.
           image.setInteractive().setData("site", p.site);

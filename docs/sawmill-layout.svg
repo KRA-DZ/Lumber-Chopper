@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1408" height="1312" viewBox="0 0 1408 1312">
+<title>Заброшенная лесопилка — план проходов</title>
+<desc>Склад на западе, двор в середине, машинный зал на востоке. Южные обходы открыты сразу. Два завала перекрывают короткие проходы.</desc>
+<rect width="1408" height="1312" fill="#192b25"/>
+<g font-family="sans-serif" fill="#ecd9af">
+<text x="64" y="48" font-size="28">Заброшенная лесопилка · прототип маршрутов</text>
+<text x="64" y="82" font-size="19">1280 × 1024 · юго-восточный регион · стартовый топор подходит для обоих завалов</text>
+<g transform="translate(-2816,-2888)">
+<rect x="2880" y="3008" width="1280" height="1024" fill="#403f30"/>
+<rect x="3360" y="3040" width="352" height="960" fill="#56503a"/>
+<text x="3536" y="3082" font-size="23" text-anchor="middle">Двор</text>
+<rect x="2912" y="3040" width="384" height="960" fill="#56503a"/>
+<text x="3104" y="3082" font-size="23" text-anchor="middle">Склад древесины</text>
+<rect x="3776" y="3040" width="352" height="960" fill="#56503a"/>
+<text x="3952" y="3082" font-size="23" text-anchor="middle">Машинный зал</text>
+<path d="M2880,3008L4160,3008" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M2880,3008L2880,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M4160,3008L4160,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M2880,4032L3408,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3632,4032L4160,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3328,3008L3328,3264" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3328,3424L3328,3744" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3328,3904L3328,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M2880,3584L3168,3584" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3744,3008L3744,3264" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3744,3424L3744,3776" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3744,3936L3744,4032" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3904,3488L4160,3488" stroke="#a48659" stroke-width="24" stroke-linecap="round"/>
+<path d="M3328,3264L3328,3424" stroke="#e7ad62" stroke-width="28" stroke-linecap="round" stroke-dasharray="14 10"/>
+<circle cx="3328" cy="3344" r="23" fill="#e7ad62"/>
+<text x="3328" y="3352" text-anchor="middle" fill="#192b25" font-size="24">1</text>
+<path d="M3744,3264L3744,3424" stroke="#e7ad62" stroke-width="28" stroke-linecap="round" stroke-dasharray="14 10"/>
+<circle cx="3744" cy="3344" r="23" fill="#e7ad62"/>
+<text x="3744" y="3352" text-anchor="middle" fill="#192b25" font-size="24">2</text>
+<path d="M3420,3344L3420,3824L3104,3824L3104,3344 M3660,3344L3660,3856L3824,3856L3824,3344" stroke="#97bba4" stroke-width="8" stroke-dasharray="12 10" fill="none"/>
+<text x="3520" y="4000" font-size="24" text-anchor="middle">↑ Вход</text>
+</g>
+<text x="64" y="1194" font-size="21">1. Упавшие балки: 6 HP → 3 бревна.     2. Тяжёлый завал: 24 HP → 6 брёвен.</text>
+<text x="64" y="1234" font-size="20">Зелёный пунктир: доступные обходы. Оранжевый: расчищаемые короткие пути.</text>
+<text x="64" y="1274" font-size="18">Награды одноразовые. Полный рюкзак не мешает расчистке — остаток древесины ждёт на земле.</text>
+</g></svg>

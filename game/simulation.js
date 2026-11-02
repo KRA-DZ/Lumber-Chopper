@@ -1,6 +1,7 @@
 import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
+import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
 import { createBuyers } from "./buyers.js";
@@ -63,6 +64,7 @@ export function createSimulation({
     transferTimer = 0,
     sunsetWarning = null,
     defenseOrder = null,
+    clearingOrder = null,
     selectedEnemyId = null,
     pursueEnemy = false,
     pursuitTimer = 0,
@@ -140,6 +142,17 @@ export function createSimulation({
       emit("pickup", { pile: { ...pile }, index });
     },
   });
+  const clearing = regional
+    ? createClearing({
+        state: gameState,
+        player,
+        world,
+        regions,
+        nav,
+        forestry,
+        canAct,
+      })
+    : null;
   const exploration = regional
     ? createExploration({
         state: gameState,
@@ -169,6 +182,7 @@ export function createSimulation({
   }
   function clearKeys() {
     keys.clear();
+    clearingOrder = null;
     player.path = [];
     player.targetX = player.x;
     player.targetY = player.y;
@@ -207,6 +221,7 @@ export function createSimulation({
     player[timer] =
       mode === "auto" ? gameState.autoInterval : gameState.clickInterval;
     if (mode === "active") {
+      clearingOrder = null;
       const approaching = exploration?.pending;
       exploration?.cancelAll();
       if (approaching) clearKeys();
@@ -230,6 +245,60 @@ export function createSimulation({
   }
   // Compatibility name is guarded by exactly the same command as pointer input.
   const hitTree = (tree) => tryChop(tree?.id, "active");
+  function orderClearing(id) {
+    const d = clearing?.get(id);
+    if (!canAct() || !clearing?.available(d)) return false;
+    const goal = clearing.near(d) ? null : clearing.approach(d);
+    if (!goal && !clearing.near(d)) return false;
+    const changed = clearingOrder !== id;
+    exploration?.cancelAll();
+    clearKeys();
+    defenseOrder = selectedEnemyId = null;
+    pursueEnemy = false;
+    clearingOrder = id;
+    if (goal) setDestination(goal.x, goal.y);
+    if (changed)
+      showNotice(
+        `${d.name}: рубим топором. Лишние брёвна останутся на земле.`,
+        5,
+      );
+    return true;
+  }
+  function tryClear(id, mode = "active") {
+    const timer = mode === "auto" ? "autoTimer" : "clickTimer";
+    if (
+      !["auto", "active"].includes(mode) ||
+      !canAct() ||
+      exploration?.fishing ||
+      player[timer] > 0
+    )
+      return false;
+    const result = clearing?.strike(id, gameState.axePower);
+    if (!result) return false;
+    if (mode === "active") {
+      exploration?.cancelAll();
+      clearKeys();
+      defenseOrder = selectedEnemyId = null;
+      pursueEnemy = false;
+      clearingOrder = id;
+    }
+    player[timer] =
+      mode === "auto" ? gameState.autoInterval : gameState.clickInterval;
+    player.swing = 0.32;
+    faceTarget(clearing.contact(result.debris));
+    survival?.hear(player);
+    emit("debris-hit", result);
+    if (result.cleared) {
+      clearingOrder = null;
+      showNotice(
+        `Проход расчищен: ${result.debris.name.toLowerCase()}. +${result.debris.logs} брёвен`,
+        5,
+      );
+      emit("debris-cleared", result);
+    }
+    revision++;
+    return true;
+  }
   function purchaseUpgrade(id) {
     if (gameState.gameOver || !buyUpgrade(gameState, id)) return false;
     player.speed = gameState.runSpeed;
@@ -311,6 +380,7 @@ export function createSimulation({
     )
       return false;
     exploration?.cancelAll();
+    clearingOrder = null;
     selectedEnemyId = id;
     defenseOrder = null;
     pursueEnemy = true;
@@ -319,6 +389,7 @@ export function createSimulation({
   }
   function navigateTo(x, y) {
     exploration?.cancelAll();
+    clearingOrder = null;
     defenseOrder = null;
     selectedEnemyId = null;
     pursueEnemy = false;
@@ -337,6 +408,7 @@ export function createSimulation({
     const section = defenses?.get(id);
     if (!canAct() || !section || section.hp >= section.maxHP) return false;
     exploration?.cancelAll();
+    clearingOrder = null;
     selectedEnemyId = null;
     pursueEnemy = false;
     defenseOrder = id;
@@ -368,6 +440,7 @@ export function createSimulation({
       showNotice("Смотритель неуязвим. Бегите к свету лагеря!", 4);
       return false;
     }
+    if (mode === "active") clearingOrder = null;
     player.swing = 0.32;
     faceTarget(enemy);
     survival?.hear(player);
@@ -560,6 +633,7 @@ export function createSimulation({
       oldY = player.y;
     if (keyboard) {
       exploration?.cancelAll();
+      clearingOrder = null;
       defenseOrder = null;
       pursueEnemy = false;
       player.path = [];
@@ -653,9 +727,13 @@ export function createSimulation({
       reachable.find((e) => e.id === selectedEnemyId) ||
       reachable.sort((a, b) => distance(player, a) - distance(player, b))[0];
     if (dt > 0 && enemy && player.autoTimer <= 0) tryAttack(enemy.id, "auto");
+    const clearingTarget = clearing?.get(clearingOrder);
+    if (dt > 0 && !enemy && clearing?.near(clearingTarget))
+      tryClear(clearingOrder, "auto");
     if (
       dt > 0 &&
       !enemy &&
+      !clearingOrder &&
       nearest &&
       player.autoTimer <= 0 &&
       gameState.wood < gameState.maxWood
@@ -778,6 +856,12 @@ export function createSimulation({
       return lore.read(clue);
     },
     tryChop,
+    tryClear,
+    orderClearing,
+    clearing,
+    get clearingOrder() {
+      return clearingOrder;
+    },
     tryAttack,
     purchaseUpgrade,
     transferOneLog,

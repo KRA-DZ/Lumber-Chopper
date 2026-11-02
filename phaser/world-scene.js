@@ -406,6 +406,14 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
       if (!this.core.paused && event.code === "KeyE") {
+        const debris = this.core.clearing?.all.find((d) =>
+          this.core.clearing.near(d),
+        );
+        if (debris) {
+          event.preventDefault();
+          if (this.core.orderClearing(debris.id)) this.core.tryClear(debris.id);
+          return;
+        }
         const clue = this.atmosphere.nearestClue();
         if (clue) {
           if (this.core.exploration.get(clue.id))
@@ -462,6 +470,7 @@ export class WorldScene extends Phaser.Scene {
         over.find((o) => o.getData("enemy")) ||
         over.find((o) => o.getData("shop")) ||
         over.find((o) => o.getData("workers")) ||
+        over.find((o) => o.getData("debris")) ||
         over.find((o) => o.getData("site")) ||
         over.find((o) => o.getData("defense")) ||
         over.find((o) => o.getData("clue")) ||
@@ -480,6 +489,11 @@ export class WorldScene extends Phaser.Scene {
       }
       if (object?.getData("site")) {
         this.core.exploration.request(object.getData("site"));
+        return;
+      }
+      if (object?.getData("debris")) {
+        const id = object.getData("debris");
+        if (this.core.orderClearing(id)) this.core.tryClear(id);
         return;
       }
       if (object?.getData("defense")) {
@@ -1188,6 +1202,17 @@ export class WorldScene extends Phaser.Scene {
     if (type === "region-open") {
       this.regionView?.opened(e.region);
       this.expansionBanner = { name: e.region.name };
+      return;
+    }
+    if (type === "debris-hit") {
+      this.audio?.hit();
+      this.heroView?.hit();
+      this.chips?.explode(
+        this.effectsLight ? 3 : 8,
+        e.debris.x,
+        e.debris.y - 12,
+      );
+      this.float(`−${e.damage}`, e.debris.x, e.debris.y - 55, "#f5e3b8");
       return;
     }
     if (type === "hit") {

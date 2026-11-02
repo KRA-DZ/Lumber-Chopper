@@ -10,6 +10,7 @@ export function createForestGround({
   trails,
   ancientTree,
   clearings = [],
+  locations = [],
   merchant = CAMP.merchant,
   biomeAt = () => "forest",
   materials = null,
@@ -34,6 +35,12 @@ export function createForestGround({
     oval(ancientTree.x, ancientTree.y, 190, 150);
     for (const site of clearings)
       oval(site.x, site.y, site.clearing * 0.7, site.clearing * 0.5);
+    // Reuse the generated dirt material for the sawmill yard, baked only per chunk.
+    for (const location of locations)
+      if (location.clearGround) {
+        const b = location.bounds;
+        g.fillRect(b.x + 16, b.y + 16, b.width - 32, b.height - 32);
+      }
     g.strokeStyle = "#ff0000";
     g.lineCap = g.lineJoin = "round";
     g.lineWidth = 64;

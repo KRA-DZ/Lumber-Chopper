@@ -429,6 +429,9 @@ export function createExploration({
         ? "Смола получена"
         : "Смола у корней";
     if (s.some((s) => s.kind === "merchant")) return "Ключи, удочка, мазь";
+    const debris = world.locations.find((l) => l.regionId === regionId)?.debris;
+    if (debris?.length)
+      return `Завалы: ${debris.filter((d) => data.debrisHP[d.id] === 0).length}/${debris.length} расчищено`;
     return "Открыто";
   }
   function regionDestination(region) {
@@ -439,7 +442,11 @@ export function createExploration({
       list.find(
         (s) => s.kind !== "chest" || !data.openedChests.includes(s.id),
       ) ||
-      list[0] || { x: region.cx, y: region.cy }
+      list[0] ||
+      world.locations.find((l) => l.regionId === region.id)?.entrance || {
+        x: region.cx,
+        y: region.cy,
+      }
     );
   }
   return {

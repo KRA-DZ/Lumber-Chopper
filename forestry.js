@@ -26,20 +26,16 @@ export function createForestry(state, { onPickup = () => {} } = {}) {
     state.cargoValue -= value;
     return value;
   }
+  function dropPile(id, x, y, count, value) {
+    const prior = piles.get(id);
+    if (prior) prior.count += count;
+    else piles.set(id, { id, x, y, count, value });
+  }
   function fell(tree, day) {
     if (tree.workerOnly || tree.hp > 0 || tree.cutDay != null) return 0;
     tree.cutDay = day;
-    const count = treeYield(tree),
-      prior = piles.get(tree.id);
-    if (prior) prior.count += count;
-    else
-      piles.set(tree.id, {
-        id: tree.id,
-        x: tree.x,
-        y: tree.y + 22,
-        count,
-        value: tree.value,
-      });
+    const count = treeYield(tree);
+    dropPile(tree.id, tree.x, tree.y + 22, count, tree.value);
     return count;
   }
   function collect(dt, player) {
@@ -80,5 +76,5 @@ export function createForestry(state, { onPickup = () => {} } = {}) {
       }
     return changed;
   }
-  return { piles, addCargo, takeCargo, fell, collect, updateGrowth };
+  return { piles, addCargo, takeCargo, dropPile, fell, collect, updateGrowth };
 }

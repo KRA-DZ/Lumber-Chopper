@@ -2,6 +2,7 @@ import { CENTER } from "./config.js";
 import { CAMP, random, pixelHash } from "../pixel-art.js";
 import { REGIONS, REGION_BOUNDS, REGION_SIZE, regionAt } from "./regions.js";
 import { FORTRESS, insideLocation } from "./locations.js";
+import { SAWMILL } from "./sawmill.js";
 
 export function createRegionWorld(regions) {
   const trees = [],
@@ -77,7 +78,7 @@ export function createRegionWorld(regions) {
       ],
     );
   }
-  const locations = [FORTRESS];
+  const locations = [FORTRESS, SAWMILL];
   // Relocate existing IDs: rewards, story evidence and journal routes stay valid.
   for (const chest of FORTRESS.chests)
     Object.assign(

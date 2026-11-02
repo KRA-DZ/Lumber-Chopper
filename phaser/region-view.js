@@ -1,6 +1,7 @@
 import { LAYERS } from "./layers.js";
 import { REGION_SIZE } from "../game/regions.js";
 import { LocationView } from "./location-view.js";
+import { ClearingView } from "./clearing-view.js";
 
 // Stream only nearby decoration and trees. Locked tiles remain geometry + names.
 export class RegionView {
@@ -12,6 +13,7 @@ export class RegionView {
     this.border = scene.add.graphics().setDepth(LAYERS.border);
     this.banner = null;
     this.locations = new LocationView(scene);
+    this.clearing = new ClearingView(scene);
   }
   createDecor(region) {
     const w = this.scene.core.world,
@@ -120,6 +122,7 @@ export class RegionView {
   }
   sync(view) {
     this.locations.sync(view);
+    this.clearing.sync(view);
     const c = this.scene.core,
       regions = c.regions,
       margin = 360,

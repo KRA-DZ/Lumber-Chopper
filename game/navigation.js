@@ -115,6 +115,10 @@ export function createNavigation(
     }
     for (const location of model.locations || []) {
       if (!model.regions.isOpen(location.entrance)) continue;
+      for (const d of location.debris || []) {
+        if ((gameState.exploration.debrisHP[d.id] ?? d.maxHP) <= 0) continue;
+        obstacles.push({ x: d.x, y: d.y, half: 0, r: d.r, a: d.a, b: d.b });
+      }
       for (const wall of location.walls) {
         if (wall.passage && passageOpen(gameState, wall.passage)) continue;
         obstacles.push({
