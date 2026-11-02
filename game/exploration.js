@@ -82,7 +82,11 @@ export function createExploration({
     routeTimer = 0;
   const get = (id) => byId.get(id);
   const available = (s) =>
-    !!s && regions.isOpen(s) && (s.kind !== "kitchen" || state.campLevel > 0);
+    !!s &&
+    regions.isOpen(s) &&
+    (s.kind !== "kitchen" || state.campLevel > 0) &&
+    (!s.requiredPassage || passageOpen(state, s.requiredPassage)) &&
+    !(s.kind === "discovery" && data.discoveries.includes(s.id));
   const near = (s) =>
     available(s) &&
     distance(player, s) < EXPLORATION.range &&
@@ -211,9 +215,20 @@ export function createExploration({
     } else if (s.kind === "passage") {
       add(
         "open-passage",
-        "Поднять боковую решётку",
+        s.actionName || "Поднять боковую решётку",
         s.description,
-        passageOpen(state, s.passage) ? "Короткий путь уже открыт" : "",
+        passageOpen(state, s.passage)
+          ? "Проход уже открыт"
+          : s.requiredClue && !state.readClues.includes(s.requiredClue)
+            ? s.clueHint
+            : "",
+      );
+    } else if (s.kind === "discovery") {
+      add(
+        "collect-discovery",
+        s.actionName,
+        s.description,
+        data.discoveries.includes(s.id) ? "Находка уже в дневнике" : "",
       );
     } else if (s.kind === "pond") {
       add(
@@ -296,6 +311,8 @@ export function createExploration({
     } else if (action === "open-passage") {
       data.openedPassages.push(s.passage);
       nav.rebuildObstacles();
+    } else if (action === "collect-discovery") {
+      data.discoveries.push(s.id);
     } else if (action === "offer-logs") {
       for (let i = 0; i < EXPLORATION.offeringLogs; i++) forestry.takeCargo();
       data.offeringDay = state.calendarDay;
@@ -444,6 +461,13 @@ export function createExploration({
     regionSummary,
     regionDestination,
     caughtToday,
+    discoveries() {
+      return sites
+        .filter(
+          (s) => s.kind === "discovery" && data.discoveries.includes(s.id),
+        )
+        .map((s) => ({ id: s.id, ...s.journal }));
+    },
     get context() {
       return context;
     },

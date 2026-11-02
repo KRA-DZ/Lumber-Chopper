@@ -100,6 +100,11 @@ export function createExplorationUi(scene) {
         paragraph(
           `Сюжетные находки: ${evidence.map((e) => e.name).join(", ")}. Хранятся в дневнике.`,
         );
+      const discoveries = m.discoveries();
+      if (discoveries.length)
+        paragraph(
+          `Личные находки: ${discoveries.map((p) => p.name).join(", ")}. Подробности — в дневнике J.`,
+        );
       const heal = button(
         `Использовать мазь · +${EXPLORATION.salveHeal} HP`,
         () => {

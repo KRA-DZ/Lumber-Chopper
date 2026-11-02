@@ -147,16 +147,118 @@ try:
             assert q.evaluate(
                 "m.state.exploration.openedPassages.length===1&&w.regionView.locations.objects.size<180"
             )
+
+            # The secret latch cannot open before reading the real archive note.
+            place(
+                q,
+                "(()=>{const p=e.get('fortress-hidden-latch');return{x:p.x,y:p.y+32}})()",
+            )
+            assert q.evaluate(
+                "!w.regionView.locations.objects.has('fortress-watch-token')&&m.state.exploration.discoveries.length===0"
+            )
+            click_world(q, "e.get('fortress-hidden-latch')", mobile)
+            q.wait_for_function("document.querySelector('#activityDialog').open")
+            assert q.locator('[data-activity-action="open-passage"]').is_disabled()
+            assert (
+                "Последний дозор" in q.locator("[data-activity-content]").inner_text()
+            )
+            q.locator("[data-activity-close]").click()
+            q.wait_for_function("!m.paused")
+
+            # Inspect a narrative scene without granting supplies or money.
+            place(
+                q,
+                "(()=>{const p=e.get('fortress-last-fire');return{x:p.x,y:p.y+32}})()",
+            )
+            click_world(q, "e.get('fortress-last-fire')", mobile)
+            q.wait_for_function("document.querySelector('#activityDialog').open")
+            assert "нет ни тепла" in q.locator("[data-activity-content]").inner_text()
+            assert q.locator("[data-activity-action]").count() == 0
+            q.locator("[data-activity-close]").click()
+            q.wait_for_function("!m.paused")
+
+            place(
+                q,
+                "(()=>{const p=m.world.clues.find(p=>p.id==='fortress-last-watch');return{x:p.x,y:p.y+32}})()",
+            )
+            click_world(
+                q, "m.world.clues.find(p=>p.id==='fortress-last-watch')", mobile
+            )
+            q.wait_for_function("document.querySelector('#clueDialog').open")
+            assert q.evaluate("m.state.readClues.includes('fortress-last-watch')")
+            q.locator("#clueClose").click()
+            q.wait_for_function("!m.paused")
+            place(
+                q,
+                "(()=>{const p=e.get('fortress-hidden-latch');return{x:p.x,y:p.y+32}})()",
+            )
+            click_world(q, "e.get('fortress-hidden-latch')", mobile)
+            q.wait_for_function("document.querySelector('#activityDialog').open")
+            q.locator('[data-activity-action="open-passage"]').click()
+            assert q.evaluate(
+                "m.state.exploration.openedPassages.includes('fortress-secret')&&m.nav.clearSegment({x:1552,y:-528},{x:1552,y:-640})"
+            )
+            q.locator("[data-activity-close]").click()
+            q.wait_for_function("!m.paused")
+            q.evaluate("g.step(0)")
+            assert q.evaluate(
+                "[...w.regionView.locations.objects.keys()].every(k=>!k.includes('/secret-door/'))&&w.regionView.locations.objects.has('fortress-watch-token')"
+            )
+
+            # Walk the actual open doorway before picking up the personal discovery.
+            q.evaluate(
+                "const t=e.get('fortress-watch-token');m.setDestination(t.x,t.y+40);for(let i=0;i<100&&m.player.path.length;i++)m.update(.05);g.step(0)"
+            )
+            assert q.evaluate(
+                "Math.hypot(m.player.x-e.get('fortress-watch-token').x,m.player.y-e.get('fortress-watch-token').y-40)<2"
+            )
+            place(q, "({x:m.player.x,y:m.player.y})")
+            if not mobile:
+                q.locator("#game-frame").screenshot(
+                    path=str(ROOT / "docs/fortress-secret.png")
+                )
+            click_world(q, "e.get('fortress-watch-token')", mobile)
+            q.wait_for_function("document.querySelector('#activityDialog').open")
+            q.locator('[data-activity-action="collect-discovery"]').click()
+            assert q.evaluate(
+                "m.state.exploration.discoveries.length===1&&m.state.coins===65&&m.state.exploration.items.relic===1"
+            )
+            assert q.locator('[data-activity-action="collect-discovery"]').is_disabled()
+            q.locator("[data-activity-close]").click()
+            q.wait_for_function("!m.paused")
+            q.evaluate("g.step(0)")
+            assert q.evaluate(
+                "!w.regionView.locations.objects.has('fortress-watch-token')&&e.nearest()?.id!=='fortress-watch-token'"
+            )
+            q.locator("#journalButton").click()
+            q.wait_for_function("document.querySelector('#journalDialog').open")
+            entry = q.locator('[data-discovery="fortress-watch-token"]')
+            assert (
+                entry.count() == 1 and "Жетон последнего дозора" in entry.inner_text()
+            )
+            if not mobile:
+                entry.scroll_into_view_if_needed()
+                q.locator("#journalDialog").screenshot(
+                    path=str(ROOT / "docs/fortress-token-journal.png")
+                )
+            q.locator("[data-journal-close]").click()
+            q.wait_for_function("!m.paused")
+            place(q, "({x:1600,y:1720})")
+            assert q.evaluate("w.regionView.locations.objects.size===0")
+            place(q, "({x:1552,y:-696})")
+            assert q.evaluate(
+                "!w.regionView.locations.objects.has('fortress-watch-token')&&e.discoveries().length===1&&w.regionView.locations.objects.size<180"
+            )
             q.evaluate("window.old=m;w.scene.restart();void 0")
             q.wait_for_function("lumberPhaser.core!==old&&lumberPhaser.scene.hudReady")
             assert q.evaluate(
-                "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.state.readClues.length===0&&lumberPhaser.core.state.coins===0"
+                "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.state.exploration.discoveries.length===0&&lumberPhaser.core.state.readClues.length===0&&lumberPhaser.core.state.coins===0"
             )
             assert not errors, errors
             print(
                 "PASS fortress",
                 "mobile Canvas" if mobile else "WebGL",
-                "walls, clue, finite chest, shortcut, streaming, fresh restart",
+                "walls, clue, chest, shortcut, narrative scene, secret latch, token journal, streaming, restart",
                 flush=True,
             )
             ctx.close()

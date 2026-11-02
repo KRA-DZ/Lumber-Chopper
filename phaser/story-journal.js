@@ -69,4 +69,22 @@ export function renderStoryJournal(scene, list, route) {
     section.append(details);
   }
   list.append(section);
+  const discoveries = scene.core.exploration?.discoveries() || [];
+  if (discoveries.length) {
+    const finds = document.createElement("section"),
+      heading = document.createElement("h3");
+    heading.textContent = "Личные находки леса";
+    finds.append(heading);
+    for (const item of discoveries) {
+      const article = document.createElement("article"),
+        title = document.createElement("h4"),
+        body = document.createElement("p");
+      article.dataset.discovery = item.id;
+      title.textContent = item.name;
+      body.textContent = item.text;
+      article.append(title, body);
+      finds.append(article);
+    }
+    list.append(finds);
+  }
 }

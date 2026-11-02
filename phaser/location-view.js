@@ -24,7 +24,13 @@ export class LocationView {
           });
       }
       for (const site of location.sites)
-        this.parts.push({ ...site, key: "world.rune", site: site.id });
+        this.parts.push({
+          ...site,
+          key: site.key || "world.rune",
+          site: site.id,
+        });
+      for (const p of location.dressing || [])
+        this.parts.push({ ...p, id: `${location.id}/${p.id}` });
       this.parts.push({
         id: `${location.id}/sign`,
         ...location.entrance,
@@ -40,6 +46,9 @@ export class LocationView {
     for (const p of this.parts) {
       if (
         !s.core.regions.unlocked.has(p.regionId) ||
+        (p.requiredPassage && !passageOpen(s.core.state, p.requiredPassage)) ||
+        (p.kind === "discovery" &&
+          s.core.state.exploration.discoveries.includes(p.id)) ||
         (p.passage && passageOpen(s.core.state, p.passage)) ||
         !s.nearView(p, view, 100)
       )
@@ -49,7 +58,8 @@ export class LocationView {
         const image = s.addImage(p.key, p.x, p.y);
         if (p.wall) image.setScale(1);
         if (p.site)
-          image.setInteractive({ pixelPerfect: true }).setData("site", p.site);
+          // PNG frames have transparent foot padding; inspection must accept base taps too.
+          image.setInteractive().setData("site", p.site);
         image.setData("locationPart", p.id);
         this.objects.set(p.id, image);
       }

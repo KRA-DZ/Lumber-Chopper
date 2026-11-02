@@ -1083,8 +1083,14 @@ export class WorldScene extends Phaser.Scene {
         );
       } else if (e.action === "open-passage") {
         this.core.showNotice(
-          "Боковая решётка поднята. Из архива открыт короткий путь во двор.",
+          e.site.openNotice ||
+            "Боковая решётка поднята. Из архива открыт короткий путь во двор.",
           6,
+        );
+      } else if (e.action === "collect-discovery") {
+        this.core.showNotice(
+          `Найдено: ${e.site.journal.name}. Запись сохранена в дневнике J.`,
+          7,
         );
       } else if (e.action === "offer-logs") {
         this.float("+1 смола", e.site.x, e.site.y - 60, "#c3dfab");

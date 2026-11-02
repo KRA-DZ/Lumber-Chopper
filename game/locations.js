@@ -33,12 +33,17 @@ export const FORTRESS = {
     wall("archive-room-west", 192, -128, 384, -128),
     wall("archive-room-east", 512, -128, 576, -128),
     wall("archive-maze", 384, -128, 384, 256),
+    wall("secret-east", 96, -512, 96, -256),
+    wall("secret-front-west", -192, -256, -112, -256),
+    wall("secret-door", -112, -256, 16, -256, "fortress-secret"),
+    wall("secret-front-east", 16, -256, 96, -256),
   ],
   rooms: [
-    { name: "Двор", ...point(-160, -448), width: 320, height: 832 },
+    { name: "Двор", ...point(-160, -192), width: 320, height: 576 },
     { name: "Караульная", ...point(-544, -480), width: 320, height: 512 },
     { name: "Склад", ...point(-544, 96), width: 320, height: 320 },
     { name: "Архив", ...point(224, -480), width: 320, height: 320 },
+    { name: "Тайник дозора", ...point(-160, -480), width: 224, height: 192 },
   ],
   chests: [
     { id: "chest:0:-1:0", ...point(-432, -304), name: "Сундук караульной" },
@@ -60,7 +65,79 @@ export const FORTRESS = {
       ...point(272, -320),
       regionId: region.id,
     },
+    {
+      id: "fortress-hidden-latch",
+      kind: "passage",
+      name: "Кладка с тремя зарубками",
+      description:
+        "Три камня потемнели от копоти. На среднем видны зарубки. Порядок нажатия мог знать последний дозорный.",
+      actionName: "Нажать отмеченные камни",
+      openNotice: "Кладка отодвинулась. Открыт тайник последнего дозора.",
+      passage: "fortress-secret",
+      requiredClue: "fortress-last-watch",
+      clueHint: "Нужно прочитать «Последний дозор» в восточном архиве",
+      ...point(-48, -208),
+      regionId: region.id,
+    },
+    {
+      id: "fortress-watch-token",
+      kind: "discovery",
+      name: "Шкатулка последнего дозора",
+      description:
+        "Внутри потемневший медный жетон. На одной стороне — незамкнутый круг, на другой выцарапано: «Мы считали огни, а он считал нас». Эту личную находку можно сохранить в дневнике.",
+      actionName: "Забрать жетон дозора",
+      requiredPassage: "fortress-secret",
+      key: "camp.crate",
+      journal: {
+        name: "Жетон последнего дозора",
+        text: "Найден в тайнике Забытой крепости. Под копотью проступают незамкнутый круг и три черты — тот же знак, что на архивной печати. С обратной стороны: «Мы считали огни, а он считал нас». Дозорные следили за кострами по всему лесу. Почему отметки обрываются у центральной поляны? Жетон оставлен среди личных находок; его нельзя продать или потратить.",
+      },
+      ...point(-48, -416),
+      regionId: region.id,
+    },
+    {
+      id: "fortress-barricade",
+      kind: "inspect",
+      name: "Сломанная баррикада",
+      description:
+        "Доски расколоты, но обломки лежат с внешней стороны. Уходившие из крепости люди сами проломили последний заслон. В пазы забилась старая зола.",
+      key: "camp.defense.barricade.broken",
+      ...point(-144, 320),
+      regionId: region.id,
+    },
+    {
+      id: "fortress-last-fire",
+      kind: "inspect",
+      name: "Погасший сборный костёр",
+      description:
+        "Холодная зола, недогоревшие поленья и следы поспешного ухода. К камням подходит цепочка длинных царапин. Здесь давно нет ни тепла, ни защиты ночного света.",
+      key: "unlitFire",
+      ...point(64, 128),
+      regionId: region.id,
+    },
+    {
+      id: "fortress-abandoned-supplies",
+      kind: "inspect",
+      name: "Брошенные припасы",
+      description:
+        "Мешки и посуда остались на месте, ящики открыты. Люди ушли без еды. На доске ножом вырезано: «Не жди остальных. Неси огонь к поляне». Полезных припасов здесь уже нет.",
+      key: "world.supplies",
+      ...point(-464, 176),
+      regionId: region.id,
+    },
   ],
+  dressing: [
+    { id: "retreat-log", key: "world.firewood", ...point(-320, 352) },
+    { id: "dropped-mug", key: "camp.dishes", ...point(-368, 192) },
+    { id: "guard-crate", key: "camp.crate", ...point(-512, -192) },
+    { id: "courtyard-tracks", key: "world.strangeTracks", ...point(128, 240) },
+    { id: "archive-tracks", key: "world.strangeTracks", ...point(480, -16) },
+    {
+      id: "last-watch-tracks",
+      key: "world.strangeTracks",
+      ...point(320, -224),
+    },
+  ].map((p) => ({ ...p, regionId: region.id })),
   clues: [
     {
       id: "fortress-entry",
@@ -84,7 +161,7 @@ export const FORTRESS = {
       id: "fortress-last-watch",
       ...point(480, -240),
       name: "Последний дозор",
-      text: "«Мы заперли северные двери, но к утру следы были внутри. Тот, кто ходит ночью, не ищет сокровищ. Он проверяет, горит ли огонь в середине леса. Если услышишь шаги — возвращайся к своему костру. Подними боковую решётку: обратный путь будет короче.»",
+      text: "«Мы заперли северные двери, но к утру следы были внутри. Он проверяет, горит ли огонь в середине леса. Я спрятал свой жетон в северной кладке двора. Найди три закопчённых камня с зарубками: нажми средний, затем крайние. Подними боковую решётку архива — до тайника вернёшься быстрее. А если услышишь шаги, беги к своему костру.»",
     },
   ].map((c) => ({ ...c, regionId: region.id })),
 };
