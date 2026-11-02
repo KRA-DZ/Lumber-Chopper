@@ -1,5 +1,26 @@
 {
-  "version": 1,
+  "version": 2,
+  "processing": {
+    "alphaThreshold": 128,
+    "whiteMatteRepair": "legacy source edges only",
+    "hiddenRGB": 0
+  },
+  "sideFrames": {
+    "hero2": 4,
+    "hero3": 4,
+    "worker3": 4,
+    "worker4": 4,
+    "buyer1": 4,
+    "buyer2": 4,
+    "buyer3": 4,
+    "buyer4": 4
+  },
+  "sideCarryFrames": {
+    "hero2": 4,
+    "hero3": 4,
+    "worker3": 4,
+    "worker4": 4
+  },
   "sources": [
     {
       "file": "heroes-walk-sheet.png",
@@ -170,6 +191,346 @@
       "gridRows": 2,
       "rows": 2,
       "columns": 3
+    },
+    {
+      "file": "people-heroes-side-walk-sheet.png",
+      "sha256": "6262b509764582c8891d071abc96f3e5e78948e7ae1e0f95151e96e6994048f4",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "hero2-walk-side-0": [
+          122,
+          53,
+          334,
+          407
+        ],
+        "hero2-walk-side-1": [
+          577,
+          54,
+          751,
+          407
+        ],
+        "hero2-walk-side-2": [
+          1012,
+          54,
+          1226,
+          407
+        ],
+        "hero2-walk-side-3": [
+          1467,
+          61,
+          1652,
+          407
+        ],
+        "hero3-walk-side-0": [
+          89,
+          495,
+          332,
+          845
+        ],
+        "hero3-walk-side-1": [
+          533,
+          497,
+          760,
+          845
+        ],
+        "hero3-walk-side-2": [
+          977,
+          500,
+          1221,
+          843
+        ],
+        "hero3-walk-side-3": [
+          1422,
+          504,
+          1654,
+          845
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "people-workers-side-walk-sheet.png",
+      "sha256": "411764c4ee626ccafbde42587c4ebcbc9634413cd12f5a90d0116d8708e8d8b0",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "worker3-walk-side-0": [
+          128,
+          59,
+          357,
+          406
+        ],
+        "worker3-walk-side-1": [
+          581,
+          56,
+          779,
+          406
+        ],
+        "worker3-walk-side-2": [
+          995,
+          59,
+          1228,
+          406
+        ],
+        "worker3-walk-side-3": [
+          1455,
+          59,
+          1643,
+          406
+        ],
+        "worker4-walk-side-0": [
+          128,
+          494,
+          344,
+          846
+        ],
+        "worker4-walk-side-1": [
+          576,
+          494,
+          748,
+          846
+        ],
+        "worker4-walk-side-2": [
+          995,
+          494,
+          1221,
+          846
+        ],
+        "worker4-walk-side-3": [
+          1456,
+          494,
+          1627,
+          846
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "people-buyers-side-walk-sheet.png",
+      "sha256": "8b4d5f0d484f2af87c906280c23471f16b7647b577bf2bea2525c47d7f3f069e",
+      "size": [
+        1290,
+        1219
+      ],
+      "columns": 4,
+      "rows": 4,
+      "boxes": {
+        "buyer1-walk-side-0": [
+          93,
+          47,
+          243,
+          276
+        ],
+        "buyer1-walk-side-1": [
+          418,
+          55,
+          546,
+          276
+        ],
+        "buyer1-walk-side-2": [
+          722,
+          57,
+          868,
+          276
+        ],
+        "buyer1-walk-side-3": [
+          1053,
+          57,
+          1174,
+          276
+        ],
+        "buyer2-walk-side-0": [
+          91,
+          350,
+          248,
+          580
+        ],
+        "buyer2-walk-side-1": [
+          410,
+          353,
+          558,
+          580
+        ],
+        "buyer2-walk-side-2": [
+          716,
+          356,
+          876,
+          579
+        ],
+        "buyer2-walk-side-3": [
+          1053,
+          356,
+          1183,
+          580
+        ],
+        "buyer3-walk-side-0": [
+          92,
+          648,
+          248,
+          884
+        ],
+        "buyer3-walk-side-1": [
+          418,
+          651,
+          555,
+          884
+        ],
+        "buyer3-walk-side-2": [
+          720,
+          657,
+          873,
+          884
+        ],
+        "buyer3-walk-side-3": [
+          1048,
+          658,
+          1182,
+          884
+        ],
+        "buyer4-walk-side-0": [
+          80,
+          953,
+          248,
+          1185
+        ],
+        "buyer4-walk-side-1": [
+          403,
+          956,
+          558,
+          1185
+        ],
+        "buyer4-walk-side-2": [
+          710,
+          962,
+          875,
+          1185
+        ],
+        "buyer4-walk-side-3": [
+          1036,
+          969,
+          1195,
+          1185
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "people-side-carry-sheet.png",
+      "sha256": "87e178f29726c57d9bd434d5c1ace319719293326faaa9ee257874560071c000",
+      "size": [
+        1290,
+        1219
+      ],
+      "columns": 4,
+      "rows": 4,
+      "boxes": {
+        "hero2-carry-side-0": [
+          93,
+          46,
+          229,
+          276
+        ],
+        "hero2-carry-side-1": [
+          411,
+          54,
+          535,
+          276
+        ],
+        "hero2-carry-side-2": [
+          714,
+          52,
+          854,
+          276
+        ],
+        "hero2-carry-side-3": [
+          1044,
+          59,
+          1168,
+          275
+        ],
+        "hero3-carry-side-0": [
+          81,
+          357,
+          240,
+          583
+        ],
+        "hero3-carry-side-1": [
+          392,
+          362,
+          543,
+          583
+        ],
+        "hero3-carry-side-2": [
+          703,
+          362,
+          860,
+          583
+        ],
+        "hero3-carry-side-3": [
+          1020,
+          371,
+          1170,
+          583
+        ],
+        "worker3-carry-side-0": [
+          88,
+          657,
+          248,
+          884
+        ],
+        "worker3-carry-side-1": [
+          405,
+          659,
+          548,
+          884
+        ],
+        "worker3-carry-side-2": [
+          706,
+          657,
+          861,
+          885
+        ],
+        "worker3-carry-side-3": [
+          1040,
+          662,
+          1176,
+          884
+        ],
+        "worker4-carry-side-0": [
+          91,
+          961,
+          232,
+          1189
+        ],
+        "worker4-carry-side-1": [
+          415,
+          961,
+          540,
+          1189
+        ],
+        "worker4-carry-side-2": [
+          714,
+          964,
+          849,
+          1188
+        ],
+        "worker4-carry-side-3": [
+          1049,
+          969,
+          1169,
+          1189
+        ]
+      },
+      "nativeAlpha": true
     }
   ],
   "atlas": "people.png",
@@ -1528,7 +1889,7 @@
         44
       ]
     },
-    "buyer1-walk-up-0": {
+    "buyer1-walk-side-3": {
       "x": 848,
       "y": 530,
       "width": 40,
@@ -1538,7 +1899,7 @@
         44
       ]
     },
-    "buyer1-walk-up-1": {
+    "buyer1-walk-up-0": {
       "x": 890,
       "y": 530,
       "width": 40,
@@ -1548,8 +1909,18 @@
         44
       ]
     },
-    "buyer1-walk-up-2": {
+    "buyer1-walk-up-1": {
       "x": 932,
+      "y": 530,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "buyer1-walk-up-2": {
+      "x": 974,
       "y": 530,
       "width": 40,
       "height": 46,
@@ -1648,8 +2019,18 @@
         44
       ]
     },
-    "buyer2-walk-up-0": {
+    "buyer2-walk-side-3": {
       "x": 452,
+      "y": 596,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "buyer2-walk-up-0": {
+      "x": 494,
       "y": 596,
       "width": 40,
       "height": 46,
@@ -1659,7 +2040,7 @@
       ]
     },
     "buyer2-walk-up-1": {
-      "x": 494,
+      "x": 536,
       "y": 596,
       "width": 40,
       "height": 46,
@@ -1669,7 +2050,7 @@
       ]
     },
     "buyer2-walk-up-2": {
-      "x": 536,
+      "x": 578,
       "y": 596,
       "width": 40,
       "height": 46,
@@ -1679,7 +2060,7 @@
       ]
     },
     "buyer3-gesture-cheer": {
-      "x": 578,
+      "x": 620,
       "y": 596,
       "width": 64,
       "height": 46,
@@ -1689,7 +2070,7 @@
       ]
     },
     "buyer3-gesture-greet": {
-      "x": 644,
+      "x": 686,
       "y": 596,
       "width": 64,
       "height": 46,
@@ -1699,7 +2080,7 @@
       ]
     },
     "buyer3-gesture-rest": {
-      "x": 710,
+      "x": 752,
       "y": 596,
       "width": 64,
       "height": 46,
@@ -1709,16 +2090,6 @@
       ]
     },
     "buyer3-walk-down-0": {
-      "x": 776,
-      "y": 596,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "buyer3-walk-down-1": {
       "x": 818,
       "y": 596,
       "width": 40,
@@ -1728,7 +2099,7 @@
         44
       ]
     },
-    "buyer3-walk-down-2": {
+    "buyer3-walk-down-1": {
       "x": 860,
       "y": 596,
       "width": 40,
@@ -1738,7 +2109,7 @@
         44
       ]
     },
-    "buyer3-walk-down-3": {
+    "buyer3-walk-down-2": {
       "x": 902,
       "y": 596,
       "width": 40,
@@ -1748,7 +2119,7 @@
         44
       ]
     },
-    "buyer3-walk-side-0": {
+    "buyer3-walk-down-3": {
       "x": 944,
       "y": 596,
       "width": 40,
@@ -1758,8 +2129,18 @@
         44
       ]
     },
-    "buyer3-walk-side-1": {
+    "buyer3-walk-side-0": {
       "x": 2,
+      "y": 644,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "buyer3-walk-side-1": {
+      "x": 44,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1769,7 +2150,7 @@
       ]
     },
     "buyer3-walk-side-2": {
-      "x": 44,
+      "x": 86,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1779,7 +2160,7 @@
       ]
     },
     "buyer3-walk-side-3": {
-      "x": 86,
+      "x": 128,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1789,7 +2170,7 @@
       ]
     },
     "buyer3-walk-up-0": {
-      "x": 128,
+      "x": 170,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1799,7 +2180,7 @@
       ]
     },
     "buyer3-walk-up-1": {
-      "x": 170,
+      "x": 212,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1809,7 +2190,7 @@
       ]
     },
     "buyer3-walk-up-2": {
-      "x": 212,
+      "x": 254,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1819,7 +2200,7 @@
       ]
     },
     "buyer3-walk-up-3": {
-      "x": 254,
+      "x": 296,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1829,7 +2210,7 @@
       ]
     },
     "buyer4-gesture-cheer": {
-      "x": 296,
+      "x": 338,
       "y": 644,
       "width": 64,
       "height": 46,
@@ -1839,7 +2220,7 @@
       ]
     },
     "buyer4-gesture-greet": {
-      "x": 362,
+      "x": 404,
       "y": 644,
       "width": 64,
       "height": 46,
@@ -1849,7 +2230,7 @@
       ]
     },
     "buyer4-gesture-rest": {
-      "x": 428,
+      "x": 470,
       "y": 644,
       "width": 64,
       "height": 46,
@@ -1859,7 +2240,7 @@
       ]
     },
     "buyer4-walk-down-0": {
-      "x": 494,
+      "x": 536,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1869,7 +2250,7 @@
       ]
     },
     "buyer4-walk-down-1": {
-      "x": 536,
+      "x": 578,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1879,7 +2260,7 @@
       ]
     },
     "buyer4-walk-down-2": {
-      "x": 578,
+      "x": 620,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1889,7 +2270,7 @@
       ]
     },
     "buyer4-walk-down-3": {
-      "x": 620,
+      "x": 662,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1899,7 +2280,7 @@
       ]
     },
     "buyer4-walk-side-0": {
-      "x": 662,
+      "x": 704,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1909,7 +2290,7 @@
       ]
     },
     "buyer4-walk-side-1": {
-      "x": 704,
+      "x": 746,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1919,7 +2300,7 @@
       ]
     },
     "buyer4-walk-side-2": {
-      "x": 746,
+      "x": 788,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1929,7 +2310,7 @@
       ]
     },
     "buyer4-walk-side-3": {
-      "x": 788,
+      "x": 830,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1939,7 +2320,7 @@
       ]
     },
     "buyer4-walk-up-0": {
-      "x": 830,
+      "x": 872,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1949,7 +2330,7 @@
       ]
     },
     "buyer4-walk-up-1": {
-      "x": 872,
+      "x": 914,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1959,7 +2340,7 @@
       ]
     },
     "buyer4-walk-up-2": {
-      "x": 914,
+      "x": 956,
       "y": 644,
       "width": 40,
       "height": 46,
@@ -1969,8 +2350,8 @@
       ]
     },
     "buyer4-walk-up-3": {
-      "x": 956,
-      "y": 644,
+      "x": 2,
+      "y": 692,
       "width": 40,
       "height": 46,
       "anchor": [
@@ -1979,7 +2360,7 @@
       ]
     },
     "hero2-carry-down-0": {
-      "x": 2,
+      "x": 44,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -1989,7 +2370,7 @@
       ]
     },
     "hero2-carry-down-1": {
-      "x": 44,
+      "x": 86,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -1999,7 +2380,7 @@
       ]
     },
     "hero2-carry-down-2": {
-      "x": 86,
+      "x": 128,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2009,7 +2390,7 @@
       ]
     },
     "hero2-carry-down-3": {
-      "x": 128,
+      "x": 170,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2019,7 +2400,7 @@
       ]
     },
     "hero2-carry-side-0": {
-      "x": 170,
+      "x": 212,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2029,7 +2410,7 @@
       ]
     },
     "hero2-carry-side-1": {
-      "x": 212,
+      "x": 254,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2039,7 +2420,7 @@
       ]
     },
     "hero2-carry-side-2": {
-      "x": 254,
+      "x": 296,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2049,7 +2430,7 @@
       ]
     },
     "hero2-carry-side-3": {
-      "x": 296,
+      "x": 338,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2059,7 +2440,7 @@
       ]
     },
     "hero2-carry-up-0": {
-      "x": 338,
+      "x": 380,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2069,7 +2450,7 @@
       ]
     },
     "hero2-carry-up-1": {
-      "x": 380,
+      "x": 422,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2079,7 +2460,7 @@
       ]
     },
     "hero2-carry-up-2": {
-      "x": 422,
+      "x": 464,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2089,7 +2470,7 @@
       ]
     },
     "hero2-carry-up-3": {
-      "x": 464,
+      "x": 506,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2099,7 +2480,7 @@
       ]
     },
     "hero2-gesture-carry": {
-      "x": 506,
+      "x": 548,
       "y": 692,
       "width": 64,
       "height": 46,
@@ -2109,7 +2490,7 @@
       ]
     },
     "hero2-gesture-cheer": {
-      "x": 572,
+      "x": 614,
       "y": 692,
       "width": 64,
       "height": 46,
@@ -2119,7 +2500,7 @@
       ]
     },
     "hero2-gesture-rest": {
-      "x": 638,
+      "x": 680,
       "y": 692,
       "width": 64,
       "height": 46,
@@ -2129,7 +2510,7 @@
       ]
     },
     "hero2-walk-down-0": {
-      "x": 704,
+      "x": 746,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2139,7 +2520,7 @@
       ]
     },
     "hero2-walk-down-1": {
-      "x": 746,
+      "x": 788,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2149,7 +2530,7 @@
       ]
     },
     "hero2-walk-down-2": {
-      "x": 788,
+      "x": 830,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2159,7 +2540,7 @@
       ]
     },
     "hero2-walk-down-3": {
-      "x": 830,
+      "x": 872,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2169,7 +2550,7 @@
       ]
     },
     "hero2-walk-side-0": {
-      "x": 872,
+      "x": 914,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2179,7 +2560,7 @@
       ]
     },
     "hero2-walk-side-1": {
-      "x": 914,
+      "x": 956,
       "y": 692,
       "width": 40,
       "height": 46,
@@ -2189,8 +2570,8 @@
       ]
     },
     "hero2-walk-side-2": {
-      "x": 956,
-      "y": 692,
+      "x": 2,
+      "y": 740,
       "width": 40,
       "height": 46,
       "anchor": [
@@ -2199,7 +2580,7 @@
       ]
     },
     "hero2-walk-side-3": {
-      "x": 2,
+      "x": 44,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2209,7 +2590,7 @@
       ]
     },
     "hero2-walk-up-0": {
-      "x": 44,
+      "x": 86,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2219,7 +2600,7 @@
       ]
     },
     "hero2-walk-up-1": {
-      "x": 86,
+      "x": 128,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2229,7 +2610,7 @@
       ]
     },
     "hero2-walk-up-2": {
-      "x": 128,
+      "x": 170,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2239,7 +2620,7 @@
       ]
     },
     "hero2-walk-up-3": {
-      "x": 170,
+      "x": 212,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2249,7 +2630,7 @@
       ]
     },
     "hero3-carry-down-0": {
-      "x": 212,
+      "x": 254,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2259,7 +2640,7 @@
       ]
     },
     "hero3-carry-down-1": {
-      "x": 254,
+      "x": 296,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2269,7 +2650,7 @@
       ]
     },
     "hero3-carry-down-2": {
-      "x": 296,
+      "x": 338,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2279,7 +2660,7 @@
       ]
     },
     "hero3-carry-down-3": {
-      "x": 338,
+      "x": 380,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2289,7 +2670,7 @@
       ]
     },
     "hero3-carry-side-0": {
-      "x": 380,
+      "x": 422,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2299,7 +2680,7 @@
       ]
     },
     "hero3-carry-side-1": {
-      "x": 422,
+      "x": 464,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2309,7 +2690,7 @@
       ]
     },
     "hero3-carry-side-2": {
-      "x": 464,
+      "x": 506,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2319,7 +2700,7 @@
       ]
     },
     "hero3-carry-side-3": {
-      "x": 506,
+      "x": 548,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2329,7 +2710,7 @@
       ]
     },
     "hero3-carry-up-0": {
-      "x": 548,
+      "x": 590,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2339,7 +2720,7 @@
       ]
     },
     "hero3-carry-up-1": {
-      "x": 590,
+      "x": 632,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2349,7 +2730,7 @@
       ]
     },
     "hero3-carry-up-2": {
-      "x": 632,
+      "x": 674,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2359,7 +2740,7 @@
       ]
     },
     "hero3-carry-up-3": {
-      "x": 674,
+      "x": 716,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2369,7 +2750,7 @@
       ]
     },
     "hero3-gesture-carry": {
-      "x": 716,
+      "x": 758,
       "y": 740,
       "width": 64,
       "height": 46,
@@ -2379,7 +2760,7 @@
       ]
     },
     "hero3-gesture-cheer": {
-      "x": 782,
+      "x": 824,
       "y": 740,
       "width": 64,
       "height": 46,
@@ -2389,7 +2770,7 @@
       ]
     },
     "hero3-gesture-rest": {
-      "x": 848,
+      "x": 890,
       "y": 740,
       "width": 64,
       "height": 46,
@@ -2399,7 +2780,7 @@
       ]
     },
     "hero3-walk-down-0": {
-      "x": 914,
+      "x": 956,
       "y": 740,
       "width": 40,
       "height": 46,
@@ -2409,8 +2790,8 @@
       ]
     },
     "hero3-walk-down-1": {
-      "x": 956,
-      "y": 740,
+      "x": 2,
+      "y": 788,
       "width": 40,
       "height": 46,
       "anchor": [
@@ -2419,7 +2800,7 @@
       ]
     },
     "hero3-walk-down-2": {
-      "x": 2,
+      "x": 44,
       "y": 788,
       "width": 40,
       "height": 46,
@@ -2429,16 +2810,6 @@
       ]
     },
     "hero3-walk-down-3": {
-      "x": 44,
-      "y": 788,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "hero3-walk-side-0": {
       "x": 86,
       "y": 788,
       "width": 40,
@@ -2448,7 +2819,7 @@
         44
       ]
     },
-    "hero3-walk-side-1": {
+    "hero3-walk-side-0": {
       "x": 128,
       "y": 788,
       "width": 40,
@@ -2458,7 +2829,7 @@
         44
       ]
     },
-    "hero3-walk-side-2": {
+    "hero3-walk-side-1": {
       "x": 170,
       "y": 788,
       "width": 40,
@@ -2468,7 +2839,7 @@
         44
       ]
     },
-    "hero3-walk-side-3": {
+    "hero3-walk-side-2": {
       "x": 212,
       "y": 788,
       "width": 40,
@@ -2478,7 +2849,7 @@
         44
       ]
     },
-    "hero3-walk-up-0": {
+    "hero3-walk-side-3": {
       "x": 254,
       "y": 788,
       "width": 40,
@@ -2488,7 +2859,7 @@
         44
       ]
     },
-    "hero3-walk-up-1": {
+    "hero3-walk-up-0": {
       "x": 296,
       "y": 788,
       "width": 40,
@@ -2498,7 +2869,7 @@
         44
       ]
     },
-    "hero3-walk-up-2": {
+    "hero3-walk-up-1": {
       "x": 338,
       "y": 788,
       "width": 40,
@@ -2508,7 +2879,7 @@
         44
       ]
     },
-    "hero3-walk-up-3": {
+    "hero3-walk-up-2": {
       "x": 380,
       "y": 788,
       "width": 40,
@@ -2518,7 +2889,7 @@
         44
       ]
     },
-    "merchant-adjust": {
+    "hero3-walk-up-3": {
       "x": 422,
       "y": 788,
       "width": 40,
@@ -2528,7 +2899,7 @@
         44
       ]
     },
-    "merchant-greet": {
+    "merchant-adjust": {
       "x": 464,
       "y": 788,
       "width": 40,
@@ -2538,7 +2909,7 @@
         44
       ]
     },
-    "merchant-idle": {
+    "merchant-greet": {
       "x": 506,
       "y": 788,
       "width": 40,
@@ -2548,7 +2919,7 @@
         44
       ]
     },
-    "merchant-look": {
+    "merchant-idle": {
       "x": 548,
       "y": 788,
       "width": 40,
@@ -2558,7 +2929,7 @@
         44
       ]
     },
-    "merchant-peek": {
+    "merchant-look": {
       "x": 590,
       "y": 788,
       "width": 40,
@@ -2568,7 +2939,7 @@
         44
       ]
     },
-    "merchant-read": {
+    "merchant-peek": {
       "x": 632,
       "y": 788,
       "width": 40,
@@ -2578,7 +2949,7 @@
         44
       ]
     },
-    "worker3-carry-down-0": {
+    "merchant-read": {
       "x": 674,
       "y": 788,
       "width": 40,
@@ -2588,7 +2959,7 @@
         44
       ]
     },
-    "worker3-carry-down-1": {
+    "worker3-carry-down-0": {
       "x": 716,
       "y": 788,
       "width": 40,
@@ -2598,7 +2969,7 @@
         44
       ]
     },
-    "worker3-carry-down-2": {
+    "worker3-carry-down-1": {
       "x": 758,
       "y": 788,
       "width": 40,
@@ -2608,7 +2979,7 @@
         44
       ]
     },
-    "worker3-carry-side-0": {
+    "worker3-carry-down-2": {
       "x": 800,
       "y": 788,
       "width": 40,
@@ -2618,7 +2989,7 @@
         44
       ]
     },
-    "worker3-carry-side-1": {
+    "worker3-carry-side-0": {
       "x": 842,
       "y": 788,
       "width": 40,
@@ -2628,7 +2999,7 @@
         44
       ]
     },
-    "worker3-carry-side-2": {
+    "worker3-carry-side-1": {
       "x": 884,
       "y": 788,
       "width": 40,
@@ -2638,7 +3009,7 @@
         44
       ]
     },
-    "worker3-carry-up-0": {
+    "worker3-carry-side-2": {
       "x": 926,
       "y": 788,
       "width": 40,
@@ -2648,7 +3019,7 @@
         44
       ]
     },
-    "worker3-carry-up-1": {
+    "worker3-carry-side-3": {
       "x": 968,
       "y": 788,
       "width": 40,
@@ -2658,8 +3029,28 @@
         44
       ]
     },
-    "worker3-carry-up-2": {
+    "worker3-carry-up-0": {
       "x": 2,
+      "y": 836,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker3-carry-up-1": {
+      "x": 44,
+      "y": 836,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker3-carry-up-2": {
+      "x": 86,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2669,7 +3060,7 @@
       ]
     },
     "worker3-gesture-carry": {
-      "x": 44,
+      "x": 128,
       "y": 836,
       "width": 64,
       "height": 46,
@@ -2679,7 +3070,7 @@
       ]
     },
     "worker3-gesture-cheer": {
-      "x": 110,
+      "x": 194,
       "y": 836,
       "width": 64,
       "height": 46,
@@ -2689,7 +3080,7 @@
       ]
     },
     "worker3-gesture-rest": {
-      "x": 176,
+      "x": 260,
       "y": 836,
       "width": 64,
       "height": 46,
@@ -2699,7 +3090,7 @@
       ]
     },
     "worker3-walk-down-0": {
-      "x": 242,
+      "x": 326,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2709,7 +3100,7 @@
       ]
     },
     "worker3-walk-down-1": {
-      "x": 284,
+      "x": 368,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2719,7 +3110,7 @@
       ]
     },
     "worker3-walk-down-2": {
-      "x": 326,
+      "x": 410,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2729,7 +3120,7 @@
       ]
     },
     "worker3-walk-side-0": {
-      "x": 368,
+      "x": 452,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2739,7 +3130,7 @@
       ]
     },
     "worker3-walk-side-1": {
-      "x": 410,
+      "x": 494,
       "y": 836,
       "width": 40,
       "height": 46,
@@ -2749,26 +3140,6 @@
       ]
     },
     "worker3-walk-side-2": {
-      "x": 452,
-      "y": 836,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker3-walk-up-0": {
-      "x": 494,
-      "y": 836,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker3-walk-up-1": {
       "x": 536,
       "y": 836,
       "width": 40,
@@ -2778,7 +3149,7 @@
         44
       ]
     },
-    "worker3-walk-up-2": {
+    "worker3-walk-side-3": {
       "x": 578,
       "y": 836,
       "width": 40,
@@ -2788,7 +3159,7 @@
         44
       ]
     },
-    "worker4-carry-down-0": {
+    "worker3-walk-up-0": {
       "x": 620,
       "y": 836,
       "width": 40,
@@ -2798,7 +3169,7 @@
         44
       ]
     },
-    "worker4-carry-down-1": {
+    "worker3-walk-up-1": {
       "x": 662,
       "y": 836,
       "width": 40,
@@ -2808,7 +3179,7 @@
         44
       ]
     },
-    "worker4-carry-down-2": {
+    "worker3-walk-up-2": {
       "x": 704,
       "y": 836,
       "width": 40,
@@ -2818,7 +3189,7 @@
         44
       ]
     },
-    "worker4-carry-side-0": {
+    "worker4-carry-down-0": {
       "x": 746,
       "y": 836,
       "width": 40,
@@ -2828,7 +3199,7 @@
         44
       ]
     },
-    "worker4-carry-side-1": {
+    "worker4-carry-down-1": {
       "x": 788,
       "y": 836,
       "width": 40,
@@ -2838,7 +3209,7 @@
         44
       ]
     },
-    "worker4-carry-side-2": {
+    "worker4-carry-down-2": {
       "x": 830,
       "y": 836,
       "width": 40,
@@ -2848,7 +3219,7 @@
         44
       ]
     },
-    "worker4-carry-up-0": {
+    "worker4-carry-side-0": {
       "x": 872,
       "y": 836,
       "width": 40,
@@ -2858,7 +3229,7 @@
         44
       ]
     },
-    "worker4-carry-up-1": {
+    "worker4-carry-side-1": {
       "x": 914,
       "y": 836,
       "width": 40,
@@ -2868,7 +3239,7 @@
         44
       ]
     },
-    "worker4-carry-up-2": {
+    "worker4-carry-side-2": {
       "x": 956,
       "y": 836,
       "width": 40,
@@ -2878,8 +3249,48 @@
         44
       ]
     },
-    "worker4-gesture-carry": {
+    "worker4-carry-side-3": {
       "x": 2,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-carry-up-0": {
+      "x": 44,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-carry-up-1": {
+      "x": 86,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-carry-up-2": {
+      "x": 128,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-gesture-carry": {
+      "x": 170,
       "y": 884,
       "width": 64,
       "height": 46,
@@ -2889,7 +3300,7 @@
       ]
     },
     "worker4-gesture-cheer": {
-      "x": 68,
+      "x": 236,
       "y": 884,
       "width": 64,
       "height": 46,
@@ -2899,7 +3310,7 @@
       ]
     },
     "worker4-gesture-rest": {
-      "x": 134,
+      "x": 302,
       "y": 884,
       "width": 64,
       "height": 46,
@@ -2909,46 +3320,6 @@
       ]
     },
     "worker4-walk-down-0": {
-      "x": 200,
-      "y": 884,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker4-walk-down-1": {
-      "x": 242,
-      "y": 884,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker4-walk-down-2": {
-      "x": 284,
-      "y": 884,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker4-walk-side-0": {
-      "x": 326,
-      "y": 884,
-      "width": 40,
-      "height": 46,
-      "anchor": [
-        20,
-        44
-      ]
-    },
-    "worker4-walk-side-1": {
       "x": 368,
       "y": 884,
       "width": 40,
@@ -2958,7 +3329,7 @@
         44
       ]
     },
-    "worker4-walk-side-2": {
+    "worker4-walk-down-1": {
       "x": 410,
       "y": 884,
       "width": 40,
@@ -2968,7 +3339,7 @@
         44
       ]
     },
-    "worker4-walk-up-0": {
+    "worker4-walk-down-2": {
       "x": 452,
       "y": 884,
       "width": 40,
@@ -2978,7 +3349,7 @@
         44
       ]
     },
-    "worker4-walk-up-1": {
+    "worker4-walk-side-0": {
       "x": 494,
       "y": 884,
       "width": 40,
@@ -2988,8 +3359,58 @@
         44
       ]
     },
-    "worker4-walk-up-2": {
+    "worker4-walk-side-1": {
       "x": 536,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-walk-side-2": {
+      "x": 578,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-walk-side-3": {
+      "x": 620,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-walk-up-0": {
+      "x": 662,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-walk-up-1": {
+      "x": 704,
+      "y": 884,
+      "width": 40,
+      "height": 46,
+      "anchor": [
+        20,
+        44
+      ]
+    },
+    "worker4-walk-up-2": {
+      "x": 746,
       "y": 884,
       "width": 40,
       "height": 46,
@@ -3024,23 +3445,23 @@
     "#d66c63"
   ],
   "metalPixels": {
-    "hero2-strike-down-0": 85,
-    "hero2-strike-up-0": 68,
-    "hero2-strike-side-0": 64,
+    "hero2-strike-down-0": 82,
+    "hero2-strike-up-0": 66,
+    "hero2-strike-side-0": 63,
     "hero2-strike-down-1": 50,
-    "hero2-strike-up-1": 24,
-    "hero2-strike-side-1": 55,
-    "hero2-strike-down-2": 85,
-    "hero2-strike-up-2": 73,
-    "hero2-strike-side-2": 66,
-    "hero3-strike-down-0": 52,
-    "hero3-strike-up-0": 38,
-    "hero3-strike-side-0": 50,
-    "hero3-strike-down-1": 48,
+    "hero2-strike-up-1": 23,
+    "hero2-strike-side-1": 54,
+    "hero2-strike-down-2": 83,
+    "hero2-strike-up-2": 68,
+    "hero2-strike-side-2": 61,
+    "hero3-strike-down-0": 51,
+    "hero3-strike-up-0": 37,
+    "hero3-strike-side-0": 47,
+    "hero3-strike-down-1": 43,
     "hero3-strike-up-1": 3,
-    "hero3-strike-side-1": 50,
-    "hero3-strike-down-2": 54,
-    "hero3-strike-up-2": 47,
-    "hero3-strike-side-2": 42
+    "hero3-strike-side-1": 45,
+    "hero3-strike-down-2": 49,
+    "hero3-strike-up-2": 45,
+    "hero3-strike-side-2": 37
   }
 }

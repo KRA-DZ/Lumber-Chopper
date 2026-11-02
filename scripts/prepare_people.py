@@ -7,6 +7,7 @@ import json
 import math
 from PIL import Image, ImageChops
 from prepare_assets import components, remove_background, clean_mask, unmatte_white
+from prepare_camp import extract as extract_native
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRS = ("down", "up", "side")
@@ -52,7 +53,7 @@ def sheet(name, roles, action, rows, columns=6):
             )
     rgba = remove_background(image, mode="all")
     if image.getchannel("A").getextrema()[0] == 255:
-        rgba = unmatte_white(rgba)
+        rgba = unmatte_white(rgba, radius=3)
     found = components(clean_mask(rgba.getchannel("A"), 12))
     grid_rows = 4 if name == "buyers-a-walk" else rows
     groups = [[] for _ in names]
@@ -114,8 +115,51 @@ def normalize(images, action):
         )
         frame = Image.new("RGBA", (width, height))
         frame.alpha_composite(im, (ax - im.width // 2, ay - im.height))
-        result[name] = (frame, ax, ay)
+        result[name] = (clean_edges(frame, legacy=True), ax, ay)
     return result
+
+
+def clean_edges(image, legacy=False):
+    """Repair only old white-matte silhouettes; keep pale costume interiors."""
+    image = unmatte_white(image, radius=2) if legacy else image.copy()
+    image.putalpha(image.getchannel("A").point(lambda a: 255 if a >= 128 else 0))
+    clean = Image.new("RGBA", image.size)
+    clean.alpha_composite(image)
+    return clean
+
+
+def replace_side_cycles(frames, sources):
+    for name, roles, action in [
+        ("people-heroes-side-walk-sheet", ROLES[:2], "walk"),
+        ("people-workers-side-walk-sheet", ROLES[2:4], "walk"),
+        ("people-buyers-side-walk-sheet", ROLES[4:], "walk"),
+        ("people-side-carry-sheet", ROLES[:4], "carry"),
+    ]:
+        keys = tuple(f"{role}-{action}-side-{i}" for role in roles for i in range(4))
+        sprites, source = extract_native(name, 4, keys)
+        sources.append(source)
+        for role in roles:
+            group = {k: v for k, v in sprites.items() if k.startswith(role + "-")}
+            old = frames[f"{role}-{action}-down-0"][0]
+            box = old.getbbox()
+            target_height = min(42, box[3] - box[1])
+            factor = min(
+                target_height / max(im.height for im in group.values()),
+                36 / max(im.width for im in group.values()),
+            )
+            for key, raw in group.items():
+                # Remove small generated camera-height drift; these remain four
+                # separate leg/arm poses, with one grounded silhouette height.
+                small = raw.resize(
+                    (
+                        max(1, round(raw.width * factor)),
+                        max(1, round(max(im.height for im in group.values()) * factor)),
+                    ),
+                    Image.Resampling.NEAREST,
+                )
+                frame = Image.new("RGBA", (40, 46))
+                frame.alpha_composite(small, (20 - small.width // 2, 44 - small.height))
+                frames[key] = (clean_edges(frame), 20, 44)
 
 
 def main():
@@ -145,6 +189,7 @@ def main():
                 key: im for key, im in images.items() if key.startswith(role + "-")
             }
             frames.update(normalize(subset, action))
+    replace_side_cycles(frames, sources)
     metal_counts = {}
     for role in ROLES[:2]:
         for key, (frame, ax, ay) in list(frames.items()):
@@ -198,9 +243,18 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     atlas.save(output / "people.png", optimize=True)
     for role, portrait in portraits.items():
-        portrait.save(output / f"{role}-portrait.png", optimize=True)
+        clean_edges(portrait, legacy=True).save(
+            output / f"{role}-portrait.png", optimize=True
+        )
     manifest = {
-        "version": 1,
+        "version": 2,
+        "processing": {
+            "alphaThreshold": 128,
+            "whiteMatteRepair": "legacy source edges only",
+            "hiddenRGB": 0,
+        },
+        "sideFrames": {role: 4 for role in ROLES},
+        "sideCarryFrames": {role: 4 for role in ROLES[:4]},
         "sources": sources,
         "atlas": "people.png",
         "size": [width, height],

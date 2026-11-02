@@ -3,9 +3,9 @@ import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
 import { createWatcher, WATCHER } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
-  monsterSpeed: 160, // Faster pursuit; the starting hero still runs at 200.
+  monsterSpeed: 190, // Near the starting hero's 200: little room to waste time while chased.
   monsterDamage: 40,
-  monsterWindup: 1.2,
+  monsterWindup: 0.55, // More than twice as quick; still a locked, avoidable strike.
   playerInvulnerability: 1.4,
   warningSeconds: 12,
   waveEvery: RAID_INTERVAL,

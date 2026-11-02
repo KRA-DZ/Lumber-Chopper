@@ -37,9 +37,11 @@ export class HeroView {
           ? "tired"
           : "neutral";
     this.bob = p.moving
-      ? Math.floor(t * 12) % 4 < 2
-        ? -2
-        : 0
+      ? scene.assets.people
+        ? 0
+        : Math.floor(t * 12) % 4 < 2
+          ? -2
+          : 0
       : p.celebration > 0 && s.wood === 0
         ? -Math.max(0, snap(Math.sin(t * 12) * 5))
         : 0;

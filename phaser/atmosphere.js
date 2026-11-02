@@ -1,7 +1,13 @@
 import { LAYERS } from "./layers.js";
 import { createWeather } from "../weather.js";
 import { createEnvironment } from "../environment.js";
-import { createMystery, MYSTERY_CLUES, nightSight } from "../mystery.js";
+import { createMystery, MYSTERY_CLUES } from "../mystery.js";
+import {
+  nightOpacity,
+  nightLights,
+  inCampLight,
+  nightFireflies,
+} from "./night-lighting.js";
 import { createWildlife } from "../game/wildlife.js";
 import { DAY_SECONDS, CENTER } from "../game/config.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
@@ -102,12 +108,22 @@ export class Atmosphere {
     this.stamp = document.createElement("canvas");
     this.stamp.width = this.stamp.height = 128;
     const ctx = this.stamp.getContext("2d"),
-      g = ctx.createRadialGradient(64, 64, 18, 64, 64, 64);
+      g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     g.addColorStop(0, "rgba(0,0,0,1)");
-    g.addColorStop(0.6, "rgba(0,0,0,.75)");
+    g.addColorStop(0.7, "rgba(0,0,0,1)");
+    g.addColorStop(0.84, "rgba(0,0,0,.6)");
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 128, 128);
+    this.playerStamp = document.createElement("canvas");
+    this.playerStamp.width = this.playerStamp.height = 128;
+    const playerCtx = this.playerStamp.getContext("2d"),
+      playerGradient = playerCtx.createRadialGradient(64, 64, 18, 64, 64, 64);
+    playerGradient.addColorStop(0, "rgba(0,0,0,1)");
+    playerGradient.addColorStop(0.6, "rgba(0,0,0,.75)");
+    playerGradient.addColorStop(1, "rgba(0,0,0,0)");
+    playerCtx.fillStyle = playerGradient;
+    playerCtx.fillRect(0, 0, 128, 128);
     this.reveal = {
       from: this.core.forestRadius(),
       to: this.core.forestRadius(),
@@ -122,32 +138,14 @@ export class Atmosphere {
     this.maskKey = "";
   }
   lights() {
-    const s = this.core.state,
-      p = this.core.player,
-      t = this.core.elapsed;
-    return [
-      { x: p.x, y: p.y - 24, r: nightSight(s.lanternLevel) },
-      ...this.lanterns(),
-      {
-        x: 1600,
-        y: 1600,
-        r: this.core.survival?.safeRadius() ?? (s.campLevel > 0 ? 220 : 0),
-      },
-      ...(s.campLevel === 4
-        ? [
-            { x: CAMP.hut.x - 68, y: CAMP.hut.y - 68, r: 100 },
-            { x: CAMP.hut.x + 78, y: CAMP.hut.y - 68, r: 85 },
-          ]
-        : []),
-    ];
+    return nightLights(
+      this.core.state,
+      this.core.player,
+      this.core.survival?.safeRadius() ?? 210,
+    );
   }
   lanterns() {
-    return [
-      { x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 115 },
-      ...(this.accessible(this.merchantSite)
-        ? [{ x: this.merchantSite.x + 75, y: this.merchantSite.y + 20, r: 110 }]
-        : []),
-    ];
+    return [{ x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 115 }];
   }
   accessible(p) {
     return this.core.accessible(p);
@@ -189,7 +187,7 @@ export class Atmosphere {
     this.environment.update(dt, c.elapsed, c.trees, c.player);
     this.wildlife.update(dt);
     this.mystery.update(dt, {
-      darkness: c.nightAmount(),
+      darkness: nightOpacity(c.state),
       player: c.player,
       view: v,
       lights: this.lights(),
@@ -223,7 +221,7 @@ export class Atmosphere {
       p = c.player,
       t = c.elapsed,
       v = scene.camera.worldView,
-      dark = c.nightAmount(),
+      dark = nightOpacity(c.state),
       profile = this.weather.profile;
     const light = this.quality === "light",
       g = this.ground.clear(),
@@ -466,20 +464,40 @@ export class Atmosphere {
           .fillRect(x - 8, y, 4, 2)
           .fillRect(x + 6, y, 4, 2);
       }
-    const phase = t % 85;
-    if (dark > 0.45 && phase > 52 && phase < 63) {
-      const x = 2210 + Math.sin(t * 0.4) * 12,
-        y = 1500 + Math.sin(t * 0.7) * 8;
-      if (
-        this.accessible({ x, y }) &&
-        near(x, y) &&
-        Math.hypot(x - p.x, y - p.y) > 120
-      )
+    if (dark > 0.45) {
+      const lights = this.lights();
+      for (const f of nightFireflies(
+        t,
+        v,
+        (p) => this.accessible(p),
+        lights,
+        light,
+      ))
+        eyes.fillStyle(0xb5d686, f.alpha).fillRect(snap(f.x), snap(f.y), 2, 2);
+      const s = c.survival;
+      for (const e of s ? [s.monster, ...s.residents, ...s.raiders] : []) {
+        if (
+          !e ||
+          e.warning > 0 ||
+          !near(e.x, e.y, 200) ||
+          inCampLight(e.x, e.y, lights)
+        )
+          continue;
+        if (!(
+          e.seesPlayer ||
+          e.attack ||
+          e.phase === "chase" ||
+          e.targetKey === "player"
+        ))
+          continue;
+        const x = snap(e.x),
+          y = snap(e.y - (e.invulnerable ? 150 : 82));
+        const strike = e.phase === "windup" || e.windup > 0;
         eyes
-          .fillStyle(0x98cbb7, Math.min(1, phase - 52, 63 - phase) * 0.7)
-          .fillRect(snap(x) - 4, snap(y) - 4, 8, 8)
-          .fillStyle(0xe8e6ad, 0.8)
-          .fillRect(snap(x) - 2, snap(y) - 2, 4, 4);
+          .fillStyle(strike ? 0xff7359 : 0xe5bd79, strike ? 0.95 : 0.65)
+          .fillRect(x - 8, y, 3, 2)
+          .fillRect(x + 5, y, 3, 2);
+      }
     }
     this.tint.clear();
     const dayPhase = c.state.worldTime / DAY_SECONDS;
@@ -530,12 +548,12 @@ export class Atmosphere {
     const ctx = this.mask.getContext();
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = `rgba(4,12,20,${dark * 0.97})`;
+    ctx.fillStyle = `rgba(0,0,0,${dark})`;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "destination-out";
     for (const l of this.lights())
       ctx.drawImage(
-        this.stamp,
+        l.kind === "player" ? this.playerStamp : this.stamp,
         (l.x - v.x - l.r) / factor,
         (l.y - v.y - l.r) / factor,
         (l.r * 2) / factor,

@@ -98,6 +98,35 @@ class PeopleAssets(unittest.TestCase):
                 self.assertEqual(im.mode, "RGBA")
                 self.assertEqual(im.getpixel((0, 0))[3], 0)
 
+    def test_side_walks_are_grounded_and_old_white_matte_is_not_hidden_in_alpha(self):
+        self.assertEqual(self.m["version"], 2)
+        for role in self.m["sideFrames"]:
+            tops = []
+            for i in range(4):
+                f = self.m["frames"][f"{role}-walk-side-{i}"]
+                crop = self.im.crop(
+                    (f["x"], f["y"], f["x"] + f["width"], f["y"] + f["height"])
+                )
+                box = crop.getbbox()
+                tops.append(box[1])
+                self.assertEqual(box[3], 44)
+            self.assertLessEqual(max(tops) - min(tops), 1, role)
+        data = self.im.tobytes()
+        for i in range(0, len(data), 4):
+            self.assertIn(data[i + 3], (0, 255))
+            if not data[i + 3]:
+                self.assertEqual(data[i : i + 3], b"\0\0\0")
+        f = self.m["frames"]["merchant-idle"]
+        crop = self.im.crop((f["x"], f["y"], f["x"] + f["width"], f["y"] + f["height"]))
+        self.assertGreater(
+            sum(
+                1
+                for r, g, b, a in zip(*[iter(crop.tobytes())] * 4)
+                if a and min(r, g, b) > 150
+            ),
+            60,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

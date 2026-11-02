@@ -1,31 +1,32 @@
 import { CENTER } from "./config.js";
 import { DEFENSE } from "./defenses.js";
+export const RAIDER_ATTACK_COOLDOWN = 1; // Together with the shorter windup, more than twice the previous cadence.
 export const RAIDER_ROLES = Object.freeze({
   attacker: {
     name: "Налётчик",
     hp: 4,
-    speed: 82,
+    speed: 102,
     damage: 12,
     structureDamage: 10,
-    windup: 0.9,
+    windup: 0.4,
     color: 0xd9ac78,
   },
   thief: {
     name: "Вор",
     hp: 3,
-    speed: 112,
+    speed: 138,
     damage: 6,
     structureDamage: 6,
-    windup: 1.2,
+    windup: 0.55,
     color: 0xa8c6ae,
   },
   breaker: {
     name: "Громила",
     hp: 7,
-    speed: 58,
+    speed: 74,
     damage: 20,
     structureDamage: 24,
-    windup: 1.3,
+    windup: 0.6,
     color: 0xe8a18b,
   },
 });
@@ -122,7 +123,7 @@ export function createRaiderAI({
       actor.windup += dt;
       if (actor.windup >= role.windup) {
         actor.windup = 0;
-        actor.cooldown = 2.2;
+        actor.cooldown = RAIDER_ATTACK_COOLDOWN;
         if (playerTarget) hurtPlayer(20);
         else if (structure) defenses.damage(structure.id, role.structureDamage);
         else if (actor.role === "thief") {

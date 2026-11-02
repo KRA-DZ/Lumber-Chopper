@@ -80,7 +80,11 @@ export class WorkerView {
       });
       if (!nearby) continue;
       const bob =
-        w.moving && Math.floor(scene.core.elapsed * 12) % 4 < 2 ? -2 : 0;
+        !scene.assets.people &&
+        w.moving &&
+        Math.floor(scene.core.elapsed * 12) % 4 < 2
+          ? -2
+          : 0;
       a.sprite.setPosition(snap(w.x), snap(w.y + bob));
       scene.animatePerson(a.sprite, w.appearance, w, "neutral");
       a.axe

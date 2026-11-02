@@ -34,7 +34,7 @@ function fixture() {
       result.hits.push(source);
     },
     damage: 40,
-    windupSeconds: 1.2,
+    windupSeconds: SURVIVAL.monsterWindup,
   });
   function tick(seconds) {
     for (let i = 0; i < Math.round(seconds * 20); i++)
@@ -50,25 +50,25 @@ test("watcher notices the player at the new distance and pursues sooner at the n
   const f = fixture();
   f.m.x = f.player.x + 320;
   f.until("notice");
-  f.tick(0.4);
+  f.tick(WATCHER.notice - 0.05);
   assert.equal(f.m.phase, "notice");
   f.tick(0.15);
   assert.equal(f.m.phase, "chase");
   f.tick(0.05);
-  assert.equal(f.m.speed, 160);
+  assert.equal(f.m.speed, 190);
   assert.deepEqual(f.m.goal, { x: f.player.x, y: f.player.y });
   assert.equal(f.result.health, 100);
 });
 test("detection pauses before chase; locked strike can be dodged and recovery cannot track or hit", () => {
   const f = fixture();
   f.until("notice");
-  f.tick(0.25);
+  f.tick(WATCHER.notice / 2);
   assert.equal(f.m.phase, "notice");
   assert.equal(f.result.health, 100);
   f.until("windup");
   const area = { ...f.m.attack };
   f.player.x += 140;
-  f.tick(0.5);
+  f.tick(SURVIVAL.monsterWindup / 2);
   assert.deepEqual(f.m.attack, area);
   assert.equal(f.m.goal, null);
   f.until("strike");
@@ -78,7 +78,7 @@ test("detection pauses before chase; locked strike can be dodged and recovery ca
     false,
   );
   f.until("recover");
-  f.tick(1);
+  f.tick(WATCHER.recovery / 2);
   assert.equal(f.m.phase, "recover");
   assert.equal(f.m.goal, null);
 });
@@ -96,7 +96,7 @@ test("standing in three announced attacks is lethal; watcher remains unkillable"
 test("entering camp light cancels a nearly completed strike immediately", () => {
   const f = fixture();
   f.until("windup");
-  f.tick(1.05);
+  f.tick(SURVIVAL.monsterWindup - 0.1);
   f.player.x = 1600;
   f.player.y = 1700;
   f.tick(0.05);

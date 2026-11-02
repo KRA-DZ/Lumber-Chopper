@@ -112,9 +112,14 @@ export function renderGeneratedPerson(
   } else {
     const action = body.cargo?.length ? "carry" : "walk",
       count =
-        action === "carry"
-          ? pack.manifest.carryFrames[role]
-          : pack.manifest.walkFrames[role],
+        dir === "side"
+          ? (action === "carry"
+              ? pack.manifest.sideCarryFrames?.[role]
+              : pack.manifest.sideFrames?.[role]) ||
+            pack.manifest.walkFrames[role]
+          : action === "carry"
+            ? pack.manifest.carryFrames[role]
+            : pack.manifest.walkFrames[role],
       sequence = count === 3 ? [0, 2, 1, 2] : [0, 1, 2, 3],
       frame = body.moving ? sequence[Math.floor(t * 8) % 4] : count - 1;
     id = `${role}-${action}-${dir}-${frame}`;

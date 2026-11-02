@@ -216,7 +216,7 @@ export function createAtlas(scene) {
               frame: `${prefix}.${i}`,
             }),
           ),
-          frameRate: role === "player" ? 12 : 9,
+          frameRate: role === "player" ? (people ? 8 : 12) : 9,
           repeat: -1,
         });
       }
@@ -228,7 +228,7 @@ export function createAtlas(scene) {
           key: "forest",
           frame: `hero.${mode}.${dir}.${i}`,
         })),
-        frameRate: 12,
+        frameRate: people ? 8 : 12,
         repeat: -1,
       });
   for (let tier = 0; tier < art.sprites.axes.length; tier++)

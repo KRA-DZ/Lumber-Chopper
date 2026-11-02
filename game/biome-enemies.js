@@ -8,8 +8,9 @@ export const BIOME_ENEMIES = Object.freeze({
   sense: 280,
   damage: 12,
   hp: 40, // Regional mini-bosses: ten times the old health; waves have separate stats.
-  speed: 80,
-  windup: 1.1,
+  speed: 104,
+  windup: 0.5,
+  cooldown: 1,
   range: 54,
   pathInterval: 0.35,
   streamRange: 1350,
@@ -231,7 +232,7 @@ export function createBiomeEnemies({
               hurtPlayer(BIOME_ENEMIES.damage, "resident");
             e.attack = null;
             e.windup = 0;
-            e.cooldown = 2.2;
+            e.cooldown = BIOME_ENEMIES.cooldown;
             if (state.gameOver) return;
           }
           continue;
