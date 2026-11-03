@@ -4,6 +4,7 @@ import { preloadCamp, retainCamp } from "./camp-assets.js";
 import { preloadItems, retainItems } from "./item-assets.js";
 import { preloadDecor, retainDecor } from "./decor-assets.js";
 import { preloadFortress, retainFortress } from "./fortress-assets.js";
+import { preloadSawmill, retainSawmill } from "./sawmill-assets.js";
 import { selectHero } from "./hero-selection.js";
 import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
@@ -26,6 +27,7 @@ class BootScene extends Phaser.Scene {
     preloadItems(this);
     preloadDecor(this);
     preloadFortress(this);
+    preloadSawmill(this);
     this.load.json("import.manifest", "./src/assets/manifest.json");
     for (const name of IMPORTED_ASSETS)
       this.load.image(`import.${name}`, `./src/assets/${name}.png`);
@@ -39,6 +41,7 @@ class BootScene extends Phaser.Scene {
       retainItems(this);
       retainDecor(this);
       retainFortress(this);
+      retainSawmill(this);
       const manifest = this.cache.json.get("import.manifest");
       if (
         !manifest ||

@@ -1,8 +1,13 @@
 import { passageOpen } from "../game/locations.js";
 import { fortressParts } from "./fortress-assets.js";
+import {
+  sawmillParts,
+  sawmillSiteKey,
+  sawmillDressingKey,
+} from "./sawmill-assets.js";
 
-// Playable layout preview with existing PNGs. Stream short wall pieces around
-// the camera; collision uses whole data segments, never these decorative images.
+// Stream modular PNGs around the camera; collision uses shared model segments,
+// independently of roofs, prop silhouettes and transparent image padding.
 export class LocationView {
   constructor(scene) {
     this.scene = scene;
@@ -11,7 +16,10 @@ export class LocationView {
     for (const location of scene.core.world.locations || []) {
       const generated =
         scene.assets.fortress?.manifest.regionId === location.regionId;
-      if (generated) this.parts.push(...fortressParts(location));
+      const sawmill =
+        scene.assets.sawmill?.manifest.regionId === location.regionId;
+      if (sawmill) this.parts.push(...sawmillParts(location));
+      else if (generated) this.parts.push(...fortressParts(location));
       else
         for (const wall of location.walls) {
           const count = Math.ceil(
@@ -41,19 +49,27 @@ export class LocationView {
       for (const site of location.sites)
         this.parts.push({
           ...site,
-          key:
-            generated && siteKeys[site.id]
+          key: sawmill
+            ? sawmillSiteKey(site)
+            : generated && siteKeys[site.id]
               ? `fortress.${siteKeys[site.id]}`
               : site.key || "world.rune",
           site: site.id,
+          occluder: sawmill,
+          openKey:
+            sawmill && site.id === "sawmill-hand-drive"
+              ? "sawmill.drive.open"
+              : site.openKey,
         });
       for (const p of location.dressing || [])
         this.parts.push({
           ...p,
           id: `${location.id}/${p.id}`,
           regionId: location.regionId,
-          key:
-            generated && p.key === "world.strangeTracks"
+          occluder: sawmill,
+          key: sawmill
+            ? sawmillDressingKey(p)
+            : generated && p.key === "world.strangeTracks"
               ? "fortress.tracks"
               : generated && p.id === "guard-crate"
                 ? "fortress.supplies"
@@ -64,7 +80,7 @@ export class LocationView {
         ...location.entrance,
         x: location.entrance.x - 120,
         regionId: location.regionId,
-        key: "camp.gateSign",
+        key: sawmill ? "sawmill.sign" : "camp.gateSign",
       });
     }
   }
@@ -75,6 +91,9 @@ export class LocationView {
       if (
         !s.core.regions.unlocked.has(p.regionId) ||
         (p.requiredPassage && !passageOpen(s.core.state, p.requiredPassage)) ||
+        (p.untilPassage && passageOpen(s.core.state, p.untilPassage)) ||
+        (p.afterDiscovery &&
+          !s.core.state.exploration.discoveries.includes(p.afterDiscovery)) ||
         (p.kind === "discovery" &&
           s.core.state.exploration.discoveries.includes(p.id)) ||
         (p.passage && !p.drawOpened && passageOpen(s.core.state, p.passage)) ||
@@ -83,7 +102,7 @@ export class LocationView {
         continue;
       wanted.add(p.id);
       if (!this.objects.has(p.id)) {
-        const image = s.addImage(p.key, p.x, p.y);
+        const image = s.addImage(p.key, p.x, p.y, p.depth ?? p.y);
         if (p.timber)
           image.setOrigin(0.5).setDisplaySize(64, 26).setRotation(p.angle);
         if (p.wall && !p.timber && !s.assets.fortress) image.setScale(1);
@@ -102,13 +121,23 @@ export class LocationView {
           : p.key;
       if (image.frame.name !== key) s.assets.setFrame(image, key);
       const meta = s.assets.meta.get(key);
+      const cover = p.roofCover;
       image.setAlpha(
-        p.wall &&
-          Math.abs(player.x - p.x) < (meta.width * image.scaleX) / 2 &&
-          player.y < p.y + (p.footSpan || 0) &&
-          player.y > p.y - meta.originY * meta.height * image.scaleY
-          ? 0.4
-          : 1,
+        cover
+          ? player.x >= cover.x &&
+            player.x <= cover.x + cover.width &&
+            player.y >= cover.y &&
+            player.y <= cover.y + cover.height
+            ? 0.18
+            : 1
+          : (p.wall || p.occluder) &&
+              Math.abs(player.x - p.x) < (meta.width * image.scaleX) / 2 &&
+              player.y < p.y + (p.footSpan || 0) &&
+              player.y > p.y - meta.originY * meta.height * image.scaleY
+            ? p.occluder
+              ? 0.35
+              : 0.4
+            : 1,
       );
     }
     for (const [id, image] of this.objects)

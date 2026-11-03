@@ -1,0 +1,686 @@
+{
+  "version": 1,
+  "approvedVariant": 1,
+  "regionId": "1:1",
+  "atlas": "sawmill.png",
+  "size": [
+    512,
+    512
+  ],
+  "frames": {
+    "roof.store": {
+      "x": 2,
+      "y": 2,
+      "width": 200,
+      "height": 136,
+      "anchor": [
+        100,
+        116
+      ]
+    },
+    "roof.hall": {
+      "x": 204,
+      "y": 2,
+      "width": 200,
+      "height": 136,
+      "anchor": [
+        100,
+        116
+      ]
+    },
+    "debris.light": {
+      "x": 406,
+      "y": 2,
+      "width": 88,
+      "height": 128,
+      "anchor": [
+        44,
+        64
+      ]
+    },
+    "debris.heavy": {
+      "x": 2,
+      "y": 140,
+      "width": 88,
+      "height": 128,
+      "anchor": [
+        44,
+        64
+      ]
+    },
+    "drive.closed": {
+      "x": 92,
+      "y": 140,
+      "width": 88,
+      "height": 100,
+      "anchor": [
+        44,
+        84
+      ]
+    },
+    "drive.open": {
+      "x": 182,
+      "y": 140,
+      "width": 88,
+      "height": 100,
+      "anchor": [
+        44,
+        84
+      ]
+    },
+    "bench": {
+      "x": 272,
+      "y": 140,
+      "width": 112,
+      "height": 92,
+      "anchor": [
+        56,
+        78
+      ]
+    },
+    "niche.closed": {
+      "x": 386,
+      "y": 140,
+      "width": 72,
+      "height": 88,
+      "anchor": [
+        36,
+        76
+      ]
+    },
+    "niche.open": {
+      "x": 2,
+      "y": 270,
+      "width": 72,
+      "height": 88,
+      "anchor": [
+        36,
+        76
+      ]
+    },
+    "niche.empty": {
+      "x": 76,
+      "y": 270,
+      "width": 72,
+      "height": 88,
+      "anchor": [
+        36,
+        76
+      ]
+    },
+    "sign": {
+      "x": 150,
+      "y": 270,
+      "width": 80,
+      "height": 84,
+      "anchor": [
+        40,
+        72
+      ]
+    },
+    "woodRack": {
+      "x": 232,
+      "y": 270,
+      "width": 96,
+      "height": 80,
+      "anchor": [
+        48,
+        68
+      ]
+    },
+    "tools": {
+      "x": 330,
+      "y": 270,
+      "width": 64,
+      "height": 80,
+      "anchor": [
+        32,
+        68
+      ]
+    },
+    "wall.v.0": {
+      "x": 396,
+      "y": 270,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.1": {
+      "x": 430,
+      "y": 270,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.2": {
+      "x": 464,
+      "y": 270,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "wall.v.3": {
+      "x": 2,
+      "y": 360,
+      "width": 32,
+      "height": 72,
+      "anchor": [
+        16,
+        48
+      ]
+    },
+    "load": {
+      "x": 36,
+      "y": 360,
+      "width": 88,
+      "height": 72,
+      "anchor": [
+        44,
+        60
+      ]
+    },
+    "cloth": {
+      "x": 126,
+      "y": 360,
+      "width": 64,
+      "height": 72,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "crate": {
+      "x": 192,
+      "y": 360,
+      "width": 68,
+      "height": 64,
+      "anchor": [
+        34,
+        54
+      ]
+    },
+    "tracks": {
+      "x": 262,
+      "y": 360,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        32
+      ]
+    },
+    "corner.nw": {
+      "x": 328,
+      "y": 360,
+      "width": 44,
+      "height": 60,
+      "anchor": [
+        22,
+        46
+      ]
+    },
+    "corner.ne": {
+      "x": 374,
+      "y": 360,
+      "width": 44,
+      "height": 60,
+      "anchor": [
+        22,
+        46
+      ]
+    },
+    "corner.sw": {
+      "x": 420,
+      "y": 360,
+      "width": 44,
+      "height": 60,
+      "anchor": [
+        22,
+        46
+      ]
+    },
+    "corner.se": {
+      "x": 466,
+      "y": 360,
+      "width": 44,
+      "height": 60,
+      "anchor": [
+        22,
+        46
+      ]
+    },
+    "end.n": {
+      "x": 2,
+      "y": 434,
+      "width": 32,
+      "height": 52,
+      "anchor": [
+        16,
+        44
+      ]
+    },
+    "end.e": {
+      "x": 36,
+      "y": 434,
+      "width": 32,
+      "height": 52,
+      "anchor": [
+        16,
+        44
+      ]
+    },
+    "end.s": {
+      "x": 70,
+      "y": 434,
+      "width": 32,
+      "height": 52,
+      "anchor": [
+        16,
+        44
+      ]
+    },
+    "end.w": {
+      "x": 104,
+      "y": 434,
+      "width": 32,
+      "height": 52,
+      "anchor": [
+        16,
+        44
+      ]
+    },
+    "wall.h.0": {
+      "x": 138,
+      "y": 434,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.1": {
+      "x": 180,
+      "y": 434,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.2": {
+      "x": 222,
+      "y": 434,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "wall.h.3": {
+      "x": 264,
+      "y": 434,
+      "width": 40,
+      "height": 48,
+      "anchor": [
+        20,
+        40
+      ]
+    },
+    "note": {
+      "x": 306,
+      "y": 434,
+      "width": 32,
+      "height": 36,
+      "anchor": [
+        16,
+        28
+      ]
+    },
+    "ledger": {
+      "x": 340,
+      "y": 434,
+      "width": 40,
+      "height": 36,
+      "anchor": [
+        20,
+        28
+      ]
+    },
+    "tag": {
+      "x": 382,
+      "y": 434,
+      "width": 32,
+      "height": 32,
+      "anchor": [
+        16,
+        28
+      ]
+    }
+  },
+  "floors": {
+    "courtyard": {
+      "x": 0,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "room": {
+      "x": 64,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    },
+    "hall": {
+      "x": 128,
+      "y": 0,
+      "width": 64,
+      "height": 64
+    }
+  },
+  "sources": [
+    {
+      "file": "sawmill-walls-sheet.png",
+      "sha256": "9717a252c71c114ea32c24e7cea20b824ea46c3dacd154ca0df66c2e6787d661",
+      "size": [
+        1312,
+        1199
+      ],
+      "columns": 4,
+      "rows": 4,
+      "boxes": {
+        "wall.h.0": [
+          39,
+          106,
+          295,
+          225
+        ],
+        "wall.h.1": [
+          365,
+          108,
+          619,
+          226
+        ],
+        "wall.h.2": [
+          690,
+          102,
+          948,
+          226
+        ],
+        "wall.h.3": [
+          1019,
+          106,
+          1274,
+          226
+        ],
+        "wall.v.0": [
+          127,
+          326,
+          204,
+          583
+        ],
+        "wall.v.1": [
+          455,
+          329,
+          534,
+          582
+        ],
+        "wall.v.2": [
+          784,
+          329,
+          860,
+          582
+        ],
+        "wall.v.3": [
+          1109,
+          329,
+          1186,
+          582
+        ],
+        "corner.nw": [
+          61,
+          646,
+          284,
+          860
+        ],
+        "corner.ne": [
+          370,
+          646,
+          595,
+          862
+        ],
+        "corner.sw": [
+          716,
+          702,
+          943,
+          862
+        ],
+        "corner.se": [
+          1029,
+          647,
+          1253,
+          860
+        ],
+        "end.n": [
+          120,
+          954,
+          210,
+          1150
+        ],
+        "end.e": [
+          429,
+          982,
+          567,
+          1140
+        ],
+        "end.s": [
+          774,
+          965,
+          865,
+          1137
+        ],
+        "end.w": [
+          1070,
+          982,
+          1209,
+          1140
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "sawmill-props-sheet.png",
+      "sha256": "3bdf881d3d3c818eb8d04ad751c30fd40f7918d3bf5c4cf74f4089b748240160",
+      "size": [
+        1254,
+        1254
+      ],
+      "columns": 4,
+      "rows": 4,
+      "boxes": {
+        "bench": [
+          56,
+          99,
+          277,
+          298
+        ],
+        "drive.closed": [
+          348,
+          81,
+          601,
+          272
+        ],
+        "drive.open": [
+          642,
+          69,
+          907,
+          272
+        ],
+        "load": [
+          959,
+          86,
+          1219,
+          271
+        ],
+        "niche.closed": [
+          58,
+          366,
+          277,
+          594
+        ],
+        "niche.open": [
+          346,
+          366,
+          592,
+          594
+        ],
+        "niche.empty": [
+          648,
+          366,
+          895,
+          594
+        ],
+        "tag": [
+          1030,
+          346,
+          1156,
+          598
+        ],
+        "crate": [
+          50,
+          663,
+          284,
+          910
+        ],
+        "note": [
+          373,
+          675,
+          581,
+          882
+        ],
+        "ledger": [
+          642,
+          690,
+          916,
+          882
+        ],
+        "tracks": [
+          957,
+          668,
+          1220,
+          902
+        ],
+        "woodRack": [
+          32,
+          983,
+          300,
+          1202
+        ],
+        "tools": [
+          346,
+          987,
+          600,
+          1192
+        ],
+        "sign": [
+          667,
+          957,
+          881,
+          1221
+        ],
+        "cloth": [
+          945,
+          985,
+          1224,
+          1195
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "sawmill-roofs-debris-sheet.png",
+      "sha256": "ba296510f7c8838e82c9cde6d8f84ee5a89bda0229bba76449d1c365ff1712c3",
+      "size": [
+        1312,
+        1199
+      ],
+      "columns": 2,
+      "rows": 2,
+      "boxes": {
+        "roof.store": [
+          25,
+          164,
+          635,
+          399
+        ],
+        "roof.hall": [
+          682,
+          164,
+          1292,
+          399
+        ],
+        "debris.light": [
+          230,
+          648,
+          426,
+          1136
+        ],
+        "debris.heavy": [
+          770,
+          648,
+          1188,
+          1156
+        ]
+      },
+      "nativeAlpha": true
+    },
+    {
+      "file": "sawmill-floors-sheet.png",
+      "sha256": "23afc3a9a37013a49919161940d3f08b583ec3d22b3e9372dca1ae7c7c403641",
+      "size": [
+        2172,
+        724
+      ],
+      "columns": 3,
+      "rows": 1,
+      "boxes": {
+        "courtyard": [
+          44,
+          27,
+          693,
+          680
+        ],
+        "room": [
+          763,
+          27,
+          1411,
+          680
+        ],
+        "hall": [
+          1480,
+          27,
+          2129,
+          680
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "processing": {
+    "alphaThreshold": 128,
+    "backgroundRemoval": false,
+    "filter": "nearest",
+    "floorEdgeBand": 4
+  }
+}

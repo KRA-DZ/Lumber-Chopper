@@ -1,6 +1,6 @@
 import { REGIONS } from "./regions.js";
 
-// Gameplay layout first; the dedicated modular art set will be chosen later.
+// Shared gameplay geometry; the selected workshop PNGs follow these bases.
 const region = REGIONS.find((r) => r.id === "1:1");
 const point = (x, y) => ({ x: region.cx + x, y: region.cy + y });
 const wall = (id, x0, y0, x1, y1) => ({

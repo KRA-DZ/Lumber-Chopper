@@ -80,9 +80,15 @@ export function renderStoryJournal(scene, list, route) {
         title = document.createElement("h4"),
         body = document.createElement("p");
       article.dataset.discovery = item.id;
-      if (item.id === "fortress-watch-token" && scene.assets.fortress) {
+      const icon =
+        item.id === "fortress-watch-token"
+          ? scene.assets.fortress?.tokenIcon
+          : item.id === "sawmill-shift-tag"
+            ? scene.assets.sawmill?.tagIcon
+            : null;
+      if (icon) {
         const image = document.createElement("img");
-        image.src = scene.assets.fortress.tokenIcon;
+        image.src = icon;
         image.alt = item.name;
         image.width = image.height = 64;
         image.style.imageRendering = "pixelated";

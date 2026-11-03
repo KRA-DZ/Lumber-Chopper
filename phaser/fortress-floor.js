@@ -1,5 +1,9 @@
 // Called only while baking terrain chunks, never while drawing a frame.
-export function createFortressFloorSampler(pack, locations = []) {
+export function createFortressFloorSampler(
+  pack,
+  locations = [],
+  roomKey = (r) => (r.name === "Архив" ? "archive" : "room"),
+) {
   if (!pack) return null;
   const layouts = locations
     .filter((l) => l.regionId === pack.manifest.regionId)
@@ -22,8 +26,7 @@ export function createFortressFloorSampler(pack, locations = []) {
           y - r.y,
           r.y + r.height - y,
         );
-        if (d >= 0 && (d >= 16 || hash % 16 < d))
-          key = r.name === "Архив" ? "archive" : "room";
+        if (d >= 0 && (d >= 16 || hash % 16 < d)) key = roomKey(r);
       }
       const ix = ((Math.floor(x / 2) % 64) + 64) % 64,
         iy = ((Math.floor(y / 2) % 64) + 64) % 64;

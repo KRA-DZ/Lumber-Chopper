@@ -1,6 +1,6 @@
 import { LAYERS } from "./layers.js";
 
-// Temporary assembly from approved log PNGs. No new textures or physics bodies.
+// Stream the two terrain piles; physics stays in the engine-independent model.
 export class ClearingView {
   constructor(scene) {
     this.scene = scene;
@@ -16,16 +16,28 @@ export class ClearingView {
       if (!c.clearing.available(d) || !s.nearView(d, view, 180)) continue;
       wanted.add(d.id);
       if (!this.objects.has(d.id)) {
-        const images = [-56, 0, 56].map((dy, i) =>
-          s
-            .addImage("log", d.x, d.y + dy)
-            .setOrigin(0.5)
-            .setDisplaySize(88, 32)
-            .setRotation(Math.PI / 2 + (i - 1) * 0.12)
-            .setInteractive()
-            .setData("debris", d.id),
-        );
-        if (d.maxHP > 6)
+        const images = s.assets.sawmill
+          ? [
+              s
+                .addImage(
+                  `sawmill.debris.${d.maxHP > 6 ? "heavy" : "light"}`,
+                  d.x,
+                  d.y,
+                  d.y + 80,
+                )
+                .setInteractive({ pixelPerfect: true })
+                .setData("debris", d.id),
+            ]
+          : [-56, 0, 56].map((dy, i) =>
+              s
+                .addImage("log", d.x, d.y + dy)
+                .setOrigin(0.5)
+                .setDisplaySize(88, 32)
+                .setRotation(Math.PI / 2 + (i - 1) * 0.12)
+                .setInteractive()
+                .setData("debris", d.id),
+            );
+        if (!s.assets.sawmill && d.maxHP > 6)
           images.push(
             s
               .addImage("log", d.x, d.y)

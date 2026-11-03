@@ -4,15 +4,22 @@ export const TERRAIN_TEXTURE_LIMIT = 24; // 1.5 MiB RGBA at 128², bounded reuse
 export class TerrainLayer {
   constructor(scene, model) {
     this.scene = scene;
+    const fortressFloor = createFortressFloorSampler(
+      scene.registry.get("fortressPack"),
+      model.locations,
+    );
+    const sawmillFloor = createFortressFloorSampler(
+      scene.registry.get("sawmillPack"),
+      model.locations,
+      (r) => (r.name === "Машинный зал" ? "hall" : "room"),
+    );
     this.source = createForestGround({
       ...model,
       materials: scene.registry.get("biomePack")?.materials,
       center: { x: 1600, y: 1600 },
       clearings: model.landmarks,
-      fortressFloor: createFortressFloorSampler(
-        scene.registry.get("fortressPack"),
-        model.locations,
-      ),
+      fortressFloor: (x, y, hash) =>
+        sawmillFloor?.(x, y, hash) || fortressFloor?.(x, y, hash),
     });
     this.images = new Map();
   }

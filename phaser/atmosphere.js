@@ -12,6 +12,7 @@ import { createWildlife } from "../game/wildlife.js";
 import { DAY_SECONDS, CENTER } from "../game/config.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
 import { fortressClueKey } from "./fortress-assets.js";
+import { sawmillClueKey } from "./sawmill-assets.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class Atmosphere {
@@ -86,7 +87,11 @@ export class Atmosphere {
     this.clues = this.clueData.map((c) => ({
       c,
       image: scene
-        .addImage(fortressClueKey(this.assets, c), c.x, c.y)
+        .addImage(
+          sawmillClueKey(this.assets, c) || fortressClueKey(this.assets, c),
+          c.x,
+          c.y,
+        )
         .setInteractive()
         .setData("clue", c),
     }));

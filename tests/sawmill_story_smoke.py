@@ -1,4 +1,4 @@
-"""Only the sawmill's notes, drive, hidden discovery and journal, with native input."""
+"""Only sawmill PNGs, roofs, debris, notes, drive, discovery and journal."""
 
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -67,7 +67,13 @@ try:
             q = ctx.new_page()
             q.set_default_timeout(60000)
             errors = []
-            q.on("pageerror", lambda e: errors.append(str(e)))
+            q.on(
+                "pageerror",
+                lambda e: (
+                    errors.append(str(e)),
+                    print("PAGE ERROR", str(e), flush=True),
+                ),
+            )
             q.goto(
                 f"http://127.0.0.1:{server.server_port}/"
                 + ("dist/" if mobile else "phaser.html")
@@ -92,10 +98,33 @@ try:
                 "mobile Canvas/dist" if mobile else "WebGL",
                 flush=True,
             )
+            assert q.evaluate(
+                "w.assets.sawmill.variant===1&&!w.textures.exists('sawmill.source')&&!w.textures.exists('sawmill.floors')&&w.textures.get('forest').getSourceImage().height<=2048"
+            )
+            # Same scaled PNG pixels must arrive in the common atlas unchanged.
+            assert q.evaluate(
+                """()=>{const pack=w.registry.get('sawmillPack');for(const key of ['wall.h.0','roof.store','bench','niche.closed','niche.open','niche.empty','debris.light']){const f=pack.manifest.frames[key],c=document.createElement('canvas');c.width=f.width;c.height=f.height;c.getContext('2d').drawImage(pack.image,f.x,f.y,f.width,f.height,0,0,f.width,f.height);const a=c.getContext('2d').getImageData(0,0,f.width,f.height).data,t=w.textures.getFrame('forest','sawmill.'+key),b=w.textures.get('forest').getSourceImage().getContext('2d').getImageData(t.cutX,t.cutY,t.cutWidth,t.cutHeight).data;if(a.length!==b.length||!a.every((v,i)=>v===b[i]))return false;}return true;}"""
+            )
+
+            focus(q, "({x:3536,y:3330})")
+            if not mobile:
+                assert q.evaluate(
+                    "[...w.regionView.locations.objects.values()].some(im=>im.frame.name==='sawmill.roof.store')"
+                )
+                q.locator("#game-frame").screenshot(
+                    path=str(ROOT / "docs/sawmill-art-yard.png")
+                )
 
             focus(q, f"e.get('{TAG}')")
             assert q.evaluate(
                 f"!w.regionView.locations.objects.has('{TAG}')&&!e.request('{TAG}')&&e.nearest()?.id!=='{TAG}'"
+            )
+            assert q.evaluate(
+                "w.regionView.locations.objects.get('abandoned-sawmill/niche-closed').frame.name==='sawmill.niche.closed'&&w.regionView.locations.objects.get('abandoned-sawmill/roof/Машинный зал').alpha<0.25"
+            )
+            # Floor sampling is periodic across the terrain chunk boundary.
+            assert q.evaluate(
+                """()=>{const x=3952,y=3200,cx=Math.floor(x/256),cy=Math.floor(y/256),pixel=w.terrain.source.getChunk(cx,cy).getContext('2d').getImageData((x-cx*256)/2,(y-cy*256)/2,1,1).data,data=w.registry.get('sawmillPack').floors.hall,i=(((y/2)%64)*64+(x/2)%64)*4;return pixel[0]===data[i]&&pixel[1]===data[i+1]&&pixel[2]===data[i+2];}"""
             )
             focus(q, f"e.get('{DRIVE}')")
             tap(q, f"e.get('{DRIVE}')", mobile)
@@ -144,9 +173,15 @@ try:
             close_activity(q)
             q.evaluate("g.step(0)")
             assert q.evaluate(f"w.regionView.locations.objects.has('{TAG}')")
+            assert q.evaluate(
+                "!w.regionView.locations.objects.has('abandoned-sawmill/niche-closed')&&w.regionView.locations.objects.get('sawmill-hand-drive').frame.name==='sawmill.drive.open'"
+            )
 
             focus(q, f"e.get('{TAG}')")
             if not mobile:
+                assert q.evaluate(
+                    "w.regionView.locations.objects.get('abandoned-sawmill/work-bench').alpha===0.35"
+                )
                 q.locator("#game-frame").screenshot(
                     path=str(ROOT / "docs/sawmill-cache.png")
                 )
@@ -159,10 +194,16 @@ try:
             assert q.evaluate(
                 f"!w.regionView.locations.objects.has('{TAG}')&&e.discoveries().length===1&&m.state.coins===0&&m.state.wood===0&&Object.keys(m.state.exploration.debrisHP).length===0&&m.state.story.phase===0"
             )
+            assert q.evaluate(
+                "w.regionView.locations.objects.get('abandoned-sawmill/niche-empty').frame.name==='sawmill.niche.empty'"
+            )
 
             q.locator("#journalButton").click()
             q.wait_for_function("document.querySelector('#journalDialog').open")
             entry = q.locator(f'[data-discovery="{TAG}"]')
+            q.wait_for_function(
+                "(()=>{const im=document.querySelector('[data-discovery=\"sawmill-shift-tag\"] img');return im?.complete&&im.naturalWidth===32})()"
+            )
             assert entry.count() == 1 and "Бирка седьмой смены" in entry.inner_text()
             assert "Ведомость пустых телег" in q.locator("[data-journal]").inner_text()
             if not mobile:
@@ -189,11 +230,32 @@ try:
             assert q.evaluate(
                 f"!w.regionView.locations.objects.has('{TAG}')&&e.discoveries().length===1"
             )
+            # The new single PNG pile keeps native chopping and finite ground stock.
+            focus(q, "(()=>{const d=m.clearing.all[0];return {x:d.x+48,y:d.y-42}})()")
+            assert q.evaluate(
+                "w.regionView.clearing.objects.get(m.clearing.all[0].id).images[0].frame.name==='sawmill.debris.light'"
+            )
+            tap(q, "m.clearing.all[0]", mobile)
+            assert q.evaluate("m.clearing.hp(m.clearing.all[0])===5")
+            q.evaluate(
+                "m.player.autoTimer=0;for(let i=0;i<120;i++)m.update(.05);g.step(0)"
+            )
+            assert q.evaluate(
+                "m.clearing.hp(m.clearing.all[0])===0&&m.state.wood===2&&m.forestry.piles.get(m.clearing.all[0].id).count===1&&!w.regionView.clearing.objects.has(m.clearing.all[0].id)"
+            )
             q.evaluate("window.old=m;w.scene.restart();void 0")
             q.wait_for_function("lumberPhaser.core!==old&&lumberPhaser.scene.hudReady")
             assert q.evaluate(
                 "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.exploration.discoveries().length===0&&lumberPhaser.core.state.readClues.length===0"
             )
+            if not mobile:
+                q.goto(
+                    f"http://127.0.0.1:{server.server_port}/phaser.html?art=procedural"
+                )
+                choose_hero(q)
+                assert q.evaluate(
+                    "!lumberPhaser.scene.assets.sawmill&&!lumberPhaser.scene.registry.has('sawmillPack')"
+                )
             assert not errors, errors
             print(
                 "PASS sawmill story",
