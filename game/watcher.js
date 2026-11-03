@@ -10,8 +10,9 @@ export const WATCHER = Object.freeze({
   senseInterval: 0.12,
   repathInterval: 0.55,
   attackRadius: 54,
+  attackReach: 96, // Contact tolerance while tracking; never hit across the map.
   strikeSeconds: 0.09,
-  recovery: 0.85,
+  recovery: 0.18,
   retreatMargin: 90,
 });
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -67,6 +68,13 @@ export function createWatcher({
     m.goal = p ? { x: p.x, y: p.y } : null;
     m.speed = speed;
   }
+  function trackVisible(m, speed) {
+    if (dist(m, player) > WATCHER.sight || !sight(m, player)) return;
+    m.seesPlayer = true;
+    m.lastKnown = { x: player.x, y: player.y };
+    m.lastSense = clock;
+    setGoal(m, m.lastKnown, speed);
+  }
   function tick(dt, m, speed) {
     clock += dt;
     m.phaseTime = (m.phaseTime || 0) + dt;
@@ -97,19 +105,26 @@ export function createWatcher({
     }
     if (m.phase === "strike") {
       if (m.phaseTime >= WATCHER.strikeSeconds) phase(m, "recover");
+      trackVisible(m, speed);
       return;
     }
     if (m.phase === "recover") {
       if (m.phaseTime >= WATCHER.recovery)
         phase(m, m.seesPlayer ? "chase" : "search");
-      else return;
+      else {
+        trackVisible(m, speed);
+        return;
+      }
     }
     if (m.phase === "windup") {
       m.windup = m.phaseTime;
+      m.attack.x = player.x;
+      m.attack.y = player.y;
+      trackVisible(m, speed);
       if (m.windup >= windupSeconds) {
         const area = { ...m.attack };
         const hit =
-          dist(player, area) <= area.radius &&
+          dist(m, player) <= WATCHER.attackReach &&
           sight(m, player) &&
           !isSafe(player);
         phase(m, "strike");
@@ -245,7 +260,7 @@ export function watcherThreat(core) {
     phase: m.phase,
     text:
       m.phase === "windup"
-        ? "Выйдите из красного круга!"
+        ? "Смотритель рядом · к укрытию или свету!"
         : `Смотритель · ${WATCHER_LABELS[m.phase] || "рядом"} · ${direction}`,
     color: m.phase === "windup" || m.phase === "strike" ? "#ffc0a8" : "#ead19f",
     direction,

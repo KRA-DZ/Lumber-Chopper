@@ -37,11 +37,11 @@ function fixture() {
     windupSeconds: SURVIVAL.monsterWindup,
   });
   function tick(seconds) {
-    for (let i = 0; i < Math.round(seconds * 20); i++)
-      ai.tick(0.05, m, SURVIVAL.monsterSpeed);
+    for (let i = 0; i < Math.round(seconds * 100); i++)
+      ai.tick(0.01, m, SURVIVAL.monsterSpeed);
   }
   function until(phase) {
-    for (let i = 0; i < 100 && m.phase !== phase; i++) tick(0.05);
+    for (let i = 0; i < 100 && m.phase !== phase; i++) tick(0.01);
     assert.equal(m.phase, phase);
   }
   return { player, m, result, ai, tick, until };
@@ -59,28 +59,102 @@ test("watcher notices the player at the new distance and pursues sooner at the n
   assert.deepEqual(f.m.goal, { x: f.player.x, y: f.player.y });
   assert.equal(f.result.health, 100);
 });
-test("detection pauses before chase; locked strike can be dodged and recovery cannot track or hit", () => {
+test("contact strike tracks the moving hero until impact and recovery keeps pursuing", () => {
   const f = fixture();
   f.until("notice");
   f.tick(WATCHER.notice / 2);
   assert.equal(f.m.phase, "notice");
   assert.equal(f.result.health, 100);
   f.until("windup");
-  const area = { ...f.m.attack };
-  f.player.x += 140;
+  f.player.x += 25;
   f.tick(SURVIVAL.monsterWindup / 2);
-  assert.deepEqual(f.m.attack, area);
-  assert.equal(f.m.goal, null);
+  assert.equal(f.m.attack.x, f.player.x);
+  assert.equal(f.m.attack.y, f.player.y);
+  assert.deepEqual(f.m.goal, { x: f.player.x, y: f.player.y });
+  assert.equal(f.result.health, 100);
+  f.until("strike");
+  assert.equal(f.result.health, 60);
+  assert.equal(
+    f.result.events.find(([t]) => t === "watcher-strike")[1].hit,
+    true,
+  );
+  assert.equal(
+    f.result.events.find(([t]) => t === "watcher-strike")[1].area.x,
+    f.player.x,
+  );
+  f.until("recover");
+  f.player.y += 20;
+  f.tick(WATCHER.recovery / 2);
+  assert.equal(f.m.phase, "recover");
+  assert.deepEqual(f.m.goal, { x: f.player.x, y: f.player.y });
+  assert.equal(f.result.health, 60);
+});
+test("tracking does not turn a contact strike into remote damage", () => {
+  const f = fixture();
+  f.until("windup");
+  f.player.x += 300;
   f.until("strike");
   assert.equal(f.result.health, 100);
   assert.equal(
     f.result.events.find(([t]) => t === "watcher-strike")[1].hit,
     false,
   );
-  f.until("recover");
-  f.tick(WATCHER.recovery / 2);
-  assert.equal(f.m.phase, "recover");
-  assert.equal(f.m.goal, null);
+});
+test("a clear pursuit route follows fresh footsteps without waiting for an A* slot", () => {
+  const g = createSimulation({ regional: true });
+  g.state.worldTime = 299.99;
+  g.update(0.02);
+  g.update(12.1);
+  for (const tree of g.world.trees)
+    if (Math.hypot(tree.x - 1600, tree.y - 2100) < 220) tree.hp = 0;
+  g.nav.rebuildObstacles();
+  Object.assign(g.player, { x: 1600, y: 2100, path: [], autoTimer: 1000 });
+  const m = g.survival.monster;
+  Object.assign(m, {
+    x: 1720,
+    y: 2100,
+    phase: "chase",
+    senseTimer: 0,
+    path: [],
+    repath: 100,
+  });
+  assert.ok(g.nav.clearSegment(m, g.player));
+  let searches = 0;
+  const find = g.nav.findPath;
+  g.nav.findPath = (...args) => {
+    searches++;
+    return find(...args);
+  };
+  g.update(0.01);
+  assert.ok(m.x < 1720);
+  g.player.y += 10;
+  g.update(0.13);
+  assert.deepEqual(m.path.at(-1), { x: g.player.x, y: g.player.y });
+  assert.ok(m.y > 2100);
+  assert.equal(searches, 0);
+});
+test("a caught hero cannot dodge the contact strike by continuing to run in open ground", () => {
+  const f = fixture();
+  f.until("windup");
+  const start = f.player.x;
+  for (let i = 0; i < 40 && !f.result.hits.length; i++) {
+    f.player.x -= 2; // The starting hero's 200 units/s.
+    f.tick(0.01);
+    if (f.m.goal) {
+      const dx = f.m.goal.x - f.m.x,
+        dy = f.m.goal.y - f.m.y;
+      const length = Math.hypot(dx, dy);
+      const step = Math.min(length, SURVIVAL.monsterSpeed * 0.01);
+      if (length) {
+        f.m.x += (dx / length) * step;
+        f.m.y += (dy / length) * step;
+      }
+    }
+  }
+  assert.ok(f.player.x < start);
+  assert.equal(f.result.health, 60);
+  assert.ok(SURVIVAL.monsterWindup <= 0.06);
+  assert.ok(WATCHER.recovery <= 0.18);
 });
 test("standing in three announced attacks is lethal; watcher remains unkillable", () => {
   const f = fixture();
@@ -96,7 +170,7 @@ test("standing in three announced attacks is lethal; watcher remains unkillable"
 test("entering camp light cancels a nearly completed strike immediately", () => {
   const f = fixture();
   f.until("windup");
-  f.tick(SURVIVAL.monsterWindup - 0.1);
+  f.tick(SURVIVAL.monsterWindup / 2);
   f.player.x = 1600;
   f.player.y = 1700;
   f.tick(0.05);
@@ -172,7 +246,7 @@ test("model pause freezes windup and noise; dawn clears all hazards", () => {
   assert.equal(g.survival.monster, null);
   assert.equal(g.state.health, 100);
 });
-test("threat directions and dodge instruction work without sound", () => {
+test("threat directions and cover instruction work without sound", () => {
   const g = createSimulation({ regional: true });
   g.state.worldTime = 299.99;
   g.update(0.02);
@@ -186,7 +260,7 @@ test("threat directions and dodge instruction work without sound", () => {
     phaseTime: 0.3,
   });
   assert.equal(watcherThreat(g).direction, "справа");
-  assert.match(watcherThreat(g).text, /круга/);
+  assert.match(watcherThreat(g).text, /укрытию|свету/);
   assert.equal(g.guide.id, "dodge");
 });
 

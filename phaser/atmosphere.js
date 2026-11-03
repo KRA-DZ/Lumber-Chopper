@@ -501,9 +501,9 @@ export class Atmosphere {
               (e.invulnerable
                 ? 150
                 : e.tier === "minion"
-                  ? 45
+                  ? 135
                   : e.tier === "boss"
-                    ? 94
+                    ? 141
                     : 82),
           );
         const strike = e.phase === "windup" || e.windup > 0;

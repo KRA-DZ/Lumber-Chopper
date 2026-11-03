@@ -82,8 +82,7 @@ export class EnemyView {
         };
         this.objects.set(e.id, o);
       }
-      const visible = s.nearView(e, s.camera.worldView, 250),
-        frame = e.moving ? Math.floor(c.elapsed * 5) % 2 : 0;
+      const frame = e.moving ? Math.floor(c.elapsed * 5) % 2 : 0;
       const role = RAIDER_ROLES[e.role] || RAIDER_ROLES.attacker;
       const small = e.tier === "minion";
       let key =
@@ -101,14 +100,25 @@ export class EnemyView {
         key = `enemy.${e.family}.${e.windup > 0 ? "attack" : frame ? "walk" : "idle"}`;
       s.assets.setFrame(o.image, key);
       o.image.setScale(
-        small ? 1.1 : e.tier === "boss" || e.role === "breaker" ? 2.25 : 2,
+        small
+          ? 3.3
+          : e.tier === "boss"
+            ? 3.375
+            : e.role === "breaker"
+              ? 2.25
+              : 2,
+      );
+      const visible = s.nearView(
+        e,
+        s.camera.worldView,
+        Math.max(250, o.image.displayHeight + 24),
       );
       if (e.flash > 0) o.image.setTintFill(0xffedc0);
       else o.image.clearTint();
       const selected = c.selectedEnemyId === e.id;
       if (selected && visible) {
         g.lineStyle(3, 0xffe5a2, 0.95).strokeEllipse(e.x, e.y, 48, 24);
-        const barY = e.y - (small ? 65 : 123);
+        const barY = e.y - (small ? 195 : e.tier === "boss" ? 185 : 123);
         g.fillStyle(0x302f29, 0.95)
           .fillRect(e.x - 26, barY, 52, 6)
           .fillStyle(role.color)
@@ -127,7 +137,13 @@ export class EnemyView {
         .setPosition(
           e.x,
           e.y -
-            (e.invulnerable ? 208 : small ? 76 : e.tier === "boss" ? 140 : 110),
+            (e.invulnerable
+              ? 208
+              : small
+                ? 228
+                : e.tier === "boss"
+                  ? 210
+                  : 110),
         )
         .setText(
           e.invulnerable

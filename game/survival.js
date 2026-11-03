@@ -6,7 +6,7 @@ import { CENTER, RAID_INTERVAL } from "./config.js";
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 190, // Near the starting hero's 200: little room to waste time while chased.
   monsterDamage: 40,
-  monsterWindup: 0.55, // More than twice as quick; still a locked, avoidable strike.
+  monsterWindup: 0.06, // Contact strike tracks the hero until impact; cover/light still protect.
   playerInvulnerability: 1.4,
   warningSeconds: 12,
   waveEvery: RAID_INTERVAL,
@@ -157,7 +157,7 @@ export function createSurvival({
     if (!state.health)
       defeat(
         source === "watcher"
-          ? "Смотритель настиг вас. Бегите к свету и выходите из круга удара."
+          ? "Смотритель настиг вас. Не подпускайте его близко: ищите укрытие или свет лагеря."
           : source === "minion"
             ? "Малые монстры настигли вас. Уклоняйтесь от снарядов и чините забор в дни налёта."
             : source === "resident"
@@ -291,7 +291,10 @@ export function createSurvival({
       if (actor.warning > 0) continue;
       if (actor.invulnerable) {
         if (actor.goal) {
-          if (actor === pathCandidate) {
+          // Refresh visible pursuit every step without spending the shared A* budget.
+          if (nav.clearSegment(actor, actor.goal)) {
+            actor.path = [{ ...actor.goal }];
+          } else if (actor === pathCandidate) {
             actor.path = nav.findPath(actor, actor.goal);
             actor.repath = WATCHER.repathInterval;
             pathCooldown = 0.25;
