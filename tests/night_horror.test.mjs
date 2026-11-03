@@ -89,7 +89,7 @@ test("all enemy windups and full attack cycles are at least twice as fast; pursu
   }
   assert.equal(SURVIVAL.waveEvery, 5);
   assert.equal(SURVIVAL.maxRaiders, 8);
-  assert.equal(BIOME_ENEMIES.hp, 40);
+  assert.equal(BIOME_ENEMIES.hp, 120);
   assert.equal(BIOME_ENEMIES.max, 6);
 });
 test("raiders actually strike on the shorter cadence, with movement out of range cancelling the windup", () => {
@@ -130,7 +130,7 @@ test("raiders actually strike on the shorter cadence, with movement out of range
     for (let i = 0; i < 260 && hits.length < 2; i++) {
       time += 0.01;
       // Survival owns cooldown ticking; this fixture calls the role AI directly.
-      actor.cooldown = Math.max(0,actor.cooldown-0.01);
+      actor.cooldown = Math.max(0, actor.cooldown - 0.01);
       ai.tick(actor, 0.01, false);
     }
     assert.equal(hits.length, 2);

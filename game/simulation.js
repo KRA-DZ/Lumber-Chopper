@@ -358,7 +358,7 @@ export function createSimulation({
       survival?.nightStarted(event);
       showNotice(
         event.night % SURVIVAL.waveEvery === 0 && survival
-          ? `Ночь ${event.night}: налёт! Вернитесь к лагерю. Смотритель неуязвим.`
+          ? `Ночь ${event.night}: налёт! Малые монстры идут за вами до лагеря. Чините забор и уклоняйтесь от снарядов.`
           : "Ночь. Смотритель ищет тех, кто покинул свет лагеря.",
         9,
       );
@@ -815,7 +815,9 @@ export function createSimulation({
       const point =
         target.kind === "clue"
           ? world.clues.find((c) => c.id === target.id)
-          : exploration?.get(target.id);
+          : target.kind === "location"
+            ? world.locations?.find((l) => l.id === target.id)?.entrance
+            : exploration?.get(target.id);
       if (!point) return false;
       if (!accessible(point)) {
         const region = regions.all.find(
@@ -840,7 +842,7 @@ export function createSimulation({
         return true;
       }
       if (target.kind === "site") return exploration.request(point.id);
-      navigateTo(point.x, point.y + 32);
+      navigateTo(point.x, point.y + (target.kind === "location" ? 0 : 32));
       return true;
     },
     readClue(id) {

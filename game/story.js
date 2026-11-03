@@ -1,4 +1,10 @@
 import { DAY_SECONDS } from "./config.js";
+import {
+  DISCOVERY_DIALOGUES,
+  discoveryOffers,
+  discoveryReply,
+  discoveryConnection,
+} from "./discovery-dialogue.js";
 
 export const STORY = Object.freeze({
   title: "Глава I · Чужой огонь",
@@ -60,7 +66,8 @@ const PAGES = Object.freeze({
 // Story follows durable gameplay facts; economic items are never reserved or consumed by it.
 export function createStory({ state, exploration, emit = () => {} }) {
   const data = state.story;
-  let revision = 0;
+  let revision = 0,
+    discoveryTopic = "";
   const read = (id) => state.readClues.includes(id);
   const identified = (e) => data.evidence[e.id] && read(e.note);
   function page(id) {
@@ -99,6 +106,7 @@ export function createStory({ state, exploration, emit = () => {} }) {
   function offers(site) {
     const rows = [];
     if (!site || exploration.get(site.id) !== site) return rows;
+    if (site.kind === "merchant") rows.push(...discoveryOffers(state));
     const add = (action, name, description, reason = "") =>
       rows.push({ action, name, description, enabled: !reason, reason });
     if (site.kind === "merchant" && data.phase === 2) {
@@ -160,6 +168,17 @@ export function createStory({ state, exploration, emit = () => {} }) {
       !exploration.near(site)
     )
       return false;
+    if (action.startsWith("story:find:")) {
+      const id = action.slice("story:find:".length);
+      if (!DISCOVERY_DIALOGUES.some((d) => d.id === id)) return false;
+      if (!state.exploration.discussedFinds.includes(id))
+        state.exploration.discussedFinds.push(id);
+      discoveryTopic = id;
+      revision++;
+      emit("story-dialogue", { siteId: site.id, text: conversation(site.id) });
+      return true;
+    }
+    discoveryTopic = "";
     if (action === "story:ask-watcher" || action === "story:ask-contract") {
       data.traderTopic = action.endsWith("watcher") ? "watcher" : "contract";
       page("interview");
@@ -183,6 +202,10 @@ export function createStory({ state, exploration, emit = () => {} }) {
     return true;
   }
   function conversation(id) {
+    if (id === "mysterious-merchant" && discoveryTopic)
+      return [discoveryReply(state, discoveryTopic), discoveryConnection(state)]
+        .filter(Boolean)
+        .join("\n\n");
     if (id === "camp-kitchen" && data.completed)
       return data.ending === "named"
         ? "Вы вписали своё имя. Рядом с подписью проступил второй почерк: «Мы помним». Свет лагеря остался прежним."

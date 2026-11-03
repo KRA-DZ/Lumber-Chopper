@@ -87,8 +87,12 @@ export function createSurvivalUi(scene) {
       });
       a.append(b);
     }
+    const groupedClues = new Set(
+      (c.world.locations || []).flatMap((l) => l.clues || []).map((n) => n.id),
+    );
     for (const clue of c.world.clues || [])
-      if (s.readClues.includes(clue.id)) append(clue.name, clue.text);
+      if (s.readClues.includes(clue.id) && !groupedClues.has(clue.id))
+        append(clue.name, clue.text);
     refreshBadge();
   }
   function open() {

@@ -1172,6 +1172,10 @@ export class WorldScene extends Phaser.Scene {
       this.enemyView?.strike(e.area);
       return;
     }
+    if (type === "minion-projectile-impact") {
+      this.enemyView?.strike(e);
+      return;
+    }
     if (type === "watcher-left") {
       this.audio?.watcherCue("dawn", 0, 0);
       return;

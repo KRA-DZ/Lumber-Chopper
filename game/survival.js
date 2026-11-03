@@ -1,4 +1,5 @@
 import { createBiomeEnemies } from "./biome-enemies.js";
+import { createMinions } from "./minions.js";
 import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
 import { createWatcher, WATCHER } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
@@ -42,6 +43,18 @@ export function createSurvival({
         regions,
         nav,
         isSafe,
+        hurtPlayer,
+        emit,
+      })
+    : null;
+  const minions = regions
+    ? createMinions({
+        state,
+        player,
+        regions,
+        nav,
+        isSafe,
+        defenses,
         hurtPlayer,
         emit,
       })
@@ -145,9 +158,11 @@ export function createSurvival({
       defeat(
         source === "watcher"
           ? "Смотритель настиг вас. Бегите к свету и выходите из круга удара."
-          : source === "resident"
-            ? "Ночной обитатель биома настиг вас. Вернитесь к свету или покиньте его территорию."
-            : "Налётчики настигли вас.",
+          : source === "minion"
+            ? "Малые монстры настигли вас. Уклоняйтесь от снарядов и чините забор в дни налёта."
+            : source === "resident"
+              ? "Ночной обитатель биома настиг вас. Вернитесь к свету или покиньте его территорию."
+              : "Налётчики настигли вас.",
       );
   }
   function finishWave() {
@@ -171,6 +186,8 @@ export function createSurvival({
     finishWave();
   }
   function hit(id, damage, knockback = true) {
+    if (minions?.actors.some((r) => r.id === id))
+      return minions.hit(id, damage, knockback);
     if (residents?.actors.some((r) => r.id === id))
       return residents.hit(id, damage, knockback);
     const target = raiders.find((r) => r.id === id);
@@ -217,6 +234,7 @@ export function createSurvival({
   function update(dt) {
     if (dt <= 0 || state.gameOver) return;
     residents?.update(dt);
+    if (!state.gameOver) minions?.update(dt);
     if (state.gameOver) return;
     hitCooldown = Math.max(0, hitCooldown - dt);
     pathCooldown = Math.max(0, pathCooldown - dt);
@@ -303,7 +321,19 @@ export function createSurvival({
     },
     raiders,
     get residents() {
+      return [...(residents?.actors || []), ...(minions?.actors || [])];
+    },
+    get regionalBosses() {
       return residents?.actors || [];
+    },
+    get minions() {
+      return minions?.actors || [];
+    },
+    get projectiles() {
+      return minions?.projectiles || [];
+    },
+    get minionHunt() {
+      return minions?.hunt || false;
     },
     get monster() {
       return monster;

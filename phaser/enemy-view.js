@@ -3,6 +3,7 @@ import { RAIDER_ROLES } from "../game/raiders.js";
 import { CENTER } from "../game/config.js";
 import { WATCHER_LABELS } from "../game/watcher.js";
 import { LAYERS } from "./layers.js";
+import { MINIONS } from "../game/minions.js";
 export class EnemyView {
   constructor(scene) {
     this.scene = scene;
@@ -83,7 +84,8 @@ export class EnemyView {
       }
       const visible = s.nearView(e, s.camera.worldView, 250),
         frame = e.moving ? Math.floor(c.elapsed * 5) % 2 : 0;
-      const role = RAIDER_ROLES[e.role || "attacker"];
+      const role = RAIDER_ROLES[e.role] || RAIDER_ROLES.attacker;
+      const small = e.tier === "minion";
       let key =
         e.kind === "raider" && e.role && e.role !== "attacker"
           ? `survival.raider.${e.role}${frame}`
@@ -98,16 +100,19 @@ export class EnemyView {
       if (e.kind === "resident")
         key = `enemy.${e.family}.${e.windup > 0 ? "attack" : frame ? "walk" : "idle"}`;
       s.assets.setFrame(o.image, key);
-      o.image.setScale(e.role === "breaker" ? 2.25 : 2);
+      o.image.setScale(
+        small ? 1.1 : e.tier === "boss" || e.role === "breaker" ? 2.25 : 2,
+      );
       if (e.flash > 0) o.image.setTintFill(0xffedc0);
       else o.image.clearTint();
       const selected = c.selectedEnemyId === e.id;
       if (selected && visible) {
         g.lineStyle(3, 0xffe5a2, 0.95).strokeEllipse(e.x, e.y, 48, 24);
+        const barY = e.y - (small ? 65 : 123);
         g.fillStyle(0x302f29, 0.95)
-          .fillRect(e.x - 26, e.y - 101, 52, 6)
+          .fillRect(e.x - 26, barY, 52, 6)
           .fillStyle(role.color)
-          .fillRect(e.x - 25, e.y - 100, (50 * e.hp) / e.maxHP, 4);
+          .fillRect(e.x - 25, barY + 1, (50 * e.hp) / e.maxHP, 4);
       }
       o.image
         .setPosition(Math.round(e.x / 2) * 2, Math.round(e.y / 2) * 2)
@@ -119,11 +124,15 @@ export class EnemyView {
         )
         .setVisible(visible);
       o.label
-        .setPosition(e.x, e.y - (e.invulnerable ? 208 : 110))
+        .setPosition(
+          e.x,
+          e.y -
+            (e.invulnerable ? 208 : small ? 76 : e.tier === "boss" ? 140 : 110),
+        )
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${e.kind === "resident" ? BIOMES[e.biome].creature : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · просыпается" : ""}${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`
@@ -157,14 +166,35 @@ export class EnemyView {
           )
           .strokePath();
       } else if (e.kind === "resident" && e.attack) {
-        g.fillStyle(0xb44834, 0.15).fillCircle(e.attack.x, e.attack.y, 54);
-        g.lineStyle(2, 0xf0a087, 0.9).strokeCircle(e.attack.x, e.attack.y, 54);
+        const radius = small
+          ? e.attack.kind === "throw"
+            ? MINIONS.blastRadius
+            : MINIONS.range
+          : 54;
+        g.fillStyle(0xb44834, 0.15).fillCircle(e.attack.x, e.attack.y, radius);
+        g.lineStyle(2, 0xf0a087, 0.9).strokeCircle(
+          e.attack.x,
+          e.attack.y,
+          radius,
+        );
       } else if (!e.invulnerable && e.windup > 0)
         g.lineStyle(3, 0xd56f62, 0.9).strokeCircle(
           e.x,
           e.y,
           20 + e.windup * 18,
         );
+    }
+    for (const shot of d.projectiles || []) {
+      const t = Math.min(1, shot.age / shot.duration);
+      if (!s.nearView(shot, s.camera.worldView, 160)) continue;
+      g.lineStyle(2, 0xe8ab79, 0.75).strokeCircle(shot.x, shot.y, shot.radius);
+      const x = shot.fromX + (shot.x - shot.fromX) * t;
+      const y =
+        shot.fromY + (shot.y - shot.fromY) * t - Math.sin(t * Math.PI) * 60;
+      g.fillStyle(0xf0bd75, 1)
+        .fillCircle(x, y, 5)
+        .lineStyle(1, 0x563f36, 1)
+        .strokeCircle(x, y, 5);
     }
     this.impacts = this.impacts.filter((e) => c.elapsed - e.time < 0.4);
     for (const e of this.impacts)

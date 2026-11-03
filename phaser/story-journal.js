@@ -1,3 +1,8 @@
+import {
+  locationJournalGroups,
+  discoveryReply,
+  discoveryConnection,
+} from "../game/discovery-dialogue.js";
 // Journal UI reads a snapshot; the model alone validates progress and pays rewards.
 export function renderStoryJournal(scene, list, route) {
   const story = scene.core.story;
@@ -69,6 +74,7 @@ export function renderStoryJournal(scene, list, route) {
     section.append(details);
   }
   list.append(section);
+  renderLocationJournal(scene, list, route);
   const discoveries = scene.core.exploration?.discoveries() || [];
   if (discoveries.length) {
     const finds = document.createElement("section"),
@@ -97,8 +103,64 @@ export function renderStoryJournal(scene, list, route) {
       title.textContent = item.name;
       body.textContent = item.text;
       article.append(title, body);
+      const reply = discoveryReply(scene.core.state, item.id);
+      if (reply) {
+        const details = document.createElement("details"),
+          summary = document.createElement("summary"),
+          text = document.createElement("p");
+        details.dataset.discoveryTalk = item.id;
+        summary.textContent = "Что сказал торговец";
+        text.textContent = reply;
+        details.append(summary, text);
+        article.append(details);
+      }
+      finds.append(article);
+    }
+    const connection = discoveryConnection(scene.core.state);
+    if (connection) {
+      const article = document.createElement("article"),
+        title = document.createElement("h4"),
+        body = document.createElement("p");
+      article.dataset.discoveryConnection = "true";
+      title.textContent = "Крепость и лесопилка";
+      body.textContent = connection;
+      article.append(title, body);
       finds.append(article);
     }
     list.append(finds);
+  }
+}
+
+function renderLocationJournal(scene, list, route) {
+  const groups = locationJournalGroups(scene.core);
+  if (!groups.length) return;
+  const heading = document.createElement("h3");
+  heading.textContent = "Места исследования";
+  list.append(heading);
+  for (const group of groups) {
+    const article = document.createElement("article"),
+      title = document.createElement("h4"),
+      summary = document.createElement("p"),
+      button = document.createElement("button");
+    article.className = "activity-card";
+    article.dataset.journalLocation = group.id;
+    title.textContent = group.name;
+    summary.textContent = `Записки: ${group.notes.length}/${group.totalNotes} · Находки: ${group.found}/${group.totalFinds}`;
+    button.type = "button";
+    button.dataset.locationRoute = group.id;
+    button.textContent = "Ко входу";
+    button.addEventListener("click", () => route(group.target));
+    article.append(title, summary, button);
+    for (const note of group.notes) {
+      const details = document.createElement("details"),
+        name = document.createElement("summary"),
+        text = document.createElement("p");
+      details.dataset.locationClue = note.id;
+      name.textContent = note.name;
+      text.textContent = note.text;
+      details.append(name, text);
+      article.append(details);
+    }
+    list.append(article);
   }
 }

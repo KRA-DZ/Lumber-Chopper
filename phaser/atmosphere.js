@@ -496,7 +496,16 @@ export class Atmosphere {
         ))
           continue;
         const x = snap(e.x),
-          y = snap(e.y - (e.invulnerable ? 150 : 82));
+          y = snap(
+            e.y -
+              (e.invulnerable
+                ? 150
+                : e.tier === "minion"
+                  ? 45
+                  : e.tier === "boss"
+                    ? 94
+                    : 82),
+          );
         const strike = e.phase === "windup" || e.windup > 0;
         eyes
           .fillStyle(strike ? 0xff7359 : 0xe5bd79, strike ? 0.95 : 0.65)

@@ -4,6 +4,7 @@ import { BIOMES } from "../game/biomes.js";
 import { REGIONS, regionAt } from "../game/regions.js";
 import { biomeWeights, sampleMaterial } from "../game/biome-terrain.js";
 import { createBiomeEnemies, BIOME_ENEMIES } from "../game/biome-enemies.js";
+import { MINIONS } from "../game/minions.js";
 import { createInitialState } from "../game/config.js";
 import { createSimulation } from "../game/simulation.js";
 const ids = {
@@ -117,7 +118,7 @@ test("every family spawns only at night in opened home territory, capped and awa
     assert.equal(f.model.actors.length, 0);
     f.state.worldTime = 301;
     f.step(0.05);
-    assert.equal(f.model.actors.length, 2);
+    assert.equal(f.model.actors.length, 1);
     for (const e of f.model.actors) {
       assert.equal(e.family, BIOMES[biome].enemy);
       assert.equal(regionAt(e.x, e.y).id, f.region.id);
@@ -169,8 +170,8 @@ test("defeated residents do not respawn until a new night or grant wave rewards"
   const f = fixture();
   f.step(4);
   const e = f.model.actors[0];
-  assert.ok(f.model.hit(e.id, 100));
-  assert.equal(f.model.hit(e.id, 100), false);
+  assert.ok(f.model.hit(e.id, BIOME_ENEMIES.hp));
+  assert.equal(f.model.hit(e.id, BIOME_ENEMIES.hp), false);
   f.step(10);
   assert.ok(!f.model.actors.some((a) => a.id === e.id));
   assert.equal(f.state.coins, 0);
@@ -179,7 +180,7 @@ test("defeated residents do not respawn until a new night or grant wave rewards"
   f.state.calendarDay++;
   f.state.worldTime = 301;
   f.step(0.05);
-  assert.equal(f.model.actors.length, 2);
+  assert.equal(f.model.actors.length, 1);
   f.state.gameOver = true;
   const snap = JSON.stringify(f.model.actors);
   f.step(3);
@@ -190,15 +191,15 @@ test("regional mini-bosses withstand repeated axe hits and retain damage between
     const f = fixture(biome);
     f.step(4);
     const e = f.model.actors[0];
-    assert.equal(e.maxHP, 40);
+    assert.equal(e.maxHP, 120);
     for (let i = 0; i < 4; i++) assert.ok(f.model.hit(e.id, 9, false));
-    assert.equal(e.hp, 4);
+    assert.equal(e.hp, 84);
     f.step(3);
     assert.ok(f.model.actors.includes(e));
-    assert.equal(e.hp, 4);
+    assert.equal(e.hp, 84);
     for (let i = 0; i < 3; i++) assert.ok(f.model.hit(e.id, 1, false));
-    assert.equal(e.hp, 1);
-    assert.ok(f.model.hit(e.id, 1, false));
+    assert.equal(e.hp, 81);
+    assert.ok(f.model.hit(e.id, 81, false));
     assert.ok(!f.model.actors.includes(e));
     assert.equal(
       f.events.filter(([type]) => type === "enemy-defeated").length,
@@ -220,7 +221,7 @@ test("local enemies are bounded separately from every-fifth-night camp waves; pa
   assert.equal(g.survival.raiders.length, 0);
   assert.ok(
     g.survival.residents.length > 0 &&
-      g.survival.residents.length <= BIOME_ENEMIES.max,
+      g.survival.residents.length <= BIOME_ENEMIES.max + MINIONS.max,
   );
   g.paused = true;
   const snap = JSON.stringify(g.survival.residents);
@@ -229,7 +230,8 @@ test("local enemies are bounded separately from every-fifth-night camp waves; pa
   g.paused = false;
   g.state.worldTime = 599.99;
   g.update(0.02);
-  assert.equal(g.survival.residents.length, 0);
+  assert.equal(g.survival.regionalBosses.length, 0);
+  assert.ok(g.survival.minions.length > 0);
 });
 
 test("player selection and guarded axe commands damage residents without contributing to a raid", () => {
@@ -250,14 +252,14 @@ test("player selection and guarded axe commands damage residents without contrib
   assert.ok(g.selectEnemy(enemy.id));
   g.player.path = [];
   const coins = g.state.coins;
-  g.state.axePower = 9; // Fully upgraded axe still needs five hits on a mini-boss.
+  g.state.axePower = 9; // The stronger boss now needs fourteen upgraded axe hits.
   assert.ok(g.tryAttack(enemy.id));
-  assert.equal(enemy.hp, 31);
+  assert.equal(enemy.hp, 111);
   assert.equal(g.tryAttack(enemy.id), false);
   g.paused = true;
   assert.equal(g.tryAttack(enemy.id), false);
   g.paused = false;
-  for (let i = 0; i < 12 && g.survival.residents.includes(enemy); i++) {
+  for (let i = 0; i < 20 && g.survival.residents.includes(enemy); i++) {
     g.update(0.2);
     g.tryAttack(enemy.id);
   }

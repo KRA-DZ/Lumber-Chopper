@@ -4,13 +4,15 @@ import { NIGHT_START } from "./cycle.js";
 import { regionAt } from "./regions.js";
 export const BIOME_ENEMIES = Object.freeze({
   max: 6,
-  perRegion: 2,
-  sense: 280,
+  perRegion: 1,
+  sense: 170,
   damage: 12,
-  hp: 40, // Regional mini-bosses: ten times the old health; waves have separate stats.
+  hp: 120, // Regional bosses: three times the previous HP; small monsters are separate.
   speed: 104,
-  windup: 0.5,
-  cooldown: 1,
+  windup: 0.22,
+  cooldown: 0.5,
+  hitStun: 0.04,
+  chaseRepath: 0.3,
   range: 54,
   pathInterval: 0.35,
   streamRange: 1350,
@@ -123,6 +125,7 @@ export function createBiomeEnemies({
           ...p,
           id,
           kind: "resident",
+          tier: "boss",
           region,
           regionId: region.id,
           biome: region.biome,
@@ -163,9 +166,8 @@ export function createBiomeEnemies({
       return false;
     e.hp = Math.max(0, e.hp - damage);
     e.flash = 0.16;
-    e.stun = 0.2;
-    e.windup = 0;
-    e.attack = null;
+    e.stun = BIOME_ENEMIES.hitStun;
+    // A hit no longer restarts a committed swing: rapid clicks cannot stun-lock a boss.
     e.path = [];
     e.repath = 0;
     if (knockback) {
@@ -219,9 +221,11 @@ export function createBiomeEnemies({
         distance(e, player) < BIOME_ENEMIES.sense &&
         nav.hasLineOfSight(e, player);
       if (e.attack) {
-        if (!aware) {
+        if (!aware || distance(player, e.attack) > BIOME_ENEMIES.range + 12) {
           e.attack = null;
           e.windup = 0;
+          e.repath = 0;
+          e.path = [];
         } else {
           e.windup += dt;
           if (e.windup >= BIOME_ENEMIES.windup) {
@@ -264,7 +268,7 @@ export function createBiomeEnemies({
       if (e.pathVersion !== nav.version) e.path = [];
       if (e.repath <= 0 && pathBudget <= 0 && inside(goal, e.region)) {
         destination(e, goal);
-        e.repath = aware ? 1 : 3;
+        e.repath = aware ? BIOME_ENEMIES.chaseRepath : 3;
         pathBudget = BIOME_ENEMIES.pathInterval;
         cursor = (first + i + 1) % Math.max(1, actors.length);
       }
