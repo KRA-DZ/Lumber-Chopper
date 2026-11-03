@@ -142,6 +142,7 @@ export function createRegionWorld(regions) {
     FORTRESS.clues.find((c) => c.id === diary.id),
   );
   clues.push(...FORTRESS.clues.filter((c) => c.id !== diary.id));
+  clues.push(...SAWMILL.clues);
   function inWater(x, y) {
     const dx = (x - pond.x) / pond.rx,
       dy = (y - pond.y) / pond.ry;

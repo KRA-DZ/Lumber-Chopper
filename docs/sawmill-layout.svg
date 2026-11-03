@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1408" height="1312" viewBox="0 0 1408 1312">
+<svg xmlns="http://www.w3.org/2000/svg" width="1408" height="1456" viewBox="0 0 1408 1456">
 <title>Заброшенная лесопилка — план проходов</title>
 <desc>Склад на западе, двор в середине, машинный зал на востоке. Южные обходы открыты сразу. Два завала перекрывают короткие проходы.</desc>
-<rect width="1408" height="1312" fill="#192b25"/>
+<rect width="1408" height="1456" fill="#192b25"/>
 <g font-family="sans-serif" fill="#ecd9af">
 <text x="64" y="48" font-size="28">Заброшенная лесопилка · прототип маршрутов</text>
 <text x="64" y="82" font-size="19">1280 × 1024 · юго-восточный регион · стартовый топор подходит для обоих завалов</text>
@@ -32,10 +32,31 @@
 <path d="M3744,3264L3744,3424" stroke="#e7ad62" stroke-width="28" stroke-linecap="round" stroke-dasharray="14 10"/>
 <circle cx="3744" cy="3344" r="23" fill="#e7ad62"/>
 <text x="3744" y="3352" text-anchor="middle" fill="#192b25" font-size="24">2</text>
+<circle cx="3520" cy="3904" r="20" fill="#afc7a1" stroke="#192b25" stroke-width="3"/>
+<text x="3520" y="3911" text-anchor="middle" fill="#192b25" font-size="21">3</text>
+<circle cx="3024" cy="3120" r="20" fill="#afc7a1" stroke="#192b25" stroke-width="3"/>
+<text x="3024" y="3127" text-anchor="middle" fill="#192b25" font-size="21">4</text>
+<circle cx="4000" cy="3808" r="20" fill="#afc7a1" stroke="#192b25" stroke-width="3"/>
+<text x="4000" y="3815" text-anchor="middle" fill="#192b25" font-size="21">5</text>
+<circle cx="3552" cy="3712" r="20" fill="#d8c080" stroke="#192b25" stroke-width="3"/>
+<text x="3552" y="3719" text-anchor="middle" fill="#192b25" font-size="21">6</text>
+<circle cx="3008" cy="3776" r="20" fill="#d8c080" stroke="#192b25" stroke-width="3"/>
+<text x="3008" y="3783" text-anchor="middle" fill="#192b25" font-size="21">7</text>
+<circle cx="3824" cy="3232" r="20" fill="#d8c080" stroke="#192b25" stroke-width="3"/>
+<text x="3824" y="3239" text-anchor="middle" fill="#192b25" font-size="21">8</text>
+<circle cx="4000" cy="3200" r="20" fill="#d8c080" stroke="#192b25" stroke-width="3"/>
+<text x="4000" y="3207" text-anchor="middle" fill="#192b25" font-size="21">9</text>
 <path d="M3420,3344L3420,3824L3104,3824L3104,3344 M3660,3344L3660,3856L3824,3856L3824,3344" stroke="#97bba4" stroke-width="8" stroke-dasharray="12 10" fill="none"/>
 <text x="3520" y="4000" font-size="24" text-anchor="middle">↑ Вход</text>
 </g>
 <text x="64" y="1194" font-size="21">1. Упавшие балки: 6 HP → 3 бревна.     2. Тяжёлый завал: 24 HP → 6 брёвен.</text>
 <text x="64" y="1234" font-size="20">Зелёный пунктир: доступные обходы. Оранжевый: расчищаемые короткие пути.</text>
 <text x="64" y="1274" font-size="18">Награды одноразовые. Полный рюкзак не мешает расчистке — остаток древесины ждёт на земле.</text>
+<text x="64" y="1320" font-size="18">3. Распоряжение последней смене</text>
+<text x="714" y="1320" font-size="18">4. Ведомость пустых телег</text>
+<text x="64" y="1350" font-size="18">5. Памятка остановленного станка</text>
+<text x="714" y="1350" font-size="18">6. Невывезенная партия</text>
+<text x="64" y="1380" font-size="18">7. Ящик с перечёркнутыми именами</text>
+<text x="714" y="1380" font-size="18">8. Ручной привод станка</text>
+<text x="64" y="1410" font-size="18">9. Ниша седьмой смены</text>
 </g></svg>

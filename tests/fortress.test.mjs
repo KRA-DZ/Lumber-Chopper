@@ -261,7 +261,9 @@ test("the watch token is a unique journal discovery, not sellable loot or repeat
 test("environmental scenes are reachable, describe the retreat and never give money or safe light", () => {
   const g = create();
   Object.assign(g.player, FORTRESS.entrance);
-  const sites = g.exploration.sites.filter((p) => p.kind === "inspect");
+  const sites = g.exploration.sites.filter(
+    (p) => p.kind === "inspect" && p.regionId === FORTRESS.regionId,
+  );
   assert.equal(sites.length, 3);
   const before = JSON.stringify({
     coins: g.state.coins,

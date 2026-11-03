@@ -429,12 +429,30 @@ export function createExploration({
         ? "Смола получена"
         : "Смола у корней";
     if (s.some((s) => s.kind === "merchant")) return "Ключи, удочка, мазь";
-    const debris = world.locations.find((l) => l.regionId === regionId)?.debris;
-    if (debris?.length)
-      return `Завалы: ${debris.filter((d) => data.debrisHP[d.id] === 0).length}/${debris.length} расчищено`;
+    const location = world.locations.find((l) => l.regionId === regionId),
+      debris = location?.debris;
+    if (debris?.length) {
+      const notes = location.clues || [],
+        finds = s.filter((site) => site.kind === "discovery");
+      return [
+        `Завалы: ${debris.filter((d) => data.debrisHP[d.id] === 0).length}/${debris.length} расчищено`,
+        ...(notes.length
+          ? [
+              `Записки: ${notes.filter((n) => state.readClues.includes(n.id)).length}/${notes.length}`,
+            ]
+          : []),
+        ...(finds.length
+          ? [
+              `Находки: ${finds.filter((f) => data.discoveries.includes(f.id)).length}/${finds.length}`,
+            ]
+          : []),
+      ].join(" · ");
+    }
     return "Открыто";
   }
   function regionDestination(region) {
+    const location = world.locations.find((l) => l.regionId === region.id);
+    if (location?.routeToEntrance) return location.entrance;
     const list = sites.filter(
       (s) => s.regionId === region.id && s.kind !== "kitchen",
     );

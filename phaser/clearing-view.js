@@ -36,7 +36,7 @@ export class ClearingView {
               .setData("debris", d.id),
           );
         const label = s.text("", d.x, d.y - 112, 12, "#ffe4ae", LAYERS.hints);
-        label.setInteractive().setData("debris", d.id);
+        // Floating hints may cover nearby props; only the actual beams accept taps.
         this.objects.set(d.id, { images, label });
       }
       const { label } = this.objects.get(d.id);
