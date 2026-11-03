@@ -14,7 +14,7 @@ export const SURVIVAL = Object.freeze({
   repairPerLog: 20,
 });
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-// Engine-independent night director. At most one path search per update, bounded actors.
+// Engine-independent night director; each bounded enemy group shares a path-search budget.
 export function createSurvival({
   state,
   player,

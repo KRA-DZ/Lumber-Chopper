@@ -429,6 +429,7 @@ export function createSimulation({
       !canAct() ||
       !["auto", "active"].includes(mode) ||
       !enemy ||
+      enemy.warning > 0 ||
       distance(player, enemy) >= 72 ||
       player[timer] > 0 ||
       !nav.clearSegment(player, enemy)

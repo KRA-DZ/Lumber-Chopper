@@ -203,6 +203,10 @@ test("the same purchased axe damage and cadence apply to small monsters; pause a
   assert.ok(g.purchaseUpgrade("axe"));
   assert.equal(g.state.axePower, 2);
   assert.ok(g.state.autoInterval < initial);
+  enemy.warning = 1;
+  assert.equal(g.tryAttack(enemy.id), false);
+  assert.equal(g.player.clickTimer, 0);
+  enemy.warning = 0;
   assert.ok(g.tryAttack(enemy.id));
   assert.equal(enemy.hp, 4);
   assert.equal(g.tryAttack(enemy.id), false);

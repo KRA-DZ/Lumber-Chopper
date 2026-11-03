@@ -83,10 +83,10 @@ try:
                     "m.state.worldTime=299.99;m.update(.02);m.update(3.2);g.step(0)"
                 )
                 assert q.evaluate(
-                    "m.survival.residents.some(e=>e.regionId===r.id)&&m.survival.residents.length<=6"
+                    "m.survival.regionalBosses.some(e=>e.regionId===r.id)&&m.survival.regionalBosses.length<=6&&m.survival.minions.length<=12"
                 )
                 q.evaluate(
-                    "window.local=m.survival.residents.find(e=>e.regionId===r.id);Object.assign(m.player,m.nav.nearestGround(local.x,local.y+120),{path:[]});g.step(0)"
+                    "window.local=m.survival.regionalBosses.find(e=>e.regionId===r.id);Object.assign(m.player,m.nav.nearestGround(local.x,local.y+120),{path:[]});g.step(0)"
                 )
                 assert q.evaluate(
                     "w.enemyView.objects.get(local.id).image.frame.name.startsWith('enemy.')"
@@ -106,13 +106,15 @@ try:
                 q.wait_for_function("!m.paused")
                 # Damage is routed through the same economic/combat command; no wave reward.
                 coins = q.evaluate("m.state.coins")
-                q.evaluate("m.survival.hit(local.id,100);g.step(0)")
+                q.evaluate("m.survival.hit(local.id,local.maxHP);g.step(0)")
                 assert q.evaluate(
                     "!m.survival.residents.some(e=>e.id===local.id)&&!w.enemyView.objects.has(local.id)"
                 )
                 assert q.evaluate("m.state.coins") == coins
                 q.evaluate("m.state.worldTime=599.99;m.update(.02);g.step(0)")
-                assert q.evaluate("m.survival.residents.length===0")
+                assert q.evaluate(
+                    "m.survival.regionalBosses.length===0&&m.survival.minions.length>0"
+                )
             assert q.evaluate(
                 "g.game.textures.get('forest').source[0].width===2048&&g.game.textures.get('forest').source[0].height===2048"
             )
