@@ -222,6 +222,10 @@
       object-fit: contain;
       image-rendering: pixelated;
     }
+    .loot-item-icon { object-fit: contain; image-rendering: pixelated; vertical-align: middle; margin-right: 8px; }
+    [data-bag-item] { display: flex; align-items: center; min-height: 38px; gap: 6px; }
+    [data-bag-item].no-item-icon::before { content: ""; width: 32px; height: 32px; margin-right: 8px; flex: none; }
+    button, summary { -webkit-tap-highlight-color: transparent; }
     dialog button {
       flex: none;
     }

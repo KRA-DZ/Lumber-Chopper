@@ -63,7 +63,7 @@ try:
                 tap(q, body(q, "small"), mobile)
                 q.evaluate("g.step(m.survival.minions.some(e=>e.id===small.id)?.2:0)")
             assert q.evaluate("!m.survival.minions.some(e=>e.id===small.id)&&m.combatLoot.piles.size===1&&m.state.coins===0")
-            assert q.evaluate("w.combatLootView.objects.size===1&&[...w.combatLootView.objects.values()][0].image.frame.name==='loot.sack'&&w.textures.get('forest').getSourceImage().height<=2048")
+            assert q.evaluate("w.combatLootView.objects.size===1&&[...w.combatLootView.objects.values()][0].image.frame.name==='loot.coins'&&w.textures.get('forest').getSourceImage().height<=2048")
             if not mobile:
                 q.locator("#game-frame").screenshot(path=str(ROOT / "docs/combat-loot-ground.png"))
             q.locator("#shopButton").click()

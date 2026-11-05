@@ -9,6 +9,7 @@ export function createShop(
     purchase = (id) => buyUpgrade(state, id),
     recommendation = () => null,
     iconFor = () => null,
+    currencyIcon = null,
   },
 ) {
   const dialog = document.querySelector("#shopDialog"),
@@ -16,6 +17,13 @@ export function createShop(
     items = dialog.querySelector("[data-items]"),
     message = dialog.querySelector("[data-message]");
   const lootInfo = document.createElement("p");
+  const moneyIcon = currencyIcon ? document.createElement("img") : null;
+  if (moneyIcon) {
+    moneyIcon.src = currencyIcon;
+    moneyIcon.alt = "";
+    moneyIcon.width = moneyIcon.height = 24;
+    moneyIcon.className = "loot-item-icon";
+  }
   lootInfo.dataset.combatProgress = "";
   items.before(lootInfo);
   items.replaceChildren();
@@ -57,6 +65,7 @@ export function createShop(
   }
   function refresh() {
     balance.textContent = `Монеты: ${state.coins}`;
+    if (moneyIcon) balance.prepend(moneyIcon);
     const loot = state.combatLoot,
       affordable = affordableCombatUpgrades(state);
     lootInfo.hidden = !loot || !(loot.coinsCollected || loot.resinCollected);

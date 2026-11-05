@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "approvedVariant": 3,
+  "atlas": "items.png",
+  "size": [
+    128,
+    128
+  ],
+  "sources": [
+    {
+      "file": "loot-items-selected-3-sheet.png",
+      "sha256": "b1b59d75cdad3980ea3e32c65998dde7f05b403645bf553a4523d5444a3ff483",
+      "size": [
+        1536,
+        1024
+      ],
+      "columns": 4,
+      "rows": 2,
+      "boxes": {
+        "coins": [
+          54,
+          155,
+          342,
+          420
+        ],
+        "resin": [
+          415,
+          163,
+          752,
+          424
+        ],
+        "key": [
+          826,
+          126,
+          1084,
+          439
+        ],
+        "salve": [
+          1192,
+          155,
+          1493,
+          428
+        ],
+        "relic": [
+          54,
+          604,
+          333,
+          892
+        ],
+        "rod": [
+          409,
+          575,
+          749,
+          901
+        ],
+        "bobber": [
+          869,
+          596,
+          1043,
+          892
+        ]
+      },
+      "nativeAlpha": true
+    }
+  ],
+  "frames": {
+    "rod": {
+      "x": 2,
+      "y": 2,
+      "width": 56,
+      "height": 68,
+      "anchor": [
+        39,
+        58
+      ],
+      "tip": [
+        5,
+        9
+      ]
+    },
+    "key": {
+      "x": 60,
+      "y": 2,
+      "width": 24,
+      "height": 32,
+      "anchor": [
+        12,
+        30
+      ]
+    },
+    "relic": {
+      "x": 86,
+      "y": 2,
+      "width": 28,
+      "height": 32,
+      "anchor": [
+        14,
+        30
+      ]
+    },
+    "resin": {
+      "x": 2,
+      "y": 72,
+      "width": 28,
+      "height": 28,
+      "anchor": [
+        14,
+        26
+      ]
+    },
+    "salve": {
+      "x": 32,
+      "y": 72,
+      "width": 26,
+      "height": 28,
+      "anchor": [
+        13,
+        26
+      ]
+    },
+    "coins": {
+      "x": 60,
+      "y": 72,
+      "width": 28,
+      "height": 24,
+      "anchor": [
+        14,
+        22
+      ]
+    },
+    "bobber": {
+      "x": 90,
+      "y": 72,
+      "width": 14,
+      "height": 24,
+      "anchor": [
+        7,
+        22
+      ]
+    }
+  },
+  "processing": {
+    "nativeAlpha": true,
+    "alphaThreshold": 128,
+    "filter": "nearest",
+    "whiteColorRemoval": false
+  }
+}

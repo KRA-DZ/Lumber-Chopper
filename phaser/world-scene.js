@@ -27,6 +27,7 @@ import { createWorldDressing } from "../world.js";
 import { bakeConstruction } from "./construction-view.js";
 import { campDamageState } from "./camp-assets.js";
 import { itemShopIcon } from "./item-assets.js";
+import { lootItemIcon } from "./loot-item-assets.js";
 import { Atmosphere } from "./atmosphere.js";
 import { createForestAudio } from "./forest-audio.js";
 import { growthStage } from "../forestry.js";
@@ -556,6 +557,7 @@ export class WorldScene extends Phaser.Scene {
   }
   bindDialogs() {
     this.shop = createShop(this.core.state, {
+      currencyIcon: lootItemIcon("coins"),
       iconFor: this.assets.items ? itemShopIcon : undefined,
       onOpen: () => this.pause("shop", true),
       purchase: (id) => this.core.purchaseUpgrade(id),
@@ -1148,6 +1150,7 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (type === "combat-loot-collected") {
+      this.combatLootView?.collected(e);
       this.float(
         [e.coins ? `+${e.coins} монет` : "", e.resin ? `+${e.resin} смола` : ""]
           .filter(Boolean)
@@ -1160,7 +1163,7 @@ export class WorldScene extends Phaser.Scene {
     }
     if (type === "combat-loot-dropped" && e.boss) {
       this.core?.showNotice(
-        `Региональный босс побеждён! Подберите мешочек: ${COMBAT_LOOT.bossCoins} монет и смола.`,
+        `Региональный босс побеждён! На земле: ${COMBAT_LOOT.bossCoins} монет и смола.`,
         6,
       );
       return;
@@ -1389,6 +1392,7 @@ export class WorldScene extends Phaser.Scene {
   }
   cleanup() {
     this.gameMenu?.destroy();
+    this.combatLootView?.destroy();
     this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);
     this.game.events.off(Phaser.Core.Events.FOCUS, this.onFocus, this);
     this.game.events.off(Phaser.Core.Events.HIDDEN, this.onHidden, this);

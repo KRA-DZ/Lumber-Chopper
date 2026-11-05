@@ -2,6 +2,7 @@ import { preloadPeople, retainPeople } from "./people-assets.js";
 import { preloadTrees, retainTrees } from "./tree-assets.js";
 import { preloadCamp, retainCamp } from "./camp-assets.js";
 import { preloadItems, retainItems } from "./item-assets.js";
+import { preloadLootItems, retainLootItems } from "./loot-item-assets.js";
 import { preloadDecor, retainDecor } from "./decor-assets.js";
 import { preloadFortress, retainFortress } from "./fortress-assets.js";
 import { preloadSawmill, retainSawmill } from "./sawmill-assets.js";
@@ -22,6 +23,7 @@ class BootScene extends Phaser.Scene {
     preloadTrees(this);
     preloadCamp(this);
     preloadItems(this);
+    preloadLootItems(this);
     preloadDecor(this);
     preloadFortress(this);
     preloadSawmill(this);
@@ -35,6 +37,7 @@ class BootScene extends Phaser.Scene {
     retainTrees(this);
     retainCamp(this);
     retainItems(this);
+    retainLootItems(this);
     retainDecor(this);
     retainFortress(this);
     retainSawmill(this);

@@ -1,4 +1,5 @@
 import { ITEMS, EXPLORATION } from "../game/exploration.js";
+import { prependLootIcon } from "./loot-item-assets.js";
 
 export function createExplorationUi(scene) {
   const dialog = document.querySelector("#activityDialog"),
@@ -78,6 +79,18 @@ export function createExplorationUi(scene) {
           row,
         );
         b.dataset.activityAction = offer.action;
+        prependLootIcon(
+          b,
+          {
+            "buy-key": "key",
+            "buy-rod": "rod",
+            "buy-salve": "salve",
+            "sell-relic": "relic",
+            "offer-logs": "resin",
+            "open-chest": "key",
+            fish: "rod",
+          }[offer.action],
+        );
         b.disabled = !offer.enabled;
         if (offer.reason) paragraph(offer.reason, row);
         content.append(row);
@@ -92,9 +105,11 @@ export function createExplorationUi(scene) {
         const li = document.createElement("li");
         li.dataset.bagItem = id;
         li.textContent = `${item.name}: ${d.items[id]}/${item.limit}`;
+        if (!prependLootIcon(li, id, 32)) li.classList.add("no-item-icon");
         list.append(li);
       }
       content.append(list);
+      if (d.rod) prependLootIcon(paragraph("Снасти: удочка"), "rod", 32);
       const evidence = scene.core.story?.evidence.filter((e) => e.found) || [];
       if (evidence.length)
         paragraph(
@@ -114,6 +129,7 @@ export function createExplorationUi(scene) {
         },
       );
       heal.dataset.useItem = "salve";
+      prependLootIcon(heal, "salve");
       heal.disabled = !d.items.salve || s.health >= s.maxHealth;
       paragraph(`Здоровье: ${s.health}/${s.maxHealth}`);
       const heading = document.createElement("h3");

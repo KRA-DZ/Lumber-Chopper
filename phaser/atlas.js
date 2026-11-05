@@ -2,6 +2,7 @@ import { applyPeopleFrames } from "./people-assets.js";
 import { applyTreeArt } from "./tree-assets.js";
 import { applyCampArt, applyCampFrames } from "./camp-assets.js";
 import { applyItemArt } from "./item-assets.js";
+import { applyLootItemFrames } from "./loot-item-assets.js";
 import { applyDecorArt, applyDecorFrames } from "./decor-assets.js";
 import { applyFortressFrames } from "./fortress-assets.js";
 import { applySawmillFrames } from "./sawmill-assets.js";
@@ -136,6 +137,7 @@ export function createAtlas(scene) {
   applyDecorFrames(decor, sources);
   const fortress = applyFortressFrames(scene, sources);
   const sawmill = applySawmillFrames(scene, sources);
+  const lootItems = applyLootItemFrames(scene, sources);
   let x = 2,
     y = 2,
     row = 0;
@@ -255,5 +257,6 @@ export function createAtlas(scene) {
     decor,
     fortress,
     sawmill,
+    lootItems,
   };
 }
