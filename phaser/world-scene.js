@@ -9,6 +9,8 @@ import { BuyerView } from "./buyer-view.js";
 import { DefenseView } from "./defense-view.js";
 import { createDefenseUi } from "./defense-ui.js";
 import { EnemyView } from "./enemy-view.js";
+import { CombatLootView } from "./combat-loot-view.js";
+import { affordableCombatUpgrades, COMBAT_LOOT } from "../game/combat-loot.js";
 import { createSurvivalUi } from "./survival-ui.js";
 import { stackOffset } from "../game/stack-layout.js";
 import { LAYERS } from "./layers.js";
@@ -101,6 +103,7 @@ export class WorldScene extends Phaser.Scene {
     this.cargo = this.stackView.logs;
     this.buyerView = new BuyerView(this);
     this.enemyView = new EnemyView(this);
+    this.combatLootView = new CombatLootView(this);
     this.defenseView = new DefenseView(this);
     this.explorationView = new ExplorationView(this);
     this.workerView = new WorkerView(this);
@@ -730,6 +733,7 @@ export class WorldScene extends Phaser.Scene {
     this.heroView.render();
     this.stackView.render();
     this.enemyView.render();
+    this.combatLootView.render();
     this.syncTrees();
     this.syncBuyers();
     this.syncPiles();
@@ -791,7 +795,7 @@ export class WorldScene extends Phaser.Scene {
       document.querySelector("#wood").textContent = `${s.wood} / ${s.maxWood}`;
       document.querySelector("#coins").textContent = s.coins;
       document.querySelector("#shopButton").textContent =
-        `Лавка · ${s.coins} монет`;
+        `Лавка · ${s.coins} монет${affordableCombatUpgrades(s).length ? " · доступно улучшение" : ""}`;
       document.querySelector("#campInfo").textContent = c.regions
         ? `Лагерь ${s.campLevel}/4 · Регионы ${s.unlockedRegions.length}/25`
         : `Лагерь ${s.campLevel}/4 · Радиус леса: ${c.forestRadius()}`;
@@ -1133,6 +1137,31 @@ export class WorldScene extends Phaser.Scene {
       this.core?.showNotice(text, 9);
       if (e.reward)
         this.float(`+${e.reward} монет`, CENTER.x, CENTER.y - 90, "#ffe296");
+      return;
+    }
+    if (type === "combat-loot-collected") {
+      this.float(
+        [e.coins ? `+${e.coins} монет` : "", e.resin ? `+${e.resin} смола` : ""]
+          .filter(Boolean)
+          .join(" · "),
+        e.x,
+        e.y - 45,
+        "#f3d797",
+      );
+      return;
+    }
+    if (type === "combat-loot-dropped" && e.boss) {
+      this.core?.showNotice(
+        `Региональный босс побеждён! Подберите мешочек: ${COMBAT_LOOT.bossCoins} монет и смола.`,
+        6,
+      );
+      return;
+    }
+    if (type === "combat-loot-limit") {
+      this.core?.showNotice(
+        "Сегодня добыча малых врагов исчерпана. Она обновится на рассвете; древесина остаётся основным заработком.",
+        6,
+      );
       return;
     }
     if (type === "supplies-stolen" || type === "supplies-recovered") {

@@ -168,7 +168,13 @@ export function createMinions({
     if (!e.hp) {
       defeated.add(id);
       actors.splice(actors.indexOf(e), 1);
-      emit("enemy-defeated", { id, kind: "minion", x: e.x, y: e.y });
+      emit("enemy-defeated", {
+        id,
+        kind: "minion",
+        regionId: e.regionId,
+        x: e.x,
+        y: e.y,
+      });
     }
     return true;
   }

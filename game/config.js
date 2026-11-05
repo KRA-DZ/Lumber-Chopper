@@ -67,6 +67,12 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     wood: 0,
     maxWood: 2, // На старте две руки; сила переноски добавляет по два бревна.
     coins: 0,
+    combatLoot: {
+      smallCoins: 0,
+      smallResin: 0,
+      coinsCollected: 0,
+      resinCollected: 0,
+    }, // Малые: до 24 монет/2 смолы в сутки; сбор не занимает стопку брёвен.
     axePower: 1, // Урон одного автоматического или активного удара.
     autoInterval: 0.85, // Задержка автоматической рубки.
     clickInterval: 0.18, // Ограничение частоты активных ударов.

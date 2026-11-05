@@ -1,4 +1,5 @@
 import { SHOP_IDS, upgradeOffer, buyUpgrade, AXE_TIERS } from "./economy.js";
+import { affordableCombatUpgrades, COMBAT_LOOT } from "./game/combat-loot.js";
 
 export function createShop(
   state,
@@ -14,6 +15,9 @@ export function createShop(
     balance = dialog.querySelector("[data-balance]"),
     items = dialog.querySelector("[data-items]"),
     message = dialog.querySelector("[data-message]");
+  const lootInfo = document.createElement("p");
+  lootInfo.dataset.combatProgress = "";
+  items.before(lootInfo);
   items.replaceChildren();
   const cards = new Map();
   for (const id of SHOP_IDS) {
@@ -53,6 +57,11 @@ export function createShop(
   }
   function refresh() {
     balance.textContent = `Монеты: ${state.coins}`;
+    const loot = state.combatLoot,
+      affordable = affordableCombatUpgrades(state);
+    lootInfo.hidden = !loot || !(loot.coinsCollected || loot.resinCollected);
+    if (!lootInfo.hidden)
+      lootInfo.textContent = `С врагов собрано: ${loot.coinsCollected} монет и ${loot.resinCollected} смолы. ${affordable.length ? `Сейчас доступны: ${affordable.map((o) => o.name).join(", ")}.` : "Копите на следующее улучшение."} Малые враги: до ${COMBAT_LOOT.minionDailyCoins} монет и ${COMBAT_LOOT.minionDailyResin} смолы в сутки. Смола нужна загадочному торговцу для лесной мази.`;
     const advice = recommendation();
     for (const [id, c] of cards) {
       const offer = upgradeOffer(state, id);
@@ -99,6 +108,7 @@ export function createShop(
     open,
     refresh,
     destroy() {
+      lootInfo.remove();
       dialog.querySelector("[data-close]").removeEventListener("click", close);
       items.replaceChildren();
     },

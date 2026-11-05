@@ -6,6 +6,7 @@ import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
 import { createDefenseRepair, DEFENSE_REPAIR } from "./defense-repair.js";
 import { createRaidReports } from "./raid-report.js";
+import { createCombatLoot } from "./combat-loot.js";
 import { createBuyers } from "./buyers.js";
 import { buyUpgrade } from "../economy.js";
 import { createCycleManager } from "./cycle.js";
@@ -204,6 +205,17 @@ export function createSimulation({
     hasCargo: () => gameState.cargo.length > 0,
     deposit: (id) => transferOneLog(id),
   });
+  const combatLoot = createCombatLoot({
+    state: gameState,
+    player,
+    canAct,
+    accessible,
+    canReach: (a, b) => nav.clearSegment(a, b),
+    emit: (type, event) => {
+      revision++;
+      emit(type, event);
+    },
+  });
   function nearestDefenseRepair() {
     return (
       (defenses?.all() || [])
@@ -386,6 +398,7 @@ export function createSimulation({
         accessible,
         emit: (type, event) => {
           raidReports.record(type, event);
+          if (type === "enemy-defeated") combatLoot.drop(event);
           emit(type, event);
         },
         defeat,
@@ -812,6 +825,7 @@ export function createSimulation({
     }
     if (forestry.collect(dt, player)) updateUI();
     survival?.update(dt);
+    combatLoot.update(dt);
     if (!gameState.gameOver) workers?.update(dt);
     if (
       !gameState.gameOver &&
@@ -871,6 +885,7 @@ export function createSimulation({
       return defenseRepair.snapshot;
     },
     defenses,
+    combatLoot,
     workers,
     navigateWorkers() {
       if (!workers || !canAct()) return false;

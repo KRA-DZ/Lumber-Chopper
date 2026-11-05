@@ -180,7 +180,13 @@ export function createBiomeEnemies({
     if (e.hp === 0) {
       defeated.add(e.id);
       actors.splice(actors.indexOf(e), 1);
-      emit("enemy-defeated", { id, kind: "boss", x: e.x, y: e.y });
+      emit("enemy-defeated", {
+        id,
+        kind: "boss",
+        regionId: e.regionId,
+        x: e.x,
+        y: e.y,
+      });
     }
     return true;
   }

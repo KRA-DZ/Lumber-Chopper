@@ -69,6 +69,7 @@ export function applyDecorArt(scene, art, worldArt) {
 export function applyDecorFrames(decor, sources) {
   if (!decor) return;
   sources.set("camp.crate", decor.get("crate"));
+  sources.set("loot.sack", decor.get("sack"));
   sources.set("camp.mat", decor.get("mat"));
   sources.set("camp.flowers", decor.get("flowerpot"));
   sources.set("camp.dishes", decor.dishes);
