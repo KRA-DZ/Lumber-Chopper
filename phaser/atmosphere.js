@@ -147,6 +147,7 @@ export class Atmosphere {
       this.core.state,
       this.core.player,
       this.core.survival?.safeRadius() ?? 210,
+      this.core.outposts.lights(),
     );
   }
   lanterns() {
@@ -551,6 +552,7 @@ export class Atmosphere {
       Math.floor(dark * 50),
       this.core.state.lanternLevel,
       this.core.state.campLevel,
+      this.core.outposts.revision,
     ].join(":");
     const jumped =
       !this.maskView ||

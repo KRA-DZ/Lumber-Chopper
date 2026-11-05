@@ -36,6 +36,7 @@ import { createAtlas } from "./atlas.js";
 import { TerrainLayer } from "./terrain-layer.js";
 import { CrownOcclusion } from "./tree-occlusion.js";
 import { WorldHints } from "./world-hints.js";
+import { OutpostView } from "./outpost-view.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -112,6 +113,7 @@ export class WorldScene extends Phaser.Scene {
     this.combatLootView = new CombatLootView(this);
     this.defenseView = new DefenseView(this);
     this.explorationView = new ExplorationView(this);
+    this.outpostView = new OutpostView(this);
     this.workerView = new WorkerView(this);
     this.camera = this.cameras.main;
     this.camera
@@ -797,6 +799,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.merchantLabel)
       this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
     this.feedback.render();
+    this.outpostView.render();
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1395,6 +1398,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.outpostView?.destroy();
     this.crownOcclusion?.destroy();
     this.gameMenu?.destroy();
     this.combatLootView?.destroy();

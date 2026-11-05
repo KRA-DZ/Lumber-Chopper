@@ -116,10 +116,16 @@ export class LocationView {
       const image = this.objects.get(p.id),
         player = s.core.player;
       const key =
-        p.drawOpened && passageOpen(s.core.state, p.passage)
+        p.kind === "outpost" && s.core.outposts.lit(p.site)
+          ? `fire.${Math.floor(s.core.elapsed * 7) % 3}`
+          : p.drawOpened && passageOpen(s.core.state, p.passage)
           ? p.openKey
           : p.key;
-      if (image.frame.name !== key) s.assets.setFrame(image, key);
+      if (image.frame.name !== key) {
+        s.assets.setFrame(image, key);
+        if (p.kind === "outpost" && image.input)
+          image.input.hitArea.setTo(0, 0, image.width, image.height);
+      }
       const meta = s.assets.meta.get(key);
       const cover = p.roofCover;
       image.setAlpha(

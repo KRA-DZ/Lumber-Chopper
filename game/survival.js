@@ -24,6 +24,7 @@ export function createSurvival({
   defeat,
   defenses,
   regions = null,
+  sanctuary = () => null,
 }) {
   const raiders = [];
   let monster = null,
@@ -35,7 +36,9 @@ export function createSurvival({
     pathCursor = 0,
     wave = null;
   const safeRadius = () => (state.campLevel > 0 ? 310 : 210);
-  const isSafe = (p) => distance(p, CENTER) < safeRadius();
+  const safeZone = p => distance(p, CENTER) < safeRadius()
+    ? { ...CENTER, r: safeRadius() } : sanctuary(p);
+  const isSafe = p => !!safeZone(p);
   const residents = regions
     ? createBiomeEnemies({
         state,
@@ -81,6 +84,7 @@ export function createSurvival({
     accessible,
     isSafe,
     safeRadius,
+    sanctuary: safeZone,
     emit,
     hurt: hurtPlayer,
     damage: SURVIVAL.monsterDamage,

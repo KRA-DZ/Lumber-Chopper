@@ -184,11 +184,15 @@ export function createForestAudio() {
         }
         timer = cue.interval;
       }
-      if (core.state.campLevel > 0 && fireTimer <= 0) {
+      const fireDistance = Math.min(
+        core.state.campLevel > 0 ? Math.hypot(core.player.x - 1600, core.player.y - 1600) : Infinity,
+        ...core.outposts.lights().map(l => Math.hypot(core.player.x - l.x, core.player.y - l.y)),
+      );
+      if (fireDistance < 320 && fireTimer <= 0) {
         crackle(
           Math.max(
             0,
-            1 - Math.hypot(core.player.x - 1600, core.player.y - 1600) / 320,
+            1 - fireDistance / 320,
           ) * 0.035,
         );
         fireTimer = 0.15 + Math.random() * 0.3;

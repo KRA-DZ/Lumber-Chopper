@@ -1,6 +1,7 @@
 import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
+import { createOutposts } from "./outposts.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
@@ -148,6 +149,17 @@ export function createSimulation({
       emit("pickup", { pile: { ...pile }, index });
     },
   });
+  const outposts = createOutposts({
+    state: gameState, world, regions, nav, forestry,
+    emit: (type, event) => {
+      revision++;
+      if (distance(player, event.site) < 500) {
+        if (type === "outpost-low-fuel") showNotice("Костёр привала догорает — осталось 20 секунд. Подбросьте бревно.", 6);
+        if (type === "outpost-extinguished") showNotice("Костёр привала погас. Защита света исчезла.", 6);
+      }
+      emit(type, event);
+    },
+  });
   const clearing = regional
     ? createClearing({
         state: gameState,
@@ -169,6 +181,7 @@ export function createSimulation({
         forestry,
         canAct,
         getStory: () => story,
+        outposts,
         navigate: navigateTo,
         emit: (type, event) => {
           story?.sync();
@@ -404,6 +417,7 @@ export function createSimulation({
         defeat,
         defenses,
         regions,
+        sanctuary: p => outposts.safeZone(p),
       })
     : null;
   const cycle = createCycleManager(gameState, (type, event) => {
@@ -692,6 +706,7 @@ export function createSimulation({
     elapsed += dt;
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
     cycle.update(dt);
+    outposts.update(dt);
     if (forestry.updateGrowth(trees, cycle.dayNumber)) {
       rebuildObstacles();
       for (const body of [player, ...buyers, ...(workers?.crew || [])])
@@ -885,6 +900,7 @@ export function createSimulation({
       return defenseRepair.snapshot;
     },
     defenses,
+    outposts,
     combatLoot,
     workers,
     navigateWorkers() {

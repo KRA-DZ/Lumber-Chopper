@@ -180,15 +180,16 @@ try:
             q.locator("[data-activity-close]").click()
             q.wait_for_function("!m.paused")
 
-            # Inspect a narrative scene without granting supplies or money.
+            # The former narrative fire now exposes a temporary outpost action.
             place(
                 q,
                 "(()=>{const p=e.get('fortress-last-fire');return{x:p.x,y:p.y+32}})()",
             )
             click_world(q, "e.get('fortress-last-fire')", mobile)
             q.wait_for_function("document.querySelector('#activityDialog').open")
-            assert "нет ни тепла" in q.locator("[data-activity-content]").inner_text()
-            assert q.locator("[data-activity-action]").count() == 0
+            assert "временный привал" in q.locator("[data-activity-content]").inner_text()
+            assert q.locator("[data-activity-action=stoke-fire]").count() == 1
+            assert q.locator("[data-activity-action=cook-fish]").is_disabled()
             q.locator("[data-activity-close]").click()
             q.wait_for_function("!m.paused")
 

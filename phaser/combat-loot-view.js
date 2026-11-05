@@ -37,7 +37,7 @@ export class CombatLootView {
       piles = c.combatLoot.piles,
       dark = nightOpacity(c.state) >= 0.98,
       lights = dark
-        ? nightLights(c.state, c.player, c.survival.safeRadius())
+        ? nightLights(c.state, c.player, c.survival.safeRadius(), c.outposts.lights())
         : null,
       lit = (x, y) => !dark || inCampLight(x, y, lights),
       glints = this.glints.clear();

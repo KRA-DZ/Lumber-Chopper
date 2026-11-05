@@ -1,5 +1,6 @@
 import { CENTER, DAY_SECONDS } from "./config.js";
 import { passageOpen } from "./locations.js";
+import { OUTPOST } from "./outposts.js";
 
 export const EXPLORATION = Object.freeze({
   range: 125,
@@ -31,6 +32,7 @@ export function createExploration({
   forestry,
   canAct,
   getStory = () => null,
+  outposts,
   navigate,
   emit = () => {},
 }) {
@@ -260,16 +262,25 @@ export function createExploration({
                 ? "Нужно принести три бревна в стопке"
                 : "",
       );
-    } else if (s.kind === "kitchen") {
+    } else if (s.kind === "kitchen" || s.kind === "outpost") {
+      if (s.kind === "outpost") {
+        const fuel = outposts.remaining(id), logs = fuel > 0 ? 1 : OUTPOST.ignitionLogs;
+        add("stoke-fire", `${fuel > 0 ? "Подбросить" : "Разжечь"} · ${logs} ${logs === 1 ? "бревно" : "бревна"}`,
+          `Запас огня: ${Math.ceil(fuel)} с. Каждое бревно даёт ${OUTPOST.secondsPerLog} с, максимум ${OUTPOST.maxFuel} с. Свет и защита действуют, пока горит огонь.`,
+          fuel > OUTPOST.maxFuel - OUTPOST.secondsPerLog ? "Огонь ещё силён — места для целого бревна пока нет"
+            : state.wood < logs ? `Нужно принести ${logs} ${logs === 1 ? "бревно" : "бревна"} в стопке` : "");
+      }
       add(
         "cook-fish",
         `Приготовить рыбу · +${EXPLORATION.fishHeal} HP`,
         "Тратит одну рыбу и восстанавливает здоровье героя. При полном здоровье рыба остаётся в сумке.",
-        !bag.fish
-          ? "Сначала поймайте рыбу"
-          : state.health >= state.maxHealth
-            ? "Здоровье полное"
-            : "",
+        s.kind === "outpost" && !outposts.lit(id)
+          ? "Сначала разожгите костёр"
+          : !bag.fish
+            ? "Сначала поймайте рыбу"
+            : state.health >= state.maxHealth
+              ? "Здоровье полное"
+              : "",
       );
     }
     return [...rows, ...(getStory()?.offers(s) || [])];
@@ -317,6 +328,8 @@ export function createExploration({
       for (let i = 0; i < EXPLORATION.offeringLogs; i++) forestry.takeCargo();
       data.offeringDay = state.calendarDay;
       bag.resin++;
+    } else if (action === "stoke-fire") {
+      if (!outposts.stoke(id)) return false;
     } else if (action === "cook-fish") {
       bag.fish--;
       state.health = Math.min(

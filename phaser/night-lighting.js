@@ -24,7 +24,7 @@ export function campLights(state, safeRadius) {
       : []),
   ];
 }
-export function nightLights(state, player, safeRadius) {
+export function nightLights(state, player, safeRadius, outposts = []) {
   return [
     {
       x: player.x,
@@ -33,6 +33,7 @@ export function nightLights(state, player, safeRadius) {
       kind: "player",
     },
     ...campLights(state, safeRadius),
+    ...outposts,
   ];
 }
 export function inCampLight(x, y, lights) {
