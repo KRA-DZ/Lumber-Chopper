@@ -27,6 +27,7 @@ export function createWatcher({
   hurt,
   damage,
   windupSeconds,
+  sanctuary = () => null,
 }) {
   let clock = 0,
     noise = null;
@@ -88,12 +89,14 @@ export function createWatcher({
     // Sanctuary protection cancels even a fully prepared strike.
     if (isSafe(player) || isSafe(m)) {
       phase(m, "repelled");
-      const radius = safeRadius() + WATCHER.retreatMargin;
-      if (dist(m, CENTER) < radius - 8) {
-        const d = Math.max(1, dist(m, CENTER)),
+      const center = sanctuary(player) || sanctuary(m) || { ...CENTER, r: safeRadius() },
+        radius = center.r + WATCHER.retreatMargin;
+      if (dist(m, center) < radius - 8) {
+        const d = Math.max(1, dist(m, center)),
+          dx = m.x === center.x && m.y === center.y ? 1 : m.x - center.x,
           p = nav.nearestGround(
-            CENTER.x + ((m.x - CENTER.x) / d) * radius,
-            CENTER.y + ((m.y - CENTER.y) / d) * radius,
+            center.x + (dx / d) * radius,
+            center.y + ((m.y - center.y) / d) * radius,
           );
         if (accessible(p) && !isSafe(p)) setGoal(m, p, WATCHER.patrolSpeed);
       }
@@ -235,7 +238,7 @@ export function watcherThreat(core) {
     return m.phase === "repelled" && m.phaseTime < 3
       ? {
           phase: "repelled",
-          text: "Свет лагеря защищает · Смотритель отступает",
+          text: `${core.outposts?.safeZone(core.player) ? "Свет привала" : "Свет лагеря"} защищает · Смотритель отступает`,
           color: "#c1dfb7",
           direction: null,
         }

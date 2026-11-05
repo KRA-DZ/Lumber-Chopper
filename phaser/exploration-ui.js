@@ -88,6 +88,7 @@ export function createExplorationUi(scene) {
             "sell-relic": "relic",
             "offer-logs": "resin",
             "open-chest": "key",
+            "cook-fish": "fish",
             fish: "rod",
           }[offer.action],
         );

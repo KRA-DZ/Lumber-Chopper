@@ -258,13 +258,13 @@ test("the watch token is a unique journal discovery, not sellable loot or repeat
   assert.deepEqual(fresh.state.exploration.openedPassages, []);
 });
 
-test("environmental scenes are reachable, describe the retreat and never give money or safe light", () => {
+test("barricade and supply inspections are reachable, describe the retreat and never give money or safe light", () => {
   const g = create();
   Object.assign(g.player, FORTRESS.entrance);
   const sites = g.exploration.sites.filter(
     (p) => p.kind === "inspect" && p.regionId === FORTRESS.regionId,
   );
-  assert.equal(sites.length, 3);
+  assert.equal(sites.length, 2);
   const before = JSON.stringify({
     coins: g.state.coins,
     items: g.state.exploration.items,
