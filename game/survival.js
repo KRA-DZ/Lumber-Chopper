@@ -215,7 +215,7 @@ export function createSurvival({
         state.coins += target.stolen;
         emit("supplies-recovered", { enemy: target, coins: target.stolen });
       }
-      emit("enemy-defeated", { id, x: target.x, y: target.y });
+      emit("enemy-defeated", { id, kind: "raider", x: target.x, y: target.y });
       finishWave();
     }
     return true;

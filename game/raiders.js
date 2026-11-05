@@ -133,8 +133,9 @@ export function createRaiderAI({
           actor.repath = 0;
           emit("supplies-stolen", { enemy: actor, coins: actor.stolen });
         } else {
+          const damage = Math.min(state.campHealth, role.damage);
           state.campHealth = Math.max(0, state.campHealth - role.damage);
-          emit("camp-hurt", { health: state.campHealth, damage: role.damage });
+          emit("camp-hurt", { health: state.campHealth, damage });
           if (!state.campHealth) defeat("Налётчики разрушили лагерь.");
         }
       }

@@ -371,6 +371,11 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (!this.core.paused && event.code === "KeyR") {
+        event.preventDefault();
+        if (!event.repeat) this.core.setDefenseRepairHeld(true);
+        return;
+      }
       if (
         !this.core.paused &&
         this.core.exploration.fishing &&
@@ -446,6 +451,9 @@ export class WorldScene extends Phaser.Scene {
       }
       if (!this.core.paused && event.code in this.keyMap)
         event.preventDefault();
+    });
+    this.input.keyboard.on("keyup", (event) => {
+      if (event.code === "KeyR") this.core.setDefenseRepairHeld(false);
     });
     this.input.on("pointerdown", (pointer, over) => {
       if (this.core.paused || pointer.button !== 0) return;

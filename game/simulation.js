@@ -4,6 +4,8 @@ import { createExploration } from "./exploration.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
+import { createDefenseRepair, DEFENSE_REPAIR } from "./defense-repair.js";
+import { createRaidReports } from "./raid-report.js";
 import { createBuyers } from "./buyers.js";
 import { buyUpgrade } from "../economy.js";
 import { createCycleManager } from "./cycle.js";
@@ -99,8 +101,11 @@ export function createSimulation({
       0,
       Math.min(1, (0.25 - Math.sin(dayPhase() * Math.PI * 2)) / 1.25),
     );
+  const raidReports = createRaidReports(gameState, () => defenses);
   const defenses = hazards
-    ? createDefenses(gameState, ({ section, topology }) => {
+    ? createDefenses(gameState, (event) => {
+        const { section, topology } = event;
+        raidReports.record("defense-changed", event);
         if (topology) {
           nav.rebuildObstacles();
           for (const body of [
@@ -120,7 +125,7 @@ export function createSimulation({
           }
         }
         revision++;
-        emit("defense-changed", { section, topology });
+        emit("defense-changed", event);
       })
     : null;
   if (defenses) world.defenses = defenses;
@@ -182,6 +187,7 @@ export function createSimulation({
   }
   function clearKeys() {
     keys.clear();
+    defenseRepair?.cancel();
     clearingOrder = null;
     player.path = [];
     player.targetX = player.x;
@@ -190,6 +196,47 @@ export function createSimulation({
   const treeIds = new Map(trees.map((t) => [t.id, t]));
   function canAct() {
     return !paused && !gameState.gameOver;
+  }
+  const defenseRepair = createDefenseRepair({
+    canAct,
+    get: (id) => defenses?.get(id),
+    near: (section) => distance(player, section) < DEFENSE_REPAIR.range,
+    hasCargo: () => gameState.cargo.length > 0,
+    deposit: (id) => transferOneLog(id),
+  });
+  function nearestDefenseRepair() {
+    return (
+      (defenses?.all() || [])
+        .filter(
+          (section) =>
+            section.hp < section.maxHP &&
+            section.kind !== "trap" &&
+            (section.kind === "fence" ||
+              Object.hasOwn(gameState.defenseHP, section.id)) &&
+            distance(player, section) < DEFENSE_REPAIR.range,
+        )
+        .sort((a, b) => distance(player, a) - distance(player, b))[0] || null
+    );
+  }
+  function setDefenseRepairHeld(held, id = null) {
+    if (!held) {
+      defenseRepair.release();
+      return true;
+    }
+    const section = id ? defenses?.get(id) : nearestDefenseRepair();
+    if (
+      !section ||
+      section.kind === "trap" ||
+      (section.kind !== "fence" &&
+        !Object.hasOwn(gameState.defenseHP, section.id)) ||
+      !defenseRepair.start(section.id)
+    )
+      return false;
+    exploration?.cancelAll();
+    defenseOrder = selectedEnemyId = clearingOrder = null;
+    pursueEnemy = false;
+    player.path = [];
+    return true;
   }
   function faceTarget(tree) {
     player.facing = tree.x < player.x ? -1 : 1;
@@ -310,6 +357,7 @@ export function createSimulation({
     if (gameState.gameOver) return;
     exploration?.cancelAll();
     gameState.gameOver = true;
+    raidReports.finish(survival?.wave, false);
     gameState.defeatReason = reason;
     clearKeys();
     paused = true;
@@ -336,7 +384,10 @@ export function createSimulation({
         player,
         nav,
         accessible,
-        emit,
+        emit: (type, event) => {
+          raidReports.record(type, event);
+          emit(type, event);
+        },
         defeat,
         defenses,
         regions,
@@ -355,6 +406,7 @@ export function createSimulation({
       );
     } else if (type === "night-started") {
       sunsetWarning = null;
+      raidReports.begin(event.night);
       survival?.nightStarted(event);
       showNotice(
         event.night % SURVIVAL.waveEvery === 0 && survival
@@ -364,9 +416,20 @@ export function createSimulation({
       );
     } else {
       survival?.dawn();
+      const report = raidReports.finish(survival?.wave, true);
       lore.onDawn();
       story?.sync();
-      showNotice(`Рассвет. Пережито ночей: ${gameState.nightsSurvived}`, 6);
+      const raidDay = event.day % SURVIVAL.waveEvery === 0;
+      if (raidDay)
+        sunsetWarning = { raid: true, morning: true, until: elapsed + 10 };
+      showNotice(
+        raidDay
+          ? "Сегодня налёт с заката. Подготовьте ограду, топор и брёвна для ремонта. Метатели достают через забор!"
+          : report
+            ? `Пережита ночь ${report.night}. Награда: ${report.reward} монет. На восстановление: ${report.repairLogs} брёвен. Итоги — Оборона (B).`
+            : `Рассвет. Пережито ночей: ${gameState.nightsSurvived}`,
+        raidDay || report ? 10 : 6,
+      );
     }
     revision++;
     emit(type, event);
@@ -380,6 +443,7 @@ export function createSimulation({
     )
       return false;
     exploration?.cancelAll();
+    defenseRepair.cancel();
     clearingOrder = null;
     selectedEnemyId = id;
     defenseOrder = null;
@@ -388,6 +452,7 @@ export function createSimulation({
     return true;
   }
   function navigateTo(x, y) {
+    defenseRepair.cancel();
     exploration?.cancelAll();
     clearingOrder = null;
     defenseOrder = null;
@@ -407,6 +472,7 @@ export function createSimulation({
   function orderDefense(id) {
     const section = defenses?.get(id);
     if (!canAct() || !section || section.hp >= section.maxHP) return false;
+    defenseRepair.cancel();
     exploration?.cancelAll();
     clearingOrder = null;
     selectedEnemyId = null;
@@ -474,6 +540,7 @@ export function createSimulation({
     : null;
   function transferOneLog(target = null) {
     if (!canAct() || transferTimer > 0 || !gameState.cargo.length) return false;
+    if (defenseRepair.target && target !== defenseRepair.target) return false;
     const slotPosition = stackOffset(gameState.wood - 1, gameState.wood);
     const start = {
       x: player.x + slotPosition.x,
@@ -604,7 +671,8 @@ export function createSimulation({
   function updatePlatforms(dt) {
     if (dt <= 0) return;
     transferTimer = Math.max(0, transferTimer - dt);
-    transferOneLog();
+    if (defenseRepair.target) defenseRepair.update(dt);
+    else transferOneLog();
   }
   function updateStep(dt) {
     if (paused) return;
@@ -633,6 +701,7 @@ export function createSimulation({
       oldX = player.x,
       oldY = player.y;
     if (keyboard) {
+      defenseRepair.cancel();
       exploration?.cancelAll();
       clearingOrder = null;
       defenseOrder = null;
@@ -795,6 +864,11 @@ export function createSimulation({
     },
     get defenseOrder() {
       return defenseOrder;
+    },
+    nearestDefenseRepair,
+    setDefenseRepairHeld,
+    get defenseRepair() {
+      return defenseRepair.snapshot;
     },
     defenses,
     workers,

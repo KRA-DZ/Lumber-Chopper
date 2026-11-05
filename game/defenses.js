@@ -84,9 +84,9 @@ export function createDefenses(state, changed = () => {}) {
     return cached;
   }
   const get = (id) => all().find((s) => s.id === id);
-  function notify(id, topology) {
+  function notify(id, topology, action, previousHP) {
     revision++;
-    changed({ section: get(id), topology });
+    changed({ section: get(id), topology, action, previousHP });
   }
   function damage(id, amount) {
     const s = get(id);
@@ -94,7 +94,7 @@ export function createDefenses(state, changed = () => {}) {
       return false;
     state.defenseHP[id] = Math.max(0, s.hp - amount);
     if (!state.defenseHP[id] && s.kind !== "fence") state.defenseWood[id] = 0;
-    notify(id, state.defenseHP[id] === 0 && s.kind !== "trap");
+    notify(id, state.defenseHP[id] === 0 && s.kind !== "trap", "damage", s.hp);
     return true;
   }
   // Consumes no resources itself: simulation validates distance and atomically takes one cargo log.
@@ -107,7 +107,12 @@ export function createDefenses(state, changed = () => {}) {
       state.defenseWood[id] = s.wood + 1;
       if (state.defenseWood[id] >= s.cost) state.defenseHP[id] = s.maxHP;
     }
-    notify(id, !s.hp && state.defenseHP[id] > 0 && s.kind !== "trap");
+    notify(
+      id,
+      !s.hp && state.defenseHP[id] > 0 && s.kind !== "trap",
+      "deposit",
+      s.hp,
+    );
     return true;
   }
   function fenceSegments() {

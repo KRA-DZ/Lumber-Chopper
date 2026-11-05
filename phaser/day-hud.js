@@ -82,14 +82,25 @@ export class DayHud {
             : c.survival?.wave?.status === "escaped"
               ? `Налёт завершён · +${c.survival.wave.reward} монет`
               : "Налётчики отступили"
-      : `Налёт · ночь ${time.nextRaid} · через ${countdown(time.raidSeconds)}`;
+      : time.raidTonight
+        ? `Налёт сегодня · через ${countdown(time.raidSeconds)}`
+        : `Налёт · ночь ${time.nextRaid} · через ${countdown(time.raidSeconds)}`;
     this.raid.setText(text).setColor(time.raidTonight ? "#f1b595" : "#cbd4ad");
     const warn = c.sunsetWarning;
+    const preparation = !time.night && time.raidTonight && time.sunsetSoon;
     this.warning
       .setPosition(s.scale.width / 2, 168)
       .setWordWrapWidth(s.scale.width - 80)
-      .setVisible(!!warn);
-    if (warn)
+      .setVisible(!!warn || preparation);
+    if (preparation)
+      this.warning.setText(
+        `Налёт через ${countdown(time.boundarySeconds)}\nПочините ограду, возьмите брёвна.\nМетатели бросают через забор — двигайтесь!`,
+      );
+    else if (warn?.morning)
+      this.warning.setText(
+        "Сегодня налёт с заката!\nПодготовьте ограду, топор и брёвна.\nМетатели достают через забор.",
+      );
+    else if (warn)
       this.warning.setText(
         `${warn.raid ? "Скоро налёт!" : "Скоро ночь!"} До темноты ${countdown(time.boundarySeconds)}\nВернитесь к свету лагеря.`,
       );

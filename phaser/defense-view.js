@@ -5,6 +5,7 @@ export class DefenseView {
     this.scene = scene;
     this.objects = [];
     this.key = "";
+    this.feedback = scene.add.graphics().setDepth(LAYERS.hints);
   }
   render() {
     const s = this.scene,
@@ -58,20 +59,17 @@ export class DefenseView {
           for (let i = -12; i <= 12; i += 8)
             g.lineBetween(d.x + i, d.y - 10, d.x + i + 4, d.y + 10);
           if (d.hp) g.fillStyle(0xe5cd9a).fillRect(d.x - 4, d.y - 4, 8, 8);
-        } else if (!s.assets.camp && d.hp < d.maxHP) {
-          g.lineStyle(3, d.hp ? 0xe2a368 : 0xa47a55, 0.8).lineBetween(
-            d.a.x,
-            d.a.y - 6,
-            d.b.x,
-            d.b.y - 6,
-          );
-          if (!d.hp)
-            g.lineBetween(d.x - 12, d.y - 16, d.x + 12, d.y + 2).lineBetween(
-              d.x + 12,
-              d.y - 16,
-              d.x - 12,
-              d.y + 2,
-            );
+        } else if (d.hp < d.maxHP) {
+          if (!d.hp) {
+            g.lineStyle(2, 0xe4ad71, 0.7).strokeEllipse(d.x, d.y, 46, 20);
+          } else {
+            // Cracks overlay the existing PNG; severe damage adds a second split.
+            for (const dx of d.hp <= d.maxHP / 2 ? [-10, 10] : [0]) {
+              g.lineStyle(3, 0x392b22, 0.95)
+                .lineBetween(d.x + dx, d.y - 29, d.x + dx - 5, d.y - 18)
+                .lineBetween(d.x + dx - 5, d.y - 18, d.x + dx + 3, d.y - 9);
+            }
+          }
         }
         const zone = s.add
           .zone(d.x, d.y - 15, d.kind === "barricade" ? 78 : 42, 46)
@@ -80,7 +78,7 @@ export class DefenseView {
           .setData("defense", d.id);
         const text =
           d.kind === "fence"
-            ? `Ремонт · ${d.hp}/${d.maxHP}`
+            ? `${d.hp ? "Повреждено" : "ПРОЛОМ"} · ${d.hp}/${d.maxHP}`
             : `${d.name}\n${d.hp ? (d.kind === "trap" ? "Взведена · 1 заряд" : `${d.hp}/${d.maxHP} HP`) : `${d.wood}/${d.cost} брёвен`}`;
         // Intact fence labels are never visible; don't allocate their canvas textures.
         const label =
@@ -90,15 +88,23 @@ export class DefenseView {
         this.objects.push({ d, g, zone, label });
       }
     }
+    const bars = this.feedback.clear();
     for (const { d, label } of this.objects) {
       if (!label) continue;
-      const selected = c.defenseOrder === d.id;
+      const selected = c.defenseOrder === d.id || c.defenseRepair?.id === d.id;
       label.setVisible(
         (selected || Math.hypot(c.player.x - d.x, c.player.y - d.y) < 135) &&
           (d.kind !== "fence" || d.hp < d.maxHP),
       );
       const color = selected ? "#ffedaa" : "#e4c994";
       if (label.style.color !== color) label.setColor(color);
+      if (label.visible && d.kind !== "trap" && d.hp < d.maxHP) {
+        bars
+          .fillStyle(0x292c24, 0.95)
+          .fillRect(d.x - 25, d.y + 29, 50, 6)
+          .fillStyle(d.hp <= d.maxHP / 2 ? 0xde9264 : 0xd9c282)
+          .fillRect(d.x - 24, d.y + 30, (48 * d.hp) / d.maxHP, 4);
+      }
     }
   }
 }

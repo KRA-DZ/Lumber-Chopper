@@ -1,3 +1,4 @@
+import { appendRaidSummary } from "./raid-summary.js";
 export function createDefenseUi(scene) {
   const dialog = document.querySelector("#defenseDialog"),
     list = dialog.querySelector("[data-defenses]"),
@@ -9,8 +10,9 @@ export function createDefenseUi(scene) {
     info.textContent =
       c.state.campLevel < 2
         ? "Сначала постройте костёр и палатку. После этого появятся места для укреплений."
-        : `В руках: ${c.state.wood}/${c.state.maxWood} брёвен. Выберите место: герой подойдёт и вложит брёвна из своей стопки. WASD или нажатие на землю отменяют работу.`;
+        : `В руках: ${c.state.wood}/${c.state.maxWood} брёвен. Рядом с повреждённой секцией удерживайте R или экранную кнопку: каждые 0,6 с одно бревно восстанавливает до 20 HP. Отпускание сбрасывает незавершённый взнос. Поручение ниже работает автоматически; WASD или нажатие на землю отменяют работу. Метатели бросают через ограду — уклоняйтесь.`;
     list.append(info);
+    appendRaidSummary(list, c.state.lastRaidReport);
     const sections = c.defenses.all();
     for (const s of sections.filter(
       (s) => s.kind !== "fence" || s.hp < s.maxHP,

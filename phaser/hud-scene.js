@@ -1,6 +1,7 @@
 import { BIOMES } from "../game/biomes.js";
 import { WatcherHud } from "./watcher-hud.js";
 import { DayHud } from "./day-hud.js";
+import { RepairControl } from "./repair-control.js";
 import { DAY_SECONDS } from "../game/config.js";
 import { regionAt } from "../game/regions.js";
 export class HudScene extends Phaser.Scene {
@@ -117,6 +118,7 @@ export class HudScene extends Phaser.Scene {
       }
     });
     this.world.hudReady = true;
+    this.repairControl = new RepairControl(this);
     this.lastRefresh = -Infinity;
     this.refresh();
   }
@@ -236,8 +238,9 @@ export class HudScene extends Phaser.Scene {
       )
       .setVisible(!!guide.action && !c.state.gameOver);
     this.watcherHud.refresh();
-    const messageY = c.sunsetWarning
-      ? 250
+    this.repairControl.refresh();
+    const messageY = this.dayHud.warning.visible
+      ? this.dayHud.warning.y + this.dayHud.warning.height + 12
       : this.watcherHud.label.visible
         ? this.watcherHud.bottom + 12
         : 168;
@@ -247,7 +250,7 @@ export class HudScene extends Phaser.Scene {
         c.elapsed < this.world.atmosphere.discoveryUntil &&
           !this.banner.visible &&
           !this.world.expansionBanner &&
-          !c.sunsetWarning,
+          !this.dayHud.warning.visible,
       )
       .setPosition(this.scale.width / 2, messageY)
       .setText(this.world.atmosphere.discovery);
