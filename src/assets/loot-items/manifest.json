@@ -61,6 +61,25 @@
         ]
       },
       "nativeAlpha": true
+    },
+    {
+      "file": "loot-perch-style-3.png",
+      "sha256": "d0c316155188ed5025702264c7b1cf362ffeb83691526627da33b9266f465994",
+      "size": [
+        1774,
+        887
+      ],
+      "columns": 1,
+      "rows": 1,
+      "boxes": {
+        "fish": [
+          343,
+          155,
+          1393,
+          715
+        ]
+      },
+      "nativeAlpha": true
     }
   ],
   "frames": {
@@ -136,6 +155,16 @@
       "anchor": [
         7,
         22
+      ]
+    },
+    "fish": {
+      "x": 2,
+      "y": 102,
+      "width": 28,
+      "height": 18,
+      "anchor": [
+        14,
+        16
       ]
     }
   },

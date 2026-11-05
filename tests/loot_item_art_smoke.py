@@ -52,7 +52,7 @@ try:
             before = q.evaluate("w.combatLootView.flights.map(f=>[f.image.x,f.image.y])")
             q.evaluate("g.step(3)")
             assert q.evaluate("w.combatLootView.flights.map(f=>[f.image.x,f.image.y])") == before
-            assert q.locator("[data-bag-item] img[data-item-icon]").count() == 4
+            assert q.locator("[data-bag-item] img[data-item-icon]").count() == 5
             assert q.locator("[data-use-item] img[data-item-icon=salve]").count() == 1
             q.locator("#activityDialog").screenshot(path=str(ROOT / f"docs/loot-item-bag-{'mobile' if mobile else 'desktop'}.png"))
             click(q, "[data-activity-close]", mobile); q.wait_for_function("!m.paused")
@@ -75,9 +75,12 @@ try:
             q.wait_for_function("!m.paused&&m.exploration.fishing")
             q.evaluate("g.step(.1)")
             assert q.evaluate("w.explorationView.rod.visible&&w.explorationView.bobber.visible&&w.explorationView.rod.frame.name==='exploration.rod'&&w.explorationView.bobber.frame.name==='exploration.bobber'&&w.explorationView.rod.rotation===0")
+            q.evaluate("m.exploration.fishing.phase='bite';m.exploration.fishing.timer=2;g.step(0)")
+            assert q.locator('#fishingControls[data-phase=bite] [data-reel]:enabled').count() == 1
             q.wait_for_timeout(100); q.evaluate("g.step(0)")
             q.locator("#game-frame").screenshot(path=str(ROOT / f"docs/loot-item-fishing-{'mobile' if mobile else 'desktop'}.png"))
-            click(q, "[data-fish-cancel]", mobile)
+            click(q, "[data-reel]", mobile)
+            assert q.evaluate("m.state.exploration.items.fish===1&&w.explorationView.fish.visible&&w.explorationView.fish.frame.name==='exploration.fish'&&w.assets.lootItems.manifest.frames.fish.width===28")
             assert q.evaluate("!m.exploration.fishing&&!w.explorationView.bobber.visible")
             q.evaluate("window.old=m;w.scene.restart();void 0")
             q.wait_for_function("lumberPhaser.core!==old&&lumberPhaser.scene.hudReady")

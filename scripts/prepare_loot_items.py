@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Approved row 3 -> seven binary-alpha sprites/icons; no RGB white-key removal."""
+"""Approved row 3 + matching perch -> binary-alpha sprites; no white-key removal."""
 from pathlib import Path
 import json
 from PIL import Image, ImageOps
@@ -8,13 +8,16 @@ from prepare_items import fit
 from prepare_assets import foot_anchor
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = ("coins", "resin", "key", "salve", "relic", "rod", "bobber")
+SOURCE_NAMES = ("coins", "resin", "key", "salve", "relic", "rod", "bobber")
+NAMES = (*SOURCE_NAMES, "fish")
 SIZES = {"coins": (28, 24), "resin": (28, 28), "key": (24, 32),
-         "salve": (26, 28), "relic": (28, 32), "rod": (56, 68), "bobber": (14, 24)}
+         "salve": (26, 28), "relic": (28, 32), "rod": (56, 68), "bobber": (14, 24), "fish": (28, 18)}
 
 
 def main():
-    sprites, source = extract("loot-items-selected-3-sheet", 4, NAMES)
+    sprites, source = extract("loot-items-selected-3-sheet", 4, SOURCE_NAMES)
+    fish, fish_source = extract("loot-perch-style-3", 1, ("fish",))
+    sprites.update(fish)
     frames, metadata = {}, {}
     atlas = Image.new("RGBA", (128, 128))
     x = y = 2
@@ -52,10 +55,10 @@ def main():
     atlas.save(out / "items.png", optimize=True)
     (out / "manifest.json").write_text(json.dumps({
         "version": 1, "approvedVariant": 3, "atlas": "items.png", "size": list(atlas.size),
-        "sources": [source], "frames": metadata,
+        "sources": [source, fish_source], "frames": metadata,
         "processing": {"nativeAlpha": True, "alphaThreshold": 128, "filter": "nearest", "whiteColorRemoval": False},
     }, indent=2) + "\n")
-    print(f"Prepared {len(frames)} approved loot sprites in 128x128 and seven 32x32 icons")
+    print(f"Prepared {len(frames)} approved loot sprites in 128x128 and {len(frames)} 32x32 icons")
 
 
 if __name__ == "__main__":

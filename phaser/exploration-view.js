@@ -37,8 +37,9 @@ export class ExplorationView {
     this.scene.axe.setVisible(!f && !this.scene.heroView.bakedTool);
     if (f) {
       const site = c.exploration.get(f.siteId),
-        x = site.x - 130,
-        y = site.y - 88 + Math.sin(t * 6) * (f.phase === "bite" ? 3 : 1);
+        bite = f.phase === "bite",
+        x = site.x - 130 + (bite ? Math.round(Math.sin(t * 26) * 2) : 0),
+        y = site.y - 88 + (bite ? 9 + Math.sin(t * 18) * 4 : Math.sin(t * 6));
       this.rod
         .setPosition(p.x - 16, p.y - 24)
         .setDepth(p.y + 0.1)
@@ -54,8 +55,9 @@ export class ExplorationView {
           y,
         );
       this.ripples
-        .lineStyle(2, 0xb4d5bf, 0.6)
-        .strokeEllipse(x, y + 6, 18 + ((t * 13) % 24), 7 + ((t * 5) % 10));
+        .lineStyle(bite ? 3 : 2, bite ? 0xf2d48b : 0xb4d5bf, bite ? 0.95 : 0.6)
+        .strokeEllipse(x, y + 6, (bite ? 30 : 18) + ((t * 13) % 24), 7 + ((t * 5) % 10));
+      if (bite) this.ripples.lineStyle(2, 0xf2d48b, 0.65).strokeEllipse(x, y + 6, 52, 20);
     }
     const age = t - this.catchTime;
     this.fish.setVisible(age >= 0 && age < 1);
