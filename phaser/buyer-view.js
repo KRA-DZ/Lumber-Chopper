@@ -89,6 +89,10 @@ export class BuyerView {
         .setDepth(b.y + 0.2)
         .setText(`${greeting}\n  ещё ${Math.max(0, b.capacity - b.load)}`)
         .setVisible(nearby);
+      scene.worldHints.offer(a.label, b, {
+        eligible: nearby, range: 220, priority: b.slot === 0 ? 65 : 35,
+        companions: [a.bubble, a.orderIcon],
+      });
     }
   }
 }

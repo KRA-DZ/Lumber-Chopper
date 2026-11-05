@@ -90,6 +90,7 @@ export class CombatLootView {
         .filter(Boolean)
         .join(" · ");
       o.label.setText(text).setVisible(visible && (pile.boss || near));
+      s.worldHints.offer(o.label, pile, { eligible: visible && (pile.boss || near), priority: 50 });
     }
     this.flights = this.flights.filter((flight) => {
       const t = (c.elapsed - flight.time) / LOOT_VISUALS.flightSeconds;

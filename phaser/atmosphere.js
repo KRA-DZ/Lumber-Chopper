@@ -258,9 +258,10 @@ export class Atmosphere {
       );
     }
     for (const { p: site, label } of this.siteLabels)
-      label.setVisible(
-        this.discovered.has(site.id) && near(site.x, site.y, 160),
-      );
+      scene.worldHints.offer(label, site, {
+        eligible: this.discovered.has(site.id) && near(site.x, site.y, 160),
+        range: 150,
+      });
     for (const { image, p: plant } of scene.staticObjects)
       if (
         ["fern", "flowers", "mushroom"].includes(plant.type) &&

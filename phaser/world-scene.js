@@ -34,6 +34,8 @@ import { growthStage } from "../forestry.js";
 import { createShop } from "../shop.js";
 import { createAtlas } from "./atlas.js";
 import { TerrainLayer } from "./terrain-layer.js";
+import { CrownOcclusion } from "./tree-occlusion.js";
+import { WorldHints } from "./world-hints.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -60,6 +62,8 @@ export class WorldScene extends Phaser.Scene {
     this.terrain = new TerrainLayer(this, this.core.world);
     this.staticObjects = [];
     this.treeObjects = new Map();
+    this.crownOcclusion = new CrownOcclusion(this);
+    this.worldHints = new WorldHints(this);
     this.customerObjects = new Map();
     this.pileObjects = new Map();
     this.flights = new Set();
@@ -734,6 +738,8 @@ export class WorldScene extends Phaser.Scene {
       s = c.state,
       p = c.player,
       t = c.elapsed;
+    this.worldHints.begin();
+    this.crownOcclusion.begin();
     this.heroView.render();
     this.stackView.render();
     this.enemyView.render();
@@ -784,7 +790,14 @@ export class WorldScene extends Phaser.Scene {
     this.merchant.setVisible(openMerchant);
     this.merchantLabel?.setVisible(openMerchant);
     this.ancient.setVisible(this.core.accessible(this.core.world.ancientTree));
+    this.crownOcclusion.apply(this.ancient);
+    this.crownOcclusion.end();
+    this.worldHints.offer(this.saleLabel, c.sale, { range: 240, priority: 70 });
+    this.worldHints.offer(this.buildLabel, c.build, { range: 240, priority: 70 });
+    if (this.merchantLabel)
+      this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
     this.feedback.render();
+    this.worldHints.flush();
     const hudKey = [
       s.wood,
       s.maxWood,
@@ -849,8 +862,7 @@ export class WorldScene extends Phaser.Scene {
           this.treeObjects.delete(id);
         }
     }
-    const p = this.playerModel,
-      view = this.camera?.worldView;
+    const view = this.camera?.worldView;
     for (const { image, tree, key } of this.treeObjects.values()) {
       const stage = growthStage(tree, this.core.dayNumber),
         frame =
@@ -887,16 +899,8 @@ export class WorldScene extends Phaser.Scene {
           snap(tree.y),
         );
       image.input.enabled = tree.hp > 0 && this.core.treeAccessible(tree);
-      image
-        .setVisible(!view || this.nearView(tree, view, 420))
-        .setAlpha(
-          tree.hp > 0 &&
-            p.y < tree.y &&
-            p.y > tree.y - image.displayHeight + 20 &&
-            Math.abs(p.x - tree.x) < image.displayWidth * 0.4
-            ? 0.45
-            : 1,
-        );
+      image.setVisible(!view || this.nearView(tree, view, 420)).setAlpha(1);
+      this.crownOcclusion.apply(image, tree.hp > 0);
     }
   }
   syncPiles() {
@@ -1391,6 +1395,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.crownOcclusion?.destroy();
     this.gameMenu?.destroy();
     this.combatLootView?.destroy();
     this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);

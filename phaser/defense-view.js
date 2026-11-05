@@ -105,6 +105,11 @@ export class DefenseView {
           .fillStyle(d.hp <= d.maxHP / 2 ? 0xde9264 : 0xd9c282)
           .fillRect(d.x - 24, d.y + 30, (48 * d.hp) / d.maxHP, 4);
       }
+      s.worldHints.offer(label, d, {
+        eligible: label.visible,
+        range: selected ? Infinity : 135,
+        priority: selected ? 85 : 60,
+      });
     }
   }
 }

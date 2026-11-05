@@ -18,6 +18,7 @@ import { createForestArt } from "./art/forest-art.js";
 import { createEnvironment } from "../environment.js";
 import { sprite } from "../pixel-art.js";
 import { createWorldArt } from "../world-art.js";
+import { crownCut } from "./tree-occlusion.js";
 
 // Это загрузчик исходных спрайтов, а не отрисовка игры в одну Canvas-текстуру.
 // Каждый кадр атласа доступен как обычный Phaser Image/Sprite.
@@ -179,6 +180,9 @@ export function createAtlas(scene) {
       originY: s.ay / s.height,
       width: s.width,
       height: s.height,
+      ...(/^(trees\.|wind\.|ancient$)/.test(key) ? {
+        crownCut: crownCut(ctx.getImageData(x, y, s.width, s.height).data, s.width, s.height),
+      } : {}),
     });
   }
   texture.refresh();
