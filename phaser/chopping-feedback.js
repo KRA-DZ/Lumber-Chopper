@@ -57,6 +57,7 @@ export class ChoppingFeedback {
         .setPosition(tree.x, y - 12)
         .setText(`${tree.hp} / ${tree.maxHp}`);
     }
+    if (tree) scene.worldHints.offer(this.label, tree, { eligible: this.barVisible, priority: 85 });
     this.highlightCount = 0;
     if (c.state.wood < c.state.maxWood)
       for (const pile of c.forestry.piles.values()) {

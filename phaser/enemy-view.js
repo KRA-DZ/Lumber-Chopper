@@ -156,6 +156,11 @@ export class EnemyView {
               }`,
         )
         .setVisible(visible);
+      s.worldHints.offer(o.label, e, {
+        eligible: visible,
+        range: selected || e.invulnerable ? Infinity : 220,
+        priority: e.invulnerable ? 110 : selected ? 100 : e.windup > 0 ? 80 : 40,
+      });
       const color = e.invulnerable
         ? "#e9c598"
         : selected

@@ -33,6 +33,7 @@ export class WorkerView {
         `СКЛАД ${d.stock.length}/${WORKERS.stockLimit} · ${system.crew.length}/3\n${d.autoSell ? "Продажа" : "Запас для стройки"} · H`,
       );
     }
+    scene.worldHints.offer(this.label, WORKERS.depot, { eligible: visible, priority: 50 });
     this.stock.forEach((log, i) =>
       log
         .setVisible(visible && i < d.stock.length)
@@ -92,6 +93,7 @@ export class WorkerView {
         .setRotation(w.swing > 0 ? -1 : 0.3)
         .setDepth(w.y + 0.02);
       a.label.setPosition(snap(w.x), snap(w.y + 22)).setDepth(w.y + 0.2);
+      scene.worldHints.offer(a.label, w, { eligible: nearby, range: 140, priority: 20 });
     }
   }
 }

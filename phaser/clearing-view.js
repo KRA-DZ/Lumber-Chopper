@@ -59,6 +59,10 @@ export class ClearingView {
         c.clearingOrder === d.id ||
           Math.hypot(c.player.x - d.x, c.player.y - d.y) < 190,
       );
+      s.worldHints.offer(label, d, {
+        eligible: label.visible, range: c.clearingOrder === d.id ? Infinity : 190,
+        priority: c.clearingOrder === d.id ? 85 : 50,
+      });
     }
     for (const [id, entry] of this.objects)
       if (!wanted.has(id)) {
@@ -75,6 +79,7 @@ export class ClearingView {
         labels.add(id);
         if (!this.labels.has(id))
           this.labels.set(id, s.text(room.name, p.x, p.y, 13, "#ecd5a4"));
+        s.worldHints.offer(this.labels.get(id), p, { range: 200 });
       }
     }
     for (const [id, label] of this.labels)

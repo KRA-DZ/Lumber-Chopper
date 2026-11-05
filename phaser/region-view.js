@@ -115,7 +115,8 @@ export class RegionView {
         .setInteractive({ pixelPerfect: true })
         .setData("site", "fishing");
       result.push(
-        this.scene.text("Тихие воды · рыбалка", p.x, p.y + 235, 12, "#dce2ba"),
+        this.scene.text("Тихие воды · рыбалка", p.x, p.y + 235, 12, "#dce2ba")
+          .setData("hintPoint", { x: p.x, y: p.y + 235 }),
       );
     }
     return result;
@@ -201,6 +202,8 @@ export class RegionView {
       label.setText(
         `Открыть · ${c.state.regionWood[gate.region.id] || 0}/${gate.region.cost} брёвен`,
       );
+      this.scene.worldHints.offer(objects[2], gate, { eligible: near, range: 210, priority: 60 });
+      this.scene.worldHints.offer(label, gate, { eligible: near, range: 210, priority: 65 });
     }
     for (const list of this.objects.values())
       for (const image of list) {
@@ -222,6 +225,8 @@ export class RegionView {
               ? "Пусто"
               : "Нужен ключ",
           );
+        if (label || image.getData("hintPoint"))
+          this.scene.worldHints.offer(image, image.getData("hintPoint") || image, { priority: label ? 45 : 10 });
         const p = image.getData("plant");
         if (!p || p.type === "rock" || !this.scene.nearView(p, view, 90))
           continue;
