@@ -8,6 +8,7 @@ from PIL import Image
 from prepare_camp import extract
 
 ROOT = Path(__file__).resolve().parents[1]
+BIOME_PROPS = ("clawMarks", "lostSatchel", "forestTracks", "swampRoots", "sunkenLantern", "swampFungi")
 
 
 def main():
@@ -28,7 +29,8 @@ def main():
     )
     camp, source_camp = extract("decor-camp-sheet", 4, camp_names)
     forest, source_forest = extract("decor-forest-sheet", 4, forest_names)
-    images = {**camp, **forest}
+    habitat, source_habitat = extract("forest-swamp-details-sheet", 3, BIOME_PROPS)
+    images = {**camp, **forest, **habitat}
     specs = {
         "crate": (36, 30, 18, 26, 32, 24),
         "barrel": (28, 34, 14, 30, 24, 28),
@@ -47,6 +49,8 @@ def main():
     ):
         for variant in range(2):
             specs[f"{kind}.{variant}"] = (32, 32, 16, 27, maxw, maxh)
+    for name in BIOME_PROPS:
+        specs[name] = (48, 48, 24, 43, 42, 37)
     frames = {}
     for key, raw in images.items():
         w, h, ax, ay, maxw, maxh = specs[key]
@@ -102,7 +106,7 @@ def main():
                 "approvedVariant": 3,
                 "atlas": "decor.png",
                 "size": list(atlas.size),
-                "sources": [source_camp, source_forest],
+                "sources": [source_camp, source_forest, source_habitat],
                 "frames": positions,
                 "processing": {
                     "backgroundRemoval": False,

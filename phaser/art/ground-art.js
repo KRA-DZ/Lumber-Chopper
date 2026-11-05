@@ -1,4 +1,4 @@
-import { biomeWeights, sampleMaterial } from "../../game/biome-terrain.js";
+import { sampleBiomeGround, sampleMaterial } from "../../game/biome-terrain.js";
 import { pixelHash, CAMP } from "../../pixel-art.js";
 const SIZE = 128,
   WORLD_CHUNK = SIZE * 2,
@@ -86,19 +86,7 @@ export function createForestGround({
               wx,
               wy,
             );
-          else {
-            r = 0;
-            gr = 0;
-            b = 0;
-            for (const [name, weight] of Object.entries(
-              biomeWeights(wx * 2, wy * 2),
-            )) {
-              const sample = sampleMaterial(materials, name, wx, wy);
-              r += sample[0] * weight;
-              gr += sample[1] * weight;
-              b += sample[2] * weight;
-            }
-          }
+          else [r, gr, b] = sampleBiomeGround(materials, wx, wy);
           // A broken pixel edge merges paths with grass without blurring the image.
           if (marked && !water && !bank) {
             const edge = [

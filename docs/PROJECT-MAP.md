@@ -22,11 +22,11 @@
 | Добыча с врагов и доступные покупки | `game/combat-loot.js`, `state.combatLoot` | `phaser/combat-loot-view.js`, `shop.js` |
 | PNG предметов добычи/находок | `scripts/prepare_loot_items.py`, `src/assets/loot-items/` | `phaser/loot-item-assets.js`, `phaser/exploration-ui.js`, `phaser/exploration-view.js`; [LOOT-ITEM-ART.md](LOOT-ITEM-ART.md) |
 | Пауза, настройки и справка | Прежняя система причин паузы сцены | `phaser/game-menu.js`, `index.html`; [GAME-MENU.md](GAME-MENU.md) |
-| Регионы и биомы | `game/regions.js`, `game/region-world.js`, `game/biomes.js` | `phaser/region-view.js`, `phaser/region-map.js`, `phaser/terrain-layer.js` |
+| Регионы и биомы | `game/regions.js`, `game/region-world.js`, `game/biomes.js`, `game/region-trails.js`, `game/biome-terrain.js`, `game/biome-dressing.js` | `phaser/region-view.js`, `phaser/region-map.js`, `phaser/terrain-layer.js`; [FOREST-SWAMP.md](FOREST-SWAMP.md) |
 | Крепость, лесопилка, находки | `game/locations.js`, `game/exploration.js`, `game/clearing.js` | `phaser/location-view.js`, `phaser/exploration-view.js`, `phaser/clearing-view.js` |
 | Сюжет и дневник | `game/story.js`, `game/lore.js`, `game/discovery-dialogue.js` | `phaser/story-journal.js`, `phaser/exploration-ui.js` |
 | Работники | `game/workers.js` | `phaser/worker-view.js`, `phaser/worker-ui.js` |
-| PNG, кадры, звук | `src/assets/`, `scripts/prepare_*.py` — только по задаче | `phaser/*-assets.js`, `phaser/atlas.js`, `phaser/forest-audio.js` |
+| PNG, кадры, звук | `src/assets/`, `scripts/prepare_*.py` — только по задаче; выбор фоновых сигналов — `game/biome-soundscape.js` | `phaser/*-assets.js`, `phaser/atlas.js`, `phaser/forest-audio.js` |
 
 Подробные правила систем: [REGIONAL-HUNT.md](REGIONAL-HUNT.md), [WATCHER.md](WATCHER.md), [REGIONS.md](REGIONS.md), [DEFENSE.md](DEFENSE.md), [STORY.md](STORY.md). Читать нужный документ, а не весь набор.
 
@@ -39,6 +39,7 @@
 - `node --test tests/economy_logic.test.mjs tests/simulation.test.mjs` — экономика и команды симуляции.
 - `node --test tests/combat-loot.test.mjs tests/runtime-entry.test.mjs` — добыча, ранний цикл и единственный вход; UI/старая ссылка — `python tests/combat_loot_smoke.py`. Баланс: [COMBAT-LOOT.md](COMBAT-LOOT.md).
 - `node --test tests/regions.test.mjs tests/biomes.test.mjs` — регионы и биомы.
+- `node --test tests/biome-atmosphere.test.mjs` и `python tests/biome_atmosphere_smoke.py` — проходы леса/болота, детерминированный декор, стык грунта, PNG, стереозвук/пауза и ограниченные кеши.
 - `node --test tests/story.test.mjs tests/discovery-dialogue.test.mjs` — сюжет и разговоры о находках.
 - Браузерные сценарии — соответствующие `tests/*_smoke.py`; нужны Python Playwright и Chromium. `tests/watcher_smoke.py --scale-only` проверяет только масштаб и подписи врагов.
 - `python tests/game_menu_smoke.py` — компактные действия, ручная пауза/звук/настройки, соседние диалоги, перезапуск и портретные экраны. Для настроек в прежних сценариях использовать `click_setting()` из `tests/helpers/browser_start.py`.
