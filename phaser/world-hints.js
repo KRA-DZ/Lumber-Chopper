@@ -27,14 +27,14 @@ export class WorldHints {
   offer(label, point, { eligible = true, range = 180, priority = 10, companions = [] } = {}) {
     label.setVisible(false);
     for (const object of companions) object.setVisible(false);
-    const p = this.scene.core.player,
-      distance = Math.hypot(p.x - point.x, p.y - point.y);
+    const players = this.scene.core.actors?.map(a => a.player) || [this.scene.core.player],
+      distance = Math.min(...players.map(p => Math.hypot(p.x - point.x, p.y - point.y)));
     if (!eligible || distance > range) return;
     this.candidates.push({ label, companions, distance, priority, bounds: label.getBounds() });
   }
   flush() {
-    const selected = selectHints(this.candidates, this.scene.camera.worldView,
-      this.scene.effectsLight ? HINT_LIMITS.light : HINT_LIMITS.full);
+    const selected = [...new Set((this.scene.coopCamera?.views() || [this.scene.camera.worldView]).flatMap(view =>
+      selectHints(this.candidates, view, this.scene.effectsLight ? HINT_LIMITS.light : HINT_LIMITS.full)))];
     for (const { label, companions } of selected) {
       label.setVisible(true);
       for (const object of companions) object.setVisible(true);

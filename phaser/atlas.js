@@ -249,6 +249,11 @@ export function createAtlas(scene) {
         })),
         duration: STRIKE_MS,
       });
+  if (scene.registry.get("playerCount") === 2)
+    for (const animation of Object.values(scene.anims.anims.entries))
+      if (animation.key.startsWith("walk.player.") && !animation.key.endsWith(".coop2"))
+        scene.anims.create({ key: `${animation.key}.coop2`, frameRate: animation.frameRate, repeat: -1,
+          frames: animation.frames.map(f => ({ key: "forest", frame: `coop2.${f.textureFrame}` })) });
   return {
     art,
     worldArt,

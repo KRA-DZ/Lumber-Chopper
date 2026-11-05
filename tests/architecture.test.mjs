@@ -130,7 +130,7 @@ test("night waves only schedule on nights 5, 10, 15; actors are capped", () => {
   g.update(12.1);
   assert.ok(g.survival.raiders.length > 0 && g.survival.raiders.length <= 8);
 });
-test("watcher cannot be killed, telegraphs damage, respects pause and can cause defeat", () => {
+test("watcher cannot be killed, strikes quickly, respects pause and can cause defeat", () => {
   const g = create(true);
   beginNight(g);
   g.update(12.1);
@@ -139,10 +139,10 @@ test("watcher cannot be killed, telegraphs damage, respects pause and can cause 
   assert.equal(g.tryAttack(m.id), false);
   assert.ok(m.invulnerable);
   g.update(0.5);
-  assert.equal(g.state.health, 100);
+  assert.equal(g.state.health, 60);
   g.paused = true;
   g.update(20);
-  assert.equal(g.state.health, 100);
+  assert.equal(g.state.health, 60);
   g.paused = false;
   g.update(10);
   assert.equal(g.state.health, 0);
@@ -228,7 +228,9 @@ test("path search budget rotates fairly across all nine enemies", () => {
     player = { x: 2500, y: 2500 };
   const nav = {
     nearestGround: (x, y) => ({ x, y }),
-    clearSegment: () => true,
+    // A visible target behind a blocked route requires a path even for the Watcher.
+    clearSegment: () => false,
+    hasLineOfSight: () => true,
     findPath: (a) => {
       seen.add(a.id);
       return [];

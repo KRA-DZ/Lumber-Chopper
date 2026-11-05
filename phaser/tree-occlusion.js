@@ -41,9 +41,10 @@ export class CrownOcclusion {
   apply(image, enabled = true) {
     const meta = this.scene.assets.meta.get(image.frame.name),
       cut = meta?.crownCut,
-      covered = enabled && cut && coversHero(image, cut, this.scene.core.player);
+      covered = enabled && cut && (this.scene.core.actors?.map(a => a.player) || [this.scene.core.player])
+        .some(p => coversHero(image, cut, p));
     let entry = this.entries.get(image);
-    if (!entry && covered && this.entries.size < CROWN_LIMIT) {
+    if (!entry && covered && this.entries.size < CROWN_LIMIT * (this.scene.core.coop ? 2 : 1)) {
       const crown = this.scene.add.image(image.x, image.y, "forest", image.frame.name);
       if (image.input) crown.setInteractive({ pixelPerfect: true });
       for (const key of ["tree", "ancient", "site"])

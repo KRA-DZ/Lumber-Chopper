@@ -3,10 +3,11 @@ import { heroDirection, STRIKE_HANDS } from "./art/hero-motion.js";
 const snap = (v) => Math.round(v / 2) * 2;
 // Only presentation. No animation callback awards wood, damage, or coins.
 export class HeroView {
-  constructor(scene) {
+  constructor(scene, second = false) {
     this.scene = scene;
+    this.prefix = second ? "coop2." : "";
     this.player = scene.add
-      .sprite(1600, 1720, "forest", "characters.player.down.0")
+      .sprite(1600, 1720, "forest", this.prefix + "characters.player.down.0")
       .setOrigin(0.5, 44 / 46)
       .setScale(2);
     this.axe = scene.add
@@ -55,9 +56,9 @@ export class HeroView {
       this.player.stop();
       scene.assets.setFrame(
         this.player,
-        scene.assets.people
+        this.prefix + (scene.assets.people
           ? `hero.strike.${s.axeLevel}.${this.strikeDir}.${phase}`
-          : `hero.strike.${this.strikeDir}.${phase}`,
+          : `hero.strike.${this.strikeDir}.${phase}`),
       );
       const [hx, hy] = STRIKE_HANDS[this.strikeDir][phase],
         sign = this.strikeFlip ? -1 : 1;
@@ -79,7 +80,7 @@ export class HeroView {
           ? `characters.player.${dir}`
           : `people.player.${mood}.${dir}`;
       if (p.moving) {
-        this.player.play(`walk.player.${carry || mood}.${dir}`, true);
+        this.player.play(`walk.player.${carry || mood}.${dir}${this.prefix ? ".coop2" : ""}`, true);
         this.player.anims.timeScale = s.runSpeed / 200;
         this.pose = carry || "walk";
       } else {
@@ -93,7 +94,7 @@ export class HeroView {
                 Math.floor(t * 10) % 53 < 2
               ? "idle.player.blink"
               : `${prefix}.0`;
-        scene.assets.setFrame(this.player, idle);
+        scene.assets.setFrame(this.player, this.prefix + idle);
         this.pose = carry || (!s.wood && p.celebration > 0 ? "cheer" : "idle");
       }
       scene.assets.setFrame(this.axe, `axes.${s.axeLevel}.0`);

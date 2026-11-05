@@ -8,7 +8,7 @@ export const OUTPOST = Object.freeze({
 });
 
 // Fuel belongs to the simulation; renderer/UI cannot extend a fire's lifetime.
-export function createOutposts({ state, world, regions, nav, forestry, emit = () => {} }) {
+export function createOutposts({ state, world, regions, nav, forestry, emit = () => {}, shared = null }) {
   const sites = (world.locations || []).flatMap(l => l.sites).filter(s => s.kind === "outpost"),
     byId = new Map(sites.map(s => [s.id, s])), fuel = state.exploration.outpostFuel;
   let revision = 0;
@@ -26,7 +26,7 @@ export function createOutposts({ state, world, regions, nav, forestry, emit = ()
       const logs = remaining(id) > 0 ? 1 : OUTPOST.ignitionLogs;
       for (let i = 0; i < logs; i++) forestry.takeCargo();
       fuel[id] = remaining(id) + logs * OUTPOST.secondsPerLog;
-      revision++;
+      if (shared) shared.invalidate(); else revision++;
       emit("outpost-stoked", { site: byId.get(id), logs, fuel: fuel[id] });
       return true;
     },
@@ -52,6 +52,7 @@ export function createOutposts({ state, world, regions, nav, forestry, emit = ()
     lights() {
       return sites.filter(s => lit(s.id)).map(s => ({ x: s.x, y: s.y, r: OUTPOST.lightRadius, kind: "outpost" }));
     },
-    get revision() { return revision; },
+    invalidate() { revision++; },
+    get revision() { return shared?.revision ?? revision; },
   };
 }

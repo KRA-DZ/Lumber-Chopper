@@ -21,7 +21,8 @@ export class WatcherHud {
   refresh() {
     const s = this.scene,
       c = s.world.core,
-      threat = watcherThreat(c),
+      target = c.coop ? c.actors[c.survival.monster?.targetPlayerId ?? c.activeActor] : c,
+      threat = watcherThreat(target),
       g = this.arrow.clear().setVisible(false);
     this.label.setVisible(!!threat);
     this.bottom = 168;
@@ -29,33 +30,34 @@ export class WatcherHud {
     this.label
       .setPosition(s.scale.width / 2, 168)
       .setWordWrapWidth(s.scale.width - 90)
-      .setText(threat.text)
+      .setText(`${c.coop ? `Игрок ${target.player.id + 1}: ` : ""}${threat.text}`)
       .setColor(threat.color);
     this.bottom = 168 + this.label.height;
     const m = c.survival.monster,
-      v = s.world.camera.worldView;
-    const x = m.x - v.x,
-      y = m.y - v.y;
+      camera = s.world.coopCamera?.split && target.player.id === 1 ? s.world.coopCamera.second : s.world.camera,
+      v = camera.worldView;
+    const x = m.x - v.x + camera.x,
+      y = m.y - v.y + camera.y;
     if (
       threat.active &&
-      (x < 0 || x > s.scale.width || y < 0 || y > s.scale.height)
+      (x < camera.x || x > camera.x + camera.width || y < camera.y || y > camera.y + camera.height)
     ) {
-      const px = c.player.x - v.x,
-        py = c.player.y - v.y,
+      const px = target.player.x - v.x + camera.x,
+        py = target.player.y - v.y + camera.y,
         dx = x - px,
         dy = y - py;
-      const top = this.bottom + 16,
-        bottom = s.scale.height - s.tutorial.height - 72;
+      const top = Math.max(camera.y + 28, this.bottom + 16),
+        bottom = Math.min(camera.y + camera.height - 28, s.scale.height - s.tutorial.height - 72);
       const candidates = [
         dx > 0
-          ? (s.scale.width - 28 - px) / dx
+          ? (camera.x + camera.width - 28 - px) / dx
           : dx < 0
-            ? (28 - px) / dx
+            ? (camera.x + 28 - px) / dx
             : Infinity,
         dy > 0 ? (bottom - py) / dy : dy < 0 ? (top - py) / dy : Infinity,
       ];
       const k = Math.max(0, Math.min(...candidates)),
-        cx = Math.max(28, Math.min(s.scale.width - 28, px + dx * k)),
+        cx = Math.max(camera.x + 28, Math.min(camera.x + camera.width - 28, px + dx * k)),
         cy = Math.max(top, Math.min(bottom, py + dy * k)),
         a = Math.atan2(dy, dx);
       const pt = (angle, r) => ({

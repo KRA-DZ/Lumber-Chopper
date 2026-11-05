@@ -147,7 +147,8 @@ export class Atmosphere {
       this.core.state,
       this.core.player,
       this.core.survival?.safeRadius() ?? 210,
-      this.core.outposts.lights(),
+      [...this.core.outposts.lights(), ...(this.core.actors || []).filter((a, i) => i !== this.core.activeActor)
+        .map(a => ({ x: a.player.x, y: a.player.y - 24, r: 140 + a.state.lanternLevel * 24, kind: "player" }))],
     );
   }
   lanterns() {
@@ -234,8 +235,8 @@ export class Atmosphere {
       a = this.air.clear(),
       eyes = this.eyes.clear(),
       glow = this.glow.clear();
-    const near = (x, y, m = 40) =>
-      x > v.x - m && x < v.right + m && y > v.y - m && y < v.bottom + m;
+    const views = scene.coopCamera?.views() || [v],
+      near = (x, y, m = 40) => scene.nearView({ x, y }, views, m);
     const pond = c.world.pond;
     for (let i = 0; i < 55; i++) {
       const x = pond.x - 160 + ((i * 47) % 310),
@@ -313,7 +314,8 @@ export class Atmosphere {
           .fillRect(snap(l.x + Math.sin(t * 4 + l.phase) * 4), snap(l.y), 4, 2)
           .fillRect(snap(l.x) + 2, snap(l.y) + 2, 2, 2);
     if (profile.rain > 0.01)
-      for (let i = 0; i < (light ? 28 : 80); i++) {
+      for (const v of views)
+      for (let i = 0; i < (light ? 28 : 80) / views.length; i++) {
         const x = snap(v.x + (((pixelHash(i, 31) % 4096) + t * 34) % v.width)),
           y = snap(
             v.y +
@@ -534,12 +536,28 @@ export class Atmosphere {
         .lineStyle(2, 0xbae0a1, 0.5)
         .strokeCircle(1600, 1600, this.reveal.from);
   }
+  attachCamera(camera) {
+    const mask = this.scene.textures.createCanvas("night-mask-p2", 240, 352);
+    mask.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    const shade = this.scene.add.image(0, 0, "night-mask-p2").setOrigin(0).setScrollFactor(0).setDepth(LAYERS.night);
+    this.scene.camera.ignore(shade); camera.ignore(this.shade);
+    this.secondMask = { mask, shade, maskKey: "" };
+  }
   drawNight(v, dark, t) {
-    this.shade
-      .setDisplaySize(this.scene.scale.width, this.scene.scale.height)
+    this.drawNightFor(this.scene.camera, this, dark, t);
+    if (this.secondMask) {
+      const camera = this.scene.coopCamera?.second;
+      if (camera?.visible) this.drawNightFor(camera, this.secondMask, dark, t);
+      else this.secondMask.shade.setVisible(false);
+    }
+  }
+  drawNightFor(camera, buffer, dark, t) {
+    const v = camera.worldView;
+    buffer.shade
+      .setDisplaySize(camera.width, camera.height)
       .setVisible(dark > 0.01);
     if (dark <= 0.01) {
-      this.maskKey = "";
+      buffer.maskKey = "";
       return;
     }
     const factor = this.quality === "light" ? 4 : 2,
@@ -555,14 +573,14 @@ export class Atmosphere {
       this.core.outposts.revision,
     ].join(":");
     const jumped =
-      !this.maskView ||
-      Math.hypot(v.x - this.maskView.x, v.y - this.maskView.y) > v.width / 4;
-    if (key === this.maskKey && !jumped) return;
-    this.maskKey = key;
-    this.maskView = { x: v.x, y: v.y };
-    if (this.mask.width !== w || this.mask.height !== h)
-      this.mask.setSize(w, h);
-    const ctx = this.mask.getContext();
+      !buffer.maskView ||
+      Math.hypot(v.x - buffer.maskView.x, v.y - buffer.maskView.y) > v.width / 4;
+    if (key === buffer.maskKey && !jumped) return;
+    buffer.maskKey = key;
+    buffer.maskView = { x: v.x, y: v.y };
+    if (buffer.mask.width !== w || buffer.mask.height !== h)
+      buffer.mask.setSize(w, h);
+    const ctx = buffer.mask.getContext();
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = `rgba(0,0,0,${dark})`;
@@ -577,9 +595,10 @@ export class Atmosphere {
         (l.r * 2) / factor,
       );
     ctx.globalCompositeOperation = "source-over";
-    this.mask.refresh();
+    buffer.mask.refresh();
   }
   destroy() {
+    if (this.secondMask) { this.secondMask.shade.destroy(); this.scene.textures.remove("night-mask-p2"); }
     this.scene.textures.remove("night-mask");
   }
 }

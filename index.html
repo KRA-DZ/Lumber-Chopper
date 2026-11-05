@@ -179,6 +179,11 @@
       border: 2px solid #b3975d;
       margin-top: 12px;
     }
+    #coopPlayers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+    #coopPlayers article { padding: 7px; background: #263f2e; border: 2px solid #536c51; }
+    #coopPlayers article[data-active="true"] { border-color: #e2c17e; }
+    #coopPlayers button { padding: 5px 8px; margin-right: 5px; font-size: 12px; }
+    #coopPlayers p { margin: 5px 0; font-size: 12px; color: #f1ddb0; }
     #fishingControls[hidden] {
       display: none;
     }
@@ -587,7 +592,13 @@
     <form>
       <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
       <h2 id="heroTitle">Кто отправится в лес?</h2>
-      <p>Выберите героя. У обоих одинаковые сила, скорость и вместимость.</p>
+      <fieldset>
+        <legend>Режим игры</legend>
+        <label><input type="radio" name="players" value="1" checked /> Один игрок</label>
+        <label><input type="radio" name="players" value="2" /> Вдвоём на одном компьютере</label>
+        <p>Вдвоём: игрок 1 — WASD и E, игрок 2 — стрелки и Enter. При удалении экран разделяется. Для помощи товарищу удерживайте E / Enter рядом с ним 3 секунды.</p>
+      </fieldset>
+      <p>Выберите героя. У обоих одинаковые сила, скорость и вместимость. Вдвоём второй игрок получает другого героя; прокачка у каждого своя.</p>
       <fieldset class="hero-choices">
         <legend>Персонаж</legend>
         <label class="hero-card">

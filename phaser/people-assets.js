@@ -44,30 +44,36 @@ export function applyPeopleFrames(scene, sources) {
   };
   for (const id of Object.keys(pack.manifest.frames))
     if (!id.startsWith("hero")) sources.set(`person.${id}`, get(id));
+  function heroFrames(role, prefix = "") {
+  const put = (key, value) => sources.set(prefix + key, value);
   for (const dir of ["down", "up", "side"]) {
     for (let i = 0; i < 8; i++) {
       const walk = get(`${role}-walk-${dir}-${i % 4}`),
         carry = get(`${role}-carry-${dir}-${i % 4}`);
-      sources.set(`characters.player.${dir}.${i}`, walk);
+      put(`characters.player.${dir}.${i}`, walk);
       for (const mood of ["happy", "tired", "focused"])
-        sources.set(`people.player.${mood}.${dir}.${i}`, walk);
+        put(`people.player.${mood}.${dir}.${i}`, walk);
       for (const mood of ["carry", "heavy"])
-        sources.set(`hero.${mood}.${dir}.${i}`, carry);
+        put(`hero.${mood}.${dir}.${i}`, carry);
     }
     for (let tier = 0; tier < 6; tier++)
       for (let phase = 0; phase < 6; phase++) {
         const frame = get(
           `${role}-strike-${dir}-${Math.floor(phase / 2)}-tier${tier}`,
         );
-        sources.set(`hero.strike.${tier}.${dir}.${phase}`, frame);
-        if (tier === 0) sources.set(`hero.strike.${dir}.${phase}`, frame);
+        put(`hero.strike.${tier}.${dir}.${phase}`, frame);
+        if (tier === 0) put(`hero.strike.${dir}.${phase}`, frame);
       }
     for (let i = 0; i < 2; i++)
-      sources.set(`hero.cheer.${dir}.${i}`, get(`${role}-gesture-cheer`));
+      put(`hero.cheer.${dir}.${i}`, get(`${role}-gesture-cheer`));
   }
   for (const mood of ["blink", "yawn"])
-    sources.set(`idle.player.${mood}`, get(`${role}-gesture-rest`));
-  sources.set("idle.player.cheer", get(`${role}-gesture-cheer`));
+    put(`idle.player.${mood}`, get(`${role}-gesture-rest`));
+  put("idle.player.cheer", get(`${role}-gesture-cheer`));
+  }
+  heroFrames(role);
+  if (scene.registry.get("playerCount") === 2)
+    heroFrames(role === HERO_APPEARANCES.traveler.role ? HERO_APPEARANCES.woodcutter.role : HERO_APPEARANCES.traveler.role, "coop2.");
   sources.set("merchant", get("merchant-idle"));
   for (const action of ["idle", "adjust", "read", "look", "peek", "greet"])
     for (let i = 0; i < 2; i++)

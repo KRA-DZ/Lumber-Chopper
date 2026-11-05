@@ -27,8 +27,9 @@ export function playFirstDay(g) {
   }
   gather();
   sell();
-  if (!g.purchaseUpgrade("carry"))
-    throw new Error("First sale did not afford carry");
+  while (!g.purchaseUpgrade("carry")) {
+    gather(); sell();
+  }
   samples.carrySeconds = g.elapsed;
   while (g.state.campLevel < 1) {
     gather();
