@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--baseline", type=Path)
+parser.add_argument("--combined-only", action="store_true", help="Only rain + night + 82 logs + raid, full/light on fresh pages")
 parser.add_argument("--output", type=Path, default=Path("/tmp/lumber-performance.json"))
 args = parser.parse_args()
 
@@ -31,7 +32,7 @@ def serve(root):
         ("127.0.0.1", 0), partial(Handler, directory=str(root))
     )
     Thread(target=server.serve_forever, daemon=True).start()
-    return server, f"http://127.0.0.1:{server.server_port}/phaser.html"
+    return server, f"http://127.0.0.1:{server.server_port}/index.html"
 
 
 servers = []
@@ -64,6 +65,35 @@ try:
             q = context.new_page()
             errors = []
             q.on("pageerror", lambda e: errors.append(str(e)))
+            if args.combined_only:
+                for light in (False, True):
+                    q.goto(url)
+                    choose_hero(q)
+                    q.evaluate((ROOT / "tests/helpers/combined_load.js").read_text(), light)
+                    q.wait_for_timeout(1000)
+                    q.evaluate("samples.cpu=[];samples.frames=[];samples.phases=new Set();samples.on=true")
+                    q.wait_for_timeout(3000)
+                    result = q.evaluate("""()=>{
+                      samples.on=false;
+                      const stats=a=>{a=a.slice().sort((a,b)=>a-b);return {count:a.length,median:+a[Math.floor(a.length*.5)].toFixed(2),p95:+a[Math.floor(a.length*.95)].toFixed(2),max:+a.at(-1).toFixed(2)}};
+                      const atlas=w.textures.get('forest').getSourceImage();
+                      return {renderer:g.renderer,cpuMs:stats(samples.cpu),frameMs:stats(samples.frames),
+                        atlas:[atlas.width,atlas.height],objects:w.children.length,textures:w.textures.getTextureKeys().length,
+                        chunks:w.terrain.images.size,cargo:w.cargo.filter(i=>i.visible).length,
+                        raiders:m.survival.raiders.length,minions:m.survival.minions.length,bosses:m.survival.regionalBosses.length,
+                        rain:w.atmosphere.weather.profile.rain,rainCount:w.atmosphere.weather.rainCount,
+                        crowns:w.crownOcclusion?.entries.size||0,hints:w.worldHints?.visibleCount??null,
+                        observedWatcher:[...samples.phases],health:m.state.health,gameOver:m.state.gameOver,paused:m.paused};
+                    }""")
+                    assert not errors, errors
+                    assert result["cpuMs"]["count"] > 20 and result["frameMs"]["count"] > 20, result
+                    assert not result["paused"] and not result["gameOver"], result
+                    assert result["rain"] == 1 and result["cargo"] == 82 and result["raiders"] > 0 and result["minions"] > 0, result
+                    entry = {"version": label, "scenario": "combined-light" if light else "combined-full", **result}
+                    report["samples"].append(entry)
+                    print(json.dumps(entry), flush=True)
+                context.close()
+                continue
             q.goto(url)
             choose_hero(q)
             q.wait_for_function("!!window.lumberPhaser?.scene.hudReady", timeout=30000)
