@@ -15,7 +15,7 @@ class DecorAssets(unittest.TestCase):
         meta = json.loads((folder / "manifest.json").read_text())
         image = Image.open(folder / "decor.png").convert("RGBA")
         self.assertEqual(meta["approvedVariant"], 3)
-        self.assertEqual(len(meta["frames"]), 16)
+        self.assertEqual(len(meta["frames"]), 22)
         self.assertLessEqual(max(image.size), 256)
         for source in meta["sources"]:
             file = ROOT / "art/source" / source["file"]

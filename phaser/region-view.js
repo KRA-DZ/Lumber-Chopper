@@ -23,6 +23,9 @@ export class RegionView {
       result.push(a);
       return a;
     };
+    for (const prop of w.biomeDetails.get(region.id) || [])
+      image(`habitat.${prop.kind}`, prop.x, prop.y, prop.ground ? LAYERS.ground + 12 : prop.y)
+        .setData("biomeDetail", prop.kind);
     for (const [index, p] of (w.decorBins.get(region.id) || []).entries())
       if (index % 3 === 0)
         image(`biomeprop.${region.biome}`, p.x, p.y).setScale(

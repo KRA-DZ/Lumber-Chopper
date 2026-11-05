@@ -72,4 +72,6 @@ export function applyDecorFrames(decor, sources) {
   sources.set("camp.mat", decor.get("mat"));
   sources.set("camp.flowers", decor.get("flowerpot"));
   sources.set("camp.dishes", decor.dishes);
+  for (const name of ["clawMarks", "lostSatchel", "forestTracks", "swampRoots", "sunkenLantern", "swampFungi"])
+    sources.set(`habitat.${name}`, decor.get(name));
 }

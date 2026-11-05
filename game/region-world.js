@@ -3,13 +3,17 @@ import { CAMP, random, pixelHash } from "../pixel-art.js";
 import { REGIONS, REGION_BOUNDS, REGION_SIZE, regionAt } from "./regions.js";
 import { FORTRESS, insideLocation } from "./locations.js";
 import { SAWMILL } from "./sawmill.js";
+import { regionTrails } from "./region-trails.js";
+import { biomeDressing } from "./biome-dressing.js";
 
 export function createRegionWorld(regions) {
   const trees = [],
     bins = new Map(),
     decorBins = new Map(),
+    biomeDetails = new Map(),
     landmarks = [],
-    trails = [];
+    trails = [],
+    trailBins = new Map();
   const ancientTree = {
     x: 3520,
     y: 1600,
@@ -66,17 +70,9 @@ export function createRegionWorld(regions) {
           clearing: 90,
           regionId: r.id,
         });
-    // Wide, continuous cross-roads keep all four borders and their signs reachable.
-    trails.push(
-      [
-        { x: r.x, y: r.cy },
-        { x: r.x + REGION_SIZE, y: r.cy },
-      ],
-      [
-        { x: r.cx, y: r.y },
-        { x: r.cx, y: r.y + REGION_SIZE },
-      ],
-    );
+    const paths = regionTrails(r);
+    trailBins.set(r.id, paths);
+    trails.push(...paths);
   }
   const locations = [FORTRESS, SAWMILL];
   // Relocate existing IDs: rewards, story evidence and journal routes stay valid.
@@ -169,9 +165,8 @@ export function createRegionWorld(regions) {
   }
   function nearTrail(p, width = 50) {
     const r = regionAt(p.x, p.y);
-    return (
-      !!r && (Math.abs(p.x - r.cx) < width || Math.abs(p.y - r.cy) < width)
-    );
+    return !!r && trailBins.get(r.id).some(path =>
+      path.some((end, i) => i > 0 && segmentDistance(p, path[i - 1], end) < width));
   }
   function reserved(x, y, r) {
     return (
@@ -200,6 +195,7 @@ export function createRegionWorld(regions) {
     const types = ["oak", "birch", "spruce", "dead"],
       hp = { oak: 4, birch: 3, spruce: 5, dead: 2 },
       values = { oak: 10, birch: 12, spruce: 15, dead: 8 };
+    const details = biomeDressing(region, trailBins.get(region.id), (x, y) => !reserved(x, y, region));
     // Jittered cells preserve generous routes without rendering a huge prebuilt map.
     for (let gy = 0; gy < 12; gy++)
       for (let gx = 0; gx < 12; gx++) {
@@ -207,6 +203,7 @@ export function createRegionWorld(regions) {
           y = region.y + 80 + gy * 150 + (rnd() - 0.5) * 75;
         if (
           reserved(x, y, region) ||
+          details.some((p, i) => Math.hypot(p.x - x, p.y - y) < (i < 3 ? 150 : 64)) ||
           (region.biome === "field" && rnd() < 0.55)
         )
           continue;
@@ -253,6 +250,7 @@ export function createRegionWorld(regions) {
     }
     bins.set(region.id, list);
     decorBins.set(region.id, decor);
+    biomeDetails.set(region.id, details);
   }
   function treesNear(view) {
     const result = [];
@@ -290,6 +288,7 @@ export function createRegionWorld(regions) {
     generate,
     treesNear,
     decorBins,
+    biomeDetails,
     biomeAt: (x, y) => regionAt(x, y)?.biome || "forest",
     campItems: [
       { type: "tools", x: 1640, y: 1645, min: 0 },

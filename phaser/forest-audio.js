@@ -1,4 +1,5 @@
 // Small procedural soundscape. AudioContext is created only by the sound button.
+import { ambientCue } from "../game/biome-soundscape.js";
 export function createForestAudio() {
   let context,
     master,
@@ -10,7 +11,8 @@ export function createForestAudio() {
     timer = 1,
     fireTimer = 0,
     threatTimer = 0,
-    windupVoice = null;
+    windupVoice = null,
+    lastAmbient = null;
   const voices = new Set();
   const safe = (promise) => promise?.catch(() => {});
   function tone(freq, duration, volume, slide = 1, pan = 0) {
@@ -55,7 +57,7 @@ export function createForestAudio() {
     };
     return voice;
   }
-  function crackle(volume) {
+  function crackle(volume, pan = 0, frequency = 1200, duration = 0.09) {
     if (
       !context ||
       !enabled ||
@@ -70,12 +72,17 @@ export function createForestAudio() {
       t = context.currentTime;
     source.buffer = noise;
     filter.type = "highpass";
-    filter.frequency.value = 1200;
+    filter.frequency.value = frequency;
     g.gain.setValueAtTime(volume, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
     source.connect(filter);
     filter.connect(g);
-    g.connect(master);
+    const panner = context.createStereoPanner?.();
+    if (panner) {
+      panner.pan.value = pan;
+      g.connect(panner);
+      panner.connect(master);
+    } else g.connect(master);
     const voice = {
       stop: () => {
         try {
@@ -85,11 +92,12 @@ export function createForestAudio() {
     };
     voices.add(voice);
     source.start(t);
-    source.stop(t + 0.09);
+    source.stop(t + duration);
     source.onended = () => {
       source.disconnect();
       filter.disconnect();
       g.disconnect();
+      panner?.disconnect();
       voices.delete(voice);
     };
   }
@@ -145,7 +153,7 @@ export function createForestAudio() {
       if (!enabled || paused || !context || dt <= 0) return;
       rain.gain.setTargetAtTime(profile.rain * 0.07, context.currentTime, 0.4);
       wind.gain.setTargetAtTime(
-        0.025 + profile.rain * 0.02,
+        (core.world.biomeAt(core.player.x, core.player.y) === "swamp" ? 0.016 : 0.025) + profile.rain * 0.02,
         context.currentTime,
         0.4,
       );
@@ -167,14 +175,14 @@ export function createForestAudio() {
       }
       if (!danger) threatTimer = 0;
       if (timer <= 0 && !danger) {
-        const night = core.nightAmount() > 0.5;
-        tone(
-          night ? 3600 : 1800 + Math.random() * 900,
-          night ? 0.08 : 0.2,
-          night ? 0.012 : 0.02,
-          night ? 1.05 : 1.7,
-        );
-        timer = night ? 0.7 : 3 + Math.random() * 4;
+        const cue = ambientCue(core);
+        lastAmbient = cue;
+        if (cue.kind === "steps") crackle(cue.volume, cue.pan, cue.frequency, cue.duration);
+        else {
+          tone(cue.frequency, cue.duration, cue.volume, cue.kind === "frog" ? 0.55 : 1.2, cue.pan);
+          if (cue.kind === "bird") tone(cue.frequency * 1.3, 0.1, cue.volume * 0.5, 1.1, cue.pan);
+        }
+        timer = cue.interval;
       }
       if (core.state.campLevel > 0 && fireTimer <= 0) {
         crackle(
@@ -200,6 +208,9 @@ export function createForestAudio() {
     },
     get activeVoices() {
       return voices.size;
+    },
+    get ambience() {
+      return lastAmbient;
     },
     warning() {
       tone(440, 0.6, 0.045, 0.5);
