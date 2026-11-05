@@ -14,6 +14,7 @@
 | Задача | Модель / данные | Представление / интеграция |
 | --- | --- | --- |
 | Ходьба, столкновения, команды | `game/navigation.js`, `game/simulation.js` | `phaser/world-scene.js`, `phaser/hero-view.js` |
+| Герой за кронами, приоритеты подписей | Геометрия/лимиты: `phaser/tree-occlusion.js`, `phaser/world-hints.js` | `phaser/atlas.js`, `phaser/world-scene.js`; [WORLD-READABILITY.md](WORLD-READABILITY.md) |
 | Рубка, брёвна, стопка, покупки | `forestry.js`, `economy.js`, `game/stack-layout.js`, `game/buyers.js` | `phaser/stack-view.js`, `phaser/chopping-feedback.js`, `phaser/buyer-view.js`, `shop.js` |
 | Сутки, Смотритель, региональные враги | `game/cycle.js`, `game/survival.js`, `game/watcher.js`, `game/biome-enemies.js`, `game/minions.js`, `game/raiders.js` | `phaser/enemy-view.js`, `phaser/watcher-hud.js`, `phaser/night-lighting.js`, `phaser/atmosphere.js` |
 | Лагерь, ограда, ремонт | `construction.js`, `game/defenses.js`, `game/defense-repair.js` | `phaser/construction-view.js`, `phaser/camp-view.js`, `phaser/defense-view.js`, `phaser/defense-ui.js`, `phaser/repair-control.js` |
@@ -42,5 +43,6 @@
 - Браузерные сценарии — соответствующие `tests/*_smoke.py`; нужны Python Playwright и Chromium. `tests/watcher_smoke.py --scale-only` проверяет только масштаб и подписи врагов.
 - `python tests/game_menu_smoke.py` — компактные действия, ручная пауза/звук/настройки, соседние диалоги, перезапуск и портретные экраны. Для настроек в прежних сценариях использовать `click_setting()` из `tests/helpers/browser_start.py`.
 - `python tests/loot_item_assets_test.py` — alpha/размеры новых предметов; `python tests/loot_item_art_smoke.py` — PNG, свет/маркеры, эффекты, сумка, торговля и снасти. `--mobile-only` повторяет только мобильную часть.
+- `node --test tests/world-readability.test.mjs` и `python tests/world_readability_smoke.py` — кроны/основания, ввод, восстановление и приоритеты подписей. `python tests/phaser_performance.py --combined-only` — только дождь + ночь + 82 бревна + налёт, полные/лёгкие эффекты.
 - `npm test` запускает все Node-тесты: применять для широких изменений или обоснованной регрессии, а не автоматически после каждой правки.
 - `git diff --check` — проверка патча перед коммитом. Итоговый отчёт называет только действительно выполненные проверки.

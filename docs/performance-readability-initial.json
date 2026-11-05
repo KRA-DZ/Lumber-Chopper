@@ -1,0 +1,169 @@
+{
+  "method": "Headless Chromium, software WebGL; 1s warmup + 3s RAF sampling per case; CPU is World.update (simulation + view, GPU work excluded), frame interval includes browser rendering. No screenshot during sampling. Mobile viewport is emulated, not a device benchmark.",
+  "samples": [
+    {
+      "version": "baseline",
+      "scenario": "combined-full",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 70,
+        "median": 1.3,
+        "p95": 4.8,
+        "max": 80.6
+      },
+      "frameMs": {
+        "count": 70,
+        "median": 49.9,
+        "p95": 83.3,
+        "max": 99.9
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 500,
+      "textures": 74,
+      "chunks": 19,
+      "cargo": 82,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "rain": 1,
+      "rainCount": 80,
+      "crowns": 0,
+      "hints": null,
+      "observedWatcher": [
+        "chase",
+        "windup",
+        "strike",
+        "recover"
+      ],
+      "health": 999960,
+      "gameOver": false,
+      "paused": false
+    },
+    {
+      "version": "baseline",
+      "scenario": "combined-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 70,
+        "median": 1.2,
+        "p95": 5.4,
+        "max": 83.6
+      },
+      "frameMs": {
+        "count": 70,
+        "median": 33.4,
+        "p95": 100,
+        "max": 133.3
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 500,
+      "textures": 74,
+      "chunks": 19,
+      "cargo": 82,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "rain": 1,
+      "rainCount": 28,
+      "crowns": 0,
+      "hints": null,
+      "observedWatcher": [
+        "chase",
+        "windup",
+        "strike",
+        "recover"
+      ],
+      "health": 999960,
+      "gameOver": false,
+      "paused": false
+    },
+    {
+      "version": "current",
+      "scenario": "combined-full",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 71,
+        "median": 1.5,
+        "p95": 8.1,
+        "max": 80.4
+      },
+      "frameMs": {
+        "count": 71,
+        "median": 33.4,
+        "p95": 83.4,
+        "max": 83.4
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 503,
+      "textures": 74,
+      "chunks": 19,
+      "cargo": 82,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "rain": 1,
+      "rainCount": 80,
+      "crowns": 3,
+      "hints": 4,
+      "observedWatcher": [
+        "chase",
+        "windup",
+        "strike",
+        "recover"
+      ],
+      "health": 999960,
+      "gameOver": false,
+      "paused": false
+    },
+    {
+      "version": "current",
+      "scenario": "combined-light",
+      "renderer": "WebGL",
+      "cpuMs": {
+        "count": 75,
+        "median": 1.3,
+        "p95": 4.1,
+        "max": 75.5
+      },
+      "frameMs": {
+        "count": 75,
+        "median": 33.4,
+        "p95": 66.7,
+        "max": 66.7
+      },
+      "atlas": [
+        2048,
+        2048
+      ],
+      "objects": 503,
+      "textures": 74,
+      "chunks": 19,
+      "cargo": 82,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "rain": 1,
+      "rainCount": 28,
+      "crowns": 3,
+      "hints": 2,
+      "observedWatcher": [
+        "chase",
+        "windup",
+        "strike",
+        "recover"
+      ],
+      "health": 999960,
+      "gameOver": false,
+      "paused": false
+    }
+  ]
+}
