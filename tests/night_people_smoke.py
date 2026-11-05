@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Thread
 from shutil import which
 from playwright.sync_api import sync_playwright
-from helpers.browser_start import choose_hero
+from helpers.browser_start import choose_hero, click_setting
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -158,14 +158,14 @@ try:
             (
                 q.locator("#effectsBtn").tap()
                 if mobile
-                else q.locator("#effectsBtn").click()
+                else click_setting(q, "#effectsBtn")
             )
             q.evaluate("w.atmosphere.maskKey='';g.step(0)")
             assert q.evaluate("w.effectsLight") and mask(q, far) == [0, 0, 0, 255]
             (
                 q.locator("#effectsBtn").tap()
                 if mobile
-                else q.locator("#effectsBtn").click()
+                else click_setting(q, "#effectsBtn")
             )
             focus(q, {"x": 1600, "y": 1720})
             assert mask(q, {"x": 1600, "y": 1600})[3] == 0

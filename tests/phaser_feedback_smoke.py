@@ -1,6 +1,6 @@
 """Hero motion, directional chopping, focused feedback and bounded visual objects."""
 
-from helpers.browser_start import choose_hero
+from helpers.browser_start import choose_hero, click_setting
 
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -119,10 +119,10 @@ try:
                 "w.children.length<=objectCount&&w.feedback.highlightCount<=8"
             )
             assert q.evaluate("m.forestry.piles.size") == before
-            q.locator("#effectsBtn").click()
+            click_setting(q, "#effectsBtn")
             q.evaluate("g.step(0)")
             assert q.evaluate("w.feedback.highlightCount===3")
-            q.locator("#effectsBtn").click()
+            click_setting(q, "#effectsBtn")
             q.evaluate(
                 "while(m.state.wood<m.state.maxWood)m.forestry.addCargo(10);g.step(0)"
             )

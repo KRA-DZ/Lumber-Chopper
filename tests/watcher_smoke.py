@@ -1,6 +1,6 @@
 """Targeted enemy scale and tracking contact-strike checks; native WASD/touch and camp light."""
 
-from helpers.browser_start import choose_hero
+from helpers.browser_start import choose_hero, click_setting
 
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -89,7 +89,7 @@ try:
             q.reload()
             ready(q)
             assert q.evaluate("!w.audio.enabled&&!w.audio.context")
-            q.locator("#sound").click()
+            click_setting(q, "#sound")
             q.wait_for_function('w.audio.context.state==="running"')
             q.evaluate(
                 "window.cues=[];const cue=w.audio.watcherCue.bind(w.audio);w.audio.watcherCue=(...args)=>{cues.push(args[0]);return cue(...args)};m.state.campLevel=1;m.nav.rebuildObstacles();m.state.worldTime=299.99;g.step(.02);g.step(12.1)"
@@ -169,7 +169,7 @@ try:
                 'm.player.x=1600;m.player.y=2000;m.player.path=[];Object.assign(m.survival.monster,{x:2200,y:1500,phase:"chase",phaseTime:1});g.step(0)'
             )
             assert q.evaluate("h.watcherHud.arrow.visible&&h.watcherHud.label.visible")
-            q.locator("#sound").click()
+            click_setting(q, "#sound")
             q.wait_for_function('w.audio.context.state==="suspended"')
             assert q.evaluate("w.audio.activeVoices===0")
             # Dawn removes gameplay danger immediately; the presentation fades out on its own.

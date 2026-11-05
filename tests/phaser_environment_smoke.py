@@ -2,7 +2,7 @@
 Run after npm run build. Preview fixtures use development state, not saved games.
 """
 
-from helpers.browser_start import choose_hero
+from helpers.browser_start import choose_hero, click_setting
 
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -110,11 +110,11 @@ try:
             assert q.evaluate(
                 "a.weather.profile.rain===0&&a.weather.profile.wet>0&&a.weather.drips.length>0"
             )
-            q.locator("#effectsBtn").click()
+            click_setting(q, "#effectsBtn")
             assert q.evaluate(
                 'a.quality==="light"&&a.weather.rainCount===28&&a.environment.leaves.length<=8&&a.weather.drips.length<=5'
             )
-            q.locator("#effectsBtn").click()
+            click_setting(q, "#effectsBtn")
             # Native pixels are distinct; night light mask keeps a clear centre and dark distance.
             q.evaluate(
                 "m.state.campLevel=4;m.nav.rebuildObstacles();m.player.x=2270;m.player.y=1730;m.player.path=[];m.state.worldTime=450;for(let i=0;i<70;i++)g.step(.1)"
@@ -139,13 +139,13 @@ try:
             q.evaluate("m.state.worldTime=120;g.step(.1)")
             assert q.evaluate("!a.shade.visible&&a.mystery.eyes.length===0")
             # Sound has a user gesture, and pauses while an interaction is open.
-            q.locator("#sound").click()
+            click_setting(q, "#sound")
             q.wait_for_function('w.audio.enabled&&w.audio.context.state==="running"')
             q.locator("#shopButton").click()
             q.wait_for_function('w.audio.context.state==="suspended"')
             q.keyboard.press("Escape")
             q.wait_for_function('!m.paused&&w.audio.context.state==="running"')
-            q.locator("#sound").click()
+            click_setting(q, "#sound")
             q.wait_for_function('!w.audio.enabled&&w.audio.context.state==="suspended"')
             # Representative daytime camp, same coordinates in both editions.
             q.evaluate(

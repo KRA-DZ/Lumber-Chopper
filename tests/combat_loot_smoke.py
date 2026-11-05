@@ -81,7 +81,7 @@ try:
             assert q.evaluate("!m.survival.regionalBosses.some(e=>e.id===boss.id)&&m.combatLoot.piles.size===1")
             collect(q, mobile)
             assert q.evaluate("m.state.coins===22&&m.state.exploration.items.resin>=1&&m.state.raidsWon===0&&m.state.combatLoot.coinsCollected===22")
-            assert "доступно улучшение" in q.locator("#shopButton").inner_text()
+            assert "доступно улучшение" in q.locator("#shopButton").get_attribute("aria-label")
             q.locator("#shopButton").click()
             assert "Сила переноски" in q.locator("[data-combat-progress]").inner_text()
             assert "маз" in q.locator("[data-combat-progress]").inner_text()

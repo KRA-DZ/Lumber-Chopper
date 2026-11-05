@@ -8,6 +8,7 @@ import { StackView } from "./stack-view.js";
 import { BuyerView } from "./buyer-view.js";
 import { DefenseView } from "./defense-view.js";
 import { createDefenseUi } from "./defense-ui.js";
+import { createGameMenu } from "./game-menu.js";
 import { EnemyView } from "./enemy-view.js";
 import { CombatLootView } from "./combat-loot-view.js";
 import { affordableCombatUpgrades, COMBAT_LOOT } from "../game/combat-loot.js";
@@ -122,6 +123,7 @@ export class WorldScene extends Phaser.Scene {
     this.atmosphere = new Atmosphere(this);
     this.bindInput();
     this.bindDialogs();
+    this.gameMenu = createGameMenu(this);
     this.regionMap = createRegionMap(this);
     this.returnCamp = () => this.core.navigateGuide("camp");
     document
@@ -789,13 +791,19 @@ export class WorldScene extends Phaser.Scene {
       s.buildWood,
       c.notice,
       c.regions?.revision,
+      this.scale.width < 600,
     ].join(":");
     if (hudKey !== this.lastHudKey) {
       this.lastHudKey = hudKey;
       document.querySelector("#wood").textContent = `${s.wood} / ${s.maxWood}`;
       document.querySelector("#coins").textContent = s.coins;
-      document.querySelector("#shopButton").textContent =
-        `Лавка · ${s.coins} монет${affordableCombatUpgrades(s).length ? " · доступно улучшение" : ""}`;
+      const shop = document.querySelector("#shopButton"),
+        ready = affordableCombatUpgrades(s).length > 0;
+      const description = `Лавка · ${s.coins} монет${ready ? " · доступно улучшение" : ""}`;
+      shop.textContent =
+        this.scale.width < 600 ? `Лавка${ready ? " · +" : ""}` : description;
+      shop.title = description;
+      shop.setAttribute("aria-label", description);
       document.querySelector("#campInfo").textContent = c.regions
         ? `Лагерь ${s.campLevel}/4 · Регионы ${s.unlockedRegions.length}/25`
         : `Лагерь ${s.campLevel}/4 · Радиус леса: ${c.forestRadius()}`;
@@ -1380,6 +1388,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.gameMenu?.destroy();
     this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);
     this.game.events.off(Phaser.Core.Events.FOCUS, this.onFocus, this);
     this.game.events.off(Phaser.Core.Events.HIDDEN, this.onHidden, this);
