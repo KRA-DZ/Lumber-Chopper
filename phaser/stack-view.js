@@ -10,7 +10,7 @@ export class StackView {
       { player: p, state: s, elapsed: t } = c;
     const count = s.cargo.length,
       hidden = new Set();
-    for (const f of flights) if (f.kind === "pickup") hidden.add(f.index);
+    for (const f of flights) if (f.kind === "pickup" && (!c.coop || f.actor === p.id)) hidden.add(f.index);
     while (this.logs.length < count)
       this.logs.push(this.scene.addImage("log", 0, 0));
     this.logs.forEach((log, i) => {

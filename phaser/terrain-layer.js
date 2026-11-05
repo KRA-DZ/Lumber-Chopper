@@ -24,7 +24,9 @@ export class TerrainLayer {
     this.images = new Map();
   }
   update(view) {
+    const views = Array.isArray(view) ? view : [view];
     const wanted = new Set();
+    for (const view of views) {
     for (
       let y = Math.floor(view.y / 256);
       y <= Math.floor((view.y + view.height) / 256);
@@ -58,10 +60,11 @@ export class TerrainLayer {
             .setDepth(-10000),
         );
       }
+    }
     for (const [key, image] of this.images) image.setVisible(wanted.has(key));
     // Preserve nearby GPU textures for return trips; evict only old hidden chunks.
     for (const [key, image] of this.images) {
-      if (this.images.size <= TERRAIN_TEXTURE_LIMIT) break;
+      if (this.images.size <= (views.length > 1 ? 40 : TERRAIN_TEXTURE_LIMIT)) break;
       if (wanted.has(key)) continue;
       image.destroy();
       this.scene.textures.remove(key);

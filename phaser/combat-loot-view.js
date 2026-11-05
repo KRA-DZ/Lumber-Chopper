@@ -28,6 +28,7 @@ export class CombatLootView {
         x: event.x,
         y: event.y - 12,
         time: this.scene.core.elapsed,
+        target: this.scene.core.player,
       });
     }
   }
@@ -37,7 +38,7 @@ export class CombatLootView {
       piles = c.combatLoot.piles,
       dark = nightOpacity(c.state) >= 0.98,
       lights = dark
-        ? nightLights(c.state, c.player, c.survival.safeRadius(), c.outposts.lights())
+        ? s.atmosphere?.lights() || nightLights(c.state, c.player, c.survival.safeRadius(), c.outposts.lights())
         : null,
       lit = (x, y) => !dark || inCampLight(x, y, lights),
       glints = this.glints.clear();
@@ -99,10 +100,10 @@ export class CombatLootView {
         return false;
       }
       const ease = 1 - (1 - t) ** 2,
-        x = flight.x + (c.player.x + 8 - flight.x) * ease,
+        x = flight.x + (flight.target.x + 8 - flight.x) * ease,
         y =
           flight.y +
-          (c.player.y - 60 - flight.y) * ease -
+          (flight.target.y - 60 - flight.y) * ease -
           Math.sin(t * Math.PI) * 24;
       flight.image
         .setPosition(Math.round(x), Math.round(y))

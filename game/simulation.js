@@ -2,6 +2,7 @@ import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
 import { createOutposts } from "./outposts.js";
+import { shareWorldState } from "./coop-state.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
@@ -37,10 +38,13 @@ export function createSimulation({
   regional = false,
   appearance = "traveler",
   survival: hazards = regional,
+  shared = null,
+  party = null,
 } = {}) {
-  const gameState = createInitialState({ appearance }),
-    regions = regional ? createRegions(gameState) : null,
-    world = regional ? createRegionWorld(regions) : createWorldModel(),
+  const initialState = createInitialState({ appearance }),
+    gameState = shared ? shareWorldState(initialState, shared.state) : initialState,
+    regions = shared?.regions || (regional ? createRegions(gameState) : null),
+    world = shared?.world || (regional ? createRegionWorld(regions) : createWorldModel()),
     { trees } = world;
   const stages = STAGES,
     keys = new Set(),
@@ -60,6 +64,7 @@ export function createSimulation({
     path: [],
     pathVersion: 0,
   };
+  if (party && !shared) party.bind(gameState, player);
   let elapsed = 0,
     notice = "",
     noticeTimer = 0,
@@ -104,7 +109,7 @@ export function createSimulation({
       Math.min(1, (0.25 - Math.sin(dayPhase() * Math.PI * 2)) / 1.25),
     );
   const raidReports = createRaidReports(gameState, () => defenses);
-  const defenses = hazards
+  const defenses = shared?.defenses || (hazards
     ? createDefenses(gameState, (event) => {
         const { section, topology } = event;
         raidReports.record("defense-changed", event);
@@ -129,7 +134,7 @@ export function createSimulation({
         revision++;
         emit("defense-changed", event);
       })
-    : null;
+    : null);
   if (defenses) world.defenses = defenses;
   const nav = createNavigation(world, gameState, player, showNotice);
   const {
@@ -144,6 +149,7 @@ export function createSimulation({
   construction.target = (state) =>
     constructionTarget(state, CENTER, construction.plan);
   const forestry = createForestry(gameState, {
+    sharedPiles: shared?.forestry.piles,
     onPickup: (pile, index) => {
       revision++;
       emit("pickup", { pile: { ...pile }, index });
@@ -151,9 +157,10 @@ export function createSimulation({
   });
   const outposts = createOutposts({
     state: gameState, world, regions, nav, forestry,
+    shared: shared?.outposts,
     emit: (type, event) => {
       revision++;
-      if (distance(player, event.site) < 500) {
+      if ((party?.positions() || [player]).some(p => distance(p, event.site) < 500)) {
         if (type === "outpost-low-fuel") showNotice("Костёр привала догорает — осталось 20 секунд. Подбросьте бревно.", 6);
         if (type === "outpost-extinguished") showNotice("Костёр привала погас. Защита света исчезла.", 6);
       }
@@ -209,7 +216,7 @@ export function createSimulation({
   }
   const treeIds = new Map(trees.map((t) => [t.id, t]));
   function canAct() {
-    return !paused && !gameState.gameOver;
+    return !paused && !gameState.gameOver && gameState.health > 0;
   }
   const defenseRepair = createDefenseRepair({
     canAct,
@@ -219,6 +226,9 @@ export function createSimulation({
     deposit: (id) => transferOneLog(id),
   });
   const combatLoot = createCombatLoot({
+    shared: shared?.combatLoot,
+    canTick: () => !paused && !gameState.gameOver,
+    canDrop: () => !paused && !gameState.gameOver && (party || gameState.health > 0),
     state: gameState,
     player,
     canAct,
@@ -372,7 +382,7 @@ export function createSimulation({
     return true;
   }
   function purchaseUpgrade(id) {
-    if (gameState.gameOver || !buyUpgrade(gameState, id)) return false;
+    if (gameState.gameOver || gameState.health <= 0 || !buyUpgrade(gameState, id)) return false;
     player.speed = gameState.runSpeed;
     revision++;
     emit("upgrade-purchased", { id });
@@ -403,10 +413,11 @@ export function createSimulation({
         },
       })
     : null;
-  const survival = hazards
+  const survival = shared?.survival || (hazards
     ? createSurvival({
-        state: gameState,
-        player,
+        state: party?.state || gameState,
+        player: party?.player || player,
+        party,
         nav,
         accessible,
         emit: (type, event) => {
@@ -419,7 +430,7 @@ export function createSimulation({
         regions,
         sanctuary: p => outposts.safeZone(p),
       })
-    : null;
+    : null);
   const cycle = createCycleManager(gameState, (type, event) => {
     if (type === "sunset-warning") {
       sunsetWarning = { ...event, until: elapsed + 7 };
@@ -539,9 +550,10 @@ export function createSimulation({
     faceTarget(enemy);
     survival?.hear(player);
     emit("attack", { enemy, damage: gameState.axePower });
+    party?.focus(core);
     return survival.hit(id, gameState.axePower);
   }
-  const buyerSystem = createBuyers({
+  const buyerSystem = shared?.buyerSystem || createBuyers({
     state: gameState,
     player,
     nav,
@@ -558,6 +570,8 @@ export function createSimulation({
         forestry,
         activeBuyer,
         sale,
+        onIncome: party ? value => party.reward(value) : null,
+        playersAtSale: party ? () => party.actors.some(a => a.state.wood > 0 && distance(a.player, sale) < sale.radius) : null,
         getSurvival: () => survival,
         emit: (type, event) => {
           revision++;
@@ -701,13 +715,16 @@ export function createSimulation({
     if (defenseRepair.target) defenseRepair.update(dt);
     else transferOneLog();
   }
-  function updateStep(dt) {
+  function updateStep(dt, actorOnly = false) {
     if (paused) return;
-    elapsed += dt;
+    if (shared) elapsed = shared.elapsed;
+    else elapsed += dt;
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
-    cycle.update(dt);
-    outposts.update(dt);
-    if (forestry.updateGrowth(trees, cycle.dayNumber)) {
+    if (!actorOnly) {
+      cycle.update(dt);
+      outposts.update(dt);
+    }
+    if (!actorOnly && forestry.updateGrowth(trees, cycle.dayNumber)) {
       rebuildObstacles();
       for (const body of [player, ...buyers, ...(workers?.crew || [])])
         if (!isWalkable(body.x, body.y)) {
@@ -719,6 +736,8 @@ export function createSimulation({
     player.autoTimer = Math.max(0, player.autoTimer - dt);
     player.clickTimer = Math.max(0, player.clickTimer - dt);
     player.swing = Math.max(0, player.swing - dt);
+    const alive = gameState.health > 0;
+    if (!alive) { keys.clear(); player.path = []; }
     const kx =
       Number(keys.has("KeyD") || keys.has("ArrowRight")) -
       Number(keys.has("KeyA") || keys.has("ArrowLeft"));
@@ -792,12 +811,12 @@ export function createSimulation({
       } else player.path = [];
     }
 
-    exploration?.update(dt);
+    if (alive) exploration?.update(dt);
     if (paused) return; // Opening an inspection can pause synchronously at arrival.
-    buyerSystem.update(dt);
-    updatePlatforms(dt);
+    if (!actorOnly) buyerSystem.update(dt);
+    if (alive) updatePlatforms(dt);
 
-    for (const tree of trees) tree.shake = Math.max(0, tree.shake - dt);
+    if (!actorOnly) for (const tree of trees) tree.shake = Math.max(0, tree.shake - dt);
     if (noticeTimer > 0) {
       noticeTimer -= dt;
       if (noticeTimer <= 0) {
@@ -838,10 +857,10 @@ export function createSimulation({
     ) {
       tryChop(nearest.id, "auto");
     }
-    if (forestry.collect(dt, player)) updateUI();
-    survival?.update(dt);
-    combatLoot.update(dt);
-    if (!gameState.gameOver) workers?.update(dt);
+    if (alive && forestry.collect(dt, player)) updateUI();
+    if (!actorOnly) survival?.update(dt);
+    if (!actorOnly || alive) combatLoot.update(dt);
+    if (!actorOnly && !gameState.gameOver) workers?.update(dt);
     if (
       !gameState.gameOver &&
       !tutorial.sheltered &&
@@ -865,7 +884,7 @@ export function createSimulation({
     if (!Number.isFinite(dt) || dt <= 0 || paused || gameState.gameOver) return;
     while (dt > 1e-9 && !paused && !gameState.gameOver) {
       const step = Math.min(dt, 0.05);
-      updateStep(step);
+      updateStep(step, Boolean(shared));
       dt -= step;
     }
   }
@@ -990,6 +1009,10 @@ export function createSimulation({
     build,
     stages,
     update,
+    buyerSystem,
+    defeat,
+    refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
+    stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },
     hitTree,
     activeBuyer,
     forestRadius,
@@ -1014,7 +1037,7 @@ export function createSimulation({
       return elapsed;
     },
     get dayNumber() {
-      return cycle.dayNumber;
+      return shared?.dayNumber ?? cycle.dayNumber;
     },
     get revision() {
       return revision;

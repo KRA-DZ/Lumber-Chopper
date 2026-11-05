@@ -152,7 +152,7 @@ export class HudScene extends Phaser.Scene {
       .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}\n♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {
@@ -167,13 +167,19 @@ export class HudScene extends Phaser.Scene {
       else if (adjacent.has(r.id))
         g.fillStyle(0xc6bd89).fillRect(x + w / 2 - 1, y + w / 2 - 1, 3, 3);
     }
-    const v = this.world.camera.worldView;
+    if (this.world.coopCamera?.split) {
+      const camera = this.world.coopCamera.second;
+      g.lineStyle(2, 0xe2c17e, .8).lineBetween(camera.x, camera.y,
+        camera.x || this.scale.width, camera.y || this.scale.height);
+    }
+    for (const v of this.world.coopCamera?.views() || [this.world.camera.worldView]) {
     g.lineStyle(1, 0xf0ecc0, 0.6).strokeRect(
       left + (v.x - b.x) * scale,
       top + (v.y - b.y) * scale,
       v.width * scale,
       v.height * scale,
     );
+    }
     g.fillStyle(0xf3c866).fillRect(
       left + (1600 - b.x) * scale - 2,
       top + (1600 - b.y) * scale - 2,
@@ -186,6 +192,10 @@ export class HudScene extends Phaser.Scene {
       3,
       3,
     );
+    if (c.coop) for (const [i, actor] of c.actors.entries())
+      g.fillStyle(i ? 0x9bdae4 : 0xf4ce83).fillRect(
+        left + (actor.player.x - b.x) * scale - 1,
+        top + (actor.player.y - b.y) * scale - 1, 3, 3);
     this.dayHud.refresh();
     const fishing = c.exploration?.fishing;
     this.storyGuide =
@@ -228,7 +238,7 @@ export class HudScene extends Phaser.Scene {
     }
     this.tutorial
       .setPosition(this.scale.width / 2, this.scale.height - 12)
-      .setText(`${guide.title}\n${guide.text}`)
+      .setText(`${c.coop ? "1: WASD / E · 2: стрелки / Enter · помощь: удерживать E / Enter\n" : ""}${guide.title}\n${guide.text}`)
       .setVisible(true);
     this.guideButton
       .setText(guide.button || "")

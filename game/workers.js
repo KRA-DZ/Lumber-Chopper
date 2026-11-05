@@ -32,6 +32,8 @@ export function createWorkers({
   activeBuyer,
   sale,
   getSurvival,
+  onIncome = null,
+  playersAtSale = null,
   emit = () => {},
 }) {
   const data = state.workforce,
@@ -55,7 +57,7 @@ export function createWorkers({
   function hire() {
     const price = WORKERS.hirePrices[crew.length];
     if (
-      state.gameOver ||
+      state.gameOver || state.health <= 0 ||
       !atDepot() ||
       !available() ||
       !daytime() ||
@@ -91,7 +93,7 @@ export function createWorkers({
   function upgrade() {
     const price = WORKERS.upgradePrices[data.level];
     if (
-      state.gameOver ||
+      state.gameOver || state.health <= 0 ||
       !atDepot() ||
       !available() ||
       !crew.length ||
@@ -121,7 +123,7 @@ export function createWorkers({
   }
   function withdraw() {
     if (
-      state.gameOver ||
+      state.gameOver || state.health <= 0 ||
       !atDepot() ||
       !data.stock.length ||
       state.wood >= state.maxWood
@@ -197,12 +199,12 @@ export function createWorkers({
       saleTimer <= 0 &&
       data.stock.length &&
       buyer &&
-      !(state.wood > 0 && distance(player, sale) < sale.radius)
+      !(playersAtSale ? playersAtSale() : state.wood > 0 && distance(player, sale) < sale.radius)
     ) {
       const value = data.stock.shift();
       buyer.load++;
       buyer.thanks = 1.5;
-      state.coins += value;
+      if (onIncome) onIncome(value); else state.coins += value;
       data.earned += value;
       saleTimer = WORKERS.saleInterval;
       changed("worker-log-sold", { buyer, value });

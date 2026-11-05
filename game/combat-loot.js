@@ -34,8 +34,11 @@ export function createCombatLoot({
   accessible,
   canReach,
   emit = () => {},
+  shared = null,
+  canTick = canAct,
+  canDrop = canAct,
 }) {
-  const piles = new Map(),
+  const piles = shared?.piles || new Map(),
     seen = new Set(),
     bosses = new Set(),
     data = state.combatLoot;
@@ -53,7 +56,7 @@ export function createCombatLoot({
   }
   function drop(source) {
     if (
-      !canAct() ||
+      !canDrop() ||
       !["minion", "boss"].includes(source.kind) ||
       typeof source.id !== "string" ||
       !Number.isFinite(source.x) ||
@@ -118,13 +121,8 @@ export function createCombatLoot({
     emit("combat-loot-dropped", { pile, boss });
     return true;
   }
-  function update(dt) {
+  function collect(dt) {
     if (!canAct() || !Number.isFinite(dt) || dt <= 0) return;
-    syncDay();
-    for (const [id, pile] of piles) {
-      pile.age += dt;
-      if (pile.age >= COMBAT_LOOT.lifetime) piles.delete(id);
-    }
     pickupTimer = Math.max(0, pickupTimer - dt);
     if (pickupTimer > 0) return;
     for (const [id, pile] of piles) {
@@ -154,5 +152,16 @@ export function createCombatLoot({
       break;
     }
   }
-  return { piles, drop, update };
+  function update(dt) {
+    if (!canTick() || !Number.isFinite(dt) || dt <= 0) return;
+    if (!shared) {
+      syncDay();
+      for (const [id, pile] of piles) {
+        pile.age += dt;
+        if (pile.age >= COMBAT_LOOT.lifetime) piles.delete(id);
+      }
+    }
+    collect(dt);
+  }
+  return { piles, drop: shared?.drop || drop, update, collect };
 }

@@ -15,6 +15,7 @@ export function selectHero(scene, start) {
     cleanup();
     dialog.close();
     scene.registry.set("heroAppearance", id);
+    scene.registry.set("playerCount", new FormData(form).get("players") === "2" ? 2 : 1);
     start();
   };
   function cleanup() {

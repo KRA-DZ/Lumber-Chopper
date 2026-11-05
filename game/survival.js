@@ -25,6 +25,7 @@ export function createSurvival({
   defenses,
   regions = null,
   sanctuary = () => null,
+  party = null,
 }) {
   const raiders = [];
   let monster = null,
@@ -48,6 +49,7 @@ export function createSurvival({
         isSafe,
         hurtPlayer,
         emit,
+        party,
       })
     : null;
   const minions = regions
@@ -60,6 +62,7 @@ export function createSurvival({
         defenses,
         hurtPlayer,
         emit,
+        party,
       })
     : null;
   function spawnPoint(around, radius, phase = 0) {
@@ -146,9 +149,13 @@ export function createSurvival({
     pending = 0;
     warningTimer = 0;
     hitCooldown = 0;
-    state.health = state.maxHealth;
+    if (party) party.dawn(); else state.health = state.maxHealth;
   }
   function hurtPlayer(amount, source = "raider") {
+    if (party) {
+      if (source !== "watcher" || !isSafe(player)) party.hurt(amount, source);
+      return;
+    }
     if (
       hitCooldown > 0 ||
       state.gameOver ||
@@ -177,7 +184,7 @@ export function createSurvival({
     wave.reward = wave.spawned
       ? Math.floor((base * wave.killed) / wave.spawned)
       : 0;
-    state.coins += wave.reward;
+    if (party) party.reward(wave.reward); else state.coins += wave.reward;
     if (wave.status === "won") state.raidsWon++;
     emit("wave-ended", { ...wave });
   }
@@ -273,7 +280,10 @@ export function createSurvival({
       emit("wave-started", { count: raiders.length });
       finishWave();
     }
-    if (monster) watcher.tick(dt, monster, SURVIVAL.monsterSpeed);
+    if (monster) {
+      party?.select(monster);
+      watcher.tick(dt, monster, SURVIVAL.monsterSpeed);
+    }
     if (state.gameOver) return;
     const actors = [...raiders, ...(monster ? [monster] : [])];
     let pathCandidate = null;
@@ -289,6 +299,7 @@ export function createSurvival({
       }
     }
     for (const actor of actors) {
+      party?.select(actor);
       actor.cooldown = Math.max(0, actor.cooldown - dt);
       actor.repath -= dt;
       actor.moving = false;

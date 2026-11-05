@@ -8,8 +8,8 @@ export const treeYield = (tree) => (tree.size === 2 ? 3 : 2);
 
 // Один числовой запас на место рубки, а не новый физический объект на каждое бревно.
 // Поваленное дерево не исчезает из экономики: остаток ждёт на земле до подбора.
-export function createForestry(state, { onPickup = () => {} } = {}) {
-  const piles = new Map();
+export function createForestry(state, { onPickup = () => {}, sharedPiles = null } = {}) {
+  const piles = sharedPiles || new Map();
   let pickupTimer = 0,
     lastDay = -1;
   function addCargo(value) {

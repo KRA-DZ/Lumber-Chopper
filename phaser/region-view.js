@@ -125,6 +125,7 @@ export class RegionView {
     return result;
   }
   sync(view) {
+    const views = Array.isArray(view) ? view : [view];
     this.locations.sync(view);
     this.clearing.sync(view);
     const c = this.scene.core,
@@ -134,10 +135,10 @@ export class RegionView {
     for (const r of regions.all)
       if (
         regions.unlocked.has(r.id) &&
-        r.x < view.right + margin &&
-        r.x + r.width > view.x - margin &&
-        r.y < view.bottom + margin &&
-        r.y + r.height > view.y - margin
+        views.some(v => r.x < v.right + margin &&
+        r.x + r.width > v.x - margin &&
+        r.y < v.bottom + margin &&
+        r.y + r.height > v.y - margin)
       ) {
         wanted.add(r.id);
         if (!this.objects.has(r.id))

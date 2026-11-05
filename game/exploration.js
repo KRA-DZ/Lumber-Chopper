@@ -357,6 +357,7 @@ export function createExploration({
     if (
       id !== "salve" ||
       state.gameOver ||
+      state.health <= 0 ||
       !bag.salve ||
       state.health >= state.maxHealth
     )

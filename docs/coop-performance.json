@@ -1,0 +1,59 @@
+{
+  "environment": "Headless Chromium, SwiftShader WebGL, 1360x1100 browser viewport",
+  "fixture": "Two separated moving heroes, 164 logs, 3x3 regions, night 30, synthetic rain; 1s warmup + 3s sample per setting",
+  "limits": "CPU is scene update only; RAF includes software rendering and is not real-device FPS.",
+  "measurements": [
+    {
+      "light": false,
+      "cpu": {
+        "count": 46,
+        "medianMs": 1.9000000059604645,
+        "p95Ms": 26
+      },
+      "raf": {
+        "count": 46,
+        "medianMs": 66.69999999999891,
+        "p95Ms": 83.39999999999964
+      },
+      "cameras": 2,
+      "logs": 164,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "worldTime": 451.04999999999905,
+      "watcher": true,
+      "terrain": 39,
+      "sourceChunks": 28,
+      "crowns": 4,
+      "textures": 98,
+      "paused": false,
+      "gameOver": false
+    },
+    {
+      "light": true,
+      "cpu": {
+        "count": 46,
+        "medianMs": 2.7999999821186066,
+        "p95Ms": 33.39999997615814
+      },
+      "raf": {
+        "count": 46,
+        "medianMs": 66.69999999999891,
+        "p95Ms": 83.39999999999964
+      },
+      "cameras": 2,
+      "logs": 164,
+      "raiders": 8,
+      "minions": 12,
+      "bosses": 6,
+      "worldTime": 453.1999999999971,
+      "watcher": true,
+      "terrain": 39,
+      "sourceChunks": 28,
+      "crowns": 4,
+      "textures": 100,
+      "paused": false,
+      "gameOver": false
+    }
+  ]
+}

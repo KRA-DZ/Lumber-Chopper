@@ -37,6 +37,9 @@ import { TerrainLayer } from "./terrain-layer.js";
 import { CrownOcclusion } from "./tree-occlusion.js";
 import { WorldHints } from "./world-hints.js";
 import { OutpostView } from "./outpost-view.js";
+import { createLocalCoop } from "../game/local-coop.js";
+import { CoopCamera } from "./coop-camera.js";
+import { CoopViews } from "./coop-views.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -45,6 +48,8 @@ export class WorldScene extends Phaser.Scene {
     this.manual = false;
   }
   create() {
+    this.coopViews = this.coopCamera = null;
+    this.routingCoop = false;
     this.manual = false;
     this.accumulator = 0;
     this.hudReady = false;
@@ -53,7 +58,7 @@ export class WorldScene extends Phaser.Scene {
     this.lastHudKey = null;
     this.assets = createAtlas(this);
     this.anims.resumeAll();
-    this.core = createSimulation({
+    this.core = (this.registry.get("playerCount") === 2 ? createLocalCoop : createSimulation)({
       regional: true,
       appearance: this.registry.get("heroAppearance"),
       emit: (type, event) => this.onModelEvent(type, event),
@@ -128,6 +133,10 @@ export class WorldScene extends Phaser.Scene {
     this.boundary = this.add.graphics().setDepth(LAYERS.border);
     this.audio = createForestAudio();
     this.atmosphere = new Atmosphere(this);
+    if (this.core.coop) {
+      this.coopViews = new CoopViews(this);
+      this.coopCamera = new CoopCamera(this);
+    }
     this.bindInput();
     this.bindDialogs();
     this.gameMenu = createGameMenu(this);
@@ -383,6 +392,32 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if (this.core.coop && !this.core.paused) {
+        if (event.repeat && ["KeyE", "Enter"].includes(event.code)) { event.preventDefault(); return; }
+        if (["KeyE", "KeyI", "KeyR", "KeyF", "Enter", "ShiftRight", "Slash", "KeyO", "KeyL"].includes(event.code))
+          this.coopViews.focus(["Enter", "ShiftRight", "Slash", "KeyO", "KeyL"].includes(event.code) ? 1 : 0);
+        const index = this.core.activeActor;
+        if (this.core.state.health <= 0) { event.preventDefault(); return; }
+        if (["KeyE", "Enter"].includes(event.code) && this.core.helpTarget(index)) {
+          event.preventDefault(); this.core.assist(index, true); return;
+        }
+        if (event.code === "Enter" && this.core.exploration.fishing) {
+          event.preventDefault(); this.core.exploration.reel(); return;
+        }
+        if (event.code === "ShiftRight") {
+          event.preventDefault(); this.core.setDefenseRepairHeld(true); return;
+        }
+        if (["KeyF", "Slash"].includes(event.code)) {
+          event.preventDefault();
+          const c = this.core, p = c.player, e = [...c.survival.raiders, ...c.survival.residents]
+            .find(e => Math.hypot(e.x - p.x, e.y - p.y) < 72);
+          if (e) c.tryAttack(e.id);
+          else { const t = c.world.trees.find(t => t.hp > 0 && Math.hypot(t.x - p.x, t.y - p.y) < 72); if (t) c.tryChop(t.id); }
+          return;
+        }
+        if (event.code === "KeyO") { event.preventDefault(); this.shop.open(); return; }
+        if (event.code === "KeyL") { event.preventDefault(); this.explorationUi.openBag(); return; }
+      }
       if (!this.core.paused && event.code === "KeyR") {
         event.preventDefault();
         if (!event.repeat) this.core.setDefenseRepairHeld(true);
@@ -422,7 +457,8 @@ export class WorldScene extends Phaser.Scene {
         this.regionMap.open();
         return;
       }
-      if (!this.core.paused && event.code === "KeyE") {
+      if (!this.core.paused && (event.code === "KeyE" || this.core.coop && event.code === "Enter")) {
+        event.preventDefault();
         const debris = this.core.clearing?.all.find((d) =>
           this.core.clearing.near(d),
         );
@@ -465,10 +501,14 @@ export class WorldScene extends Phaser.Scene {
         event.preventDefault();
     });
     this.input.keyboard.on("keyup", (event) => {
-      if (event.code === "KeyR") this.core.setDefenseRepairHeld(false);
+      if (this.core.coop && ["KeyE", "Enter"].includes(event.code)) this.core.assist(event.code === "Enter" ? 1 : 0, false);
+      if (this.core.coop && event.code === "ShiftRight") this.core.actors[1].setDefenseRepairHeld(false);
+      if (event.code === "KeyR") (this.core.actors?.[0] || this.core).setDefenseRepairHeld(false);
     });
     this.input.on("pointerdown", (pointer, over) => {
       if (this.core.paused || pointer.button !== 0) return;
+      if (this.coopViews) this.coopViews.focus(this.coopCamera.actorAt(pointer));
+      if (this.core.coop && this.core.state.health <= 0) return;
       const size = this.scale.width < 600 ? 100 : 144;
       if (pointer.x > this.scale.width - size - 20 && pointer.y < size + 52)
         return;
@@ -541,7 +581,8 @@ export class WorldScene extends Phaser.Scene {
         else this.core.setDestination(clue.x, clue.y + 24);
         return;
       }
-      const p = this.camera.getWorldPoint(pointer.x, pointer.y),
+      const camera = this.coopCamera?.split && this.core.activeActor === 1 ? this.coopCamera.second : this.camera;
+      const p = camera.getWorldPoint(pointer.x, pointer.y),
         tree = object?.getData("tree");
       if (object?.getData("ancient")) {
         this.core.setDestination(
@@ -665,6 +706,14 @@ export class WorldScene extends Phaser.Scene {
     this.pause("hidden", false);
   }
   readInput() {
+    if (this.core.coop) {
+      for (const a of this.core.actors) a.keys.clear();
+      if (!this.core.paused) for (const [name, key] of Object.entries(this.keyboard)) {
+        const actor = this.core.actors[name.startsWith("Arrow") ? 1 : 0];
+        if (key.isDown && actor.state.health > 0) actor.keys.add(name);
+      }
+      return;
+    }
     this.core.keys.clear();
     if (!this.core.paused)
       for (const [name, key] of Object.entries(this.keyboard))
@@ -735,6 +784,7 @@ export class WorldScene extends Phaser.Scene {
     sprite.setFlipX(body.direction === "left").setDepth(body.y);
   }
   renderModel() {
+    this.coopCamera?.update();
     this.camera?.preRender();
     const c = this.core,
       s = c.state,
@@ -742,8 +792,8 @@ export class WorldScene extends Phaser.Scene {
       t = c.elapsed;
     this.worldHints.begin();
     this.crownOcclusion.begin();
-    this.heroView.render();
-    this.stackView.render();
+    if (this.coopViews) this.coopViews.render();
+    else { this.heroView.render(); this.stackView.render(); }
     this.enemyView.render();
     this.combatLootView.render();
     this.syncTrees();
@@ -751,7 +801,7 @@ export class WorldScene extends Phaser.Scene {
     this.syncPiles();
     this.syncCamp();
     this.defenseView.render();
-    this.explorationView.render();
+    if (!this.coopViews) this.explorationView.render();
     this.workerView.render();
     this.workerUi?.resume();
     this.explorationUi?.refresh();
@@ -798,7 +848,7 @@ export class WorldScene extends Phaser.Scene {
     this.worldHints.offer(this.buildLabel, c.build, { range: 240, priority: 70 });
     if (this.merchantLabel)
       this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
-    this.feedback.render();
+    if (!this.coopViews) this.feedback.render();
     this.outpostView.render();
     this.worldHints.flush();
     const hudKey = [
@@ -835,14 +885,15 @@ export class WorldScene extends Phaser.Scene {
   syncTrees() {
     const cameraView = this.camera?.worldView;
     if (this.core.regions && cameraView) {
+      const wanted = new Set();
+      for (const cameraView of this.coopCamera?.views() || [this.camera.worldView]) {
       const margin = 420,
         view = {
           x: cameraView.x - margin,
           y: cameraView.y - margin,
           width: cameraView.width + margin * 2,
           height: cameraView.height + margin * 2,
-        },
-        wanted = new Set();
+        };
       for (const tree of this.core.world.treesNear(view))
         if (
           tree.x >= view.x &&
@@ -859,6 +910,7 @@ export class WorldScene extends Phaser.Scene {
             this.treeObjects.set(tree.id, { tree, key, image });
           }
         }
+      }
       for (const [id, entry] of this.treeObjects)
         if (!wanted.has(id)) {
           entry.image.destroy();
@@ -1027,17 +1079,13 @@ export class WorldScene extends Phaser.Scene {
       image.setVisible(s.campLevel >= p.min && s.campLevel <= (p.max ?? 4));
   }
   nearView(p, v, margin = 120) {
-    return (
-      p.x > v.x - margin &&
-      p.x < v.right + margin &&
-      p.y > v.y - margin &&
-      p.y < v.bottom + margin
-    );
+    const views = Array.isArray(v) ? v : this.coopCamera && v === this.camera.worldView ? this.coopCamera.views() : [v];
+    return views.some(v => p.x > v.x - margin && p.x < v.right + margin && p.y > v.y - margin && p.y < v.bottom + margin);
   }
   refreshView() {
     if (!this.camera) return;
-    const v = this.camera.worldView;
-    this.terrain.update({ x: v.x, y: v.y, width: v.width, height: v.height });
+    const v = this.coopCamera?.views() || this.camera.worldView;
+    this.terrain.update(v);
     for (const { image, p } of this.staticObjects)
       image.setVisible(
         this.nearView(p, v, 160) &&
@@ -1068,6 +1116,19 @@ export class WorldScene extends Phaser.Scene {
     }
   }
   onModelEvent(type, e) {
+    if (this.coopViews && Number.isInteger(e.actor) && !this.routingCoop) {
+      this.routingCoop = true;
+      try { return this.coopViews.withActor(e.actor, () => this.onModelEvent(type, e)); }
+      finally { this.routingCoop = false; }
+    }
+    if (type === "player-down") {
+      this.core.showNotice(`Игрок ${e.actor + 1} повержен. Подойдите и удерживайте ${e.actor ? "E" : "Enter"}, чтобы помочь.`, 8);
+      return;
+    }
+    if (type === "player-revived") {
+      this.float("Снова в строю!", this.core.player.x, this.core.player.y - 70);
+      return;
+    }
     if (type === "worker-hired") {
       this.core.showNotice(
         "Помощник нанят! Днём он добывает брёвна у древнего дуба. Управление командой — H.",
@@ -1351,6 +1412,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   fly(event) {
+    const account = this.core.actors?.[this.core.activeActor] || this.core;
     if (this.flights.size >= 16) {
       const oldest = this.flights.values().next().value;
       this.tweens.killTweensOf(oldest);
@@ -1359,6 +1421,7 @@ export class WorldScene extends Phaser.Scene {
     }
     const f = {
       ...event,
+      actor: account.player.id,
       progress: 0,
       image: this.addImage("log", event.start.x, event.start.y, LAYERS.flights),
     };
@@ -1369,12 +1432,12 @@ export class WorldScene extends Phaser.Scene {
       duration: event.kind === "pickup" ? 780 : 550,
       onUpdate: () => {
         const slot = stackOffset(
-          Math.min(Math.max(0, this.core.state.wood - 1), event.index ?? 0),
-          this.core.state.wood,
+          Math.min(Math.max(0, account.state.wood - 1), event.index ?? 0),
+          account.state.wood,
         );
         const target =
           event.kind === "pickup"
-            ? { x: this.playerModel.x + slot.x, y: this.playerModel.y + slot.y }
+            ? { x: account.player.x + slot.x, y: account.player.y + slot.y }
             : event.target.follow
               ? {
                   x: event.target.follow.x + event.target.dx,
@@ -1398,6 +1461,8 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.coopViews?.destroy();
+    this.coopCamera?.destroy();
     this.outpostView?.destroy();
     this.crownOcclusion?.destroy();
     this.gameMenu?.destroy();

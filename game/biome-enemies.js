@@ -27,6 +27,7 @@ export function createBiomeEnemies({
   isSafe,
   hurtPlayer,
   emit = () => {},
+  party = null,
 }) {
   const actors = [],
     defeated = new Set();
@@ -77,20 +78,20 @@ export function createBiomeEnemies({
         (r) =>
           regions.unlocked.has(r.id) &&
           r.id !== "0:0" &&
-          Math.hypot(
-            Math.max(r.x - player.x, 0, player.x - r.x - r.width),
-            Math.max(r.y - player.y, 0, player.y - r.y - r.height),
-          ) < BIOME_ENEMIES.streamRange,
+          (party?.positions() || [player]).some(p => Math.hypot(
+            Math.max(r.x - p.x, 0, p.x - r.x - r.width),
+            Math.max(r.y - p.y, 0, p.y - r.y - r.height),
+          ) < BIOME_ENEMIES.streamRange),
       )
       .sort(
         (a, b) =>
-          distance(a.cx ? { x: a.cx, y: a.cy } : a, player) -
-          distance({ x: b.cx, y: b.cy }, player),
+          Math.min(...(party?.positions() || [player]).map(p => distance({ x: a.cx, y: a.cy }, p))) -
+          Math.min(...(party?.positions() || [player]).map(p => distance({ x: b.cx, y: b.cy }, p))),
       );
     for (let i = actors.length - 1; i >= 0; i--)
       if (
         !candidates.includes(actors[i].region) ||
-        distance(actors[i], player) > 2400
+        (party?.positions() || [player]).every(p => distance(actors[i], p) > 2400)
       )
         actors.splice(i, 1);
     for (const region of candidates) {
@@ -104,16 +105,16 @@ export function createBiomeEnemies({
         let p = null;
         for (let i = 0; i < 18; i++) {
           const angle = slot * Math.PI + i * 2.399,
-            origin = belongs(player, region.id)
-              ? player
-              : { x: region.cx, y: region.cy };
+            origin = (party?.positions() || [player]).find(p => belongs(p, region.id))
+              ||
+              { x: region.cx, y: region.cy };
           const candidate = nav.nearestGround(
             origin.x + Math.cos(angle) * (430 + i * 12),
             origin.y + Math.sin(angle) * (430 + i * 12),
           );
           if (
             inside(candidate, region) &&
-            distance(candidate, player) > 330 &&
+            (party?.positions() || [player]).every(p => distance(candidate, p) > 330) &&
             distance(candidate, CENTER) > 600
           ) {
             p = candidate;
@@ -209,6 +210,7 @@ export function createBiomeEnemies({
     const first = cursor;
     for (let i = 0; i < actors.length; i++) {
       const e = actors[(first + i) % actors.length];
+      party?.select(e);
       e.moving = false;
       e.warning = Math.max(0, e.warning - dt);
       e.cooldown = Math.max(0, e.cooldown - dt);

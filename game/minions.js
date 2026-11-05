@@ -41,6 +41,7 @@ export function createMinions({
   defenses,
   hurtPlayer,
   emit = () => {},
+  party = null,
 }) {
   const actors = [],
     projectiles = [],
@@ -60,21 +61,21 @@ export function createMinions({
         (r) =>
           regions.unlocked.has(r.id) &&
           r.id !== "0:0" &&
-          Math.hypot(
-            Math.max(r.x - player.x, 0, player.x - r.x - r.width),
-            Math.max(r.y - player.y, 0, player.y - r.y - r.height),
-          ) < MINIONS.streamRange,
+          (party?.positions() || [player]).some(p => Math.hypot(
+            Math.max(r.x - p.x, 0, p.x - r.x - r.width),
+            Math.max(r.y - p.y, 0, p.y - r.y - r.height),
+          ) < MINIONS.streamRange),
       )
       .sort(
         (a, b) =>
-          distance({ x: a.cx, y: a.cy }, player) -
-          distance({ x: b.cx, y: b.cy }, player),
+          Math.min(...(party?.positions() || [player]).map(p => distance({ x: a.cx, y: a.cy }, p))) -
+          Math.min(...(party?.positions() || [player]).map(p => distance({ x: b.cx, y: b.cy }, p))),
       );
     if (!hunt)
       for (let i = actors.length - 1; i >= 0; i--)
         if (
           !candidates.includes(actors[i].region) ||
-          distance(actors[i], player) > 2400
+          (party?.positions() || [player]).every(p => distance(actors[i], p) > 2400)
         )
           actors.splice(i, 1);
     for (const region of candidates)
@@ -85,10 +86,7 @@ export function createMinions({
       ) {
         const id = `minion:${epoch}:${region.id}:${slot}`;
         if (defeated.has(id) || actors.some((e) => e.id === id)) continue;
-        const origin =
-          regionAt(player.x, player.y)?.id === region.id
-            ? player
-            : { x: region.cx, y: region.cy };
+        const origin = (party?.positions() || [player]).find(p => regionAt(p.x, p.y)?.id === region.id) || { x: region.cx, y: region.cy };
         let point = null;
         for (let i = 0; i < 20; i++) {
           const angle = slot * 2.1 + i * 2.399;
@@ -99,7 +97,7 @@ export function createMinions({
           if (
             regionAt(p.x, p.y)?.id === region.id &&
             !isSafe(p) &&
-            distance(p, player) > 330 &&
+            (party?.positions() || [player]).every(other => distance(p, other) > 330) &&
             p.x > region.x + 25 &&
             p.x < region.x + region.width - 25 &&
             p.y > region.y + 25 &&
@@ -250,7 +248,8 @@ export function createMinions({
       p.age += dt;
       if (p.age < p.duration) continue;
       projectiles.splice(i, 1);
-      if (distance(player, p) < p.radius && regions.isOpen(player))
+      if (party) party.blast(p, p.radius, MINIONS.projectileDamage);
+      else if (distance(player, p) < p.radius && regions.isOpen(player))
         hurtPlayer(MINIONS.projectileDamage, "minion");
       emit("minion-projectile-impact", { x: p.x, y: p.y, radius: p.radius });
       if (state.gameOver) return;
@@ -292,6 +291,7 @@ export function createMinions({
     const first = cursor % Math.max(1, order.length);
     for (let index = 0; index < order.length; index++) {
       const e = order[(first + index) % order.length];
+      party?.select(e);
       if (!actors.includes(e)) continue;
       e.moving = false;
       for (const key of [

@@ -115,7 +115,7 @@ export class EnemyView {
       );
       if (e.flash > 0) o.image.setTintFill(0xffedc0);
       else o.image.clearTint();
-      const selected = c.selectedEnemyId === e.id;
+      const selected = (c.actors || [c]).some(a => a.selectedEnemyId === e.id);
       if (selected && visible) {
         g.lineStyle(3, 0xffe5a2, 0.95).strokeEllipse(e.x, e.y, 48, 24);
         const barY = e.y - (small ? 195 : e.tier === "boss" ? 185 : 123);
@@ -224,7 +224,7 @@ export class EnemyView {
         e.y,
         e.radius + (c.elapsed - e.time) * 24,
       );
-    s.player.setAlpha(
+    if (!c.coop) s.player.setAlpha(
       d.hitCooldown > 0 && Math.floor(c.elapsed * 12) % 2 === 0 ? 0.45 : 1,
     );
   }
