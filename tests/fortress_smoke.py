@@ -273,14 +273,6 @@ try:
                 "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.state.exploration.discoveries.length===0&&lumberPhaser.core.state.readClues.length===0&&lumberPhaser.core.state.coins===0"
             )
             assert q.evaluate("lumberPhaser.scene.assets.fortress.variant===4")
-            if not mobile:
-                q.goto(
-                    f"http://127.0.0.1:{server.server_port}/phaser.html?art=procedural"
-                )
-                choose_hero(q)
-                assert q.evaluate(
-                    "!lumberPhaser.scene.assets.fortress&&!lumberPhaser.scene.registry.has('fortressPack')"
-                )
             assert not errors, errors
             print(
                 "PASS fortress",

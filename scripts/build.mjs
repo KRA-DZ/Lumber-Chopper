@@ -26,7 +26,6 @@ for (const file of [
   "economy.js",
   "forestry.js",
   "construction.js",
-  "terrain.js",
   "shop.js",
   "weather.js",
   "environment.js",
@@ -35,12 +34,7 @@ for (const file of [
   await copyFile(new URL(file, root), new URL(file, out));
 for (const dir of ["game", "phaser", "vendor", "src/assets"])
   await cp(new URL(dir, root), new URL(dir, out), { recursive: true });
-const html = (await readFile(new URL("phaser.html", root), "utf8")).replace(
-  /<a[^>]*data-legacy-link[^>]*>[^<]*<\/a\s*>/,
-  " ",
-);
-if (html.includes("data-legacy-link"))
-  throw new Error("Legacy comparison link must not enter the standalone build");
+const html = await readFile(new URL("index.html", root), "utf8");
 await writeFile(new URL("index.html", out), html);
 let total = 0;
 async function count(dir) {

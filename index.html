@@ -5,7 +5,7 @@
     name="viewport"
     content="width=device-width,initial-scale=1,viewport-fit=cover"
   />
-  <title>Лесная смена • Lumber Chopper</title>
+  <title>Лесная смена • Phaser</title>
   <link rel="icon" href="data:," />
   <style>
     * {
@@ -132,6 +132,41 @@
       align-items: start;
       gap: 12px;
     }
+    [data-story-chapter] {
+      border: 2px solid #b3975d;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+    [data-story-chapter] h3 {
+      color: #f0d58c;
+      margin-top: 0;
+    }
+    [data-story-chapter] details {
+      padding: 10px 0;
+      border-top: 1px solid #61734b;
+    }
+    [data-story-chapter] summary {
+      cursor: pointer;
+      color: #f0d58c;
+    }
+    .activity-card {
+      border-top: 1px solid #61734b;
+      padding: 10px 0;
+    }
+    #fishingControls {
+      padding: 12px;
+      background: #263f2e;
+      border: 2px solid #b3975d;
+      margin-top: 12px;
+    }
+    #fishingControls[hidden] {
+      display: none;
+    }
+    #fishingControls p {
+      margin-top: 0;
+      font-size: 14px;
+      color: #ffe2a0;
+    }
     .shop-item {
       display: grid;
       grid-template-columns: 38px 1fr 120px;
@@ -139,6 +174,11 @@
       align-items: center;
       padding: 14px 0;
       border-top: 1px solid #61734b;
+    }
+    .shop-item[data-recommended="true"] {
+      border-left: 3px solid #dbb56c;
+      padding-left: 10px;
+      background: #314b34;
     }
     .shop-item h3 {
       margin: 0;
@@ -154,6 +194,13 @@
     }
     .shop-icon {
       font: 30px monospace;
+    }
+    .shop-icon img {
+      display: block;
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      image-rendering: pixelated;
     }
     dialog button {
       flex: none;
@@ -214,6 +261,11 @@
         grid-template-columns: 24px 1fr 92px;
         gap: 8px;
       }
+      .shop-item[data-recommended="true"] {
+        border-left: 3px solid #dbb56c;
+        padding-left: 10px;
+        background: #314b34;
+      }
       .shop-item h3 {
         font-size: 13px;
       }
@@ -221,11 +273,117 @@
         font-size: 22px;
       }
     }
+    #game-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 960/688;
+      background: #203b2b;
+      overflow: hidden;
+    }
+    #game-frame {
+      border: 4px solid #ac8a51;
+      box-shadow: 0 5px #142c20;
+    }
+    #game-viewport canvas {
+      border: 0;
+      box-shadow: none;
+      aspect-ratio: auto;
+    }
+    .hero-choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      border: 0;
+      padding: 0;
+      margin: 16px 0;
+    }
+    .hero-choices legend {
+      padding: 0 0 10px;
+    }
+    .hero-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid #61734b;
+      padding: 12px 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .hero-card:has(input:checked) {
+      border-color: #f0d58c;
+      background: #354f35;
+    }
+    .hero-card:focus-within {
+      outline: 2px solid #f0d58c;
+      outline-offset: 3px;
+    }
+    .hero-card input {
+      width: 20px;
+      height: 20px;
+      accent-color: #d9b66d;
+    }
+    .hero-card img {
+      object-fit: contain;
+      image-rendering: pixelated;
+      max-width: 100%;
+    }
+    .hero-card span {
+      font-size: 12px;
+      color: #bacd9d;
+    }
+    [data-hero-start] {
+      width: 100%;
+      min-height: 48px;
+    }
+    #loading {
+      position: absolute;
+      inset: 0;
+      padding: 20px;
+      margin: 0;
+    }
+    [data-regions] {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    [data-regions] button {
+      min-height: 82px;
+      padding: 7px 3px;
+      font: 11px monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      overflow-wrap: anywhere;
+    }
+    [data-regions] small {
+      color: inherit;
+      font-size: 10px;
+    }
+    [data-regions] .region-open {
+      background: #719264;
+      color: #162e24;
+    }
+    [data-regions] .region-adjacent {
+      background: #c3ad73;
+      color: #293c2b;
+    }
+    [data-regions] .region-unknown {
+      background: #344d40;
+      color: #a2b198;
+      opacity: 0.6;
+    }
+    @media (max-width: 599px) {
+      #game-viewport {
+        aspect-ratio: 512/704;
+      }
+    }
   </style>
   <main>
     <header>
       <div>
-        <small>ЛЕСНОЙ ПРОМЫСЕЛ · ПИКСЕЛЬНЫЙ МИР</small>
+        <small>ЛЕСНОЙ ПРОМЫСЕЛ</small>
         <h1>Лесная смена</h1>
       </div>
       <div class="stats">
@@ -233,30 +391,59 @@
         <div class="stat">Монеты <b id="coins">0</b></div>
       </div>
     </header>
-    <p>
-      <a href="./phaser.html" style="color: #efd18a"
-        >Новая пиксельная графика · Phaser →</a
+    <div id="game-frame">
+      <div
+        id="game-viewport"
+        role="application"
+        aria-label="Лесная смена: WASD или касание для движения"
       >
-    </p>
-    <canvas
-      id="game"
-      width="960"
-      height="600"
-      aria-label="Лес: нажмите на землю для движения, на дерево рядом для удара"
-    ></canvas>
+        <p id="loading" role="status">Загружаем лес…</p>
+      </div>
+    </div>
+    <div id="fishingControls" hidden>
+      <p data-fish-status role="status" aria-live="polite"></p>
+      <button type="button" data-reel>Подсечь · E / пробел</button>
+      <button type="button" data-fish-cancel>Убрать снасти</button>
+    </div>
     <footer>
       <div>
         <small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small>
         <p>
-          WASD / стрелки или нажатие на землю — движение. Рядом с деревом рубка
-          идёт автоматически.<br />Нажимайте на дерево рядом, чтобы рубить
-          быстрее. После рубки остаётся пень. Золотая площадка — продажа
+          WASD / стрелки или нажатие на землю — движение. Нажатие на врага —
+          выбор цели и атака; удар также автоматический вблизи. B — оборона. I —
+          сумка находок и пути к занятиям. E — взаимодействие рядом; при рыбалке
+          E или пробел — подсечка. Рядом с деревом рубка идёт автоматически.<br />Нажимайте
+          на дерево рядом, чтобы рубить быстрее. M — карта леса. Соседние
+          регионы открываются за брёвна: встаньте на площадку у пограничного
+          указателя. После рубки остаётся пень. Золотая площадка — продажа
           покупателям. Голубая — строительство лагеря. Лавка открывается по
-          нажатию на прилавок или палатку торговца; E — осмотреть находку рядом.
+          нажатию на прилавок или палатку торговца. Кнопка «К лагерю»
+          прокладывает путь к безопасному кругу. Шкала сверху показывает время
+          до заката и следующего налёта. Обратные таймеры — минуты и секунды
+          активной игры. E — изучить находку рядом. J — дневник и письма. Ночью
+          Смотритель неуязвим: спасайтесь в круге света лагеря. На ночи 5, 10,
+          15 приходят налётчики — их можно рубить топором. Смотритель видит
+          вблизи и слышит рубку. Не подпускайте его близко: ищите укрытие или
+          свет лагеря. Повреждённый лагерь чинится брёвнами на голубой площадке.
+          Рядом с повреждённой оградой удерживайте R или экранную кнопку для
+          ремонта: одно бревно восстанавливает до 20 HP. Итоги последнего
+          налёта — в обороне (B) и дневнике (J).
         </p>
       </div>
       <div>
+        <button
+          id="campButton"
+          type="button"
+          title="Проложить путь к свету лагеря"
+        >
+          К лагерю
+        </button>
         <button id="shopButton" type="button">Лавка</button>
+        <button id="defenseButton" type="button">Оборона · B</button>
+        <button id="workerButton" type="button">Помощники · H</button>
+        <button id="bagButton" type="button">Находки · I</button>
+        <button id="journalButton" type="button">Дневник · J</button>
+        <button id="mapButton" type="button">Карта леса · M</button>
         <button id="sound" type="button" aria-pressed="false">
           Включить звуки леса
         </button>
@@ -266,7 +453,10 @@
       </div>
     </footer>
     <div id="campInfo" class="stat"></div>
-    <p>Тестовая версия: каждая загрузка начинает новую игру.</p>
+    <p>
+      Новое пиксельное оформление, погода, животные и ночной лес. Сравните с
+      исходной версией по ссылке над игрой. Каждая загрузка начинает новую игру.
+    </p>
     <div id="status" role="status" aria-live="polite"></div>
   </main>
   <dialog id="shopDialog" aria-labelledby="shopTitle">
@@ -292,2022 +482,96 @@
     <p id="clueText"></p>
     <button type="button" id="clueClose">Убрать находку</button>
   </dialog>
-  <script type="module">
-    import { createPixelArt, PIXEL_SCALE, METRICS, CAMP } from "./pixel-art.js";
-    import { createTerrain } from "./terrain.js";
-    import { createEffects } from "./effects.js";
-    import {
-      createConstruction,
-      STAGE_COSTS,
-      partialFence,
-      constructionCollisionKey,
-    } from "./construction.js";
-    import { createEnvironment } from "./environment.js";
-    import { createWorldArt } from "./world-art.js";
-    import { FOREST_SITES, createWorldDressing } from "./world.js";
-    import { createWeather } from "./weather.js";
-    import { createExpansion } from "./expansion.js";
-    import { createInitialState, DAY_SECONDS } from "./game/config.js";
-    import { createWorldModel } from "./game/world-model.js";
-    import { createNavigation } from "./game/navigation.js";
-    import { createShop } from "./shop.js";
-    import { createForestry, growthStage } from "./forestry.js";
-    import { createMystery, MYSTERY_CLUES, nightSight } from "./mystery.js";
-    ("use strict");
-    const gameState = createInitialState();
-    const canvas = document.querySelector("#game"),
-      ctx = canvas.getContext("2d");
-    const ui = {
-      wood: document.querySelector("#wood"),
-      coins: document.querySelector("#coins"),
-      shop: document.querySelector("#shopButton"),
-      status: document.querySelector("#status"),
-    };
-    const clueDialog = document.querySelector("#clueDialog");
-    const WORLD = { width: 3200, height: 3200 };
-    const VIEW = { width: 960, height: 688 },
-      camera = { x: 0, y: 0 };
-    const keys = new Set();
-    const CENTER = { x: 1600, y: 1600 };
-    const stages = [
-      { name: "Костёр", cost: STAGE_COSTS[0] },
-      { name: "Палатка", cost: STAGE_COSTS[1] },
-      { name: "Забор", cost: STAGE_COSTS[2] },
-      { name: "Хижина", cost: STAGE_COSTS[3] },
-    ];
-    const radii = [900, 1040, 1180, 1320, 1450]; // Каждый этап открывает новое кольцо леса.
-    // Породы перемешаны по всему лесу, сложность не привязана к кольцам карты.
-    let notice = "",
-      noticeTimer = 0;
-    function showNotice(text, duration = 4) {
-      notice = text;
-      noticeTimer = duration;
-      updateUI();
-    }
-    const sale = { x: 1420, y: 1690, radius: 53 },
-      build = { x: 1780, y: 1690, radius: 53 };
-    const landmarks = FOREST_SITES;
-    const discovered = new Set();
-    const miniMap = { x: 780, y: 16, size: 164 };
-    function mapTransform() {
-      const span = WORLD.width; // Постоянный масштаб: видно, как растёт открытый круг.
-      return {
-        span,
-        left: CENTER.x - span / 2,
-        top: CENTER.y - span / 2,
-        scale: miniMap.size / span,
-      };
-    }
-    const nightLayer = document.createElement("canvas");
-    nightLayer.width = VIEW.width;
-    nightLayer.height = VIEW.height;
-    function fitGameView() {
-      const mobile = window.innerWidth < 600;
-      VIEW.width = mobile ? 512 : 960;
-      VIEW.height = mobile ? 704 : 688;
-      if (canvas.width !== VIEW.width || canvas.height !== VIEW.height) {
-        canvas.width = VIEW.width;
-        canvas.height = VIEW.height;
-        nightLayer.width = VIEW.width;
-        nightLayer.height = VIEW.height;
-      }
-      ctx.imageSmoothingEnabled = false;
-      miniMap.size = mobile ? 100 : 144;
-      miniMap.x = VIEW.width - miniMap.size - 16;
-      canvas.style.aspectRatio = `${VIEW.width} / ${VIEW.height}`;
-      updateCamera();
-    }
-    window.addEventListener("resize", fitGameView);
-    const nightCtx = nightLayer.getContext("2d"); // Маска света переиспользуется, не создаётся каждый кадр.
-    const dayPhase = () => gameState.worldTime / DAY_SECONDS;
-    const nightAmount = () =>
-      Math.max(
-        0,
-        Math.min(1, (0.25 - Math.sin(dayPhase() * Math.PI * 2)) / 1.25),
-      );
-    function periodName() {
-      const p = dayPhase();
-      return p < 0.06 || p > 0.96
-        ? "Рассвет"
-        : p < 0.43
-          ? "День"
-          : p < 0.56
-            ? "Закат"
-            : "Ночь";
-    }
-    function updateDiscoveries() {
-      for (const site of landmarks) {
-        if (
-          !discovered.has(site.id) &&
-          treeAccessible(site) &&
-          distance(player, site) < 145
-        ) {
-          discovered.add(site.id);
-          showNotice(
-            `Открыто место: ${site.name}. Пока это часть истории леса.`,
-          );
-        }
-      }
-    }
-    let transferTimer = 0;
-    const forestRadius = () => radii[gameState.campLevel];
-    const treeAccessible = (t) =>
-      Math.hypot(t.x - CENTER.x, t.y - CENTER.y) < forestRadius() - 45;
-    function constrainPoint(x, y) {
-      const dx = x - CENTER.x,
-        dy = y - CENTER.y,
-        d = Math.hypot(dx, dy),
-        r = forestRadius() - player.radius;
-      return d > r
-        ? { x: CENTER.x + (dx / d) * r, y: CENTER.y + (dy / d) * r }
-        : { x, y };
-    }
-    // Пока тестируем со старта: нет загрузки, сериализации и таймера автосохранения.
-    // Удаляем только прежнюю запись этой игры, не затрагивая данные других страниц.
-    try {
-      localStorage.removeItem("lumber-chopper-v1");
-    } catch {
-      /* Хранилище не требуется. */
-    }
-    function updateCamera() {
-      camera.x =
-        Math.round(
-          clamp(player.x - VIEW.width / 2, 0, WORLD.width - VIEW.width) /
-            PIXEL_SCALE,
-        ) * PIXEL_SCALE;
-      camera.y =
-        Math.round(
-          clamp(
-            player.y - VIEW.height / 2 - 160,
-            0,
-            WORLD.height - VIEW.height,
-          ) / PIXEL_SCALE,
-        ) * PIXEL_SCALE;
-    }
-    function clearKeys() {
-      keys.clear();
-      player.targetX = player.x;
-      player.targetY = player.y;
-      player.path = [];
-    }
-    window.addEventListener("keydown", (e) => {
-      if (
-        document.querySelector("dialog[open]") ||
-        e.target.closest("input,textarea,select") ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.altKey
-      )
-        return;
-      if (
-        [
-          "KeyW",
-          "KeyA",
-          "KeyS",
-          "KeyD",
-          "ArrowUp",
-          "ArrowLeft",
-          "ArrowDown",
-          "ArrowRight",
-        ].includes(e.code)
-      ) {
-        e.preventDefault();
-        keys.add(e.code);
-      }
-    });
-    window.addEventListener("keyup", (e) => keys.delete(e.code));
-    window.addEventListener("blur", clearKeys);
-    const player = {
-      x: 1600,
-      y: 1720,
-      targetX: 1600,
-      targetY: 1720,
-      radius: 10,
-      speed: gameState.runSpeed,
-      autoTimer: 0,
-      clickTimer: 0,
-      swing: 0,
-      moving: false,
-    };
-
-    const worldModel = createWorldModel();
-    const {
-      trees,
-      ancientTree,
-      pond,
-      pondOutline,
-      streamOutline,
-      trails,
-      bridge,
-      inWater,
-      waterCollision,
-      nearTrail,
-    } = worldModel;
-    const effects = [];
-    player.path = [];
-    player.pathVersion = 0;
-    let elapsed = 0,
-      lastTime = null,
-      dayNumber = 0;
-    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-    // Рельеф, тропы и физические основания объектов используют общие координаты.
-    const nav = createNavigation(worldModel, gameState, player, showNotice);
-    const {
-      rebuildObstacles,
-      isWalkable,
-      nearestGround,
-      clearSegment,
-      moveBody,
-      findPath,
-      setDestination,
-      followPath,
-      campFencePosts,
-      campFenceSegments,
-    } = nav;
-    // Очередь живёт весь торговый день; покупатель не уходит каждые несколько секунд.
-    const BUYER_INTERVAL = 55,
-      MAX_BUYERS = 5;
-    let buyerSequence = 0,
-      buyerSpawnTimer = 0;
-    const buyers = [];
-    const shopOpen = () => dayPhase() >= 0.06 && dayPhase() < 0.5; // 07:26–18:00 по часам мира.
-    const buyerExit = { x: 1320, y: 2140 };
-    function activeBuyer() {
-      return shopOpen()
-        ? buyers.find(
-            (b) => b.phase === "waiting" && b.slot === 0 && b.load < b.capacity,
-          )
-        : null;
-    }
-    function spawnBuyer() {
-      const b = {
-        id: buyerSequence++,
-        kind: buyerSequence % 2 === 1 ? "walker" : "cart",
-        capacity: buyerSequence % 2 === 1 ? 5 : 15,
-        x: buyerExit.x,
-        y: buyerExit.y,
-        phase: "arriving",
-        load: 0,
-        wait: 0,
-        slot: -1,
-        trip: buyerSequence,
-        path: [],
-        routeKey: "",
-      };
-      buyers.push(b);
-      return b;
-    }
-    function updateBuyers(dt) {
-      const open = shopOpen();
-      buyerSpawnTimer -= dt;
-      if (
-        open &&
-        buyerSpawnTimer <= 0 &&
-        buyers.filter((b) => b.phase !== "leaving").length < MAX_BUYERS
-      ) {
-        spawnBuyer();
-        buyerSpawnTimer = BUYER_INTERVAL;
-      }
-      for (const b of buyers)
-        if (
-          !open ||
-          (b.slot === 0 && b.load >= b.capacity && (b.thanks || 0) <= 0)
-        )
-          b.phase = "leaving";
-      const queue = buyers
-        .filter((b) => b.phase !== "leaving")
-        .sort((a, b) => a.id - b.id);
-      queue.forEach((b, i) => (b.slot = i));
-      for (let i = buyers.length - 1; i >= 0; i--) {
-        const b = buyers[i],
-          target =
-            b.phase === "leaving"
-              ? buyerExit
-              : { x: 1420, y: 1775 + b.slot * 64 },
-          key = `${b.phase === "leaving" ? "exit" : b.slot}:${nav.version}`;
-        if (b.routeKey !== key) {
-          const changedTarget = b.routeKey.split(":")[0] !== key.split(":")[0];
-          if (
-            changedTarget ||
-            (!b.path.length && distance(b, target) > 5) ||
-            b.path.some((p, i) => !clearSegment(i ? b.path[i - 1] : b, p))
-          )
-            b.path = findPath(b, target);
-          b.routeKey = key;
-        }
-        const ox = b.x,
-          oy = b.y,
-          moved = followPath(b, dt, 64);
-        b.moving = moved > 0.1;
-        if (b.moving) {
-          const dx = b.x - ox,
-            dy = b.y - oy;
-          b.direction =
-            Math.abs(dx) > Math.abs(dy)
-              ? dx < 0
-                ? "left"
-                : "right"
-              : dy < 0
-                ? "up"
-                : "down";
-        } else b.direction = "down";
-        b.greetCooldown = Math.max(0, (b.greetCooldown || 0) - dt);
-        b.actionTimer = Math.max(0, (b.actionTimer || 0) - dt);
-        b.thanks = Math.max(0, (b.thanks || 0) - dt);
-        if (!b.moving && distance(b, player) < 130 && b.greetCooldown <= 0) {
-          b.action = "greet";
-          b.actionTimer = 2.5;
-          b.greetCooldown = 16;
-        } else if (!b.moving && b.actionTimer <= 0)
-          b.action = ["idle", "look", "shift", "yawn"][
-            Math.floor((elapsed + b.id * 4) / 5) % 4
-          ];
-        if (distance(b, target) < 5) {
-          if (b.phase === "leaving") {
-            buyers.splice(i, 1);
-            continue;
-          }
-          b.phase = b.slot === 0 ? "waiting" : "queued";
-          b.wait += dt;
-        }
-      }
-    }
-    const animals = [];
-    function spawnAnimals() {
-      for (let i = 0; i < 18; i++) {
-        const angle = i * 2.399,
-          r = 390 + (i % 5) * 185,
-          pos = nearestGround(
-            1600 + Math.cos(angle) * Math.min(r, forestRadius() - 80),
-            1600 + Math.sin(angle) * Math.min(r, forestRadius() - 80),
-          );
-        animals.push({
-          id: i,
-          type: ["rabbit", "squirrel", "bird"][i % 3],
-          x: pos.x,
-          y: pos.y,
-          homeX: pos.x,
-          homeY: pos.y,
-          angle: i,
-          timer: i * 0.7,
-          state: "idle",
-          moving: false,
-          z: 0,
-        });
-        if (i < 3) {
-          const a = animals.at(-1),
-            bank = waterRestPoint(i + 1);
-          a.x = bank.x;
-          a.y = bank.y;
-          a.state = i === 1 ? "rest" : "drink";
-          a.timer = 8 + i * 3;
-        }
-      }
-    }
-    // Небольшие действия жителей не меняют экономику и не требуют новых кнопок.
-    const merchantLife = {
-      action: "read",
-      timer: 6,
-      greetCooldown: 0,
-      cycle: 0,
-    };
-    function updateCampLife(dt) {
-      merchantLife.timer -= dt;
-      merchantLife.greetCooldown = Math.max(0, merchantLife.greetCooldown - dt);
-      if (
-        Math.hypot(
-          player.x - CAMP.merchant.x,
-          player.y - CAMP.merchant.y - 36,
-        ) < 145 &&
-        merchantLife.greetCooldown <= 0
-      ) {
-        merchantLife.action = "greet";
-        merchantLife.timer = 3;
-        merchantLife.greetCooldown = 16;
-      } else if (merchantLife.timer <= 0) {
-        merchantLife.cycle++;
-        merchantLife.action = ["idle", "adjust", "read", "look", "peek"][
-          merchantLife.cycle % 5
-        ];
-        merchantLife.timer = merchantLife.action === "adjust" ? 4 : 7;
-      }
-      const desired = merchantLife.action === "peek" ? 8 : 36;
-      merchantLife.offset =
-        (merchantLife.offset ?? 36) +
-        (desired - (merchantLife.offset ?? 36)) * (1 - Math.exp(-dt * 4));
-    }
-    function waterRestPoint(id) {
-      const angle = -0.5 + (id % 6) * 0.52;
-      return nearestGround(
-        pond.x + Math.cos(angle) * (pond.rx + 35),
-        pond.y + Math.sin(angle) * (pond.ry + 32),
-        8,
-      );
-    }
-    function updateAnimals(dt) {
-      for (const a of animals) {
-        a.timer -= dt;
-        const near = distance(a, player) < 100;
-        if (near) {
-          a.state = "flee";
-          a.timer = 2.5;
-          a.path = [];
-          a.angle =
-            Math.atan2(a.y - player.y, a.x - player.x) +
-            (a.id % 2 ? 0.2 : -0.2);
-        } else if (a.state === "flee" && a.timer <= 0) {
-          a.state = "idle";
-          a.timer = 3;
-        } else if (a.state !== "flee") {
-          if (
-            nightAmount() > 0.6 &&
-            a.type !== "squirrel" &&
-            a.state !== "seekWater"
-          ) {
-            a.state = "sleep";
-            a.moving = false;
-          } else if (a.state === "sleep" && nightAmount() < 0.4) {
-            a.state = "idle";
-            a.timer = 2;
-          } else if (a.state === "seekWater") {
-            if (a.pathVersion !== nav.version) {
-              a.path = findPath(a, a.waterTarget);
-              a.pathVersion = nav.version;
-            }
-            const moved = followPath(a, dt, 32);
-            a.moving = moved > 0.01;
-            if (distance(a, a.waterTarget) < 12) {
-              a.state = "drink";
-              a.timer = 7;
-              a.moving = false;
-              a.angle = Math.atan2(pond.y - a.y, pond.x - a.x);
-            } else if (!a.path.length) {
-              a.state = "rest";
-              a.timer = 5;
-              a.moving = false;
-            }
-            continue;
-          } else if (a.state !== "sleep" && a.timer <= 0) {
-            a.cycle = (a.cycle || 0) + 1;
-            if (a.id % 4 === 0 && a.cycle % 3 === 1) {
-              a.waterTarget = waterRestPoint(a.id);
-              a.path = findPath(a, a.waterTarget);
-              a.pathVersion = nav.version;
-              a.state = a.path.length ? "seekWater" : "rest";
-              a.timer = 8;
-            } else {
-              a.state = ["drink", "rest"].includes(a.state)
-                ? "idle"
-                : a.state === "idle"
-                  ? "wander"
-                  : "rest";
-              a.timer = 4 + (a.id % 5);
-              a.angle += 1.7;
-            }
-          }
-        }
-        const speed =
-          a.state === "flee"
-            ? a.type === "bird"
-              ? 165
-              : 140
-            : a.state === "wander"
-              ? 27
-              : 0;
-        a.z =
-          a.type === "bird" && a.state === "flee"
-            ? Math.min(50, a.z + dt * 60)
-            : Math.max(0, a.z - dt * 25);
-        if (a.type === "bird" && a.z > 5) {
-          const p = constrainPoint(
-            a.x + Math.cos(a.angle) * speed * dt,
-            a.y + Math.sin(a.angle) * speed * dt,
-          );
-          a.x = p.x;
-          a.y = p.y;
-          a.moving = speed > 0;
-        } else {
-          const moved = moveBody(
-            a,
-            Math.cos(a.angle) * speed * dt,
-            Math.sin(a.angle) * speed * dt,
-            8,
-          );
-          a.moving = moved > 0.01;
-          if (speed && moved < speed * dt * 0.3) a.angle += 1.6;
-        }
-        if (a.z < 5 && !isWalkable(a.x, a.y, 8)) {
-          const p = nearestGround(a.x, a.y, 8);
-          a.x = p.x;
-          a.y = p.y;
-        }
-      }
-    }
-
-    // Процедурный звук без файлов и библиотек. Запуск только по кнопке пользователя.
-    let audio = null,
-      audioEnabled = false,
-      audioTimer = 0,
-      crackleTimer = 0;
-    const soundButton = document.querySelector("#sound");
-    async function toggleSound() {
-      try {
-        if (!audio) {
-          const Audio = window.AudioContext || window.webkitAudioContext;
-          if (!Audio) throw Error("unsupported");
-          const ac = new Audio(),
-            master = ac.createGain();
-          master.gain.value = 0.5;
-          master.connect(ac.destination);
-          const noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate),
-            samples = noise.getChannelData(0);
-          for (let i = 0; i < samples.length; i++)
-            samples[i] = Math.random() * 2 - 1;
-          const wind = ac.createBufferSource(),
-            filter = ac.createBiquadFilter(),
-            gain = ac.createGain();
-          wind.buffer = noise;
-          wind.loop = true;
-          filter.type = "lowpass";
-          filter.frequency.value = 450;
-          gain.gain.value = 0.035;
-          wind.connect(filter);
-          filter.connect(gain);
-          gain.connect(master);
-          wind.start();
-          audio = { ac, master, noise, wind, gain };
-        }
-        audioEnabled = !audioEnabled;
-        if (audioEnabled) await audio.ac.resume();
-        else await audio.ac.suspend();
-        soundButton.textContent = audioEnabled
-          ? "Звук: вкл"
-          : "Включить звуки леса";
-        soundButton.setAttribute("aria-pressed", String(audioEnabled));
-      } catch {
-        audioEnabled = false;
-        soundButton.textContent = "Звук недоступен";
-        soundButton.setAttribute("aria-pressed", "false");
-        showNotice(
-          "Браузер не разрешил звук. Игра продолжает работать без него.",
-        );
-      }
-    }
-    soundButton.addEventListener("click", toggleSound);
-    function chirp(frequency, duration, volume, slide) {
-      if (!audio || !audioEnabled) return;
-      const { ac, master } = audio,
-        o = ac.createOscillator(),
-        g = ac.createGain(),
-        now = ac.currentTime;
-      o.type = "sine";
-      o.frequency.setValueAtTime(frequency, now);
-      o.frequency.exponentialRampToValueAtTime(
-        frequency * slide,
-        now + duration,
-      );
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(volume, now + 0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      o.connect(g);
-      g.connect(master);
-      o.start();
-      o.stop(now + duration + 0.01);
-    }
-    function updateAudio(dt) {
-      if (
-        !audioEnabled ||
-        !audio ||
-        document.hidden ||
-        audio.ac.state !== "running"
-      )
-        return;
-      audioTimer -= dt;
-      crackleTimer -= dt;
-      audio.gain.gain.setTargetAtTime(
-        0.027 + Math.sin(elapsed * 0.3) * 0.009,
-        audio.ac.currentTime,
-        0.4,
-      );
-      if (audioTimer <= 0) {
-        const night = nightAmount() > 0.4;
-        chirp(
-          night ? 3600 : 1800 + Math.random() * 900,
-          night ? 0.08 : 0.2,
-          night ? 0.018 : 0.027,
-          night ? 1.05 : 1.7,
-        );
-        audioTimer = night ? 0.7 : 3 + Math.random() * 4;
-      }
-      const fire = Math.max(0, 1 - distance(player, CENTER) / 360);
-      if (gameState.campLevel >= 1 && fire > 0 && crackleTimer <= 0) {
-        const { ac, noise, master } = audio,
-          source = ac.createBufferSource(),
-          g = ac.createGain(),
-          filter = ac.createBiquadFilter();
-        source.buffer = noise;
-        filter.type = "highpass";
-        filter.frequency.value = 1200;
-        g.gain.setValueAtTime(fire * 0.03, ac.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.08);
-        source.connect(filter);
-        filter.connect(g);
-        g.connect(master);
-        source.start(0, Math.random(), 0.09);
-        crackleTimer = 0.15 + Math.random() * 0.3;
-      }
-    }
-
-    function updateUI() {
-      ui.wood.textContent = `${gameState.wood} / ${gameState.maxWood}`;
-      ui.coins.textContent = gameState.coins;
-      ui.shop.textContent = `Лавка · ${gameState.coins} монет`;
-      const next = stages[gameState.campLevel];
-      document.querySelector("#campInfo").textContent = next
-        ? `Лагерь ${gameState.campLevel}/4 · ${next.name}: ${gameState.buildWood}/${next.cost} брёвен · Радиус леса: ${forestRadius()}`
-        : "Лагерь 4/4 · Хижина построена · Весь лес открыт";
-      ui.status.textContent =
-        notice ||
-        (gameState.wood >= gameState.maxWood
-          ? "Руки заняты — продайте брёвна или вложите их в лагерь. Остаток дождётся на земле."
-          : "Покупатели торгуют до 18:00 и ждут в очереди. На площадке стройки брёвна вкладываются автоматически.");
-    }
-    function floatingText(x, y, text, color = "#fff4ce") {
-      if (effects.length >= 128) effects.shift();
-      effects.push({ x, y, text, color, life: 1, maxLife: 1, vx: 0, vy: -35 });
-    }
-    function hitTree(tree) {
-      if (tree.workerOnly || !treeAccessible(tree) || tree.hp <= 0) return;
-      const damage = Math.min(tree.hp, gameState.axePower);
-      tree.hp -= damage;
-      tree.shake = 0.25;
-      player.swing = 0.32;
-      player.facing = tree.x < player.x ? -1 : 1;
-      player.direction =
-        Math.abs(tree.x - player.x) > Math.abs(tree.y - player.y)
-          ? tree.x < player.x
-            ? "left"
-            : "right"
-          : tree.y < player.y
-            ? "up"
-            : "down";
-      floatingText(tree.x, tree.y - 55, `−${damage}`);
-      for (let i = 0; i < 6; i++)
-        effects.push({
-          x: tree.x,
-          y: tree.y - 10,
-          vx: (Math.random() - 0.5) * 150,
-          vy: -50 - Math.random() * 75,
-          life: 0.5,
-          maxLife: 0.5,
-        });
-      if (effects.length > 128) effects.splice(0, effects.length - 128);
-      if (tree.hp <= 0) {
-        visualEffects.fell(tree, treeSpriteFor(tree), player);
-        rebuildObstacles();
-        const count = forestry.fell(tree, dayNumber);
-        floatingText(tree.x, tree.y - 50, `+${count} бревна`);
-        updateUI();
-      }
-    }
-    // Ввод отделён от симуляции. Pointer Events поддерживают мышь, перо и касания.
-    canvas.addEventListener("pointerdown", (event) => {
-      if (!event.isPrimary || event.button !== 0) return;
-      event.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const screen = {
-        x:
-          ((event.clientX - rect.left - canvas.clientLeft) * VIEW.width) /
-          (rect.width - canvas.clientLeft * 2),
-        y:
-          ((event.clientY - rect.top - canvas.clientTop) * VIEW.height) /
-          (rect.height - canvas.clientTop * 2),
-      };
-      // Мини-карта задаёт путь только в уже открытом круге, не обходит границы леса.
-      if (
-        screen.x >= miniMap.x - 4 &&
-        screen.x <= miniMap.x + miniMap.size + 4 &&
-        screen.y >= miniMap.y - 4 &&
-        screen.y <= miniMap.y + miniMap.size + 36
-      ) {
-        if (
-          screen.x < miniMap.x ||
-          screen.x > miniMap.x + miniMap.size ||
-          screen.y < miniMap.y ||
-          screen.y > miniMap.y + miniMap.size
-        )
-          return;
-        const map = mapTransform();
-        const point = constrainPoint(
-          map.left + ((screen.x - miniMap.x) / miniMap.size) * map.span,
-          map.top + ((screen.y - miniMap.y) / miniMap.size) * map.span,
-        );
-        setDestination(point.x, point.y);
-        return;
-      }
-      const point = { x: screen.x + camera.x, y: screen.y + camera.y };
-      if (
-        art.contains(
-          art.sprites.stall,
-          point.x,
-          point.y,
-          CAMP.stall.x,
-          CAMP.stall.y,
-        ) ||
-        art.contains(
-          art.sprites.merchantTent,
-          point.x,
-          point.y,
-          CAMP.merchant.x,
-          CAMP.merchant.y,
-        )
-      ) {
-        shop.open();
-        return;
-      }
-      const clue = MYSTERY_CLUES.find(
-        (c) =>
-          treeAccessible(c) && Math.hypot(point.x - c.x, point.y - c.y) < 28,
-      );
-      if (clue) {
-        if (distance(player, clue) < 140) openClue(clue);
-        else setDestination(clue.x, clue.y + 25);
-        return;
-      }
-      if (
-        treeAccessible(ancientTree) &&
-        art.contains(
-          art.sprites.ancient,
-          point.x,
-          point.y,
-          ancientTree.x,
-          ancientTree.y,
-        )
-      ) {
-        showNotice(
-          "Великое дерево — бесконечный источник для работников. Найм появится позже.",
-        );
-        const target = constrainPoint(ancientTree.x, ancientTree.y + 90);
-        setDestination(target.x, target.y);
-        return;
-      }
-      const clicked = trees
-        .filter(
-          (t) =>
-            treeAccessible(t) &&
-            t.hp > 0 &&
-            art.contains(treeSpriteFor(t), point.x, point.y, t.x, t.y),
-        )
-        .sort((a, b) => b.y - a.y)[0];
-      if (clicked && distance(player, clicked) < 72) {
-        if (player.clickTimer <= 0) {
-          hitTree(clicked);
-          player.clickTimer = gameState.clickInterval;
-        }
-        return;
-      }
-      const target = constrainPoint(
-        clicked ? clicked.x : point.x,
-        clicked ? clicked.y + 42 : point.y,
-      );
-      setDestination(target.x, target.y);
-    });
-    function openClue(clue) {
-      clearKeys();
-      mystery.read.add(clue.id);
-      document.querySelector("#clueTitle").textContent = clue.name;
-      document.querySelector("#clueText").textContent = clue.text;
-      if (!clueDialog.open) clueDialog.showModal();
-    }
-    function updatePlatforms(dt) {
-      if (dt <= 0) return;
-      transferTimer = Math.max(0, transferTimer - dt);
-      if (transferTimer > 0 || gameState.wood === 0) return;
-      const building =
-        distance(player, build) < build.radius &&
-        gameState.campLevel < stages.length;
-      const customer = activeBuyer();
-      const selling = distance(player, sale) < sale.radius && customer;
-      if (!building && !selling) return;
-      const start = {
-        x: player.x,
-        y: player.y - 4 - Math.min(39, gameState.wood - 1) * 9,
-      };
-      const value = forestry.takeCargo();
-      if (value === null) return;
-      transferTimer = 0.18;
-      if (building) {
-        const target = construction.target(gameState);
-        visualEffects.transfer("build", start, target);
-        gameState.buildWood++;
-        floatingText(build.x, build.y - 35, "+1 в лагерь", "#b8e8e4");
-        const stage = stages[gameState.campLevel];
-        if (gameState.buildWood >= stage.cost) {
-          gameState.buildWood = 0;
-          const oldRadius = forestRadius();
-          gameState.campLevel++;
-          expansion.open(oldRadius, forestRadius());
-          showNotice(
-            `Открыта новая территория! Радиус леса: ${forestRadius()}`,
-            8,
-          );
-          player.celebration = 2.2;
-          visualEffects.complete(target);
-          rebuildObstacles();
-          floatingText(
-            CENTER.x,
-            CENTER.y - 90,
-            `${stage.name}: готово! Лес расширен`,
-          );
-        }
-      } else {
-        const displayLimit = customer.kind === "cart" ? 15 : 5;
-        const slot = customer.load < displayLimit ? customer.load : -1;
-        customer.load++;
-        customer.thanks = 1.5;
-        visualEffects.transfer("sell", start, {
-          follow: customer,
-          dx:
-            customer.kind === "cart"
-              ? slot < 0
-                ? 44
-                : 30 + (slot % 2) * 24
-              : 0,
-          dy:
-            customer.kind === "cart"
-              ? -28 - Math.floor(Math.min(14, customer.load - 1) / 2) * 9
-              : -4 - Math.min(4, customer.load - 1) * 9,
-          slot,
-        });
-        player.celebration = 1.4;
-        gameState.coins += value;
-        floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
-      }
-      if (
-        nav.collisionKey !==
-        constructionCollisionKey(gameState, construction.plan)
-      )
-        rebuildObstacles();
-      updateUI();
-    }
-    function update(dt) {
-      if (shop.isOpen || clueDialog.open) return;
-      elapsed += dt;
-      player.celebration = Math.max(0, (player.celebration || 0) - dt);
-      const nextTime = gameState.worldTime + dt;
-      dayNumber += Math.floor(nextTime / DAY_SECONDS);
-      gameState.worldTime = nextTime % DAY_SECONDS;
-      if (forestry.updateGrowth(trees, dayNumber)) {
-        rebuildObstacles();
-        for (const body of [player, ...buyers])
-          if (!isWalkable(body.x, body.y)) {
-            const safe = nearestGround(body.x, body.y);
-            body.x = safe.x;
-            body.y = safe.y;
-          }
-      }
-      player.autoTimer = Math.max(0, player.autoTimer - dt);
-      player.clickTimer = Math.max(0, player.clickTimer - dt);
-      player.swing = Math.max(0, player.swing - dt);
-      const kx =
-        Number(keys.has("KeyD") || keys.has("ArrowRight")) -
-        Number(keys.has("KeyA") || keys.has("ArrowLeft"));
-      const ky =
-        Number(keys.has("KeyS") || keys.has("ArrowDown")) -
-        Number(keys.has("KeyW") || keys.has("ArrowUp"));
-      const keyboard = keys.size > 0,
-        oldX = player.x,
-        oldY = player.y;
-      if (keyboard) {
-        player.path = [];
-        const d = Math.hypot(kx, ky);
-        if (d) {
-          moveBody(
-            player,
-            (kx / d) * player.speed * dt,
-            (ky / d) * player.speed * dt,
-          );
-          if (kx) player.facing = kx < 0 ? -1 : 1;
-        }
-        player.targetX = player.x;
-        player.targetY = player.y;
-      } else if (player.path.length) {
-        if (player.pathVersion !== nav.version)
-          setDestination(player.targetX, player.targetY);
-        followPath(player, dt, player.speed);
-        if (player.x !== oldX) player.facing = player.x < oldX ? -1 : 1;
-      }
-      player.moving = Math.hypot(player.x - oldX, player.y - oldY) > 0.01;
-      if (player.moving) {
-        const dx = player.x - oldX,
-          dy = player.y - oldY;
-        player.direction =
-          Math.abs(dx) > Math.abs(dy)
-            ? dx < 0
-              ? "left"
-              : "right"
-            : dy < 0
-              ? "up"
-              : "down";
-      }
-      updateCamera();
-      updateBuyers(dt);
-      updatePlatforms(dt);
-      updateDiscoveries();
-      updateAnimals(dt);
-      updateCampLife(dt);
-      updateAudio(dt);
-      for (const tree of trees) tree.shake = Math.max(0, tree.shake - dt);
-      if (noticeTimer > 0) {
-        noticeTimer -= dt;
-        if (noticeTimer <= 0) {
-          notice = "";
-          updateUI();
-        }
-      }
-      const nearest = trees
-        .filter(
-          (t) => treeAccessible(t) && t.hp > 0 && distance(player, t) < 72,
-        )
-        .sort((a, b) => distance(player, a) - distance(player, b))[0];
-      if (
-        dt > 0 &&
-        nearest &&
-        player.autoTimer <= 0 &&
-        gameState.wood < gameState.maxWood
-      ) {
-        hitTree(nearest);
-        player.autoTimer = gameState.autoInterval;
-      }
-      if (forestry.collect(dt, player)) updateUI();
-      visualEffects.update(dt, player, gameState.wood);
-      construction.update(gameState, dt);
-      environment.update(dt, elapsed, trees, player);
-      weather.update(dt, gameState, DAY_SECONDS, dayNumber, trees, player);
-      expansion.update(dt, gameState.campLevel);
-      mystery.update(dt, {
-        darkness: nightAmount(),
-        player,
-        view: { ...camera, ...VIEW },
-        lights: nightLights(),
-        center: CENTER,
-        radius: forestRadius(),
-      });
-      for (let i = effects.length - 1; i >= 0; i--) {
-        const e = effects[i];
-        e.life -= dt;
-        e.x += e.vx * dt;
-        e.y += e.vy * dt;
-        if (!e.text) e.vy += 260 * dt;
-        if (e.life <= 0) effects.splice(i, 1);
-      }
-    }
-    // Отрисовка отделена от update/ввода: каждый объект получает готовый пиксельный спрайт.
-    const art = createPixelArt();
-    const visualEffects = createEffects(art),
-      construction = createConstruction(art, CENTER),
-      environment = createEnvironment(art);
-    const forestry = createForestry(gameState, {
-      onPickup: (pile, index) => visualEffects.pickup(pile, index),
-    });
-    const mystery = createMystery();
-    const shop = createShop(gameState, {
-      onChange: () => {
-        player.speed = gameState.runSpeed;
-        updateUI();
-      },
-      onOpen: clearKeys,
-    });
-    const scenerySprites = createWorldArt();
-    const weather = createWeather({
-      art,
-      sprites: scenerySprites,
-      pond,
-      springs: landmarks.filter((s) => s.type === "spring"),
-      inWater,
-      nearTrail,
-      center: CENTER,
-    });
-    const expansion = createExpansion({ center: CENTER, radii });
-    const terrain = createTerrain({
-      center: CENTER,
-      pondOutline,
-      streamOutline,
-      trails,
-      ancientTree,
-      clearings: landmarks,
-    });
-    function treeSpriteFor(t) {
-      return art.sprites.trees[t.type][t.legacyIndex % 3];
-    }
-    function pixelRect(x, y, w, h, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(
-        Math.round(x / 2) * 2,
-        Math.round(y / 2) * 2,
-        Math.max(2, Math.round(w / 2) * 2),
-        Math.max(2, Math.round(h / 2) * 2),
-      );
-    }
-    function ellipse(x, y, rx, ry, color) {
-      ctx.fillStyle = color;
-      for (let py = -Math.floor(ry / 2); py <= Math.floor(ry / 2); py++) {
-        const yy = py * 2,
-          span =
-            Math.floor(
-              (rx * Math.sqrt(Math.max(0, 1 - (yy * yy) / (ry * ry)))) / 2,
-            ) * 2;
-        ctx.fillRect(
-          Math.round((x - span) / 2) * 2,
-          Math.round((y + yy) / 2) * 2,
-          Math.max(2, span * 2),
-          2,
-        );
-      }
-    }
-    function label(text, x, y, size = 14, color = "#fff0c1") {
-      ctx.fillStyle = color;
-      ctx.font = `600 ${size}px monospace`;
-      ctx.textAlign = "center";
-      ctx.fillText(text, Math.round(x), Math.round(y));
-    }
-    function pixelLine(a, b, color, width = 2) {
-      let x = Math.round(a.x / 2),
-        y = Math.round(a.y / 2);
-      const tx = Math.round(b.x / 2),
-        ty = Math.round(b.y / 2),
-        dx = Math.abs(tx - x),
-        sx = x < tx ? 1 : -1,
-        dy = -Math.abs(ty - y),
-        sy = y < ty ? 1 : -1;
-      let err = dx + dy;
-      for (;;) {
-        pixelRect(x * 2, y * 2, width, width, color);
-        if (x === tx && y === ty) break;
-        const e = err * 2;
-        if (e >= dy) {
-          err += dy;
-          x += sx;
-        }
-        if (e <= dx) {
-          err += dx;
-          y += sy;
-        }
-      }
-    }
-    function shadow(x, y, rx = 22, ry = 7) {
-      ellipse(x, y, rx, ry, "#1d422a35");
-    }
-    function drawTree(t) {
-      shadow(t.x + 8, t.y + 4, t.hp > 0 ? 44 : 18, t.hp > 0 ? 12 : 6);
-      if (t.hp <= 0) {
-        const stage = growthStage(t, dayNumber);
-        if (stage === 0) art.draw(ctx, art.sprites.stump, t.x, t.y);
-        else if (stage === 1)
-          art.draw(
-            ctx,
-            scenerySprites.saplings[t.legacyIndex % 2],
-            t.x,
-            t.y,
-            1,
-          );
-        else art.draw(ctx, treeSpriteFor(t), t.x, t.y, 1);
-        if (distance(player, t) < 100)
-          label(
-            stage === 0
-              ? "Пень · росток завтра"
-              : stage === 1
-                ? "Росток · 1/3 дня"
-                : "Молодое дерево · 2/3 дня",
-            t.x,
-            t.y + 30,
-            10,
-            "#f0e2aa",
-          );
-        return;
-      }
-      const sprite = treeSpriteFor(t),
-        shake = t.shake ? Math.round(Math.sin(t.shake * 90) * 2) * 2 : 0;
-      const overlap =
-        player.y < t.y &&
-        player.y > t.y - sprite.height * 2 &&
-        Math.abs(player.x - t.x) < sprite.width * 0.75;
-      ctx.save();
-      if (overlap) ctx.globalAlpha = 0.5;
-      art.draw(
-        ctx,
-        t.shake ? sprite : environment.treeSprite(t, sprite, elapsed),
-        t.x + shake,
-        t.y,
-      );
-      ctx.restore();
-      if (t.hp < t.maxHp) {
-        pixelRect(t.x - 24, t.y - sprite.height * 2 - 8, 48, 6, "#324b30");
-        pixelRect(
-          t.x - 22,
-          t.y - sprite.height * 2 - 6,
-          (44 * t.hp) / t.maxHp,
-          2,
-          "#edc66c",
-        );
-      }
-    }
-    function drawAncientTree() {
-      shadow(ancientTree.x, ancientTree.y + 6, 110, 22);
-      ctx.save();
-      if (player.y < ancientTree.y && Math.abs(player.x - ancientTree.x) < 150)
-        ctx.globalAlpha = 0.55;
-      art.draw(ctx, art.sprites.ancient, ancientTree.x, ancientTree.y);
-      ctx.restore();
-      if (distance(player, ancientTree) < 280) {
-        label(
-          "ВЕЛИКОЕ ДЕРЕВО",
-          ancientTree.x,
-          ancientTree.y + 42,
-          15,
-          "#f8e8af",
-        );
-        label(
-          "Только для будущих работников",
-          ancientTree.x,
-          ancientTree.y + 62,
-          11,
-          "#384e32",
-        );
-      }
-    }
-    function characterSprite(
-      role,
-      direction,
-      moving,
-      seed = 0,
-      mood = "neutral",
-      gesture = "none",
-    ) {
-      const dir =
-          direction === "up"
-            ? "up"
-            : direction === "left" || direction === "right"
-              ? "side"
-              : "down",
-        frame = moving ? Math.floor(elapsed * 9 + seed) % 4 : 0;
-      const selectedFrame =
-        !moving && gesture !== "none" ? Math.floor(elapsed * 5) % 2 : frame;
-      if (mood === "neutral" && Math.sin(elapsed * 1.3 + seed) > 0.985)
-        mood = "blink";
-      return art.person(role, dir, selectedFrame, mood, gesture);
-    }
-    function getPlayerMood() {
-      return player.swing > 0
-        ? "focused"
-        : player.celebration > 0
-          ? "happy"
-          : gameState.wood / gameState.maxWood > 0.75
-            ? "tired"
-            : "neutral";
-    }
-    function drawPlayer() {
-      shadow(player.x, player.y + 4, 19, 6);
-      const direction = player.direction || "down",
-        bob = player.moving
-          ? (Math.floor(elapsed * 9) % 2) * 2
-          : player.celebration > 0
-            ? (Math.floor(elapsed * 7) % 2) * 4
-            : 0;
-      art.draw(
-        ctx,
-        characterSprite(
-          "player",
-          direction,
-          player.moving,
-          0,
-          getPlayerMood(),
-          player.celebration > 0 && !player.moving ? "cheer" : "none",
-        ),
-        player.x,
-        player.y - bob,
-        2,
-        direction === "left",
-      );
-      const axeFrame =
-        player.swing > 0
-          ? Math.min(2, Math.floor((1 - player.swing / 0.32) * 3))
-          : 0;
-      art.draw(
-        ctx,
-        art.sprites.axes[gameState.axeLevel][axeFrame],
-        player.x + (direction === "left" ? -20 : 20),
-        player.y - 16 - bob,
-        2,
-        direction === "left",
-      );
-      // Ноша намеренно шире героя и закрывает его при большой загрузке.
-      const count = Math.min(gameState.wood, 40),
-        load = Math.min(gameState.wood / 20, 1.5);
-      for (let i = 0; i < count; i++) {
-        if (visualEffects.cargoHidden(i)) continue;
-        const height = i / Math.max(1, count - 1),
-          sway = player.moving
-            ? Math.sin(elapsed * 9 - height * 1.8) * (2 + height * 11) * load
-            : 0,
-          bounce = player.moving ? Math.sin(elapsed * 14) * (1 + load * 2) : 0;
-        art.draw(
-          ctx,
-          art.sprites.log,
-          player.x + sway + (i % 2 ? 2 : -2),
-          player.y - 4 - i * 9 + bounce - bob,
-        );
-      }
-    }
-    function drawTent(x, y, kind = "camp") {
-      shadow(x, y + 2, 82, 14);
-      art.draw(
-        ctx,
-        kind === "merchant"
-          ? art.sprites.merchantTent
-          : kind === "old"
-            ? art.sprites.oldTent
-            : art.sprites.tent,
-        x,
-        y,
-      );
-    }
-    function drawStall() {
-      shadow(CAMP.stall.x, CAMP.stall.y + 4, 82, 13);
-      art.draw(ctx, art.sprites.stall, CAMP.stall.x, CAMP.stall.y);
-      label("ЛЕСНАЯ ЛАВКА", CAMP.stall.x, CAMP.stall.y - 20, 11, "#4c3928");
-    }
-    function drawMerchant() {
-      drawTent(CAMP.merchant.x, CAMP.merchant.y, "merchant");
-      const action = merchantLife.action,
-        frame = Math.floor(elapsed * 3) % 2,
-        x = CAMP.merchant.x + (action === "look" ? (frame ? 2 : -2) : 0),
-        y = CAMP.merchant.y + Math.round((merchantLife.offset ?? 36) / 2) * 2;
-      if (action !== "peek") shadow(x, y + 4, 20, 6);
-      art.draw(ctx, art.merchantPose(action, frame), x, y);
-      label("ТОРГОВЕЦ", x, CAMP.merchant.y - 158, 12, "#f5e2ac");
-    }
-    function drawFire() {
-      if (gameState.campLevel < 1) {
-        if (gameState.buildWood > 0) return;
-        ellipse(CENTER.x, CENTER.y, 25, 10, "#9e8a51");
-        label("Костёр", CENTER.x, CENTER.y + 24, 12, "#675431");
-        return;
-      }
-      shadow(CENTER.x, CENTER.y + 8, 36, 12);
-      art.draw(
-        ctx,
-        art.sprites.fire[Math.floor(elapsed * 7) % 3],
-        CENTER.x,
-        CENTER.y,
-      );
-    }
-    function drawHut() {
-      shadow(CAMP.hut.x, CAMP.hut.y + 6, 116, 15);
-      const overlaps =
-        player.y < CAMP.hut.y &&
-        player.y > CAMP.hut.y - 220 &&
-        Math.abs(player.x - CAMP.hut.x) < 115;
-      ctx.save();
-      if (overlaps) ctx.globalAlpha = 0.5;
-      art.draw(ctx, art.sprites.house, CAMP.hut.x, CAMP.hut.y);
-      ctx.restore();
-    }
-    function drawFenceSegment(a, b) {
-      for (const rise of [23, 11]) {
-        pixelLine(
-          { x: a.x, y: a.y - rise },
-          { x: b.x, y: b.y - rise },
-          "#5c432b",
-          6,
-        );
-        pixelLine(
-          { x: a.x, y: a.y - rise },
-          { x: b.x, y: b.y - rise },
-          "#cba064",
-          2,
-        );
-      }
-    }
-    function drawFencePost(p) {
-      art.draw(ctx, art.sprites.fence, p.x, p.y);
-    }
-    function drawBuyer(b) {
-      if (b.kind === "cart") {
-        shadow(b.x + 44, b.y + 12, 44, 9);
-        art.draw(ctx, art.sprites.cart, b.x + 44, b.y + 10);
-        for (let i = 0; i < Math.min(15, b.load); i++) {
-          if (
-            visualEffects.logs.some(
-              (l) =>
-                l.kind === "sell" &&
-                l.target.follow === b &&
-                l.target.slot === i,
-            )
-          )
-            continue;
-          art.draw(
-            ctx,
-            art.sprites.log,
-            b.x + 30 + (i % 2) * 24,
-            b.y - 28 - Math.floor(i / 2) * 9,
-          );
-        }
-      }
-      shadow(b.x, b.y + 4, 18, 6);
-      const direction =
-        !b.moving && b.action === "look"
-          ? Math.floor(elapsed / 2) % 2
-            ? "left"
-            : "right"
-          : b.direction || "down";
-      const mood =
-          b.thanks > 0 ? "happy" : b.action === "yawn" ? "yawn" : "neutral",
-        gesture =
-          !b.moving && (b.action === "greet" || b.thanks > 0) ? "wave" : "none";
-      art.draw(
-        ctx,
-        characterSprite(
-          b.trip % 2 ? "buyerA" : "buyerB",
-          direction,
-          b.moving,
-          b.id,
-          mood,
-          gesture,
-        ),
-        b.x +
-          (!b.moving && b.action === "shift"
-            ? (Math.floor(elapsed * 2) % 2) * 2
-            : 0),
-        b.y,
-        2,
-        direction === "left",
-      );
-      if (b.kind === "walker")
-        for (let i = 0; i < Math.min(5, b.load); i++) {
-          if (
-            visualEffects.logs.some(
-              (l) =>
-                l.kind === "sell" &&
-                l.target.follow === b &&
-                l.target.slot === i,
-            )
-          )
-            continue;
-          art.draw(ctx, art.sprites.log, b.x, b.y - 4 - i * 9);
-        }
-      if (distance(player, b) < 180)
-        label(`${b.load}/${b.capacity}`, b.x, b.y + 28, 11, "#f1deab");
-    }
-    function drawAnimal(a) {
-      if (
-        a.x < camera.x - 40 ||
-        a.x > camera.x + VIEW.width + 40 ||
-        a.y < camera.y - 30 ||
-        a.y > camera.y + VIEW.height + 80
-      )
-        return;
-      shadow(a.x, a.y + 2, 12, 4);
-      const frame = a.moving ? Math.floor(elapsed * 9 + a.id) % 2 : 0,
-        hop =
-          a.moving && a.type !== "bird"
-            ? Math.floor(Math.abs(Math.sin(elapsed * 12 + a.id)) * 2) * 2
-            : 0;
-      art.draw(
-        ctx,
-        art.sprites.animals[a.type][frame],
-        a.x,
-        a.y - a.z - hop,
-        2,
-        Math.cos(a.angle) < 0,
-      );
-      if (a.state === "sleep") label("z", a.x + 10, a.y - 32, 10, "#e8e1b2");
-    }
-    function drawCamp() {
-      for (const [pad, color, text] of [
-        [sale, "#ddb765", "ПРОДАТЬ"],
-        [build, "#8abbb0", "СТРОИТЬ"],
-      ]) {
-        pixelRect(pad.x - 50, pad.y - 28, 100, 62, "#4c4930");
-        pixelRect(pad.x - 46, pad.y - 26, 92, 54, color);
-        for (let x = pad.x - 42; x < pad.x + 43; x += 16)
-          pixelRect(x, pad.y - 22, 2, 44, "#6c735250");
-        pixelRect(pad.x - 46, pad.y + 28, 92, 4, "#846439");
-        label(text, pad.x, pad.y + 2, 13, "#354730");
-      }
-      const customer = activeBuyer(),
-        count = buyers.filter((b) => b.phase !== "leaving").length,
-        next = stages[gameState.campLevel];
-      label(
-        !shopOpen()
-          ? "До утра закрыто"
-          : customer
-            ? `${customer.kind === "cart" ? "Тележка" : "Покупатель"} ${customer.load}/${customer.capacity} · очередь ${count}`
-            : `Ждём покупателя · ${count}`,
-        sale.x,
-        sale.y + 51,
-        11,
-        "#405238",
-      );
-      label(
-        next
-          ? `${next.name} ${gameState.buildWood}/${next.cost}`
-          : "Лагерь построен",
-        build.x,
-        build.y + 51,
-        12,
-        "#405238",
-      );
-    }
-    function drawTerrain() {
-      terrain.draw(ctx, camera, VIEW);
-      // Анимируются только видимые блики воды; сама земля закеширована по участкам.
-      for (let i = 0; i < 55; i++) {
-        const x = pond.x - 160 + ((i * 47) % 310),
-          y = pond.y - 90 + ((i * 73) % 850);
-        if (
-          x < camera.x ||
-          x > camera.x + VIEW.width ||
-          y < camera.y ||
-          y > camera.y + VIEW.height ||
-          !inWater(x, y)
-        )
-          continue;
-        const phase = Math.floor(elapsed * 3 + i) % 4;
-        pixelRect(
-          x + phase * 2,
-          y,
-          8 + (i % 3) * 4,
-          2,
-          i % 2 ? "#94cac0" : "#529eaa",
-        );
-      }
-      for (let i = 0; i < 7; i++) {
-        const x = pond.x - 110 + i * 34,
-          y = pond.y - 48 + Math.sin(i * 2) * 55;
-        if (
-          inWater(x, y) &&
-          x > camera.x - 30 &&
-          x < camera.x + VIEW.width + 30 &&
-          y > camera.y - 15 &&
-          y < camera.y + VIEW.height + 15
-        ) {
-          const phase = Math.floor(elapsed * 1.6 + i * 0.7) % 4;
-          art.draw(ctx, art.sprites.ripples[phase], x, y);
-        }
-      }
-      for (let i = 0; i < 4; i++) {
-        const x = pond.x - 80 + i * 43,
-          y = pond.y - 30 + Math.sin(i * 2) * 35;
-        ellipse(x, y, 11, 5, "#407749");
-        pixelRect(x - 4, y - 4, 6, 4, i % 2 ? "#9bb75a" : "#ead4aa");
-      }
-      const bx = bridge.x - bridge.width / 2,
-        by = bridge.y - bridge.height / 2;
-      pixelRect(bx - 4, by - 4, bridge.width + 8, bridge.height + 8, "#655038");
-      for (let i = 0; i < 15; i++) {
-        pixelRect(
-          bx + i * 12,
-          by,
-          10,
-          bridge.height,
-          i % 2 ? "#ba8b4d" : "#c69b5b",
-        );
-        pixelRect(bx + i * 12 + 2, by + 4, 2, bridge.height - 8, "#dcba76");
-      }
-      for (const sy of [-1, 1])
-        pixelRect(bx, bridge.y + sy * 31, bridge.width, 4, "#785330");
-      for (const x of [bx, bx + bridge.width])
-        for (const y of [by, by + bridge.height]) {
-          pixelRect(x - 4, y - 14, 8, 22, "#654b31");
-          pixelRect(x - 2, y - 14, 4, 4, "#dbb774");
-        }
-    }
-    function drawLandmark(s) {
-      const { x, y } = s;
-      if (
-        x < camera.x - 180 ||
-        x > camera.x + VIEW.width + 180 ||
-        y < camera.y - 40 ||
-        y > camera.y + VIEW.height + 210
-      )
-        return;
-      shadow(x, y + 6, 60, 12);
-      if (["arch", "spring", "log"].includes(s.type)) {
-        art.draw(ctx, scenerySprites[s.type], x, y);
-        if (s.type === "spring")
-          art.draw(
-            ctx,
-            art.sprites.ripples[Math.floor(elapsed * 2) % 4],
-            x + 10,
-            y - 2,
-          );
-      } else if (s.type === "logging")
-        art.draw(ctx, art.sprites.stump, x - 52, y + 22);
-      else if (s.type === "camp") drawTent(x, y, "old");
-      else if (s.type === "ruins") {
-        for (let col = 0; col < 5; col++)
-          for (let row = 0; row < (col === 2 ? 1 : col === 4 ? 2 : 3); row++) {
-            const xx = x - 50 + col * 22 + (row % 2) * 4,
-              yy = y - row * 18 - 18;
-            pixelRect(xx, yy, 20, 16, "#53604b");
-            pixelRect(
-              xx + 2,
-              yy + 2,
-              16,
-              10,
-              (row + col) % 2 ? "#92a180" : "#a7b18b",
-            );
-            pixelRect(xx + 4, yy + 2, 10, 2, "#c1c49b");
-          }
-        art.draw(ctx, art.sprites.details.fern[0], x - 30, y + 4);
-      } else if (s.type === "wagon") {
-        art.draw(ctx, art.sprites.cart, x, y);
-        art.draw(ctx, art.sprites.details.fern[0], x + 26, y + 4);
-      } else {
-        pixelRect(x - 26, y - 30, 52, 36, "#60452d");
-        pixelRect(x - 24, y - 28, 48, 14, "#be914e");
-        pixelRect(x - 24, y - 12, 48, 16, "#926436");
-        for (const dx of [-17, 15]) pixelRect(x + dx, y - 29, 4, 34, "#dab56c");
-        pixelRect(x - 4, y - 15, 8, 10, "#4f4933");
-        art.draw(ctx, art.sprites.details.fern[0], x - 26, y + 8);
-      }
-      if (discovered.has(s.id)) label(s.name, x, y + 42, 11, "#e9e5be");
-    }
-    function drawForestDetails() {
-      for (const p of dressing.details) {
-        if (
-          p.x < camera.x - 40 ||
-          p.x > camera.x + VIEW.width + 40 ||
-          p.y < camera.y - 40 ||
-          p.y > camera.y + VIEW.height + 40
-        )
-          continue;
-        const source = art.sprites.details[p.type][p.variant];
-        art.draw(
-          ctx,
-          p.type === "fern" || p.type === "flowers"
-            ? environment.plantSprite(source, elapsed, p.phase)
-            : source,
-          p.x,
-          p.y,
-        );
-      }
-    }
-    function drawGroundPiles() {
-      for (const pile of forestry.piles.values()) {
-        if (
-          pile.x < camera.x - 50 ||
-          pile.x > camera.x + VIEW.width + 50 ||
-          pile.y < camera.y - 30 ||
-          pile.y > camera.y + VIEW.height + 30
-        )
-          continue;
-        for (let i = 0; i < Math.min(3, pile.count); i++)
-          art.draw(
-            ctx,
-            art.sprites.log,
-            pile.x + (i % 2 ? 9 : -7),
-            pile.y - i * 7,
-          );
-        if (distance(player, pile) < 160)
-          label(`×${pile.count}`, pile.x, pile.y + 22, 12, "#f5dfa4");
-      }
-    }
-    function campLights() {
-      const lights = [
-        { x: CAMP.stall.x, y: CAMP.stall.y - 54, r: 115 },
-        { x: CAMP.merchant.x + 75, y: CAMP.merchant.y + 20, r: 110 },
-      ];
-      if (gameState.campLevel >= 1)
-        lights.push({
-          x: CENTER.x,
-          y: CENTER.y - 8,
-          r: 220 + Math.sin(elapsed * 8) * 8,
-        });
-      if (gameState.campLevel >= 4)
-        lights.push(
-          { x: CAMP.hut.x + 65, y: CAMP.hut.y - 76, r: 100 },
-          { x: CAMP.hut.x - 60, y: CAMP.hut.y - 76, r: 85 },
-        );
-      return lights;
-    }
-    function nightLights() {
-      return [
-        ...campLights(),
-        {
-          x: player.x,
-          y: player.y - 20,
-          r: nightSight(gameState.lanternLevel),
-          player: true,
-        },
-      ];
-    }
-    function drawLanterns() {
-      for (const l of campLights().slice(0, 2)) {
-        pixelRect(l.x - 2, l.y - 8, 4, 30, "#644b30");
-        pixelRect(l.x - 8, l.y - 30, 16, 22, "#4a4931");
-        pixelRect(l.x - 5, l.y - 26, 10, 14, "#e8be66");
-        pixelRect(l.x - 2, l.y - 25, 4, 10, "#ffe3a0");
-      }
-      if (gameState.campLevel >= 1)
-        for (let i = 0; i < 7; i++) {
-          const t = (elapsed * 0.23 + i / 7) % 1;
-          ctx.globalAlpha = (1 - t) * 0.2;
-          pixelRect(
-            CENTER.x + Math.sin(t * 8 + i) * 12,
-            CENTER.y - 42 - t * 65,
-            8 + t * 12,
-            6 + t * 8,
-            "#d9d6bf",
-          );
-        }
-      ctx.globalAlpha = 1;
-    }
-    function drawAtmosphere() {
-      const phase = dayPhase(),
-        darkness = nightAmount(),
-        sunset = Math.max(0, 1 - Math.abs(phase - 0.5) / 0.11) * 0.13,
-        sunrise = Math.max(0, 1 - Math.min(phase, 1 - phase) / 0.08) * 0.07;
-      if (sunset + sunrise > 0) {
-        ctx.fillStyle = `rgba(235,157,91,${sunset + sunrise})`;
-        ctx.fillRect(0, 0, VIEW.width, VIEW.height);
-      }
-      if (darkness > 0.001) {
-        nightCtx.globalCompositeOperation = "source-over";
-        nightCtx.clearRect(0, 0, VIEW.width, VIEW.height);
-        nightCtx.fillStyle = `rgba(4,12,20,${darkness * 0.97})`;
-        nightCtx.fillRect(0, 0, VIEW.width, VIEW.height);
-        nightCtx.globalCompositeOperation = "destination-out";
-        for (const light of nightLights()) {
-          const x = light.x - camera.x,
-            y = light.y - camera.y,
-            g = nightCtx.createRadialGradient(
-              x,
-              y,
-              light.player ? light.r * 0.4 : 8,
-              x,
-              y,
-              light.r,
-            );
-          g.addColorStop(0, "rgba(0,0,0,.95)");
-          g.addColorStop(1, "rgba(0,0,0,0)");
-          nightCtx.fillStyle = g;
-          nightCtx.fillRect(x - light.r, y - light.r, light.r * 2, light.r * 2);
-        }
-        ctx.drawImage(nightLayer, 0, 0);
-      }
-      mystery.drawEyes(ctx, { ...camera, ...VIEW }, darkness, nightLights());
-      for (let i = 0; i < 16; i++) {
-        const x =
-            CENTER.x +
-            Math.sin(i * 43) * 540 +
-            Math.sin(elapsed * 0.7 + i) * 22 -
-            camera.x,
-          y =
-            CENTER.y +
-            Math.cos(i * 23) * 480 +
-            Math.cos(elapsed + i) * 12 -
-            camera.y;
-        if (x < 0 || x > VIEW.width || y < 0 || y > VIEW.height) continue;
-        ctx.globalAlpha =
-          darkness > 0.25 ? (Math.sin(elapsed * 2 + i) + 1) * 0.3 + 0.15 : 0.65;
-        pixelRect(x, y, 2, 2, darkness > 0.25 ? "#eff3a1" : "#f0dbaa");
-      }
-      ctx.globalAlpha = 1;
-      pixelRect(14, 48, 186, 30, "#243c2de8");
-      label(
-        `Д${dayNumber + 1} ${periodName()} · ${Math.floor(
-          (dayPhase() * 24 + 6) % 24,
-        )
-          .toString()
-          .padStart(2, "0")}:${Math.floor((dayPhase() * 24 * 60) % 60)
-          .toString()
-          .padStart(2, "0")}`,
-        107,
-        68,
-        13,
-        "#f5e5b2",
-      );
-      pixelRect(14, 84, 186, 24, "#243c2de8");
-      label(weather.profile.name, 107, 101, 12, "#c7d7ba");
-    }
-    function drawMiniMap() {
-      const { x, y, size } = miniMap,
-        { scale, left, top } = mapTransform(),
-        mx = (x) => (x - left) * scale,
-        my = (y) => (y - top) * scale;
-      ctx.save();
-      ctx.translate(x, y);
-      pixelRect(-4, -4, size + 8, size + 30, "#243d2ee8");
-      ellipse(
-        size / 2,
-        size / 2,
-        expansion.radius * scale,
-        expansion.radius * scale,
-        "#68a34e",
-      );
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, expansion.radius * scale, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.strokeStyle = "#dab86b";
-      ctx.lineWidth = 2;
-      for (const path of trails) {
-        ctx.beginPath();
-        path.forEach((p, i) =>
-          i ? ctx.lineTo(mx(p.x), my(p.y)) : ctx.moveTo(mx(p.x), my(p.y)),
-        );
-        ctx.stroke();
-      }
-      ctx.fillStyle = "#275d38";
-      for (const t of trees)
-        if (t.hp > 0)
-          ctx.fillRect(Math.floor(mx(t.x)), Math.floor(my(t.y)), 1, 1);
-      for (const site of landmarks)
-        if (discovered.has(site.id))
-          pixelRect(mx(site.x), my(site.y), 3, 3, "#e6cbaa");
-      ellipse(mx(CENTER.x), my(CENTER.y), 3, 3, "#f3c866");
-      ellipse(mx(ancientTree.x), my(ancientTree.y), 3, 3, "#9fe1ca");
-      ctx.strokeStyle = "#f0ecc080";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        mx(camera.x),
-        my(camera.y),
-        VIEW.width * scale,
-        VIEW.height * scale,
-      );
-      pixelRect(mx(player.x) - 2, my(player.y) - 2, 4, 4, "#fff8e9");
-      ctx.restore();
-      expansion.drawMapRings(ctx, size, scale, gameState.campLevel);
-      label(
-        `${discovered.size}/${landmarks.length} мест`,
-        size / 2,
-        size + 18,
-        11,
-        "#e5e6c4",
-      );
-      ctx.restore();
-    }
-    function draw() {
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, VIEW.width, VIEW.height);
-      ctx.save();
-      ctx.translate(-camera.x, -camera.y);
-      const localView = {
-        x: camera.x,
-        y: camera.y,
-        width: VIEW.width,
-        height: VIEW.height,
-      };
-      drawTerrain();
-      dressing.drawGround(ctx, localView, elapsed);
-      drawForestDetails();
-      drawCamp();
-      weather.drawGround(ctx, localView);
-      drawGroundPiles();
-      if (player.moving) {
-        pixelRect(player.targetX - 8, player.targetY - 2, 16, 2, "#f5e6b6");
-        pixelRect(player.targetX - 2, player.targetY - 8, 2, 16, "#f5e6b6");
-      }
-      const entities = trees
-        .filter(
-          (t) =>
-            t.x > camera.x - 90 &&
-            t.x < camera.x + VIEW.width + 90 &&
-            t.y > camera.y - 20 &&
-            t.y < camera.y + VIEW.height + 250,
-        )
-        .map((t) => ({ y: t.y, draw: () => drawTree(t) }));
-      for (const f of visualEffects.falls)
-        entities.push({
-          y: f.y + 0.2,
-          draw: () => visualEffects.drawFall(ctx, f),
-        });
-      for (const e of construction.previewEntities(gameState))
-        entities.push({ y: e.y, draw: () => e.draw(ctx) });
-      for (const e of dressing.entities(
-        localView,
-        elapsed,
-        gameState.campLevel,
-      ))
-        entities.push({ y: e.y, draw: () => e.draw(ctx) });
-      entities.push(
-        { y: player.y, draw: drawPlayer },
-        ...buyers.map((b) => ({ y: b.y, draw: () => drawBuyer(b) })),
-        { y: ancientTree.y, draw: drawAncientTree },
-        ...landmarks.map((s) => ({ y: s.y, draw: () => drawLandmark(s) })),
-        { y: CAMP.stall.y, draw: drawStall },
-        { y: CAMP.merchant.y + 36, draw: drawMerchant },
-        { y: CENTER.y + 8, draw: drawFire },
-        ...animals.map((a) => ({
-          y: a.y + (a.z > 5 ? 200 : 0),
-          draw: () => drawAnimal(a),
-        })),
-        ...campFencePosts().map((p) => ({
-          y: p.y + 1,
-          draw: () => drawFencePost(p),
-        })),
-        ...campFenceSegments().map(([a, b]) => ({
-          y: (a.y + b.y) / 2,
-          draw: () => drawFenceSegment(a, b),
-        })),
-      );
-      if (gameState.campLevel >= 2 && gameState.campLevel < 4)
-        entities.push({
-          y: CAMP.tent.y,
-          draw: () => drawTent(CAMP.tent.x, CAMP.tent.y),
-        });
-      if (gameState.campLevel >= 4)
-        entities.push({ y: CAMP.hut.y, draw: drawHut });
-      entities.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
-      mystery.drawWorld(ctx, {
-        art,
-        sprites: scenerySprites,
-        view: localView,
-        time: elapsed,
-        darkness: nightAmount(),
-        player,
-        accessible: treeAccessible,
-      });
-      dressing.drawHouseLife(
-        ctx,
-        localView,
-        elapsed,
-        gameState.campLevel,
-        nightAmount(),
-      );
-      environment.draw(ctx, elapsed, localView);
-      visualEffects.draw(ctx, localView);
-      for (const e of effects) {
-        ctx.globalAlpha = Math.max(0, e.life / e.maxLife);
-        if (e.text) label(e.text, e.x, e.y, 14, e.color);
-        else pixelRect(e.x, e.y, 4, 2, "#edc28b");
-      }
-      ctx.globalAlpha = 1;
-      drawLanterns();
-      weather.draw(ctx, localView);
-      expansion.drawWorld(ctx, localView, gameState.campLevel);
-      ctx.restore();
-      drawAtmosphere();
-      pixelRect(14, 12, 234, 30, "#243c2de8");
-      label(
-        `Лагерь · ${Math.round(distance(player, CENTER))} шагов`,
-        131,
-        32,
-        13,
-        "#f3e9c2",
-      );
-      drawMiniMap();
-      drawExpansionBanner();
-    }
-    function drawExpansionBanner() {
-      const event = expansion.banner;
-      if (!event) return;
-      const w = Math.min(440, VIEW.width - 32),
-        x = (VIEW.width - w) / 2,
-        y = VIEW.width < 600 ? 182 : 100;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, event.age * 3, (5.5 - event.age) * 2);
-      pixelRect(x - 2, y - 2, w + 4, 64, "#cdb779");
-      pixelRect(x, y, w, 60, "#263e2bef");
-      label("Открыта новая территория", VIEW.width / 2, y + 25, 17, "#ffe4a0");
-      label(
-        `Радиус леса ${event.from} → ${event.to}`,
-        VIEW.width / 2,
-        y + 47,
-        12,
-        "#d4e1b9",
-      );
-      ctx.restore();
-    }
-    function gameLoop(time) {
-      const dt =
-        lastTime === null ? 0 : Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
-      update(dt);
-      draw();
-      requestAnimationFrame(gameLoop);
-    }
-    document.addEventListener("visibilitychange", () => {
-      lastTime = null;
-      if (document.hidden) {
-        clearKeys();
-        if (audio) audio.ac.suspend().catch(() => {});
-      } else if (audioEnabled && audio) audio.ac.resume().catch(() => {});
-    });
-    const dressing = createWorldDressing({
-      art,
-      sprites: scenerySprites,
-      trees,
-      center: CENTER,
-      ancientTree,
-      nearTrail,
-      inWater,
-    });
-    rebuildObstacles();
-    const safeStart = nearestGround(player.x, player.y);
-    player.x = player.targetX = safeStart.x;
-    player.y = player.targetY = safeStart.y;
-    spawnAnimals();
-    construction.update(gameState, 0);
-    weather.update(0, gameState, DAY_SECONDS, dayNumber, trees, player);
-    fitGameView();
-    updateCamera();
-    updateUI();
-    ui.shop.addEventListener("click", () => shop.open());
-    document
-      .querySelector("#clueClose")
-      .addEventListener("click", () => clueDialog.close());
-    window.addEventListener("keydown", (e) => {
-      if (
-        e.code !== "KeyE" ||
-        e.repeat ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.altKey ||
-        document.querySelector("dialog[open]") ||
-        e.target.closest("input,textarea,select")
-      )
-        return;
-      const clue = MYSTERY_CLUES.find(
-        (c) => treeAccessible(c) && distance(player, c) < 130,
-      );
-      if (clue) {
-        e.preventDefault();
-        openClue(clue);
-      } else if (
-        distance(player, CAMP.stall) < 220 ||
-        distance(player, CAMP.merchant) < 220
-      ) {
-        e.preventDefault();
-        shop.open();
-      }
-    });
-    document.querySelector("#effectsBtn").addEventListener("click", () => {
-      const light = weather.quality !== "light";
-      weather.setQuality(light ? "light" : "full");
-      environment.setQuality(light ? "light" : "full");
-      const button = document.querySelector("#effectsBtn");
-      button.textContent = light ? "Эффекты: лёгкие" : "Эффекты: полные";
-      button.setAttribute("aria-pressed", String(light));
-    });
-    draw();
-    // Небольшой API для проверки симуляции, управления и замены спрайтов.
-    window.lumberGame = {
-      state: gameState,
-      player,
-      trees,
-      buyers,
-      animals,
-      world: WORLD,
-      view: VIEW,
-      camera,
-      art,
-      terrain,
-      metrics: METRICS,
-      visualEffects,
-      construction,
-      environment,
-      weather,
-      forestry,
-      shop,
-      mystery,
-      growthStage,
-      get dayNumber() {
-        return dayNumber;
-      },
-      nightLights,
-      expansion,
-      dressing,
-      landmarks,
-      discovered,
-      daySeconds: DAY_SECONDS,
-      mapTransform,
-      merchantLife,
-      getPlayerMood,
-      camp: CAMP,
-      stages,
-      build,
-      sale,
-      ancientTree,
-      miniMap,
-      keys,
-      update,
-      draw,
-      refreshUI: updateUI,
-      rebuildObstacles,
-      isWalkable,
-      nearestGround,
-      setDestination,
-      hitTree,
-      activeBuyer,
-      nightAmount,
-      forestRadius,
-      campFencePosts,
-      campFenceSegments,
-    };
-    requestAnimationFrame(gameLoop);
-  </script>
+  <dialog id="mapDialog" aria-labelledby="mapTitle">
+    <div class="dialog-top">
+      <div>
+        <small>БОЛЬШОЙ ЛЕС</small>
+        <h2 id="mapTitle">Карта регионов</h2>
+        <b data-explored></b>
+      </div>
+      <button type="button" data-map-close>Закрыть</button>
+    </div>
+    <p>
+      Выберите участок, чтобы проложить путь. Открывайте соседние регионы
+      брёвнами на пограничных площадках.
+    </p>
+    <div data-regions></div>
+  </dialog>
+  <dialog id="journalDialog" aria-labelledby="journalTitle">
+    <div class="dialog-top">
+      <h2 id="journalTitle">Дневник лесоруба</h2>
+      <button type="button" data-journal-close>Закрыть</button>
+    </div>
+    <div data-journal></div>
+  </dialog>
+  <dialog id="defenseDialog" aria-labelledby="defenseTitle">
+    <div class="dialog-top">
+      <h2 id="defenseTitle">Подготовка к налёту</h2>
+      <button type="button" data-defense-close>Закрыть</button>
+    </div>
+    <p>
+      Налёты приходят только в ночи 5, 10, 15 и далее. Укрепления открываются
+      после палатки. Ремонт лагеря — на голубой площадке; ремонт забора — по
+      выбранной секции.
+    </p>
+    <div data-defenses></div>
+  </dialog>
+  <dialog id="activityDialog" aria-labelledby="activityTitle">
+    <div class="dialog-top">
+      <h2 id="activityTitle" data-activity-title>Места леса</h2>
+      <button type="button" data-activity-close>Закрыть</button>
+    </div>
+    <div data-activity-content></div>
+    <p data-activity-message role="status" aria-live="polite"></p>
+  </dialog>
+  <dialog id="workerDialog" aria-labelledby="workerTitle">
+    <div class="dialog-top">
+      <h2 id="workerTitle">Команда лесорубов</h2>
+      <button type="button" data-worker-close>Закрыть</button>
+    </div>
+    <p>
+      Работники рубят только древний дуб, несут брёвна на склад и уходят к
+      костру перед ночью. Пока меню открыто, время остановлено.
+    </p>
+    <div data-workers></div>
+  </dialog>
+  <dialog id="deathDialog" aria-labelledby="deathTitle">
+    <h2 id="deathTitle">Лес погас</h2>
+    <p data-defeat></p>
+    <button type="button" data-restart>Начать заново</button>
+  </dialog>
+  <dialog id="heroDialog" aria-labelledby="heroTitle">
+    <form>
+      <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
+      <h2 id="heroTitle">Кто отправится в лес?</h2>
+      <p>Выберите героя. У обоих одинаковые сила, скорость и вместимость.</p>
+      <fieldset class="hero-choices">
+        <legend>Персонаж</legend>
+        <label class="hero-card">
+          <input type="radio" name="appearance" value="traveler" checked />
+          <img
+            src="./src/assets/people/hero2-portrait.png"
+            alt="Путешественник в бирюзовой куртке"
+            width="110"
+            height="160"
+          />
+          <b>Путешественник</b><span>Вариант 2</span>
+        </label>
+        <label class="hero-card">
+          <input type="radio" name="appearance" value="woodcutter" />
+          <img
+            src="./src/assets/people/hero3-portrait.png"
+            alt="Лесорубка с косой и зелёным шарфом"
+            width="110"
+            height="160"
+          />
+          <b>Лесорубка</b><span>Вариант 3</span>
+        </label>
+      </fieldset>
+      <p data-hero-error role="alert"></p>
+      <button type="submit" data-hero-start>Начать смену</button>
+    </form>
+  </dialog>
+  <script src="./vendor/phaser/phaser.min.js"></script>
+  <script type="module" src="./phaser/main.js"></script>
 </html>

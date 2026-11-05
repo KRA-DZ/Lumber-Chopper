@@ -7,7 +7,6 @@ import {
   constructionCollisionKey,
   STAGE_COSTS,
 } from "../construction.js";
-import { createEffects, EFFECT_LIMITS } from "../effects.js";
 import { createEnvironment, ENVIRONMENT_LIMITS } from "../environment.js";
 
 test("partial fence grows through connected sections and keeps the entrance open", () => {
@@ -27,52 +26,6 @@ test("partial fence grows through connected sections and keeps the entrance open
   assert.equal(
     constructionCollisionKey({ campLevel: 3, buildWood: 5 }, plan),
     constructionCollisionKey({ campLevel: 3, buildWood: 25 }, plan),
-  );
-});
-
-test("log flights track moving endpoints and never change the supplied inventory", () => {
-  const effects = createEffects({}),
-    player = { x: 100, y: 100 },
-    inventory = { wood: 1, cargoValue: 12, coins: 0 };
-  effects.pickup({ x: 0, y: 0 }, 0);
-  assert.equal(effects.cargoHidden(0), true);
-  effects.update(0, player, inventory.wood);
-  assert.equal(effects.logs[0].age, 0);
-  effects.update(0.4, player, inventory.wood);
-  assert.ok(effects.logs[0].x > 0 && effects.logs[0].x < 100);
-  effects.update(0.5, player, inventory.wood);
-  assert.equal(effects.logs.length, 0);
-  assert.equal(effects.cargoHidden(0), false);
-  const buyer = { x: 200, y: 200 };
-  effects.transfer(
-    "sell",
-    { x: 100, y: 100 },
-    { follow: buyer, dx: 44, dy: -30 },
-  );
-  effects.update(0.25, player, 1);
-  const before = effects.logs[0].x;
-  buyer.x = 300;
-  effects.update(0.1, player, 1);
-  assert.ok(effects.logs[0].x > before);
-  effects.update(1, player, 1);
-  assert.equal(effects.logs.length, 0);
-  assert.deepEqual(inventory, { wood: 1, cargoValue: 12, coins: 0 });
-});
-
-test("effect pools are capped and clean up after animations", () => {
-  const effects = createEffects({}),
-    player = { x: 0, y: 0 };
-  for (let i = 0; i < 100; i++) {
-    effects.pickup({ x: i, y: 0 }, i);
-    effects.complete({ x: i, y: 0 });
-  }
-  assert.equal(effects.logs.length, EFFECT_LIMITS.logs);
-  assert.equal(effects.dust.length, EFFECT_LIMITS.dust);
-  assert.ok(effects.bursts.length <= 3);
-  effects.update(3, player, 100);
-  assert.equal(
-    effects.logs.length + effects.dust.length + effects.bursts.length,
-    0,
   );
 });
 

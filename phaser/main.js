@@ -19,9 +19,6 @@ class BootScene extends Phaser.Scene {
   preload() {
     preloadBiomeAssets(this);
     preloadPeople(this);
-    this.usePng =
-      new URLSearchParams(location.search).get("art") !== "procedural";
-    if (!this.usePng) return;
     preloadTrees(this);
     preloadCamp(this);
     preloadItems(this);
@@ -35,35 +32,33 @@ class BootScene extends Phaser.Scene {
   create() {
     retainBiomeAssets(this);
     retainPeople(this);
-    if (this.usePng) {
-      retainTrees(this);
-      retainCamp(this);
-      retainItems(this);
-      retainDecor(this);
-      retainFortress(this);
-      retainSawmill(this);
-      const manifest = this.cache.json.get("import.manifest");
-      if (
-        !manifest ||
-        IMPORTED_ASSETS.some(
-          (name) =>
-            !manifest.assets?.[name] || !this.textures.exists(`import.${name}`),
-        )
-      ) {
-        document.querySelector("#loading").textContent =
-          "Не удалось загрузить PNG-ассеты. Обновите папку src/assets и откройте игру через HTTP-сервер.";
-        return;
-      }
-      this.registry.set("importedPack", {
-        manifest,
-        images: Object.fromEntries(
-          IMPORTED_ASSETS.map((name) => [
-            name,
-            this.textures.get(`import.${name}`).getSourceImage(),
-          ]),
-        ),
-      });
+    retainTrees(this);
+    retainCamp(this);
+    retainItems(this);
+    retainDecor(this);
+    retainFortress(this);
+    retainSawmill(this);
+    const manifest = this.cache.json.get("import.manifest");
+    if (
+      !manifest ||
+      IMPORTED_ASSETS.some(
+        (name) =>
+          !manifest.assets?.[name] || !this.textures.exists(`import.${name}`),
+      )
+    ) {
+      document.querySelector("#loading").textContent =
+        "Не удалось загрузить PNG-ассеты. Обновите папку src/assets и откройте игру через HTTP-сервер.";
+      return;
     }
+    this.registry.set("importedPack", {
+      manifest,
+      images: Object.fromEntries(
+        IMPORTED_ASSETS.map((name) => [
+          name,
+          this.textures.get(`import.${name}`).getSourceImage(),
+        ]),
+      ),
+    });
     selectHero(this, () => this.scene.start("World"));
   }
 }

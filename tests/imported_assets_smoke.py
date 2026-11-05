@@ -112,20 +112,6 @@ try:
             assert q.evaluate(
                 'w.assets.art.style==="generated-camp-png"&&g.game.registry.get("importedPack").images.birch.naturalWidth>0'
             )
-            if not canvas:
-                requests = []
-                q.on("request", lambda r: requests.append(r.url))
-                q.goto(url + "phaser.html?art=procedural")
-                ready(q)
-                assert q.evaluate(
-                    'w.assets.art.style==="forest-ledger"&&!g.game.registry.get("importedPack")'
-                )
-                # This switch replaces the original six camp/tree PNGs only.
-                # Shared generated biome/people packs stay active in both modes.
-                assert not any(
-                    "/src/assets/" in r and "/" not in r.split("/src/assets/", 1)[1]
-                    for r in requests
-                )
             assert not errors, errors
             print(
                 "PASS imported PNGs",

@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { weatherAt, createWeather, WEATHER_LIMITS } from "../weather.js";
-import { createExpansion } from "../expansion.js";
 import { FOREST_SITES, inClearing } from "../world.js";
 
 test("weather follows the 10-minute world clock with a dry day between showers", () => {
@@ -64,24 +63,6 @@ test("canopy drips appear only while trees remain wet and pools clean up", () =>
   for (let i = 0; i < 100; i++)
     weather.update(0.1, { worldTime: 350 }, 600, 0, trees, player);
   assert.equal(weather.drips.length, 0);
-});
-test("territory reveal eases towards the physical radius, caps events and expires", () => {
-  const expansion = createExpansion({
-    center: { x: 1600, y: 1600 },
-    radii: [900, 1040, 1180, 1320, 1450],
-  });
-  expansion.open(900, 1040);
-  expansion.update(0.2, 1);
-  assert.ok(expansion.radius > 900 && expansion.radius < 1040);
-  assert.equal(expansion.banner.to, 1040);
-  expansion.update(0, 1);
-  assert.equal(expansion.rings.length, 1);
-  for (let i = 0; i < 200; i++) expansion.update(0.1, 1);
-  assert.equal(expansion.radius, 1040);
-  assert.equal(expansion.banner, null);
-  assert.equal(expansion.rings.length, 0);
-  expansion.update(0, 4);
-  assert.equal(expansion.radius, 1450);
 });
 test("hand-placed sites reserve clearings in more than the starting circle", () => {
   assert.equal(

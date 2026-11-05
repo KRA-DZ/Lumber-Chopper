@@ -248,14 +248,6 @@ try:
             assert q.evaluate(
                 "lumberPhaser.core.state.exploration.openedPassages.length===0&&lumberPhaser.core.exploration.discoveries().length===0&&lumberPhaser.core.state.readClues.length===0"
             )
-            if not mobile:
-                q.goto(
-                    f"http://127.0.0.1:{server.server_port}/phaser.html?art=procedural"
-                )
-                choose_hero(q)
-                assert q.evaluate(
-                    "!lumberPhaser.scene.assets.sawmill&&!lumberPhaser.scene.registry.has('sawmillPack')"
-                )
             assert not errors, errors
             print(
                 "PASS sawmill story",

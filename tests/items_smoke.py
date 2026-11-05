@@ -185,18 +185,6 @@ try:
             assert q.evaluate(
                 "lumberPhaser.scene.assets.items.variant===3&&lumberPhaser.core.state.wood===0&&lumberPhaser.core.state.axeLevel===0"
             )
-            if not mobile:
-                q.goto(url + "phaser.html?art=procedural")
-                choose_hero(q)
-                assert q.evaluate("!lumberPhaser.scene.assets.items")
-                q.locator("#shopButton").click()
-                assert q.locator("#shopDialog img").count() == 0
-                q.goto(url + "index.html")
-                q.locator("#shopButton").click()
-                assert (
-                    q.locator("#shopDialog").is_visible()
-                    and q.locator("#shopDialog img").count() == 0
-                )
             assert not errors, errors
             print(
                 "PASS items",

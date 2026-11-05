@@ -4,10 +4,10 @@
 
 ## Вход и границы
 
-- `phaser.html` → `phaser/main.js`: основная игра, BootScene, загрузка и выбор героя, конфигурация Phaser.
+- `index.html` → `phaser/main.js`: единственная игра, BootScene, загрузка PNG и выбор героя, конфигурация Phaser. `phaser.html` перенаправляет сюда с сохранением параметров/якоря.
 - `phaser/world-scene.js`: WorldScene, связывание модели с вводом и представлениями; `phaser/hud-scene.js` — HUD.
 - `game/simulation.js`: `createSimulation()`, игровые команды и координация независимых систем. Начальное состояние/баланс — `game/config.js`.
-- `index.html`: старая Canvas-версия для сравнения. Код в корне частично общий, поэтому перед правкой проверять импорты нужного модуля.
+- Старая Canvas-игра и режим сравнения графики удалены. Корневые модули экономики, рубки, геометрии и генерации растров используются Phaser; перед очисткой проверять граф импортов.
 
 ## Где искать изменение
 
@@ -28,7 +28,7 @@
 
 ## Команды по необходимости
 
-- `npm run serve`, затем `http://localhost:8000/phaser.html` — локальный запуск. Открывать через HTTP, не `file://`.
+- `npm run serve`, затем `http://localhost:8000/` — локальный запуск. Открывать через HTTP, не `file://`.
 - `npm run build` — автономная статическая сборка в игнорируемой папке `dist/`; Phaser включён локально.
 - `node --test tests/watcher.test.mjs tests/night_horror.test.mjs tests/minions.test.mjs` — ночная опасность и малые враги.
 - `node --test tests/defense-preparation.test.mjs tests/defenses.test.mjs tests/first_days.test.mjs` — удержание ремонта, предупреждения и отчёт; UI — `python tests/defense_preparation_smoke.py`.

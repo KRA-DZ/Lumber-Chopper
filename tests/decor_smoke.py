@@ -140,12 +140,6 @@ try:
             assert q.evaluate(
                 "lumberPhaser.scene.assets.decor.variant===3&&lumberPhaser.core.state.campLevel===0&&lumberPhaser.core.state.coins===0"
             )
-            if not mobile:
-                q.goto(url + "phaser.html?art=procedural")
-                choose_hero(q)
-                assert q.evaluate(
-                    "!lumberPhaser.scene.assets.decor&&!lumberPhaser.scene.registry.has('decorPack')"
-                )
             assert not errors, errors
             print(
                 "PASS decor",
