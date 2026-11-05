@@ -9,7 +9,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "src/assets/loot-items"
-NAMES = {"coins", "resin", "key", "salve", "relic", "rod", "bobber"}
+NAMES = {"coins", "resin", "key", "salve", "relic", "rod", "bobber", "fish"}
 
 
 def pixels(image):
@@ -25,8 +25,9 @@ class LootItems(unittest.TestCase):
         self.assertEqual(m["approvedVariant"], 3)
         self.assertEqual(set(m["frames"]), NAMES)
         self.assertEqual(m["size"], [128, 128])
-        source = ROOT / "art/source" / m["sources"][0]["file"]
-        self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), m["sources"][0]["sha256"])
+        for info in m["sources"]:
+            source = ROOT / "art/source" / info["file"]
+            self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), info["sha256"])
         for f in m["frames"].values():
             self.assertLessEqual(f["x"] + f["width"], 128)
             self.assertLessEqual(f["y"] + f["height"], 128)

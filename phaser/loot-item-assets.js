@@ -8,6 +8,7 @@ const IDS = new Set([
   "relic",
   "rod",
   "bobber",
+  "fish",
 ]);
 export function lootItemIcon(id) {
   return IDS.has(id) ? `./src/assets/loot-items/icons/${id}.png` : null;
@@ -45,7 +46,7 @@ export function applyLootItemFrames(scene, sources) {
   const pack = scene.registry.get("lootItemPack");
   if (!pack) throw Error("Missing approved loot item pack");
   for (const [id, f] of Object.entries(pack.manifest.frames)) {
-    const key = ["rod", "bobber"].includes(id)
+    const key = ["rod", "bobber", "fish"].includes(id)
       ? `exploration.${id}`
       : `loot.${id}`;
     sources.set(

@@ -216,6 +216,7 @@ export function createExplorationUi(scene) {
       const hidden = !f || scene.core.state.gameOver;
       if (controls.hidden !== hidden) controls.hidden = hidden;
       if (!f) return;
+      controls.dataset.phase = f.phase;
       const text =
         f.phase === "bite"
           ? `Клюёт! Подсекайте · ${Math.max(0, f.timer).toFixed(1)} с`
