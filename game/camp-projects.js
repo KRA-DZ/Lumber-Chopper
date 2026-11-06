@@ -1,4 +1,5 @@
 // Independent projects: their order never grants another project's effects.
+import { INDUSTRY_PROJECTS } from "./camp-industry-config.js";
 export const CAMP_PROJECTS = Object.freeze([
   { id: "fire", stage: 0, name: "Костёр", cost: 10,
     description: "Свет и защита от Смотрителя после розжига. Строится потухшим: каждое добавленное бревно даёт 60 секунд огня." },
@@ -8,6 +9,7 @@ export const CAMP_PROJECTS = Object.freeze([
     description: "Ограда с четырьмя калитками задерживает врагов. Её можно сломать и починить. Без горящего костра лагерь остаётся опасным." },
   { id: "house", stage: 3, name: "Хижина", cost: 50,
     description: "Отдельная комната с общим складом и выходом. Снаружи жизнь продолжается; дом не разжигает костёр." },
+  ...INDUSTRY_PROJECTS,
 ]);
 export function hasCampBuilding(state, id) {
   // Numeric development fixtures still describe the former sequential stages.
@@ -17,6 +19,9 @@ export function hasCampBuilding(state, id) {
 export const selectedCampProject = state => CAMP_PROJECTS.find(p => p.id === state.buildProject) || null;
 export const constructionStage = state => selectedCampProject(state)?.stage ?? state.campLevel;
 export const remainingCampProjects = state => CAMP_PROJECTS.filter(p => !hasCampBuilding(state, p.id));
+export const projectLockReason = (state,project) => (project.requires||[]).filter(id=>!hasCampBuilding(state,id))
+  .map(id=>`Нужна постройка: ${CAMP_PROJECTS.find(p=>p.id===id).name}`).join(". ");
+export const projectMaterialsReady = (state,project) => Object.entries(project.materials||{}).every(([id,n])=>(state.campIndustry?.materials[id]||0)>=n);
 
 export function createCampBuilder({ state, player, pad, forestry, canAct, players = () => [player], emit = () => {} }) {
   let inside = false, requested = false;
@@ -37,7 +42,7 @@ export function createCampBuilder({ state, player, pad, forestry, canAct, player
   }
   function choose(projectId) {
     const project = CAMP_PROJECTS.find(p => p.id === projectId);
-    if (!project || state.gameOver || state.health <= 0 || player.room || !near(player) || state.buildProject || hasCampBuilding(state,projectId)) return false;
+    if (!project || projectLockReason(state,project) || state.gameOver || state.health <= 0 || player.room || !near(player) || state.buildProject || hasCampBuilding(state,projectId)) return false;
     if (state.campBuildings == null) state.campBuildings = Object.fromEntries(CAMP_PROJECTS.filter(p => hasCampBuilding(state,p.id)).map(p => [p.id,true]));
     state.buildProject = projectId; state.buildWood = 0;
     state.buildBlockedPlayers = players().filter(near).map(p => p.id ?? 0);
@@ -47,20 +52,27 @@ export function createCampBuilder({ state, player, pad, forestry, canAct, player
     return canAct() && near(player) && !!selectedCampProject(state) && !state.buildBlockedPlayers.includes(id());
   }
   function contribute() {
-    if (!canContribute()) return null;
+    if (!canContribute() || state.buildWood >= selectedCampProject(state).cost) return null;
     const value = forestry.takeCargo(); if (value === null) return null;
     const project = selectedCampProject(state); state.buildWood++;
-    const complete = state.buildWood >= project.cost;
-    if (complete) {
-      state.campBuildings[project.id] = true;
-      state.campLevel = CAMP_PROJECTS.filter(p => hasCampBuilding(state,p.id)).length;
-      state.buildWood = 0; state.buildProject = null; state.buildBlockedPlayers = [];
-      if (project.id === "fire") state.campFuel = 0;
-      requested = false;
-    }
+    const complete = state.buildWood >= project.cost && projectMaterialsReady(state,project);
+    if (complete) finish(project);
     return { project, value, complete };
   }
-  return { update, choose, canContribute, contribute, requestChoice,
+  function finish(project) {
+    for(const [id,n] of Object.entries(project.materials||{}))state.campIndustry.materials[id]-=n;
+    state.campBuildings[project.id] = true;
+    state.campLevel = CAMP_PROJECTS.filter(p => hasCampBuilding(state,p.id)).length;
+    state.buildWood = 0; state.buildProject = null; state.buildBlockedPlayers = [];
+    if (project.id === "fire") state.campFuel = 0;
+    requested = false;
+  }
+  function finishMaterials() {
+    const project=selectedCampProject(state);
+    if(!project||!canContribute()||state.buildWood<project.cost||!projectMaterialsReady(state,project))return null;
+    finish(project);return project;
+  }
+  return { update, choose, canContribute, contribute, finishMaterials, requestChoice,
     get project() { return selectedCampProject(state); },
     get choices() { return remainingCampProjects(state); },
     get needsExit() { return state.buildBlockedPlayers.includes(id()); },

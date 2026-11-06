@@ -1,6 +1,7 @@
 import { normalizeAppearance } from "./appearances.js";
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
+import { initialIndustryState } from "./camp-industry-config.js";
 export const DAY_SECONDS = 600;
 export const RAID_INTERVAL = 5; // Общий интервал налётов для календаря, директора и интерфейса.
 export const WORLD = Object.freeze({ width: 3200, height: 3200 });
@@ -17,10 +18,12 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     appearance: normalizeAppearance(appearance), // Только внешний вид: вариант 2 или 3, характеристики одинаковы.
     health: 100, // Три ошибки рядом со Смотрителем смертельны; рассвет восстанавливает здоровье.
     maxHealth: 100,
-    campFuel: 0, // Общий костёр строится потухшим; 1 бревно = 60 с, максимум 600 с.
-    campBuildings: null, // После первого выбора — независимые флаги fire/tent/fence/house; до него лагерь пуст.
+    campFuel: 0, // Общий костёр строится потухшим; бревно = 60 с, уголь = 180 с, предел 600–1200 с.
+    campBuildings: null, // Независимые флаги базовых и хозяйственных построек; до первого выбора лагерь пуст.
     buildProject: null, // Выбранный общий проект; выбор ничего не списывает.
     buildBlockedPlayers: [], // Стоявшие на платформе при выборе должны сойти и войти повторно.
+    campIndustry: initialIndustryState(), // Общие материалы (до 200/300/400), очередь до 3 работ, усиления 0–2 и топливо фонарей.
+    buyerOrders: {active:null,refund:[],completedDay:-1,completed:0}, // Один заказ в день; частичные брёвна возвращаются без потери стоимости.
     logStore: [], // Общий склад: храним стоимость каждого бревна без создания мировых объектов.
     stone: 0, // Личный запас камня; вместимость 40 + 10 за уровень переноски.
     regionStone: {}, // Общие взносы камнем в дальние границы.

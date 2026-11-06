@@ -16,7 +16,7 @@ export function createDefenseUi(scene) {
     appendRaidSummary(list, c.state.lastRaidReport);
     const sections = c.defenses.all();
     for (const s of sections.filter(
-      (s) => !["fence","gate"].includes(s.kind) || s.hp < s.maxHP,
+      (s) => !["fence","gate","tower"].includes(s.kind) || s.hp < s.maxHP,
     )) {
       const article = document.createElement("article"),
         title = document.createElement("h3"),
@@ -27,7 +27,7 @@ export function createDefenseUi(scene) {
         ? s.kind === "trap"
           ? "Взведена: один раз наносит 3 урона и замедляет на 3 секунды. Смотрителя не останавливает."
           : `${s.hp}/${s.maxHP} HP. Ремонт: до 20 HP за одно бревно.`
-        : ["fence","gate"].includes(s.kind)
+        : ["fence","gate","tower"].includes(s.kind)
           ? "Сломана. Одно бревно восстановит 20 HP и закроет пролом."
           : `${s.wood}/${s.cost} брёвен. ${s.kind === "trap" ? "Одноразовая ловушка: 3 урона и замедление. После срабатывания нужно собрать заново." : "Баррикада: 60 HP. Центральный проход остаётся открытым."}`;
       b.type = "button";
@@ -35,7 +35,7 @@ export function createDefenseUi(scene) {
       b.disabled = s.hp >= s.maxHP;
       b.textContent = b.disabled
         ? "Готово"
-        : s.hp || ["fence","gate"].includes(s.kind)
+        : s.hp || ["fence","gate","tower"].includes(s.kind)
           ? "Подойти и чинить"
           : "Подойти и построить";
       b.addEventListener("click", () => {

@@ -1,6 +1,7 @@
 import { CENTER } from "./config.js";
 import { CAMP } from "./camp-layout.js";
 import { hasCampBuilding } from "./camp-projects.js";
+import { campFuelLimit, campStorageLimit, industryLevel } from "./camp-industry-config.js";
 
 export const CAMP_SERVICE = Object.freeze({
   store: { x: 1480, y: 1740 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
@@ -13,9 +14,12 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
   const near = p => Math.hypot(player.x - p.x, player.y - p.y) < 110 && nav.hasLineOfSight(player, p);
   const living = () => state.health > 0 && !state.gameOver;
   const lit = () => hasCampBuilding(state,"fire") && state.campFuel > 0;
-  function stoke(quoted = false) {
-    if (!(quoted ? living() : canAct()) || !near({x:CENTER.x,y:CENTER.y+48}) || !hasCampBuilding(state,"fire") || !state.wood || state.campFuel > CAMP_SERVICE.maxFuel - CAMP_SERVICE.fuelPerLog) return false;
-    forestry.takeCargo(); state.campFuel += CAMP_SERVICE.fuelPerLog;
+  function stoke(quoted = false, material = "wood") {
+    const seconds=material==="coal"?180:CAMP_SERVICE.fuelPerLog;
+    if (!['wood','coal'].includes(material) || !(quoted ? living() : canAct()) || !near({x:CENTER.x,y:CENTER.y+48}) || !hasCampBuilding(state,"fire") ||
+      (material==="wood"?!state.wood:!(state.campIndustry?.materials.coal>0)) || state.campFuel > campFuelLimit(state)-seconds) return false;
+    if(material==="wood")forestry.takeCargo();else state.campIndustry.materials.coal--;
+    state.campFuel += seconds;
     emit("camp-stoked", {}); return true;
   }
   function store(action = "deposit") {
@@ -23,7 +27,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     if (!living() || (player.room ? !atChest : !canAct() || !near(CAMP_SERVICE.store))) return 0;
     let n = 0;
     if (action === "deposit") {
-      while (state.wood && state.logStore.length < CAMP_SERVICE.storeLimit) { state.logStore.push(forestry.takeCargo()); n++; }
+      while (state.wood && state.logStore.length < campStorageLimit(state)) { state.logStore.push(forestry.takeCargo()); n++; }
     } else if (action === "withdraw") {
       while (state.logStore.length && state.wood < state.maxWood) {
         if (!forestry.addCargo(state.logStore.at(-1))) break;
@@ -52,6 +56,11 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     if (len) p.target = null;
     else if (p.target) { dx=p.target.x-p.x;dy=p.target.y-p.y;len=Math.hypot(dx,dy);speed=Math.min(speed,len);if(len<2){p.target=null;len=0;} }
     player.moving = len > 0; p.moving = len > 0;
+    p.restStill=len?0:Math.min(3,(p.restStill||0)+dt);
+    if(p.restStill>=3&&industryLevel(state,"house")>0){
+      p.restTimer=(p.restTimer||0)+dt;
+      while(p.restTimer>=1){p.restTimer--;state.health=Math.min(state.maxHealth,state.health+industryLevel(state,"house")*2);}
+    }else p.restTimer=0;
     if (!len) return;
     p.x = Math.max(30, Math.min(ROOM.width - 30, p.x + dx / len * speed));
     p.y = Math.max(100, Math.min(ROOM.height - 28, p.y + dy / len * speed));
@@ -62,5 +71,6 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     if (before && !lit()) emit("camp-extinguished", {});
     if (before && state.campFuel <= 30 && state.campFuel + dt > 30) emit("camp-low-fuel", {});
   }
-  return { near, lit, stoke, store, enter, exit, moveRoom, update };
+  return { near, lit, stoke, store, enter, exit, moveRoom, update,
+    maxFuel:()=>campFuelLimit(state),storageLimit:()=>campStorageLimit(state) };
 }

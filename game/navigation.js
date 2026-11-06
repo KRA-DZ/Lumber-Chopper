@@ -1,5 +1,6 @@
 import { CAMP } from "./camp-layout.js";
 import { hasCampBuilding, constructionStage } from "./camp-projects.js";
+import { INDUSTRY_PROJECTS } from "./camp-industry-config.js";
 import {
   fencePlan,
   partialFence,
@@ -18,7 +19,7 @@ export function createNavigation(
   const construction = { plan: fencePlan(CENTER) };
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const forestRadius = () => RADII[gameState.campLevel];
+  const forestRadius = () => RADII[Math.min(RADII.length-1,gameState.campLevel)];
   const bounds = model.bounds || { x: 0, y: 0, width: 3200, height: 3200 };
   const merchant = model.merchant || CAMP.merchant;
   function constrainPoint(x, y) {
@@ -68,6 +69,7 @@ export function createNavigation(
         half: Math.max(0, (w - h) / 2),
       });
     for (const t of trees) if (t.hp > 0) circle(t.x, t.y - 3, 8);
+    for(const p of INDUSTRY_PROJECTS)if(p.kind!=="lamp"&&hasCampBuilding(gameState,p.id))circle(p.site.x,p.site.y,p.kind==="kiln"?24:20);
     for (const rock of model.boulders || []) if ((gameState.boulderHP[rock.id] ?? rock.maxHP) > 0) circle(rock.x, rock.y - 6, rock.radius);
     if (!model.regions || model.regions.isOpen(ancientTree))
       circle(ancientTree.x, ancientTree.y - 12, 50);

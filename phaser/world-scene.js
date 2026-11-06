@@ -45,6 +45,9 @@ import { NIGHT_START } from "../game/cycle.js";
 import { CampServicesView, HouseView } from "./camp-services-view.js";
 import { CAMP_PROJECTS, hasCampBuilding, constructionStage } from "../game/camp-projects.js";
 import { createBuildUi } from "./build-ui.js";
+import { createCampDesk } from "./camp-desk.js";
+import { CampIndustryView } from "./camp-industry-view.js";
+import { materialCostText } from "../game/camp-industry-config.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -145,6 +148,8 @@ export class WorldScene extends Phaser.Scene {
     this.keyboardUi = new KeyboardInteractions(this);
     this.campServicesView = new CampServicesView(this);
     this.houseView = new HouseView(this);
+    this.industryView = new CampIndustryView(this);
+    this.campDesk = createCampDesk(this);
     this.bindInput();
     this.bindDialogs();
     this.buildUi = createBuildUi(this);
@@ -466,6 +471,7 @@ export class WorldScene extends Phaser.Scene {
         this.regionMap.open();
         return;
       }
+      if (!this.core.paused && event.code === "KeyC") { event.preventDefault(); this.campDesk.open(); return; }
       if (!this.core.paused && ["KeyE", "Enter"].includes(event.code)) {
         event.preventDefault();
         if (!event.repeat) interactNearby(this);
@@ -484,6 +490,8 @@ export class WorldScene extends Phaser.Scene {
       if (this.coopViews) this.coopViews.focus(this.coopCamera.actorAt(pointer));
       if (this.core.state.health <= 0 || this.core.player.menuOpen) return;
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
+      const industrySite=over.find(o=>o.getData("industrySite"));
+      if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
       const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
       if (service) {
         if (service.getData("campStore")) this.core.camp.store(this.core.state.wood ? "deposit" : "withdraw");
@@ -817,7 +825,7 @@ export class WorldScene extends Phaser.Scene {
       s.campHealth < s.maxCampHealth
         ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 20 HP/бревно`
         : c.builder.project
-          ? `${c.builder.project.name} ${s.buildWood}/${c.builder.project.cost}${c.builder.needsExit ? " · сойдите и вернитесь" : ""}`
+          ? `${c.builder.project.name} ${s.buildWood}/${c.builder.project.cost}${c.builder.project.materials ? "\n"+materialCostText(c.builder.project.materials)+" из общего запаса" : ""}${c.builder.needsExit ? " · сойдите и вернитесь" : ""}`
           : c.builder.choices.length ? "Выбрать постройку · встаньте на платформу" : "Лагерь построен",
     );
     this.camera?.preRender();
@@ -839,6 +847,7 @@ export class WorldScene extends Phaser.Scene {
     this.outpostView.render();
     this.campServicesView.render();
     this.houseView.render();
+    this.industryView.render();
     for (const [i, actor] of (c.actors || [c]).entries()) {
       const entry = this.coopViews?.entries[i] || this;
       entry.player.setVisible(!actor.player.room);
@@ -868,8 +877,8 @@ export class WorldScene extends Phaser.Scene {
       shop.title = description;
       shop.setAttribute("aria-label", description);
       document.querySelector("#campInfo").textContent = c.regions
-        ? `Лагерь ${s.campLevel}/4 · Регионы ${s.unlockedRegions.length}/25`
-        : `Лагерь ${s.campLevel}/4 · Радиус леса: ${c.forestRadius()}`;
+        ? `Лагерь ${s.campLevel}/${CAMP_PROJECTS.length} · Регионы ${s.unlockedRegions.length}/25`
+        : `Лагерь ${s.campLevel}/${CAMP_PROJECTS.length} · Радиус леса: ${c.forestRadius()}`;
       document.querySelector("#status").textContent =
         c.notice ||
         (s.wood >= s.maxWood
@@ -1009,7 +1018,7 @@ export class WorldScene extends Phaser.Scene {
     else { this.fire.stop(); this.assets.setFrame(this.fire,"unlitFire"); }
     this.tent.setVisible(hasCampBuilding(s,"tent"));
     this.hut.setVisible(hasCampBuilding(s,"house"));
-    this.partial.setVisible(s.buildWood > 0 && constructionStage(s) !== 2);
+    this.partial.setVisible(s.buildWood > 0 && constructionStage(s) < 4 && constructionStage(s) !== 2);
     if (this.partial.visible) {
       const site = bakeConstruction(
         this.partialTexture.getContext(),
@@ -1117,6 +1126,10 @@ export class WorldScene extends Phaser.Scene {
       try { return this.coopViews.withActor(e.actor, () => this.onModelEvent(type, e)); }
       finally { this.routingCoop = false; }
     }
+    if (type === "tower-shot") { this.industryView?.shot(e); return; }
+    if (type === "production-ready") { this.core.showNotice(`Готово: ${materialCostText(e.output)}. В общем запасе лагеря.`,4); return; }
+    if (type === "order-completed") { this.core.showNotice(`Заказ выполнен: +${e.order.reward} монет!`,6); return; }
+    if (type === "order-expired") { this.core.showNotice("Срок заказа истёк. Переданные брёвна можно забрать у продажи.",6); return; }
     if (type === "build-choice") { this.buildUi?.open(); return; }
     if (type === "mining-hit") { this.heroView?.hit(); this.float(`-${e.damage}`,e.rock.x,e.rock.y-50); return; }
     if (type === "stone-collected") { this.float(`+${e.count} камня`,e.rock.x,e.rock.y-65,"#d4ddd5"); return; }
@@ -1464,6 +1477,8 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.campDesk?.destroy();
+    this.industryView?.destroy();
     this.buildUi?.destroy();
     this.houseView?.destroy();
     this.campServicesView?.destroy();

@@ -1,3 +1,5 @@
+import { projectLockReason } from "../game/camp-projects.js";
+import { materialCostText } from "../game/camp-industry-config.js";
 export function createBuildUi(scene) {
   const dialog = document.querySelector("#buildDialog"), list = dialog.querySelector("[data-build-options]"),
     cancel = dialog.querySelector("[data-build-close]");
@@ -9,10 +11,12 @@ export function createBuildUi(scene) {
       const card = document.createElement("article"), title = document.createElement("h3"),
         detail = document.createElement("p"), button = document.createElement("button");
       card.className = "build-option";
-      title.textContent = `${project.name} · ${project.cost} брёвен`;
-      detail.textContent = project.description + (core.state.campHealth < core.state.maxCampHealth ? " Лагерь повреждён: перед стройкой платформа сначала потратит брёвна на ремонт." : "");
+      title.textContent = `${project.name} · ${project.cost} брёвен${project.materials?" · "+materialCostText(project.materials):""}`;
+      const lock=projectLockReason(core.state,project);
+      detail.textContent = project.description + (lock?` ${lock}.`:"") + (project.materials?" Дополнительные материалы списываются из общего запаса после сдачи брёвен.":"") + (core.state.campHealth < core.state.maxCampHealth ? " Лагерь повреждён: перед стройкой платформа сначала потратит брёвна на ремонт." : "");
       button.type = "button"; button.dataset.buildProject = project.id;
       button.textContent = `Выбрать: ${project.name}`;
+      button.disabled=!!lock;
       button.onclick = () => {
         if (!builder.choose(project.id)) return;
         dialog.close();

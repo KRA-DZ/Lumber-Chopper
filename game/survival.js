@@ -1,4 +1,5 @@
 import { hasCampBuilding } from "./camp-projects.js";
+import { industryLevel } from "./camp-industry-config.js";
 import { createBiomeEnemies } from "./biome-enemies.js";
 import { createMinions } from "./minions.js";
 import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
@@ -37,7 +38,7 @@ export function createSurvival({
     hitCooldown = 0,
     pathCursor = 0,
     wave = null;
-  const safeRadius = () => hasCampBuilding(state,"fire") && state.campFuel > 0 ? 310 : 0;
+  const safeRadius = () => hasCampBuilding(state,"fire") && state.campFuel > 0 ? 310+industryLevel(state,"fire")*20 : 0;
   const safeZone = p => p.room ? { x: p.x, y: p.y, r: 100 } : safeRadius() > 0 && distance(p, CENTER) < safeRadius()
     ? { ...CENTER, r: safeRadius() } : sanctuary(p);
   const isSafe = p => !!safeZone(p);

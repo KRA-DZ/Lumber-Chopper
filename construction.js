@@ -1,5 +1,5 @@
 import { CAMP } from "./game/camp-layout.js";
-import { CAMP_PROJECTS, constructionStage, hasCampBuilding } from "./game/camp-projects.js";
+import { CAMP_PROJECTS, constructionStage, hasCampBuilding, selectedCampProject } from "./game/camp-projects.js";
 export const STAGE_COSTS = Object.freeze(CAMP_PROJECTS.map(p => p.cost));
 export function stageRatio(state) {
   return Math.max(
@@ -42,6 +42,8 @@ export function constructionCollisionKey(state, plan) {
   return `${JSON.stringify(state.campBuildings)}:${state.campLevel}:${state.buildProject}:${partialFence(state,plan).posts.length}:${Number(state.buildWood > 0)}`;
 }
 export function constructionTarget(state, center, plan = fencePlan(center)) {
+  const project=selectedCampProject(state);
+  if(project?.site)return {x:project.site.x,y:project.site.y-35};
   const r = stageRatio(state);
   if (constructionStage(state) === 0) return { x: center.x, y: center.y - 12 };
   if (constructionStage(state) === 1)

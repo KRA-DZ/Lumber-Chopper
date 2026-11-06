@@ -1,5 +1,4 @@
 import { dayOverview, countdown } from "../game/first-days.js";
-import { CAMP_SERVICE } from "../game/camp-services.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
 export class DayHud {
   constructor(scene) {
@@ -58,7 +57,7 @@ export class DayHud {
     const x = 22,
       y = 110,
       g = this.track.clear();
-    this.fuelRatio = hasCampBuilding(c.state,"fire") ? Math.max(0,Math.min(1,c.state.campFuel/CAMP_SERVICE.maxFuel)) : 0;
+    this.fuelRatio = hasCampBuilding(c.state,"fire") ? Math.max(0,Math.min(1,c.state.campFuel/c.camp.maxFuel())) : 0;
     this.fuelTrack.clear().fillStyle(0x242f28,.95).fillRect(x,80,width,6)
       .fillStyle(c.state.campFuel <= 30 ? 0xc2694c : 0xe6ad56).fillRect(x,80,width*this.fuelRatio,6)
       .lineStyle(1,0x998465,.7).strokeRect(x,80,width,6);
