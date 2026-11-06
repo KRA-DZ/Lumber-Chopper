@@ -18,7 +18,7 @@ test("first entry requests a free choice even empty handed; cancel never spends 
   leaveAndReturn(c,c);assert.equal(events.filter(t=>t==="build-choice").length,2);
 });
 test("every project can be first, only its own effects activate, and payment requires re-entry",()=>{
-  for(const project of CAMP_PROJECTS){
+  for(const project of CAMP_PROJECTS.filter(p=>p.stage<4)){
     const events=[],c=createSimulation({regional:true,emit:t=>events.push(t)});
     place(c,c.build);c.update(.01);assert.ok(c.builder.choose(project.id));
     c.state.maxWood=project.cost;for(let i=0;i<project.cost;i++)c.forestry.addCargo(10);

@@ -28,7 +28,7 @@ export class CampServicesView {
       entry.label.setText(`Камень · ${hp}/${entry.rock.maxHP} · +8`);
       s.worldHints.offer(entry.label, entry.rock, { eligible: hp > 0, range: 180, priority: 60 });
     }
-    this.label.setText(`Склад · ${c.state.logStore.length}/400 · E/Enter ${c.state.wood ? "сложить" : "взять"}`);
+    this.label.setText(`Склад · ${c.state.logStore.length}/${c.camp.storageLimit()} · E/Enter ${c.state.wood ? "сложить" : "взять"}`);
     this.fireLabel.setText(hasCampBuilding(c.state,"fire") ? `${c.camp.lit() ? "Огонь" : "ПОТУХШИЙ КОСТЁР"} · ${Math.ceil(c.state.campFuel)} с · E/Enter +1 бревно` : "Сначала постройте костёр!");
     s.worldHints.offer(this.label,CAMP_SERVICE.store,{range:200,priority:70});
     s.worldHints.offer(this.fireLabel,{x:1600,y:1648},{range:210,priority:75});
@@ -76,7 +76,7 @@ export class HouseView {
           key=`${j?"coop2.":""}characters.player.${dir}.${p.room.moving?Math.floor(s.core.elapsed*10)%4:0}`;
         s.assets.setFrame(avatar,key);avatar.setPosition(p.room.x,p.room.y).setFlipX(p.direction==="left");
       });
-      e.hint.setText(`Склад ${a.state.logStore.length}/400 · E/Enter у сундука: ${a.state.wood?"сложить":"взять"} · у двери: выйти`);
+      e.hint.setText(`Склад ${a.state.logStore.length}/${a.camp.storageLimit()} · E/Enter у сундука: ${a.state.wood?"сложить":"взять"} · у двери: выйти · C мастерская`);
     });
   }
   pointer(pointer,i) {

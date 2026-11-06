@@ -149,7 +149,7 @@ export class Atmosphere {
       this.core.state,
       this.core.player,
       this.core.survival?.safeRadius() ?? 210,
-      [...this.core.outposts.lights(), ...(this.core.actors || []).filter((a, i) => i !== this.core.activeActor)
+      [...this.core.outposts.lights(),...this.core.preparation.lights(), ...(this.core.actors || []).filter((a, i) => i !== this.core.activeActor)
         .map(a => ({ x: a.player.x, y: a.player.y - 24, r: 140 + a.state.lanternLevel * 24, kind: "player" }))],
     );
   }
@@ -575,6 +575,9 @@ export class Atmosphere {
       this.core.state.campLevel,
       this.core.outposts.revision,
       Number(this.core.state.campFuel > 0),
+      this.core.state.campIndustry.upgrades.fire,
+      Number(this.core.state.campIndustry.lampFuel["lamp-north"]>0),
+      Number(this.core.state.campIndustry.lampFuel["lamp-south"]>0),
     ].join(":");
     const jumped =
       !buffer.maskView ||

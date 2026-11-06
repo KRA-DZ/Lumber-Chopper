@@ -20,7 +20,7 @@ export class DefenseView {
       }
       this.objects = [];
       for (const d of c.defenses?.all() || []) {
-        const generated = s.assets.camp && !["fence","gate"].includes(d.kind);
+        const generated = s.assets.camp && !["fence","gate","tower"].includes(d.kind);
         const g = generated
           ? s.addImage(
               `camp.defense.${d.kind}.${d.hp > 0 ? "ready" : "broken"}`,

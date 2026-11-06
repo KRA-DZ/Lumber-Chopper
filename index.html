@@ -195,6 +195,11 @@
     .build-option { border: 1px solid #687555; padding: 12px; margin: 8px 0; }
     .build-option h3 { margin: 0; }
     .build-option p { color: #d3d6b5; }
+    .camp-card { padding: 10px; border: 1px solid #687555; margin: 8px 0; }
+    .camp-card h3 { margin: 0; }
+    .camp-card[data-selected="true"] { outline: 3px solid #efd18e; background: #3f543b; }
+    .camp-card button[aria-disabled="true"] { opacity: .65; }
+    .camp-tabs { display:flex; flex-wrap:wrap; gap:6px; }
     @media(max-width:600px) {
       .personal-shop { width: 98%; max-height: 47%; }
       .personal-shop[data-player-shop="1"] { top: auto; bottom: 1%; }
@@ -458,6 +463,7 @@
     </div>
     <footer>
       <nav class="game-actions" aria-label="Действия игрока">
+        <button id="industryButton" type="button">Мастерская · C</button>
         <button
           id="campButton"
           type="button"
@@ -498,6 +504,8 @@
       <p>E или Enter рядом — взаимодействовать. В меню W/S или ↑/↓ выбирают действие, E/Enter подтверждают, Q/Esc закрывают. Вдвоём лавки личные: первый — W/S, E, Q; второй — ↑/↓, Enter, Backspace. Лавка не останавливает мир.</p>
       <p>Ночь занимает последнюю четверть суток. Костёр нужно построить и поддерживать: бревно даёт 60 секунд света, без огня лагерь уязвим. Склад игроков: E/Enter сложить брёвна, с пустыми руками — взять. Дальние границы требуют камень из крупных валунов. Готовый дом можно посетить через дверь.</p>
       <p>На голубой платформе сначала выберите проект. После подтверждения сойдите и вернитесь, чтобы начать сдавать брёвна. Порядок построек свободный. Костёр строится потухшим: E/Enter рядом добавляет бревно в любое время суток; запас огня показан верхней полоской.</p>
+      <p>C или «Мастерская» в лагере — общие производство, улучшения и оборона. Сначала постройте верстак: 2 бревна → доска, 3 камня → блок. Угольная яма: 3 бревна → 2 угля. Очередь до трёх работ, ресурсы списываются сразу; закройте меню, чтобы работа продолжилась. Уголь даёт 180 секунд огня, питает башни и отдельные фонари. Свет фонаря не защищает от Смотрителя.</p>
+      <p>E/Enter у продажи — заказы обоза. Один выполненный заказ в день, срок до ночи; награда за продажу достаётся обоим игрокам. Незавершённые брёвна можно забрать обратно. Базовые постройки выбираются свободно; башням нужны верстак и забор, фонарям — угольная яма. В общих меню хозяйства оба игрока на паузе, личные лавки по-прежнему работают независимо.</p>
 
         <small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small>
         <p>
@@ -524,6 +532,11 @@
 
     </details>
     <p>Каждая загрузка начинает новую смену. Настройки и прогресс не сохраняются.</p>
+  </dialog>
+  <dialog id="campDesk" aria-labelledby="campDeskTitle">
+    <div class="dialog-top"><h2 id="campDeskTitle">Хозяйство лагеря</h2><button type="button" data-camp-close>Закрыть</button></div>
+    <p>Общие материалы и очередь. W/S или ↑/↓ — выбор, E/Enter — действие, Q/Esc — закрыть. Производство и сроки идут в игровом мире после закрытия меню.</p>
+    <div data-camp-content></div><p data-camp-message role="status" aria-live="polite"></p>
   </dialog>
   <dialog id="buildDialog" aria-labelledby="buildTitle">
     <div class="dialog-top"><h2 id="buildTitle">Что построим?</h2><button type="button" data-build-close>Пока не строить</button></div>

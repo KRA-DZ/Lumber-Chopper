@@ -6,6 +6,8 @@ import { DAY_SECONDS } from "../game/config.js";
 import { clockHour } from "../game/cycle.js";
 import { regionAt } from "../game/regions.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
+import { MATERIAL_NAMES } from "../game/camp-industry-config.js";
+import { countdown } from "../game/first-days.js";
 export class HudScene extends Phaser.Scene {
   constructor() {
     super("Hud");
@@ -153,8 +155,11 @@ export class HudScene extends Phaser.Scene {
       .fillStyle(0x243c2d, 0.95)
       .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
+    const order=c.orders.current,orderProgress=order?.resource==="logs"?c.orders.data.active.logs.length:order?Math.min(order.amount,c.state.campIndustry.materials[order.resource]):0,
+      location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
+        `${c.player.room ? "Дом лагеря" : regionAt(c.player.x,c.player.y)?.name||"Лес"} · Камень ${c.state.stone}`;
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${c.player.room ? "Дом лагеря" : regionAt(c.player.x, c.player.y)?.name || "Лес"} · Камень ${c.state.stone}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${location}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {

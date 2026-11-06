@@ -21,6 +21,8 @@
 | Рубка, брёвна, стопка, покупки | `forestry.js`, `economy.js`, `game/stack-layout.js`, `game/buyers.js` | `phaser/stack-view.js`, `phaser/chopping-feedback.js`, `phaser/buyer-view.js`, `shop.js` |
 | Сутки, Смотритель, региональные враги | `game/cycle.js`, `game/survival.js`, `game/watcher.js`, `game/biome-enemies.js`, `game/minions.js`, `game/raiders.js` | `phaser/enemy-view.js`, `phaser/watcher-hud.js`, `phaser/night-lighting.js`, `phaser/atmosphere.js` |
 | Лагерь, ограда, ремонт | `construction.js`, `game/defenses.js`, `game/defense-repair.js` | `phaser/construction-view.js`, `phaser/camp-view.js`, `phaser/defense-view.js`, `phaser/defense-ui.js`, `phaser/repair-control.js` |
+| Переработка, усиления, башни и фонари | `game/camp-industry-config.js` — баланс; `game/camp-industry.js` — общий запас/очередь/усиления; `game/camp-preparation.js` — ремнаборы, свет, стрельба | `phaser/camp-desk.js`, `phaser/camp-industry-view.js`; [CAMP-ECONOMY.md](CAMP-ECONOMY.md) |
+| Ежедневные заказы покупателей | `game/buyer-orders.js`, общая `state.buyerOrders`; сдача на платформе — `game/simulation.js` | Вкладка заказов `phaser/camp-desk.js`, подпись у продажи и HUD |
 | Итоги налёта | `game/raid-report.js`, `state.lastRaidReport` | `phaser/raid-summary.js`, меню обороны и дневник |
 | Добыча с врагов и доступные покупки | `game/combat-loot.js`, `state.combatLoot` | `phaser/combat-loot-view.js`, `shop.js` |
 | PNG предметов добычи/находок | `scripts/prepare_loot_items.py`, `src/assets/loot-items/` | `phaser/loot-item-assets.js`, `phaser/exploration-ui.js`, `phaser/exploration-view.js`; [LOOT-ITEM-ART.md](LOOT-ITEM-ART.md) |
@@ -40,6 +42,7 @@
 - `npm run build` — автономная статическая сборка в игнорируемой папке `dist/`; Phaser включён локально.
 - `node --test tests/camp-expansion.test.mjs` и `python tests/camp_expansion_smoke.py` — оплата регионов двумя материалами, топливо, склад, калитки, независимые лавки, E/Enter, комната дома, мышь/тач и перезапуск.
 - `node --test tests/build-projects.test.mjs` и `python tests/build_choice_smoke.py` — любая первая постройка, выбор без списания, обязательный повторный вход, холодный костёр, E днём/ночью, верхняя шкала и W/S для доступных и недоступных покупок.
+- `node --test tests/camp-industry.test.mjs tests/build-projects.test.mjs` — очередь, списания, зависимости построек, улучшения, топливо, ремонт, отдых, заказы/возврат и начисления вдвоём. После сборки `python tests/camp_industry_smoke.py` проверяет только новый цикл: WebGL вдвоём и мобильный Canvas из `dist/`, клавиатуру/тач, реальную башню в пятую ночь и очистку при перезапуске.
 - `node --test tests/local-coop.test.mjs` и `python tests/local_coop_smoke.py` — личные счета и общий мир, два комплекта ввода, разделение/слияние камер, фонари, спасение, перезапуск и ограниченный совмещённый замер нагрузки.
 - `node --test tests/watcher.test.mjs tests/night_horror.test.mjs tests/minions.test.mjs` — ночная опасность и малые враги.
 - `node --test tests/defense-preparation.test.mjs tests/defenses.test.mjs tests/first_days.test.mjs` — удержание ремонта, предупреждения и отчёт; UI — `python tests/defense_preparation_smoke.py`.

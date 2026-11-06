@@ -269,8 +269,10 @@ export function createExploration({
     } else if (s.kind === "kitchen" || s.kind === "outpost") {
       if (s.kind === "kitchen") {
         add("stoke-camp", `${camp.lit() ? "Подбросить" : "Разжечь"} · 1 бревно`,
-          `Топливо: ${Math.ceil(state.campFuel)} / 600 с. Бревно даёт 60 с защиты лагеря.`,
-          !hasCampBuilding(state,"fire") ? "Сначала постройте костёр на голубой площадке" : state.wood < 1 ? "Нужно бревно" : state.campFuel > 540 ? "Запас топлива полон" : "");
+          `Топливо: ${Math.ceil(state.campFuel)} / ${camp.maxFuel()} с. Бревно даёт 60 с защиты лагеря.`,
+          !hasCampBuilding(state,"fire") ? "Сначала постройте костёр на голубой площадке" : state.wood < 1 ? "Нужно бревно" : state.campFuel > camp.maxFuel()-60 ? "Запас топлива полон" : "");
+        add("stoke-coal","Добавить уголь · +180 с",`Общий уголь: ${state.campIndustry.materials.coal}. Максимум ${camp.maxFuel()} с.`,
+          !hasCampBuilding(state,"fire")?"Нужен костёр":state.campIndustry.materials.coal<1?"Сделайте уголь в яме":state.campFuel>camp.maxFuel()-180?"Запас полон":"");
       }
       if (s.kind === "outpost") {
         const fuel = outposts.remaining(id), logs = fuel > 0 ? 1 : OUTPOST.ignitionLogs;
@@ -337,6 +339,8 @@ export function createExploration({
       for (let i = 0; i < EXPLORATION.offeringLogs; i++) forestry.takeCargo();
       data.offeringDay = state.calendarDay;
       bag.resin++;
+    } else if (action === "stoke-coal") {
+      if(!camp.stoke(true,"coal"))return false;
     } else if (action === "stoke-camp") {
       if (!camp.stoke(true)) return false;
     } else if (action === "stoke-fire") {
