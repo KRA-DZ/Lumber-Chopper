@@ -7,9 +7,10 @@ function create() {
   const g = createSimulation({ regional: true, survival: false });
   const gate = g.regions.frontiers().find((p) => p.region.id === "0:-1");
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 10000 });
-  g.state.maxWood = 16;
-  for (let i = 0; i < 12; i++) g.forestry.addCargo(10);
-  for (let i = 0; i <= 12; i++) g.update(0.2);
+  g.state.campLevel = gate.region.campRequired;
+  g.state.maxWood = gate.region.cost;
+  for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
+  for (let i = 0; i <= gate.region.cost; i++) g.update(0.2);
   assert.ok(g.regions.unlocked.has("0:-1"));
   return g;
 }

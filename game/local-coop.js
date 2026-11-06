@@ -8,6 +8,7 @@ export function createLocalCoop(options = {}) {
     const core = createSimulation({ ...options, appearance, regional: true, party, shared: actors[0] || null,
       emit: (type, event) => emit(type, { actor: i, ...event }) });
     core.player.id = i; core.player.x += i ? 34 : -34;
+    core.state.priceMultiplier = 1.75;
     actors.push(core);
   }
   let focus = 0, versions = actors.map(a => a.nav.version);

@@ -14,7 +14,7 @@ export function createLocalParty(emit) {
     bind(state, player) { fallback = { state, player }; },
     focus(actor) { target = actor; },
     select(enemy) {
-      let candidates = actors.filter(a => a.state.health > 0);
+      let candidates = actors.filter(a => a.state.health > 0 && !a.player.room);
       if (!candidates.length) return;
       if (enemy.kind === "resident" && (enemy.tier === "boss" || !minionHuntNight(actors[0].state))) {
         const home = candidates.filter(a => regionAt(a.player.x, a.player.y)?.id === enemy.regionId);
@@ -29,11 +29,11 @@ export function createLocalParty(emit) {
         Math.hypot(b.player.x - enemy.x, b.player.y - enemy.y) ? a : b);
       enemy.targetPlayerId = target.player.id;
     },
-    positions() { return actors.filter(a => a.state.health > 0).map(a => a.player); },
+    positions() { return actors.filter(a => a.state.health > 0 && !a.player.room).map(a => a.player); },
     tick(dt) { for (const a of actors) a.player.hitCooldown = Math.max(0, (a.player.hitCooldown || 0) - dt); },
     hurt(amount, source) {
       const a = current();
-      if (!a || a.state.health <= 0 || a.player.hitCooldown > 0 || a.state.gameOver) return;
+      if (!a || a.player.room || a.state.health <= 0 || a.player.hitCooldown > 0 || a.state.gameOver) return;
       a.state.health = Math.max(0, a.state.health - amount);
       a.player.hitCooldown = 1.4;
       emit("player-hurt", { actor: a.player.id, health: a.state.health, damage: amount, source });
@@ -45,6 +45,7 @@ export function createLocalParty(emit) {
     },
     dawn() { for (const a of actors) if (a.state.health > 0) { a.state.health = a.state.maxHealth; a.player.hitCooldown = 0; } },
     reward(coins) { actors.forEach((a, i) => { a.state.coins += Math.floor(coins / actors.length) + (i < coins % actors.length ? 1 : 0); }); },
+    sale(coins) { for (const a of actors) a.state.coins += coins; },
     blast(point, radius, amount) {
       for (const a of actors) if (a.state.health > 0 && Math.hypot(a.player.x - point.x, a.player.y - point.y) < radius) {
         target = a; party.hurt(amount, "minion");

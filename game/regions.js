@@ -58,7 +58,9 @@ export const REGIONS = Object.freeze(
       height: REGION_SIZE,
       cx: CENTER.x + gx * REGION_SIZE,
       cy: CENTER.y + gy * REGION_SIZE,
-      cost: 12 * Math.max(1, Math.abs(gx) + Math.abs(gy)),
+      cost: 48 * Math.max(1, Math.abs(gx) + Math.abs(gy)) ** 2,
+      stoneCost: Math.max(0, Math.abs(gx) + Math.abs(gy) - 1) * 20,
+      campRequired: Math.min(3, Math.max(1, Math.abs(gx) + Math.abs(gy))),
     });
   }),
 );
@@ -133,22 +135,26 @@ export function createRegions(state) {
     }
     return frontierCache;
   }
-  function deposit(id) {
+  function deposit(id, material = "wood") {
     const region = byId.get(id);
     if (
       !region ||
+      state.campLevel < region.campRequired ||
       unlocked.has(id) ||
       !frontiers().some((g) => g.region.id === id)
     )
       return null;
-    const paid = (state.regionWood[id] || 0) + 1;
-    state.regionWood[id] = Math.min(region.cost, paid);
-    if (paid < region.cost) return { region, opened: false };
+    const store = material === "stone" ? state.regionStone : material === "wood" ? state.regionWood : null,
+      cost = material === "stone" ? region.stoneCost : region.cost;
+    if (!store || (store[id] || 0) >= cost) return null;
+    store[id] = Math.min(cost, (store[id] || 0) + 1);
+    if ((state.regionWood[id] || 0) < region.cost || (state.regionStone[id] || 0) < region.stoneCost)
+      return { region, opened: false, material };
     unlocked.add(id);
     state.unlockedRegions.push(id);
     revision++;
     frontierCache = null;
-    return { region, opened: true };
+    return { region, opened: true, material };
   }
   return {
     all: REGIONS,

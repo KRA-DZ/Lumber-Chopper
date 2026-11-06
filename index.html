@@ -184,6 +184,17 @@
     #coopPlayers article[data-active="true"] { border-color: #e2c17e; }
     #coopPlayers button { padding: 5px 8px; margin-right: 5px; font-size: 12px; }
     #coopPlayers p { margin: 5px 0; font-size: 12px; color: #f1ddb0; }
+    #game-frame { position: relative; }
+    .personal-shop { position: absolute; top: 12px; left: 1%; width: 46%; max-height: 94%; overflow: auto; z-index: 10; padding: 10px; box-sizing: border-box; background: #1e3229f5; border: 3px solid #c5a46e; font-size: 12px; }
+    .personal-shop[data-player-shop="1"] { left: auto; right: 1%; border-color: #8fc6cd; }
+    .personal-shop h3 { margin: 0 0 5px; }
+    .personal-shop button { display: block; width: 100%; text-align: left; margin: 4px 0; padding: 8px; font-size: 12px; }
+    .personal-shop button[data-selected="true"] { outline: 3px solid #f1d88f; background: #506644; }
+    .personal-shop button[aria-disabled="true"] { color: #b8afa1; }
+    @media(max-width:600px) {
+      .personal-shop { width: 98%; max-height: 47%; }
+      .personal-shop[data-player-shop="1"] { top: auto; bottom: 1%; }
+    }
     #fishingControls[hidden] {
       display: none;
     }
@@ -480,6 +491,8 @@
     <details class="controls-help">
       <summary>Управление и правила</summary>
       <p>P или Esc — открыть паузу; повторное нажатие возвращает в игру. Esc в другом открытом меню закрывает только это меню.</p>
+      <p>E или Enter рядом — взаимодействовать. В меню W/S или ↑/↓ выбирают действие, E/Enter подтверждают, Q/Esc закрывают. Вдвоём лавки личные: первый — W/S, E, Q; второй — ↑/↓, Enter, Backspace. Лавка не останавливает мир.</p>
+      <p>Ночь занимает последнюю четверть суток. Костёр нужно построить и поддерживать: бревно даёт 60 секунд света, без огня лагерь уязвим. Склад игроков: E/Enter сложить брёвна, с пустыми руками — взять. Дальние границы требуют камень из крупных валунов. Готовый дом можно посетить через дверь.</p>
 
         <small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small>
         <p>

@@ -1,5 +1,5 @@
 import { CENTER, DAY_SECONDS, STAGES, RAID_INTERVAL } from "./config.js";
-import { NIGHT_START } from "./cycle.js";
+import { NIGHT_START, timePeriod } from "./cycle.js";
 import { upgradeOffer } from "../economy.js";
 
 export function countdown(seconds) {
@@ -19,6 +19,7 @@ export function dayOverview(state) {
     : Math.ceil(day / RAID_INTERVAL) * RAID_INTERVAL;
   return {
     night,
+    period: timePeriod(state.worldTime),
     day,
     raidTonight,
     raidActive,
@@ -138,7 +139,9 @@ export function firstDaysGuide(c) {
         id: "return",
         title: "Опасность · вернитесь к свету",
         text:
-          c.survival.monster?.phase === "search"
+          !c.camp.lit()
+            ? "Без огня лагерь не защищает! Постройте костёр на голубой площадке, затем подбрасывайте брёвна через E/Enter рядом с ним. Личный фонарь остаётся с вами."
+            : c.survival.monster?.phase === "search"
             ? "Смотритель ищет след. Стволы закрывают прямой обзор, но шаги рядом и рубка выдают вас. Возвращайтесь к свету."
             : "Смотритель неуязвим, быстро сближается и почти не оставляет пауз между ударами. Бегите к свету лагеря. Кнопка прокладывает путь — в дороге вы уязвимы.",
         action: "camp",
@@ -154,7 +157,7 @@ export function firstDaysGuide(c) {
             : step === 5
               ? "6/7 · Переживите первую ночь"
               : "Вы в круге света",
-        text: "Смотритель не атакует внутри круга. Можно дождаться утра или рискнуть в лесу. На рассвете придёт письмо; открытые меню останавливают время.",
+        text: "Смотритель не атакует в свете горящего костра. Следите за топливом и подбрасывайте дрова через E/Enter. На рассвете придёт письмо. Общие меню останавливают время, личные лавки продолжают смену.",
         action: s.wood > 0 && s.campLevel < 1 ? "build" : null,
         button: "Вложить брёвна в костёр",
       };
@@ -165,7 +168,7 @@ export function firstDaysGuide(c) {
       id: "sunset",
       title: `До заката ${countdown(time.boundarySeconds)}${time.raidTonight ? " · сегодня налёт" : ""}`,
       text: safe
-        ? "Вы уже у лагеря. Покупатели уходят в 18:00. Свет защищает от Смотрителя, а от налётчиков нужен топор."
+        ? "Вы уже у лагеря. Покупатели уходят с наступлением ночи. Поддерживайте огонь брёвнами: только горящий костёр защищает от Смотрителя, а от налётчиков нужен топор."
         : "Завершите дела и возвращайтесь к свету. Кнопка прокладывает обычный путь, без телепортации.",
       action: !safe ? "camp" : s.wood > 0 && s.campLevel < 1 ? "build" : null,
       button: !safe ? "К свету лагеря" : "Достроить костёр",

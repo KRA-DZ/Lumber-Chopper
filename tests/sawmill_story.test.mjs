@@ -10,7 +10,9 @@ function create(emit) {
   // Opening/funding the same two squares is covered by sawmill.test.mjs.
   for (const id of ["1:0", "1:1"]) {
     const r = g.regions.all.find((r) => r.id === id);
+    g.state.campLevel = Math.max(g.state.campLevel, r.campRequired);
     for (let i = 0; i < r.cost; i++) g.regions.deposit(id);
+    for (let i = 0; i < r.stoneCost; i++) g.regions.deposit(id,"stone");
     g.world.generate(r);
   }
   g.nav.rebuildObstacles();

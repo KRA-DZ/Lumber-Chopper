@@ -1,7 +1,6 @@
 import { buyerAppearance } from "./appearances.js";
-import { DAY_SECONDS } from "./config.js";
+import { NIGHT_START } from "./cycle.js";
 export function createBuyers({ state: gameState, player, nav, getElapsed }) {
-  const dayPhase = () => gameState.worldTime / DAY_SECONDS;
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const { clearSegment, findPath, followPath } = nav;
   // Очередь живёт весь торговый день; покупатель не уходит каждые несколько секунд.
@@ -10,7 +9,7 @@ export function createBuyers({ state: gameState, player, nav, getElapsed }) {
   let buyerSequence = 0,
     buyerSpawnTimer = 0;
   const buyers = [];
-  const shopOpen = () => dayPhase() >= 0.06 && dayPhase() < 0.5; // 07:26–18:00 по часам мира.
+  const shopOpen = () => gameState.worldTime < NIGHT_START; // Торговля утром, днём и вечером.
   const buyerExit = { x: 1320, y: 2140 };
   function activeBuyer() {
     return shopOpen()

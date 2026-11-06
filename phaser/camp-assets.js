@@ -115,7 +115,8 @@ export function applyCampFrames(art, sources) {
         `camp.defense.${kind}.${state}`,
         pack.get(`${kind}.${state}`),
       );
-  for (const [a, b] of fencePlan(CENTER).segments)
+  const plan = fencePlan(CENTER);
+  for (const [a, b] of [...plan.segments, ...plan.gates.map(g => [g.a,g.b])])
     for (const state of ["ready", "damaged", "broken"])
       sources.set(
         `camp.rail.${a.id}.${state}`,

@@ -14,7 +14,7 @@
       { path: [], autoTimer: 10000 });
   }
   m.state.campHealth = m.state.maxCampHealth = 1e6;
-  m.state.calendarDay = 29; m.state.worldTime = 299.99;
+  m.state.calendarDay = 29; m.state.worldTime = 449.99;
   g.step(.02); g.step(12.1); m.state.worldTime = 450;
   const weather = w.atmosphere.weather, originalWeather = weather.update.bind(weather), rain = { ...m.state, worldTime: 220 };
   weather.update = (dt, state, cycle, day, trees, player) => originalWeather(dt, rain, cycle, 0, trees, player);

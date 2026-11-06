@@ -1,4 +1,4 @@
-// Баланс лавки: первая переноска окупается одной продажей двух обычных брёвен.
+// Базовые цены одиночной игры; в кооперативе применяется личный priceMultiplier.
 export const AXE_TIERS = Object.freeze([
   {
     name: "Походный",
@@ -91,11 +91,12 @@ export function upgradeOffer(state, id) {
   if (!d) return null;
   const level = state[d.level] || 0,
     maxed = level >= d.max;
-  const price = maxed
+  const basePrice = maxed
     ? null
     : id === "axe"
       ? AXE_TIERS[level + 1].cost
       : Math.ceil(d.base * d.growth ** level);
+  const price = basePrice === null ? null : Math.ceil(basePrice * (state.priceMultiplier || 1));
   const descriptions = {
     carry: `Ноша ${2 + level * 2} → ${2 + (level + 1) * 2} брёвен`,
     axe: maxed

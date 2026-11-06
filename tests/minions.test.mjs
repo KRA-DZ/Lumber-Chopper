@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -58,7 +59,7 @@ test("small monsters exist by day, persist through dawn, reset at each dusk and 
   assert.ok(f.m.hit(e.id, 6, false));
   f.step(4);
   assert.ok(!f.m.actors.some((a) => a.id === e.id));
-  f.g.state.worldTime = 301;
+  f.g.state.worldTime = NIGHT_START + 1;
   f.step(0.05);
   assert.equal(f.m.actors.length, 3);
   const ids = f.m.actors.map((e) => e.id);
@@ -80,7 +81,7 @@ test("global pursuit starts at dusk on nights 5,10,...; it never begins in the f
   for (let day = 0; day < 15; day++) {
     assert.equal(minionHuntNight({ calendarDay: day, worldTime: 120 }), false);
     assert.equal(
-      minionHuntNight({ calendarDay: day, worldTime: 301 }),
+      minionHuntNight({ calendarDay: day, worldTime: NIGHT_START + 1 }),
       (day + 1) % 5 === 0,
     );
   }
@@ -94,7 +95,7 @@ test("global pursuit starts at dusk on nights 5,10,...; it never begins in the f
   });
   f.step(2);
   assert.equal(regionAt(e.x, e.y).id, "1:0");
-  f.g.state.worldTime = 301;
+  f.g.state.worldTime = NIGHT_START + 1;
   f.step(0.05);
   e = f.isolate();
   Object.assign(e, f.g.nav.nearestGround(2600, 1800), {
@@ -111,7 +112,7 @@ test("global pursuit starts at dusk on nights 5,10,...; it never begins in the f
 });
 
 test("a melee pursuer actually damages and breaches the real camp fence, then advances through the gap", () => {
-  const f = fixture({ day: 4, time: 301, fence: true }),
+  const f = fixture({ day: 4, time: NIGHT_START + 1, fence: true }),
     e = f.isolate();
   Object.assign(f.g.player, { x: 1600, y: 1720 });
   const section = f.g.defenses
@@ -138,7 +139,7 @@ test("a melee pursuer actually damages and breaches the real camp fence, then ad
 });
 
 test("ranged attacks arc over an intact fence, lock their landing point and allow a dodge", () => {
-  const f = fixture({ day: 4, time: 301, fence: true }),
+  const f = fixture({ day: 4, time: NIGHT_START + 1, fence: true }),
     e = f.isolate("ranged");
   Object.assign(f.g.player, f.g.nav.nearestGround(1795, 1640));
   Object.assign(e, f.g.nav.nearestGround(1925, 1640), {
@@ -171,7 +172,7 @@ test("ranged attacks arc over an intact fence, lock their landing point and allo
 });
 
 test("hunting pursuers remain active far from their home; all open regions still respect actor and projectile caps", () => {
-  const f = fixture({ day: 4, time: 301, all: true }),
+  const f = fixture({ day: 4, time: NIGHT_START + 1, all: true }),
     e = f.isolate();
   assert.ok(f.m.actors.length <= MINIONS.max);
   Object.assign(e, f.g.nav.nearestGround(6000, 1600), {
@@ -228,7 +229,7 @@ test("the same purchased axe damage and cadence apply to small monsters; pause a
 
 test("bosses have a narrower notice radius, retain committed strikes after hits and resume chase quickly", () => {
   const f = fixture();
-  f.g.state.worldTime = 301;
+  f.g.state.worldTime = NIGHT_START + 1;
   const bosses = createBiomeEnemies(f.options);
   for (let i = 0; i < 70; i++) bosses.update(0.05);
   const e = bosses.actors[0];

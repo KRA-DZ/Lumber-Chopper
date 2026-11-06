@@ -40,6 +40,9 @@ import { OutpostView } from "./outpost-view.js";
 import { createLocalCoop } from "../game/local-coop.js";
 import { CoopCamera } from "./coop-camera.js";
 import { CoopViews } from "./coop-views.js";
+import { KeyboardInteractions, interactNearby } from "./keyboard-interactions.js";
+import { NIGHT_START } from "../game/cycle.js";
+import { CampServicesView, HouseView } from "./camp-services-view.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -137,6 +140,9 @@ export class WorldScene extends Phaser.Scene {
       this.coopViews = new CoopViews(this);
       this.coopCamera = new CoopCamera(this);
     }
+    this.keyboardUi = new KeyboardInteractions(this);
+    this.campServicesView = new CampServicesView(this);
+    this.houseView = new HouseView(this);
     this.bindInput();
     this.bindDialogs();
     this.gameMenu = createGameMenu(this);
@@ -426,7 +432,7 @@ export class WorldScene extends Phaser.Scene {
       if (
         !this.core.paused &&
         this.core.exploration.fishing &&
-        ["KeyE", "Space"].includes(event.code)
+        ["KeyE", "Enter", "Space"].includes(event.code)
       ) {
         event.preventDefault();
         this.core.exploration.reel();
@@ -457,45 +463,10 @@ export class WorldScene extends Phaser.Scene {
         this.regionMap.open();
         return;
       }
-      if (!this.core.paused && (event.code === "KeyE" || this.core.coop && event.code === "Enter")) {
+      if (!this.core.paused && ["KeyE", "Enter"].includes(event.code)) {
         event.preventDefault();
-        const debris = this.core.clearing?.all.find((d) =>
-          this.core.clearing.near(d),
-        );
-        if (debris) {
-          event.preventDefault();
-          if (this.core.orderClearing(debris.id)) this.core.tryClear(debris.id);
-          return;
-        }
-        const clue = this.atmosphere.nearestClue();
-        if (clue) {
-          if (this.core.exploration.get(clue.id))
-            this.core.exploration.request(clue.id);
-          else this.openClue(clue);
-        } else if (
-          this.core.regions
-            ?.frontiers()
-            .some(
-              (g) =>
-                Math.hypot(g.x - this.playerModel.x, g.y - this.playerModel.y) <
-                130,
-            )
-        ) {
-          const gate = this.core.regions
-            .frontiers()
-            .find(
-              (g) =>
-                Math.hypot(g.x - this.playerModel.x, g.y - this.playerModel.y) <
-                130,
-            );
-          this.core.setDestination(gate.x, gate.y);
-        } else if (
-          Math.hypot(
-            this.playerModel.x - this.merchantSite.x,
-            this.playerModel.y - this.merchantSite.y,
-          ) < 150
-        )
-          this.core.exploration.request("mysterious-merchant");
+        if (!event.repeat) interactNearby(this);
+        return;
       }
       if (!this.core.paused && event.code in this.keyMap)
         event.preventDefault();
@@ -508,7 +479,17 @@ export class WorldScene extends Phaser.Scene {
     this.input.on("pointerdown", (pointer, over) => {
       if (this.core.paused || pointer.button !== 0) return;
       if (this.coopViews) this.coopViews.focus(this.coopCamera.actorAt(pointer));
-      if (this.core.coop && this.core.state.health <= 0) return;
+      if (this.core.state.health <= 0 || this.core.player.menuOpen) return;
+      if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
+      const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
+      if (service) {
+        if (service.getData("campStore")) this.core.camp.store(this.core.state.wood ? "deposit" : "withdraw");
+        else if (service.getData("campHouse")) this.core.camp.enter();
+        else this.core.showNotice("Палатка — этап лагеря. Закончите хижину, чтобы войти внутрь.");
+        return;
+      }
+      const boulder = over.find(o => o.getData("boulder"));
+      if (boulder) { if (!this.core.mining.hit(boulder.getData("boulder"))) this.core.setDestination(boulder.x,boulder.y+65); return; }
       const size = this.scale.width < 600 ? 100 : 144;
       if (pointer.x > this.scale.width - size - 20 && pointer.y < size + 52)
         return;
@@ -603,7 +584,10 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   bindDialogs() {
-    this.shop = createShop(this.core.state, {
+    this.shop = this.core.coop ? {
+      open: () => this.keyboardUi.openShop(), refresh: () => this.keyboardUi.refresh(), destroy: () => {},
+      get isOpen() { return false; },
+    } : createShop(this.core.state, {
       currencyIcon: lootItemIcon("coins"),
       iconFor: this.assets.items ? itemShopIcon : undefined,
       onOpen: () => this.pause("shop", true),
@@ -710,7 +694,7 @@ export class WorldScene extends Phaser.Scene {
       for (const a of this.core.actors) a.keys.clear();
       if (!this.core.paused) for (const [name, key] of Object.entries(this.keyboard)) {
         const actor = this.core.actors[name.startsWith("Arrow") ? 1 : 0];
-        if (key.isDown && actor.state.health > 0) actor.keys.add(name);
+        if (key.isDown && actor.state.health > 0 && !actor.player.menuOpen) actor.keys.add(name);
       }
       return;
     }
@@ -822,7 +806,7 @@ export class WorldScene extends Phaser.Scene {
     this.saleLabel.setText(
       buyer
         ? `${buyer.kind === "cart" ? "Тележка" : "Покупатель"} ${buyer.load}/${buyer.capacity}`
-        : s.worldTime / DAY_SECONDS >= 0.5
+        : s.worldTime >= NIGHT_START
           ? "До утра закрыто"
           : "Ждём покупателя",
     );
@@ -850,6 +834,14 @@ export class WorldScene extends Phaser.Scene {
       this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
     if (!this.coopViews) this.feedback.render();
     this.outpostView.render();
+    this.campServicesView.render();
+    this.houseView.render();
+    for (const [i, actor] of (c.actors || [c]).entries()) {
+      const entry = this.coopViews?.entries[i] || this;
+      entry.player.setVisible(!actor.player.room);
+      if (actor.player.room) { entry.axe.setVisible(false); for (const log of entry.cargo) log.setVisible(false); }
+    }
+    this.keyboardUi?.refresh();
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1006,11 +998,12 @@ export class WorldScene extends Phaser.Scene {
         damaged ? "campStates.hut.damaged" : "house",
       );
     }
-    const key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}`;
+    const key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}:${Number(this.core.camp.lit())}`;
     if (key === this.lastCampKey) return;
     this.lastCampKey = key;
-    this.fire.setVisible(s.campLevel > 0);
-    if (s.campLevel > 0) this.fire.play("fire.loop", true);
+    this.fire.setVisible(true);
+    if (this.core.camp.lit()) this.fire.play("fire.loop", true);
+    else { this.fire.stop(); this.assets.setFrame(this.fire,"unlitFire"); }
     this.tent.setVisible(s.campLevel >= 2 && s.campLevel < 4);
     this.hut.setVisible(s.campLevel === 4);
     this.partial.setVisible(s.buildWood > 0 && s.campLevel !== 2);
@@ -1028,7 +1021,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.assets.camp) {
       const sections = this.core.defenses
         .all()
-        .filter((d) => d.kind === "fence");
+        .filter((d) => d.kind === "fence" || d.kind === "gate" && !d.open);
       for (const d of sections)
         this.fences.push(
           this.addImage(
@@ -1121,6 +1114,11 @@ export class WorldScene extends Phaser.Scene {
       try { return this.coopViews.withActor(e.actor, () => this.onModelEvent(type, e)); }
       finally { this.routingCoop = false; }
     }
+    if (type === "mining-hit") { this.heroView?.hit(); this.float(`-${e.damage}`,e.rock.x,e.rock.y-50); return; }
+    if (type === "stone-collected") { this.float(`+${e.count} камня`,e.rock.x,e.rock.y-65,"#d4ddd5"); return; }
+    if (type === "camp-extinguished" || type === "camp-low-fuel") {
+      this.core.showNotice(type === "camp-extinguished" ? "Костёр погас! Лагерь больше не защищает от Смотрителя." : "Костёр догорает: подбросьте дрова через E/Enter.",8); return;
+    }
     if (type === "player-down") {
       this.core.showNotice(`Игрок ${e.actor + 1} повержен. Подойдите и удерживайте ${e.actor ? "E" : "Enter"}, чтобы помочь.`, 8);
       return;
@@ -1154,7 +1152,8 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (type === "site-ready") {
-      this.explorationUi?.openSite(e.site);
+      if(this.core.coop && e.site.kind === "merchant") this.keyboardUi.openShop(this.core.activeActor,e.site);
+      else this.explorationUi?.openSite(e.site);
       return;
     }
     if (type === "fish-caught") {
@@ -1461,6 +1460,9 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.houseView?.destroy();
+    this.campServicesView?.destroy();
+    this.keyboardUi?.destroy();
     this.coopViews?.destroy();
     this.coopCamera?.destroy();
     this.outpostView?.destroy();

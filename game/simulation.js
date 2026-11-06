@@ -3,6 +3,8 @@ import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
 import { createOutposts } from "./outposts.js";
 import { shareWorldState } from "./coop-state.js";
+import { createCampServices, CAMP_SERVICE } from "./camp-services.js";
+import { createMining } from "./mining.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
@@ -189,6 +191,8 @@ export function createSimulation({
         canAct,
         getStory: () => story,
         outposts,
+        camp: { lit: () => camp.lit(), stoke: quoted => camp.stoke(quoted) },
+        onSale: party ? value => party.sale(value) : null,
         navigate: navigateTo,
         emit: (type, event) => {
           story?.sync();
@@ -208,6 +212,7 @@ export function createSimulation({
   }
   function clearKeys() {
     keys.clear();
+    if (player.room) player.room.target = null;
     defenseRepair?.cancel();
     clearingOrder = null;
     player.path = [];
@@ -216,8 +221,10 @@ export function createSimulation({
   }
   const treeIds = new Map(trees.map((t) => [t.id, t]));
   function canAct() {
-    return !paused && !gameState.gameOver && gameState.health > 0;
+    return !paused && !gameState.gameOver && gameState.health > 0 && !player.room && !player.menuOpen;
   }
+  const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, emit });
+  const mining = createMining({ state: gameState, player, world, nav, canAct, emit });
   const defenseRepair = createDefenseRepair({
     canAct,
     get: (id) => defenses?.get(id),
@@ -570,7 +577,7 @@ export function createSimulation({
         forestry,
         activeBuyer,
         sale,
-        onIncome: party ? value => party.reward(value) : null,
+        onIncome: party ? value => party.sale(value) : null,
         playersAtSale: party ? () => party.actors.some(a => a.state.wood > 0 && distance(a.player, sale) < sale.radius) : null,
         getSurvival: () => survival,
         emit: (type, event) => {
@@ -580,7 +587,16 @@ export function createSimulation({
       })
     : null;
   function transferOneLog(target = null) {
-    if (!canAct() || transferTimer > 0 || !gameState.cargo.length) return false;
+    if (!canAct() || transferTimer > 0) return false;
+    const frontier = regions?.frontiers().find(g => distance(player, g) < 50 && (!target || target === g.region.id));
+    if (frontier && !defenseOrder && !defenseRepair.target && (gameState.regionWood[frontier.region.id] || 0) >= frontier.region.cost && gameState.stone > 0) {
+      const result = regions.deposit(frontier.region.id, "stone");
+      if (!result) return false;
+      gameState.stone--; transferTimer = .25;
+      if (result.opened) openRegion(result.region);
+      updateUI(); return true;
+    }
+    if (!gameState.cargo.length) return false;
     if (defenseRepair.target && target !== defenseRepair.target) return false;
     const slotPosition = stackOffset(gameState.wood - 1, gameState.wood);
     const start = {
@@ -609,14 +625,7 @@ export function createSimulation({
         forestry.takeCargo();
         transferTimer = 0.18;
         visualEffects.transfer("region", start, { x: gate.x, y: gate.y - 25 });
-        if (result.opened) {
-          world.generate(result.region);
-          for (const t of trees) treeIds.set(t.id, t);
-          rebuildObstacles();
-          emit("region-open", { region: result.region });
-          showNotice(`Открыта новая территория: ${result.region.name}`, 8);
-          player.celebration = 2;
-        }
+        if (result.opened) openRegion(result.region);
         updateUI();
         return true;
       }
@@ -657,6 +666,7 @@ export function createSimulation({
         gameState.buildWood = 0;
         const oldRadius = forestRadius();
         gameState.campLevel++;
+        if (gameState.campLevel === 1) gameState.campFuel = CAMP_SERVICE.startingFuel;
         if (!regions) expansion.open(oldRadius, forestRadius());
         showNotice(
           regions
@@ -691,7 +701,8 @@ export function createSimulation({
         slot,
       });
       player.celebration = 1.4;
-      gameState.coins += value;
+      if (party) party.sale(value);
+      else gameState.coins += value;
       tutorial.sold = true;
       floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
     }
@@ -715,6 +726,12 @@ export function createSimulation({
     if (defenseRepair.target) defenseRepair.update(dt);
     else transferOneLog();
   }
+  function openRegion(region) {
+    world.generate(region);
+    for (const t of trees) treeIds.set(t.id, t);
+    rebuildObstacles(); emit("region-open", { region });
+    showNotice(`Открыта новая территория: ${region.name}`, 8); player.celebration = 2;
+  }
   function updateStep(dt, actorOnly = false) {
     if (paused) return;
     if (shared) elapsed = shared.elapsed;
@@ -723,6 +740,13 @@ export function createSimulation({
     if (!actorOnly) {
       cycle.update(dt);
       outposts.update(dt);
+      camp.update(dt);
+      mining.update();
+      for (const gate of defenses?.all().filter(d => d.kind === "gate" && d.hp > 0) || []) {
+        const nearFriendly = [...(party?.positions() || [player]), ...buyers, ...(workers?.crew || [])]
+          .some(p => !p.room && distance(p, gate) < (gate.open ? 140 : 85));
+        if (gate.open !== nearFriendly) defenses.toggleGate(gate.id, nearFriendly);
+      }
     }
     if (!actorOnly && forestry.updateGrowth(trees, cycle.dayNumber)) {
       rebuildObstacles();
@@ -738,13 +762,18 @@ export function createSimulation({
     player.swing = Math.max(0, player.swing - dt);
     const alive = gameState.health > 0;
     if (!alive) { keys.clear(); player.path = []; }
+    if (player.room || player.menuOpen) {
+      player.path=[];selectedEnemyId=null;pursueEnemy=false;defenseOrder=null;clearingOrder=null;defenseRepair.cancel();
+    }
+    if (player.room && !player.menuOpen) camp.moveRoom(dt, keys);
+    const worldKeys = player.room || player.menuOpen ? new Set() : keys;
     const kx =
-      Number(keys.has("KeyD") || keys.has("ArrowRight")) -
-      Number(keys.has("KeyA") || keys.has("ArrowLeft"));
+      Number(worldKeys.has("KeyD") || worldKeys.has("ArrowRight")) -
+      Number(worldKeys.has("KeyA") || worldKeys.has("ArrowLeft"));
     const ky =
-      Number(keys.has("KeyS") || keys.has("ArrowDown")) -
-      Number(keys.has("KeyW") || keys.has("ArrowUp"));
-    const keyboard = keys.size > 0,
+      Number(worldKeys.has("KeyS") || worldKeys.has("ArrowDown")) -
+      Number(worldKeys.has("KeyW") || worldKeys.has("ArrowUp"));
+    const keyboard = worldKeys.size > 0,
       oldX = player.x,
       oldY = player.y;
     if (keyboard) {
@@ -805,16 +834,16 @@ export function createSimulation({
     }
     pursuitTimer = Math.max(0, pursuitTimer - dt);
     if (focused && pursueEnemy && !keyboard && pursuitTimer <= 0) {
-      if (distance(player, focused) > 62 && distance(player, focused) < 700) {
+      if ((distance(player, focused) > 62 || !nav.clearSegment(player, focused)) && distance(player, focused) < 700) {
         setDestination(focused.x, focused.y);
         pursuitTimer = 0.6;
       } else player.path = [];
     }
 
-    if (alive) exploration?.update(dt);
+    if (alive && !player.room && !player.menuOpen) exploration?.update(dt);
     if (paused) return; // Opening an inspection can pause synchronously at arrival.
     if (!actorOnly) buyerSystem.update(dt);
-    if (alive) updatePlatforms(dt);
+    if (canAct()) updatePlatforms(dt);
 
     if (!actorOnly) for (const tree of trees) tree.shake = Math.max(0, tree.shake - dt);
     if (noticeTimer > 0) {
@@ -857,7 +886,9 @@ export function createSimulation({
     ) {
       tryChop(nearest.id, "auto");
     }
-    if (alive && forestry.collect(dt, player)) updateUI();
+    const rock = world.boulders?.find(r => (gameState.boulderHP[r.id] ?? r.maxHP) > 0 && distance(player, r) < 90);
+    if (!enemy && !nearest && rock) mining.hit(rock.id, "auto");
+    if (canAct() && forestry.collect(dt, player)) updateUI();
     if (!actorOnly) survival?.update(dt);
     if (!actorOnly || alive) combatLoot.update(dt);
     if (!actorOnly && !gameState.gameOver) workers?.update(dt);
@@ -1010,6 +1041,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
+    camp, mining,
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },

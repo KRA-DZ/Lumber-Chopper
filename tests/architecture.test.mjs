@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -10,7 +11,7 @@ const create = (survival = false, emit = () => {}) =>
   createSimulation({ regional: true, survival, emit });
 function beginNight(g, night = 1) {
   g.state.calendarDay = night - 1;
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
 }
 function outside(g) {
@@ -69,6 +70,7 @@ test("regional economic loop earns a real carry purchase and preserves exact res
 test("public transfers reject wrong target, distance, empty cargo and repeated same-tick debits", () => {
   const g = create();
   const gate = g.regions.frontiers()[0];
+  g.state.campLevel = gate.region.campRequired;
   assert.equal(g.transferOneLog(gate.region.id), false);
   g.forestry.addCargo(12);
   assert.equal(g.transferOneLog(gate.region.id), false);
@@ -96,12 +98,12 @@ test("cycle emits each edge once including a large delta and counts nights only 
   const s = createInitialState(),
     events = [],
     cycle = createCycleManager(s, (type, e) => events.push([type, e]));
-  cycle.update(180);
+  cycle.update(NIGHT_START - s.worldTime);
   assert.equal(events.filter(([type]) => type === "night-started").length, 1);
   assert.equal(s.nightsSurvived, 0);
   cycle.update(0);
   assert.equal(events.length, 3);
-  cycle.update(300);
+  cycle.update(600 - NIGHT_START);
   assert.equal(s.nightsSurvived, 1);
   assert.equal(s.calendarDay, 1);
   cycle.update(1200);
@@ -155,6 +157,7 @@ test("watcher cannot be killed, strikes quickly, respects pause and can cause de
 });
 test("camp light protects the player; dawn removes all enemies and restores health", () => {
   const g = create(true);
+  g.state.campLevel = 1; g.state.campFuel = 600;
   beginNight(g);
   g.update(12.1);
   Object.assign(g.player, { x: 1600, y: 1720, path: [] });

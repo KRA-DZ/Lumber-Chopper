@@ -79,14 +79,15 @@ try:
             assert abs(after[2] - before[2] - .4) < 1e-7
             q.evaluate("a.state.coins=100;b.state.coins=100;g.step(0)")
             q.locator('[data-coop-player="1"] [data-coop-action="shop"]').click()
-            q.wait_for_selector("#shopDialog[open]")
-            assert q.evaluate("m.paused&&a.paused&&b.paused&&m.activeActor===1")
-            q.locator("[data-buy=carry]").click()
-            assert q.evaluate("b.state.maxWood===4&&b.state.coins===80&&a.state.maxWood===2&&a.state.coins===100")
-            snapshot = q.evaluate("[a.player.x,b.player.x,m.state.worldTime]")
-            q.evaluate("g.step(5)")
-            assert q.evaluate("[a.player.x,b.player.x,m.state.worldTime]") == snapshot
-            q.locator('#shopDialog [data-close]').click(); q.wait_for_function("!m.paused")
+            q.wait_for_selector('[data-player-shop="1"]')
+            assert q.evaluate("!m.paused&&!a.player.menuOpen&&b.player.menuOpen&&m.activeActor===1")
+            q.locator('[data-player-shop="1"] [data-personal-buy=carry]').click()
+            assert q.evaluate("b.state.maxWood===4&&b.state.coins===65&&a.state.maxWood===2&&a.state.coins===100")
+            snapshot = q.evaluate("m.state.worldTime")
+            q.evaluate("g.step(1)")
+            assert abs(q.evaluate("m.state.worldTime")-snapshot-1)<1e-7
+            q.keyboard.press("Backspace", delay=70)
+            assert q.evaluate("!m.paused&&!b.player.menuOpen")
             q.evaluate("""()=>{Object.assign(a.player,a.nav.nearestGround(1050,1900),{path:[],autoTimer:10000});
               Object.assign(b.player,b.nav.nearestGround(2250,1900),{path:[],autoTimer:10000});
               b.state.lanternLevel=4;m.state.worldTime=450;g.step(0)}""")

@@ -6,13 +6,11 @@ import { nightSight } from "../mystery.js";
 // Night is fully opaque from the boundary onward; dusk only prepares the transition.
 export function nightOpacity(state) {
   if (state.worldTime >= NIGHT_START) return 1;
-  const t = Math.max(
-    0,
-    Math.min(1, (state.worldTime - (NIGHT_START - 30)) / 30),
-  );
+  const t = Math.max(0, Math.min(1, (state.worldTime - (NIGHT_START - 12)) / 12));
   return t * t * (3 - 2 * t);
 }
 export function campLights(state, safeRadius) {
+  if (state.campLevel < 1 || state.campFuel <= 0) return [];
   return [
     { x: CENTER.x, y: CENTER.y, r: safeRadius + 120 },
     { x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 90 },

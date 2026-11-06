@@ -36,8 +36,8 @@ export function createSurvival({
     hitCooldown = 0,
     pathCursor = 0,
     wave = null;
-  const safeRadius = () => (state.campLevel > 0 ? 310 : 210);
-  const safeZone = p => distance(p, CENTER) < safeRadius()
+  const safeRadius = () => state.campLevel > 0 && state.campFuel > 0 ? 310 : 0;
+  const safeZone = p => p.room ? { x: p.x, y: p.y, r: 100 } : safeRadius() > 0 && distance(p, CENTER) < safeRadius()
     ? { ...CENTER, r: safeRadius() } : sanctuary(p);
   const isSafe = p => !!safeZone(p);
   const residents = regions
@@ -152,6 +152,7 @@ export function createSurvival({
     if (party) party.dawn(); else state.health = state.maxHealth;
   }
   function hurtPlayer(amount, source = "raider") {
+    if (player.room) return;
     if (party) {
       if (source !== "watcher" || !isSafe(player)) party.hurt(amount, source);
       return;

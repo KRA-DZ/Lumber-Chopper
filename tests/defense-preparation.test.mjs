@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -137,7 +138,7 @@ test("raid day dawn announces preparation once without starting the hunt or chan
   g.paused = false;
   g.update(11);
   assert.equal(g.sunsetWarning, null);
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   assert.equal(g.survival.minionHunt, true);
   assert.equal(g.survival.wave.status, "warning");
@@ -156,7 +157,7 @@ test("the dawn report covers damage after the paid wave, local kills, repaired b
   g.world.generate(region);
   g.nav.rebuildObstacles();
   g.state.calendarDay = 4;
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   for (const enemy of [...g.survival.raiders])
@@ -203,7 +204,7 @@ test("the dawn report covers damage after the paid wave, local kills, repaired b
 test("a withdrawn wave reports zero reward, and ordinary nights cannot replace the last raid report", () => {
   const { g } = fixture();
   g.state.calendarDay = 4;
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   g.state.worldTime = 599.99;
@@ -213,7 +214,7 @@ test("a withdrawn wave reports zero reward, and ordinary nights cannot replace t
   assert.equal(report.reward, 0);
   assert.equal(g.state.coins, 0);
   assert.equal(g.state.raidsWon, 0);
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.state.worldTime = 599.99;
   g.update(0.02);
@@ -223,7 +224,7 @@ test("a withdrawn wave reports zero reward, and ordinary nights cannot replace t
 test("a lethal camp strike records effective HP damage and closes the report without a reward", () => {
   const { g } = fixture();
   g.state.calendarDay = 4;
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   Object.assign(g.player, g.nav.nearestGround(1600, 1880), { path: [] });

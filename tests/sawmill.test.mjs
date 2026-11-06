@@ -14,9 +14,11 @@ function create(emit) {
       path: [],
       autoTimer: 10000,
     });
+    g.state.campLevel = Math.max(g.state.campLevel, gate.region.campRequired);
+    g.state.stone = gate.region.stoneCost;
     g.state.maxWood = gate.region.cost;
     for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
-    g.update((gate.region.cost + 1) * 0.2);
+    g.update((gate.region.cost + 1) * 0.2 + gate.region.stoneCost * .3);
     assert.ok(g.regions.unlocked.has(id));
   }
   g.state.maxWood = 2;
@@ -50,7 +52,8 @@ test("sawmill reuses the field square, reserves the whole footprint and routes t
   const region = g.regions.all.find((r) => r.id === "1:1");
   assert.equal(g.regions.all.length, 25);
   assert.equal(region.biome, "field");
-  assert.equal(region.cost, 24);
+  assert.equal(region.cost, 192);
+  assert.equal(region.stoneCost, 20);
   assert.equal(region.name, SAWMILL.name);
   assert.deepEqual(g.exploration.regionDestination(region), SAWMILL.entrance);
   assert.match(g.exploration.regionSummary(region.id), /0\/2/);

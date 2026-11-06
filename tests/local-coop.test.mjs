@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createLocalCoop } from "../game/local-coop.js";
@@ -58,6 +59,7 @@ test("both players build a common camp and open a common region using their own 
   assert.equal(g.actors.reduce((n, a) => n + a.state.wood, 0), 0);
   const gate = g.regions.frontiers().find(g => g.region.id === "1:0");
   for (const a of g.actors) {
+    a.state.maxWood = gate.region.cost / 2;
     for (let i = 0; i < gate.region.cost / 2; i++) a.forestry.addCargo(10);
     place(a, gate);
   }
@@ -75,7 +77,7 @@ test("a shared sale has one finite customer while proceeds go to each seller", (
     a.forestry.addCargo(10 + i * 10); place(a, g.sale);
     assert.ok(a.transferOneLog());
   }
-  assert.equal(buyer.load, 2); assert.equal(g.actors[0].state.coins, 10); assert.equal(g.actors[1].state.coins, 20);
+  assert.equal(buyer.load, 2); assert.equal(g.actors[0].state.coins, 30); assert.equal(g.actors[1].state.coins, 30);
 });
 
 test("outpost fuel and opened chests are shared; resources and healing are charged to the interacting player", () => {
@@ -108,8 +110,9 @@ test("one downed player cannot move or self-heal; uninterrupted nearby help revi
 
 test("night enemies select and hurt the exposed second player while a sheltered first player stays healthy", () => {
   const g = make(true), [a, b] = g.actors;
+  g.state.campLevel = 1; g.state.campFuel = 600;
   place(a, { x: 1600, y: 1780 }); place(b, { x: 2000, y: 2000 });
-  g.state.worldTime = 299.99; g.update(.02); g.update(12.1);
+  g.state.worldTime = NIGHT_START - .01; g.update(.02); g.update(12.1);
   b.state.health = 100; b.player.hitCooldown = 0;
   for (const e of g.survival.residents) e.warning = 1000;
   const m = g.survival.monster;
@@ -122,7 +125,7 @@ test("night enemies select and hurt the exposed second player while a sheltered 
 test("a living second player can earn combat loot while the host is down without duplicate rewards", () => {
   const g = make(true), [a, b] = g.actors;
   const forest = open(g, "1:0"); place(b, b.nav.nearestGround(forest.cx, forest.cy + 300));
-  g.state.worldTime = 299.99; g.update(.02);
+  g.state.worldTime = NIGHT_START - .01; g.update(.02);
   const enemy = g.survival.minions.find(e => e.regionId === forest.id);
   assert.ok(enemy); enemy.warning = 0;
   place(b, enemy); b.state.axePower = 1000; b.player.clickTimer = 0;
@@ -139,7 +142,7 @@ test("separated players stream enemies near both regions with shared caps and no
   const g = make(true); const swamp = open(g, "0:1"), forest = open(g, "1:0");
   place(g.actors[0], g.nav.nearestGround(swamp.cx, swamp.cy + 400));
   place(g.actors[1], g.actors[1].nav.nearestGround(forest.cx, forest.cy + 400));
-  g.state.worldTime = 299.99; g.update(.02);
+  g.state.worldTime = NIGHT_START - .01; g.update(.02);
   for (const r of [swamp, forest]) assert.ok(g.survival.minions.some(e => e.regionId === r.id));
   assert.ok(g.survival.minions.length <= 12 && g.survival.regionalBosses.length <= 6);
   for (const e of g.survival.residents) for (const a of g.actors)

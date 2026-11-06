@@ -215,7 +215,7 @@ export function createMinions({
       return null;
     return (
       (defenses?.all() || [])
-        .filter((s) => s.kind !== "trap" && s.hp > 0)
+        .filter((s) => s.kind !== "trap" && s.hp > 0 && !s.open)
         .sort(
           (a, b) =>
             distance(e, a) +

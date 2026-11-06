@@ -64,7 +64,7 @@ export function createRaiderAI({
       distance(actor, player) < 180 &&
       nav.clearSegment(actor, player);
     const structures = (defenses?.all() || []).filter(
-      (s) => s.kind !== "trap" && s.hp > 0,
+      (s) => s.kind !== "trap" && s.hp > 0 && !s.open,
     );
     // Outside the enclosure, breakers breach the nearest section. Others strike only a nearby barrier.
     const barrier =

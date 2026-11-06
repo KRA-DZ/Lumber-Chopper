@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import { createNavigation } from "../game/navigation.js";
 import { createInitialState } from "../game/config.js";
 import test from "node:test";
@@ -102,7 +103,7 @@ test("tracking does not turn a contact strike into remote damage", () => {
 });
 test("a clear pursuit route follows fresh footsteps without waiting for an A* slot", () => {
   const g = createSimulation({ regional: true });
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   for (const tree of g.world.trees)
@@ -162,7 +163,7 @@ test("standing in three announced attacks is lethal; watcher remains unkillable"
   assert.equal(f.result.health, 0);
   assert.deepEqual(f.result.hits, ["watcher", "watcher", "watcher"]);
   const g = createSimulation({ regional: true });
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   assert.equal(g.survival.hit("watcher", 99999), false);
   assert.ok(g.survival.monster.invulnerable);
@@ -221,7 +222,7 @@ test("a trunk blocks damage even if the player stays inside the painted area", (
 });
 test("model pause freezes windup and noise; dawn clears all hazards", () => {
   const g = createSimulation({ regional: true });
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   const p = g.nav.nearestGround(1600, 2000);
@@ -248,7 +249,7 @@ test("model pause freezes windup and noise; dawn clears all hazards", () => {
 });
 test("threat directions and cover instruction work without sound", () => {
   const g = createSimulation({ regional: true });
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   g.player.x = 2200;

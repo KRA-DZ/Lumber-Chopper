@@ -43,7 +43,7 @@ export function createRaidReports(state, defenses) {
           (s) =>
             s.kind !== "trap" &&
             s.hp < s.maxHP &&
-            (s.kind === "fence" || Object.hasOwn(state.defenseHP, s.id)),
+            (["fence","gate"].includes(s.kind) || Object.hasOwn(state.defenseHP, s.id)),
         )
         .map((s) => ({
           id: s.id,
@@ -51,7 +51,7 @@ export function createRaidReports(state, defenses) {
           hp: s.hp,
           maxHP: s.maxHP,
           logs:
-            !s.hp && s.kind !== "fence"
+            !s.hp && !["fence","gate"].includes(s.kind)
               ? s.cost - s.wood
               : Math.ceil((s.maxHP - s.hp) / DEFENSE.repairPerLog),
         }));

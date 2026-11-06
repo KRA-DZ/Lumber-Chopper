@@ -20,7 +20,7 @@ export class DefenseView {
       }
       this.objects = [];
       for (const d of c.defenses?.all() || []) {
-        const generated = s.assets.camp && d.kind !== "fence";
+        const generated = s.assets.camp && !["fence","gate"].includes(d.kind);
         const g = generated
           ? s.addImage(
               `camp.defense.${d.kind}.${d.hp > 0 ? "ready" : "broken"}`,
@@ -59,6 +59,8 @@ export class DefenseView {
           for (let i = -12; i <= 12; i += 8)
             g.lineBetween(d.x + i, d.y - 10, d.x + i + 4, d.y + 10);
           if (d.hp) g.fillStyle(0xe5cd9a).fillRect(d.x - 4, d.y - 4, 8, 8);
+        } else if (d.kind === "gate") {
+          g.lineStyle(3,d.open ? 0x95bc95 : 0xd5b475,.8).strokeCircle(d.x,d.y-10,12);
         } else if (d.hp < d.maxHP) {
           if (!d.hp) {
             g.lineStyle(2, 0xe4ad71, 0.7).strokeEllipse(d.x, d.y, 46, 20);
@@ -77,7 +79,7 @@ export class DefenseView {
           .setInteractive()
           .setData("defense", d.id);
         const text =
-          d.kind === "fence"
+          d.kind === "gate" ? `${d.name} · ${!d.hp ? "СЛОМАНА" : d.open ? "открыта" : "закрыта"} · ${d.hp}/${d.maxHP}` : d.kind === "fence"
             ? `${d.hp ? "Повреждено" : "ПРОЛОМ"} · ${d.hp}/${d.maxHP}`
             : `${d.name}\n${d.hp ? (d.kind === "trap" ? "Взведена · 1 заряд" : `${d.hp}/${d.maxHP} HP`) : `${d.wood}/${d.cost} брёвен`}`;
         // Intact fence labels are never visible; don't allocate their canvas textures.

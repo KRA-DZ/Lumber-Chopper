@@ -16,7 +16,7 @@
   while (m.state.wood < 82) m.forestry.addCargo(10);
   m.state.health = m.state.maxHealth = m.state.campHealth = m.state.maxCampHealth = 1e6;
   Object.assign(m.player, m.nav.nearestGround(1800, 1980), { path: [], autoTimer: 10000 });
-  m.state.calendarDay = 29; m.state.worldTime = 299.99;
+  m.state.calendarDay = 29; m.state.worldTime = 449.99;
   g.step(.02); g.step(12.1);
   m.state.worldTime = 450;
   const p = m.player;
