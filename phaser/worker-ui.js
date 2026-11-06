@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "../game/camp-projects.js";
 import { WORKERS, WORKER_PHASES } from "../game/workers.js";
 
 export function createWorkerUi(scene) {
@@ -18,7 +19,7 @@ export function createWorkerUi(scene) {
     const requirements = document.createElement("p");
     requirements.dataset.workerRequirements = "";
     requirements.textContent =
-      s.campLevel < 2
+      !hasCampBuilding(s,"tent")
         ? "Сначала постройте костёр и палатку на голубой площадке."
         : !w.available()
           ? "Откройте Дубовую рощу: восточный указатель, 12 брёвен."

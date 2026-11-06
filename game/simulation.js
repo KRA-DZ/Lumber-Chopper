@@ -3,8 +3,9 @@ import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
 import { createOutposts } from "./outposts.js";
 import { shareWorldState } from "./coop-state.js";
-import { createCampServices, CAMP_SERVICE } from "./camp-services.js";
+import { createCampServices } from "./camp-services.js";
 import { createMining } from "./mining.js";
+import { createCampBuilder } from "./camp-projects.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { createDefenses } from "./defenses.js";
@@ -224,6 +225,8 @@ export function createSimulation({
     return !paused && !gameState.gameOver && gameState.health > 0 && !player.room && !player.menuOpen;
   }
   const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, emit });
+  const builder = createCampBuilder({ state: gameState, player, pad: build, forestry, canAct,
+    players: () => party?.actors.map(a => a.player) || [player], emit });
   const mining = createMining({ state: gameState, player, world, nav, canAct, emit });
   const defenseRepair = createDefenseRepair({
     canAct,
@@ -588,6 +591,8 @@ export function createSimulation({
     : null;
   function transferOneLog(target = null) {
     if (!canAct() || transferTimer > 0) return false;
+    builder.update();
+    if (!canAct()) return false; // Opening the project picker pauses before any debit.
     const frontier = regions?.frontiers().find(g => distance(player, g) < 50 && (!target || target === g.region.id));
     if (frontier && !defenseOrder && !defenseRepair.target && (gameState.regionWood[frontier.region.id] || 0) >= frontier.region.cost && gameState.stone > 0) {
       const result = regions.deposit(frontier.region.id, "stone");
@@ -630,10 +635,10 @@ export function createSimulation({
         return true;
       }
     }
-    const repairing = hazards && gameState.campHealth < gameState.maxCampHealth;
+    const repairing = hazards && gameState.campHealth < gameState.maxCampHealth && (builder.canContribute() || !builder.choices.length);
     const building =
       distance(player, build) < build.radius &&
-      (gameState.campLevel < stages.length || repairing) &&
+      (builder.canContribute() || repairing) &&
       (!target || target === "build");
     const customer = activeBuyer();
     const selling =
@@ -641,7 +646,10 @@ export function createSimulation({
       customer &&
       (!target || target === "sell");
     if (!building && !selling) return false;
-    const value = forestry.takeCargo();
+    const buildTarget = building && !repairing ? construction.target(gameState) : null,
+      oldRadius = forestRadius(),
+      contribution = building && !repairing ? builder.contribute() : null;
+    const value = building && !repairing ? contribution?.value ?? null : forestry.takeCargo();
     if (value === null) return false;
     transferTimer = 0.18;
     if (building && repairing) {
@@ -657,20 +665,15 @@ export function createSimulation({
       emit("camp-repaired", { health: gameState.campHealth });
       floatingText(build.x, build.y - 35, `+${restored} прочности`, "#b8e8e4");
     } else if (building) {
-      const target = construction.target(gameState);
+      const target = buildTarget;
       visualEffects.transfer("build", start, target);
-      gameState.buildWood++;
       floatingText(build.x, build.y - 35, "+1 в лагерь", "#b8e8e4");
-      const stage = stages[gameState.campLevel];
-      if (gameState.buildWood >= stage.cost) {
-        gameState.buildWood = 0;
-        const oldRadius = forestRadius();
-        gameState.campLevel++;
-        if (gameState.campLevel === 1) gameState.campFuel = CAMP_SERVICE.startingFuel;
+      const stage = contribution.project;
+      if (contribution.complete) {
         if (!regions) expansion.open(oldRadius, forestRadius());
         showNotice(
           regions
-            ? `${stage.name}: готово! Новые регионы открываются у пограничных указателей.`
+            ? `${stage.name}: готово!${stage.id === "fire" ? " Добавьте брёвна через E/Enter, чтобы разжечь огонь." : " Выберите следующий проект на платформе."}`
             : `Открыта новая территория! Радиус леса: ${forestRadius()}`,
           8,
         );
@@ -718,10 +721,13 @@ export function createSimulation({
         body.repath = 0;
       }
     updateUI();
+    if (contribution?.complete) builder.update();
     return true;
   }
   function updatePlatforms(dt) {
     if (dt <= 0) return;
+    builder.update();
+    if (!canAct()) return;
     transferTimer = Math.max(0, transferTimer - dt);
     if (defenseRepair.target) defenseRepair.update(dt);
     else transferOneLog();
@@ -844,6 +850,7 @@ export function createSimulation({
     if (paused) return; // Opening an inspection can pause synchronously at arrival.
     if (!actorOnly) buyerSystem.update(dt);
     if (canAct()) updatePlatforms(dt);
+    if (paused) return;
 
     if (!actorOnly) for (const tree of trees) tree.shake = Math.max(0, tree.shake - dt);
     if (noticeTimer > 0) {
@@ -1041,7 +1048,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    camp, mining,
+    camp, mining, builder,
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },

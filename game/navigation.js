@@ -1,4 +1,5 @@
 import { CAMP } from "./camp-layout.js";
+import { hasCampBuilding, constructionStage } from "./camp-projects.js";
 import {
   fencePlan,
   partialFence,
@@ -74,16 +75,16 @@ export function createNavigation(
     capsule(CAMP.stall.x - 80, CAMP.stall.y - 30, 160, 32);
     if (!model.regions || model.regions.isOpen(merchant))
       capsule(merchant.x - 82, merchant.y - 24, 164, 28);
-    if (gameState.campLevel >= 1 || gameState.buildWood > 0)
+    if (hasCampBuilding(gameState,"fire") || constructionStage(gameState) === 0 && gameState.buildWood > 0)
       circle(1600, 1600, 23);
     if (
-      (gameState.campLevel >= 2 && gameState.campLevel < 4) ||
-      (gameState.campLevel === 1 && gameState.buildWood > 0)
+      hasCampBuilding(gameState,"tent") ||
+      (constructionStage(gameState) === 1 && gameState.buildWood > 0)
     )
       capsule(CAMP.tent.x - 80, CAMP.tent.y - 22, 160, 26);
     if (
-      gameState.campLevel >= 4 ||
-      (gameState.campLevel === 3 && gameState.buildWood > 0)
+      hasCampBuilding(gameState,"house") ||
+      (constructionStage(gameState) === 3 && gameState.buildWood > 0)
     )
       capsule(CAMP.hut.x - 114, CAMP.hut.y - 44, 228, 48);
     for (const p of campFencePosts()) circle(p.x, p.y, 5);

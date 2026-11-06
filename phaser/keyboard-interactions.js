@@ -2,6 +2,7 @@ import { SHOP_IDS, upgradeOffer } from "../economy.js";
 import { CAMP } from "../game/camp-layout.js";
 import { CAMP_SERVICE, ROOM } from "../game/camp-services.js";
 import { CENTER } from "../game/config.js";
+import { hasCampBuilding } from "../game/camp-projects.js";
 
 // Native keyboard navigation runs before Phaser. Co-op shops lock only their owner.
 export class KeyboardInteractions {
@@ -59,25 +60,33 @@ export class KeyboardInteractions {
     const dialog = document.querySelector("dialog[open]");
     if (dialog && dialog.id !== "heroDialog") {
       if (!["KeyW","KeyS","ArrowUp","ArrowDown","KeyE","Enter","KeyQ"].includes(e.code)) return;
-      this.consume(e); if (e.repeat) return;
+      this.consume(e); if (e.repeat && !["KeyW","KeyS","ArrowUp","ArrowDown"].includes(e.code)) return;
       if (this.modal !== dialog) { this.modal = dialog; this.selection = 0; }
-      const actions = [...dialog.querySelectorAll("button:not([disabled])")].filter(b => b.offsetParent !== null),
-        primary = actions.filter(b => !b.matches("[data-close],[data-activity-close],[data-journal-close],[data-menu-close]"));
+      const actions = [...dialog.querySelectorAll(dialog.id === "shopDialog" ? "[data-buy]" : "button:not([disabled])")].filter(b => b.offsetParent !== null),
+        primary = actions.filter(b => !b.matches("[data-close],[data-activity-close],[data-journal-close],[data-menu-close],[data-build-close]"));
       const list = primary.length ? primary : actions; if (!list.length) return;
       if (["KeyS","ArrowDown"].includes(e.code)) this.selection++;
       if (["KeyW","ArrowUp"].includes(e.code)) this.selection--;
       this.selection = (this.selection + list.length) % list.length;
       if (e.code === "KeyQ") { dialog.close(); return; }
       const button = list[this.selection];
-      if (["KeyE","Enter"].includes(e.code)) button.click(); else button.focus({ preventScroll: true });
+      for (const b of list) (b.closest(".shop-item") || b.closest(".build-option") || b).dataset.selected = String(b === button);
+      if (["KeyE","Enter"].includes(e.code)) {
+        if (!button.disabled) button.click();
+        else if (dialog.id === "shopDialog") dialog.querySelector("[data-message]").textContent = "Пока недоступно: проверьте стоимость и уровень улучшения.";
+      } else {
+        const target = button.disabled ? button.closest(".shop-item") : button;
+        target.tabIndex = -1; target.focus({ preventScroll: true }); target.scrollIntoView({block:"nearest"});
+      }
       return;
     }
+    this.modal = null;
     const i = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter","Backspace"].includes(e.code) ? 1 : 0, entry = this.shops.get(i);
     if (e.code === "Escape" && this.shops.size) {
       this.consume(e); for (const index of [...this.shops.keys()]) this.closeShop(index); return;
     }
     if (!entry || !["KeyW","KeyS","KeyA","KeyD","KeyE","KeyQ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter","Backspace"].includes(e.code)) return;
-    this.consume(e); if (e.repeat || this.scene.core.paused) return;
+    this.consume(e); if (this.scene.core.paused || e.repeat && !["KeyW","KeyS","ArrowUp","ArrowDown"].includes(e.code)) return;
     if (["KeyQ","Backspace"].includes(e.code)) { this.closeShop(i); return; }
     if (["KeyW","ArrowUp"].includes(e.code)) entry.index = (entry.index + entry.ids.length - 1) % entry.ids.length;
     if (["KeyS","ArrowDown"].includes(e.code)) entry.index = (entry.index + 1) % entry.ids.length;
@@ -98,10 +107,14 @@ export function interactNearby(scene) {
     { p: { x: CAMP.stall.x, y: CAMP.stall.y + 45 }, range: 155, act: () => scene.shop.open() },
     { p: CAMP_SERVICE.store, range: 110, act: () => { const n = c.camp.store(c.state.wood ? "deposit" : "withdraw"); c.showNotice(n ? `Склад: ${c.state.logStore.length} брёвен` : "Склад пуст или заполнен."); } },
     { p: {x:1710,y:1780}, range:100, act:()=>scene.workerUi.open() },
-    { p: CAMP.tent, range:100, act:()=>c.showNotice(c.state.campLevel>=2 ? "Палатка — начало будущего дома. Завершите хижину для входа внутрь." : "Сначала закончите постройку палатки.") },
+    ...(hasCampBuilding(c.state,"tent") ? [{ p: CAMP.tent, range:100, act:()=>c.showNotice("Палатка позволяет нанимать помощников. Для отдельной комнаты выберите хижину на платформе стройки.") }] : []),
     { p: c.sale, range:90, act:()=>{if(!c.transferOneLog("sell"))c.showNotice(c.activeBuyer()?"Принесите брёвна на площадку продажи.":"Покупатель ещё не подошёл или торговый день окончен.");} },
-    ...(c.state.campLevel === 4 ? [{ p: CAMP_SERVICE.door, range: 110, act: () => c.camp.enter() }] : []),
-    ...c.exploration.sites.filter(site => c.exploration.near(site)).map(site => ({ p: site, range: 150, act: () => c.exploration.request(site.id) })),
+    { p: c.build, range:c.build.radius, act:()=>c.builder.requestChoice(true) },
+    ...(hasCampBuilding(c.state,"house") ? [{ p: CAMP_SERVICE.door, range: 110, act: () => c.camp.enter() }] : []),
+    ...c.exploration.sites.filter(site => c.exploration.near(site)).map(site => ({ p: site, range: 150, act: () => {
+      if (site.kind === "kitchen" && c.state.wood && c.camp.stoke()) c.showNotice(`Огонь: ${Math.ceil(c.state.campFuel)} с. Можно добавлять топливо в любое время суток.`);
+      else c.exploration.request(site.id);
+    } })),
     ...c.world.clues.filter(site => c.accessible(site)).map(site => ({ p: site, range: 120, act: () => scene.openClue(site) })),
     ...(c.defenses?.all().filter(d => d.kind === "gate") || []).map(d => ({ p: d, range: 110, act: () => c.defenses.toggleGate(d.id) })),
     ...c.regions.frontiers().map(g => ({ p: g, range: 130, act: () => { c.setDestination(g.x,g.y); c.showNotice(`Нужно: ${g.region.cost} брёвен, ${g.region.stoneCost} камня; лагерь ${g.region.campRequired}.`); } })),

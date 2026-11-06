@@ -1,9 +1,10 @@
 import { CENTER } from "./config.js";
 import { CAMP } from "./camp-layout.js";
+import { hasCampBuilding } from "./camp-projects.js";
 
 export const CAMP_SERVICE = Object.freeze({
   store: { x: 1480, y: 1740 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
-  fuelPerLog: 60, startingFuel: 240, maxFuel: 600, storeLimit: 400,
+  fuelPerLog: 60, maxFuel: 600, storeLimit: 400,
 });
 export const ROOM = Object.freeze({ width: 480, height: 352, exit: { x: 240, y: 316 }, chest: { x: 100, y: 130 } });
 
@@ -11,9 +12,9 @@ export const ROOM = Object.freeze({ width: 480, height: 352, exit: { x: 240, y: 
 export function createCampServices({ state, player, forestry, canAct, nav, emit = () => {} }) {
   const near = p => Math.hypot(player.x - p.x, player.y - p.y) < 110 && nav.hasLineOfSight(player, p);
   const living = () => state.health > 0 && !state.gameOver;
-  const lit = () => state.campLevel > 0 && state.campFuel > 0;
+  const lit = () => hasCampBuilding(state,"fire") && state.campFuel > 0;
   function stoke(quoted = false) {
-    if (!(quoted ? living() : canAct()) || !near({x:CENTER.x,y:CENTER.y+48}) || state.campLevel < 1 || !state.wood || state.campFuel > CAMP_SERVICE.maxFuel - CAMP_SERVICE.fuelPerLog) return false;
+    if (!(quoted ? living() : canAct()) || !near({x:CENTER.x,y:CENTER.y+48}) || !hasCampBuilding(state,"fire") || !state.wood || state.campFuel > CAMP_SERVICE.maxFuel - CAMP_SERVICE.fuelPerLog) return false;
     forestry.takeCargo(); state.campFuel += CAMP_SERVICE.fuelPerLog;
     emit("camp-stoked", {}); return true;
   }
@@ -33,7 +34,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     return n;
   }
   function enter() {
-    if (!canAct() || state.campLevel !== 4 || !near(CAMP_SERVICE.door)) return false;
+    if (!canAct() || !hasCampBuilding(state,"house") || !near(CAMP_SERVICE.door)) return false;
     player.path = []; player.room = { x: ROOM.exit.x, y: ROOM.exit.y - 32 };
     emit("house-entered", {}); return true;
   }

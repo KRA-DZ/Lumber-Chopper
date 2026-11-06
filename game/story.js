@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "./camp-projects.js";
 import { DAY_SECONDS } from "./config.js";
 import {
   DISCOVERY_DIALOGUES,
@@ -94,7 +95,7 @@ export function createStory({ state, exploration, emit = () => {} }) {
       data.phase = 1;
       page("invitation");
     }
-    if (data.phase === 1 && state.campLevel >= 1 && read("note"))
+    if (data.phase === 1 && hasCampBuilding(state,"fire") && read("note"))
       data.phase = 2;
     if (data.phase === 2 && data.traderTopic) data.phase = 3;
     if (data.phase === 3 && STORY_EVIDENCE.every(identified)) data.phase = 4;
@@ -139,7 +140,7 @@ export function createStory({ state, exploration, emit = () => {} }) {
       const reason =
         state.nightsSurvived < 5
           ? "Сначала переживите пятую ночь"
-          : state.campLevel < 2
+          : !hasCampBuilding(state,"tent")
             ? "Нужно построить палатку"
             : state.worldTime >= DAY_SECONDS / 2
               ? "Закрепите страницу при дневном свете"
@@ -230,7 +231,7 @@ export function createStory({ state, exploration, emit = () => {} }) {
       title = "След у костра";
       text = "Сохраните огонь и прочитайте записку к северо-западу от лагеря.";
       goals = [
-        goal("Построить костёр", state.campLevel >= 1, { kind: "build" }),
+        goal("Построить костёр", hasCampBuilding(state,"fire"), { kind: "build" }),
         goal("Прочитать записку у лагеря", read("note"), {
           kind: "clue",
           id: "note",
@@ -278,7 +279,7 @@ export function createStory({ state, exploration, emit = () => {} }) {
       text =
         "Переживите пятую ночь, постройте палатку и при дневном свете закрепите страницу у костра.";
       goals = [
-        goal("Построить палатку", state.campLevel >= 2, { kind: "build" }),
+        goal("Построить палатку", hasCampBuilding(state,"tent"), { kind: "build" }),
         goal("Пережить пять ночей", state.nightsSurvived >= 5, {
           kind: "camp",
         }),

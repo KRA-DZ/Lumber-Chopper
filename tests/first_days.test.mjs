@@ -111,7 +111,7 @@ test("safety guidance takes priority without marking economic objectives complet
 test("first-day budget earns carry, a fire and an axe by walking before dusk, then survives to the letter", () => {
   const g = create(),
     samples = playFirstDay(g);
-  assert.ok(samples.returnSeconds < 180, JSON.stringify(samples));
+  assert.ok(samples.returnSeconds < NIGHT_START-120, JSON.stringify(samples));
   assert.equal(g.state.carryLevel, 1);
   assert.equal(g.state.axeLevel, 1);
   assert.equal(g.state.campLevel, 1);

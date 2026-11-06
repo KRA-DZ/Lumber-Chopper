@@ -7,6 +7,7 @@ import { createInitialState } from "../game/config.js";
 import { applyUpgrades } from "../economy.js";
 import { createSurvival } from "../game/survival.js";
 import { stackOffset } from "../game/stack-layout.js";
+import { chooseBuildProject } from "./helpers/build-project.mjs";
 const create = (survival = false, emit = () => {}) =>
   createSimulation({ regional: true, survival, emit });
 function beginNight(g, night = 1) {
@@ -183,6 +184,7 @@ test("raiders damage the camp; build pad repairs before consuming logs for const
   g.update(1.1);
   assert.ok(g.state.campHealth < 200);
   Object.assign(g.player, { x: g.build.x, y: g.build.y, path: [] });
+  chooseBuildProject(g,"fire");
   g.forestry.addCargo(10);
   const build = g.state.buildWood;
   assert.equal(g.transferOneLog("build"), true);

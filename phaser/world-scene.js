@@ -43,6 +43,8 @@ import { CoopViews } from "./coop-views.js";
 import { KeyboardInteractions, interactNearby } from "./keyboard-interactions.js";
 import { NIGHT_START } from "../game/cycle.js";
 import { CampServicesView, HouseView } from "./camp-services-view.js";
+import { CAMP_PROJECTS, hasCampBuilding, constructionStage } from "../game/camp-projects.js";
+import { createBuildUi } from "./build-ui.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -145,6 +147,7 @@ export class WorldScene extends Phaser.Scene {
     this.houseView = new HouseView(this);
     this.bindInput();
     this.bindDialogs();
+    this.buildUi = createBuildUi(this);
     this.gameMenu = createGameMenu(this);
     this.regionMap = createRegionMap(this);
     this.returnCamp = () => this.core.navigateGuide("camp");
@@ -297,7 +300,7 @@ export class WorldScene extends Phaser.Scene {
         this.assets.meta.get("unlitFire").originY,
       )
       .setScale(2)
-      .setDepth(CENTER.y + 8);
+      .setDepth(CENTER.y + 8).setVisible(false);
     this.anims.create({
       key: "fire.loop",
       frames: [0, 1, 2].map((i) => ({ key: "forest", frame: `fire.${i}` })),
@@ -590,7 +593,7 @@ export class WorldScene extends Phaser.Scene {
     } : createShop(this.core.state, {
       currencyIcon: lootItemIcon("coins"),
       iconFor: this.assets.items ? itemShopIcon : undefined,
-      onOpen: () => this.pause("shop", true),
+      onOpen: () => { this.keyboardUi.modal = null; this.pause("shop", true); },
       purchase: (id) => this.core.purchaseUpgrade(id),
       recommendation: () => shopAdvice(this.core.state),
       onChange: () => {
@@ -813,9 +816,9 @@ export class WorldScene extends Phaser.Scene {
     this.buildLabel.setText(
       s.campHealth < s.maxCampHealth
         ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 20 HP/бревно`
-        : c.stages[s.campLevel]
-          ? `${c.stages[s.campLevel].name} ${s.buildWood}/${c.stages[s.campLevel].cost}`
-          : "Лагерь построен",
+        : c.builder.project
+          ? `${c.builder.project.name} ${s.buildWood}/${c.builder.project.cost}${c.builder.needsExit ? " · сойдите и вернитесь" : ""}`
+          : c.builder.choices.length ? "Выбрать постройку · встаньте на платформу" : "Лагерь построен",
     );
     this.camera?.preRender();
     this.refreshView();
@@ -998,15 +1001,15 @@ export class WorldScene extends Phaser.Scene {
         damaged ? "campStates.hut.damaged" : "house",
       );
     }
-    const key = `${s.campLevel}:${s.buildWood}:${this.core.defenses?.revision}:${Number(this.core.camp.lit())}`;
+    const key = `${s.campLevel}:${s.buildProject}:${JSON.stringify(s.campBuildings)}:${s.buildWood}:${this.core.defenses?.revision}:${Number(this.core.camp.lit())}`;
     if (key === this.lastCampKey) return;
     this.lastCampKey = key;
-    this.fire.setVisible(true);
+    this.fire.setVisible(hasCampBuilding(s,"fire"));
     if (this.core.camp.lit()) this.fire.play("fire.loop", true);
     else { this.fire.stop(); this.assets.setFrame(this.fire,"unlitFire"); }
-    this.tent.setVisible(s.campLevel >= 2 && s.campLevel < 4);
-    this.hut.setVisible(s.campLevel === 4);
-    this.partial.setVisible(s.buildWood > 0 && s.campLevel !== 2);
+    this.tent.setVisible(hasCampBuilding(s,"tent"));
+    this.hut.setVisible(hasCampBuilding(s,"house"));
+    this.partial.setVisible(s.buildWood > 0 && constructionStage(s) !== 2);
     if (this.partial.visible) {
       const site = bakeConstruction(
         this.partialTexture.getContext(),
@@ -1069,7 +1072,7 @@ export class WorldScene extends Phaser.Scene {
         this.fences.push(this.addImage("fence", p.x, p.y, p.y + 1));
     }
     for (const { image, p } of this.campDecor)
-      image.setVisible(s.campLevel >= p.min && s.campLevel <= (p.max ?? 4));
+      image.setVisible(p.min === 0 || hasCampBuilding(s,CAMP_PROJECTS[p.min-1].id));
   }
   nearView(p, v, margin = 120) {
     const views = Array.isArray(v) ? v : this.coopCamera && v === this.camera.worldView ? this.coopCamera.views() : [v];
@@ -1114,6 +1117,7 @@ export class WorldScene extends Phaser.Scene {
       try { return this.coopViews.withActor(e.actor, () => this.onModelEvent(type, e)); }
       finally { this.routingCoop = false; }
     }
+    if (type === "build-choice") { this.buildUi?.open(); return; }
     if (type === "mining-hit") { this.heroView?.hit(); this.float(`-${e.damage}`,e.rock.x,e.rock.y-50); return; }
     if (type === "stone-collected") { this.float(`+${e.count} камня`,e.rock.x,e.rock.y-65,"#d4ddd5"); return; }
     if (type === "camp-extinguished" || type === "camp-low-fuel") {
@@ -1460,6 +1464,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.buildUi?.destroy();
     this.houseView?.destroy();
     this.campServicesView?.destroy();
     this.keyboardUi?.destroy();

@@ -14,7 +14,7 @@ export class EnemyView {
       "survival.startLantern",
       CENTER.x,
       CENTER.y,
-    );
+    ).setVisible(false);
     this.signals = scene.add.graphics().setDepth(LAYERS.hints);
   }
   strike(area) {
@@ -27,7 +27,7 @@ export class EnemyView {
       d = c.survival,
       g = this.signals.clear();
     if (!d) return;
-    this.starterLight.setVisible(c.state.campLevel === 0);
+    this.starterLight.setVisible(false);
     const actors = [
         ...d.raiders,
         ...(d.residents || []),

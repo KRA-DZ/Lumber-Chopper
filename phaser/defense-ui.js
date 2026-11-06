@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "../game/camp-projects.js";
 import { appendRaidSummary } from "./raid-summary.js";
 export function createDefenseUi(scene) {
   const dialog = document.querySelector("#defenseDialog"),
@@ -8,7 +9,7 @@ export function createDefenseUi(scene) {
     list.replaceChildren();
     const info = document.createElement("p");
     info.textContent =
-      c.state.campLevel < 2
+      !hasCampBuilding(c.state,"tent") && !hasCampBuilding(c.state,"fence")
         ? "Сначала постройте костёр и палатку. После этого появятся места для укреплений."
         : `В руках: ${c.state.wood}/${c.state.maxWood} брёвен. Рядом с повреждённой секцией удерживайте R или экранную кнопку: каждые 0,6 с одно бревно восстанавливает до 20 HP. Отпускание сбрасывает незавершённый взнос. Поручение ниже работает автоматически; WASD или нажатие на землю отменяют работу. Метатели бросают через ограду — уклоняйтесь.`;
     list.append(info);

@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "./camp-projects.js";
 import { workerAppearance } from "./appearances.js";
 import { NIGHT_START } from "./cycle.js";
 
@@ -43,7 +44,7 @@ export function createWorkers({
     routeTurn = 0,
     saleTimer = 0;
   const available = () =>
-    state.campLevel >= 2 && regions.isOpen(world.ancientTree);
+    hasCampBuilding(state,"tent") && regions.isOpen(world.ancientTree);
   const atDepot = () =>
     distance(player, WORKERS.depot) < 140 &&
     nav.hasLineOfSight(player, WORKERS.depot);

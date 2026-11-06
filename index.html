@@ -191,6 +191,10 @@
     .personal-shop button { display: block; width: 100%; text-align: left; margin: 4px 0; padding: 8px; font-size: 12px; }
     .personal-shop button[data-selected="true"] { outline: 3px solid #f1d88f; background: #506644; }
     .personal-shop button[aria-disabled="true"] { color: #b8afa1; }
+    .shop-item[data-selected="true"], .build-option[data-selected="true"] { outline: 3px solid #efd18e; background: #3f543b; }
+    .build-option { border: 1px solid #687555; padding: 12px; margin: 8px 0; }
+    .build-option h3 { margin: 0; }
+    .build-option p { color: #d3d6b5; }
     @media(max-width:600px) {
       .personal-shop { width: 98%; max-height: 47%; }
       .personal-shop[data-player-shop="1"] { top: auto; bottom: 1%; }
@@ -493,6 +497,7 @@
       <p>P или Esc — открыть паузу; повторное нажатие возвращает в игру. Esc в другом открытом меню закрывает только это меню.</p>
       <p>E или Enter рядом — взаимодействовать. В меню W/S или ↑/↓ выбирают действие, E/Enter подтверждают, Q/Esc закрывают. Вдвоём лавки личные: первый — W/S, E, Q; второй — ↑/↓, Enter, Backspace. Лавка не останавливает мир.</p>
       <p>Ночь занимает последнюю четверть суток. Костёр нужно построить и поддерживать: бревно даёт 60 секунд света, без огня лагерь уязвим. Склад игроков: E/Enter сложить брёвна, с пустыми руками — взять. Дальние границы требуют камень из крупных валунов. Готовый дом можно посетить через дверь.</p>
+      <p>На голубой платформе сначала выберите проект. После подтверждения сойдите и вернитесь, чтобы начать сдавать брёвна. Порядок построек свободный. Костёр строится потухшим: E/Enter рядом добавляет бревно в любое время суток; запас огня показан верхней полоской.</p>
 
         <small>РУБИ → ПРОДАВАЙ ИЛИ СТРОЙ</small>
         <p>
@@ -519,6 +524,11 @@
 
     </details>
     <p>Каждая загрузка начинает новую смену. Настройки и прогресс не сохраняются.</p>
+  </dialog>
+  <dialog id="buildDialog" aria-labelledby="buildTitle">
+    <div class="dialog-top"><h2 id="buildTitle">Что построим?</h2><button type="button" data-build-close>Пока не строить</button></div>
+    <p>Выбор бесплатный. После подтверждения сойдите с платформы и вернитесь: брёвна начнут поступать в выбранный проект. W/S или ↑/↓ — выбор, E/Enter — подтвердить, Q/Esc — закрыть.</p>
+    <div data-build-options></div>
   </dialog>
   <dialog id="shopDialog" aria-labelledby="shopTitle">
     <div class="dialog-top">

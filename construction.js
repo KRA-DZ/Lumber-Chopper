@@ -1,9 +1,10 @@
 import { CAMP } from "./game/camp-layout.js";
-export const STAGE_COSTS = Object.freeze([10, 20, 35, 50]);
+import { CAMP_PROJECTS, constructionStage, hasCampBuilding } from "./game/camp-projects.js";
+export const STAGE_COSTS = Object.freeze(CAMP_PROJECTS.map(p => p.cost));
 export function stageRatio(state) {
   return Math.max(
     0,
-    Math.min(1, state.buildWood / (STAGE_COSTS[state.campLevel] || 1)),
+    Math.min(1, state.buildWood / (STAGE_COSTS[constructionStage(state)] || 1)),
   );
 }
 export function fencePlan(center = { x: 1600, y: 1600 }) {
@@ -24,8 +25,8 @@ export function fencePlan(center = { x: 1600, y: 1600 }) {
   return { posts, segments, gates };
 }
 export function partialFence(state, plan) {
-  if (state.campLevel >= 3) return plan;
-  if (state.campLevel !== 2) return { posts: [], segments: [] };
+  if (hasCampBuilding(state,"fence")) return plan;
+  if (constructionStage(state) !== 2) return { posts: [], segments: [] };
   const n = Math.min(
       plan.posts.length,
       Math.ceil(stageRatio(state) * plan.posts.length),
@@ -38,14 +39,14 @@ export function partialFence(state, plan) {
   };
 }
 export function constructionCollisionKey(state, plan) {
-  return `${state.campLevel}:${state.campLevel === 2 ? partialFence(state, plan).posts.length : Number(state.buildWood > 0)}`;
+  return `${JSON.stringify(state.campBuildings)}:${state.campLevel}:${state.buildProject}:${partialFence(state,plan).posts.length}:${Number(state.buildWood > 0)}`;
 }
 export function constructionTarget(state, center, plan = fencePlan(center)) {
   const r = stageRatio(state);
-  if (state.campLevel === 0) return { x: center.x, y: center.y - 12 };
-  if (state.campLevel === 1)
+  if (constructionStage(state) === 0) return { x: center.x, y: center.y - 12 };
+  if (constructionStage(state) === 1)
     return { x: CAMP.tent.x, y: CAMP.tent.y - 26 - r * 72 };
-  if (state.campLevel === 2) {
+  if (constructionStage(state) === 2) {
     const p =
       plan.posts[
         Math.min(plan.posts.length - 1, Math.floor(r * plan.posts.length))
@@ -61,8 +62,8 @@ export function createConstruction(art, center) {
     ratio = 0;
   function update(state, dt) {
     const next = stageRatio(state);
-    if (level !== state.campLevel || dt === 0) {
-      level = state.campLevel;
+    if (level !== constructionStage(state) || dt === 0) {
+      level = constructionStage(state);
       ratio = next;
     } else ratio += (next - ratio) * (1 - Math.exp(-dt * 10));
   }
@@ -89,7 +90,7 @@ export function createConstruction(art, center) {
     return constructionTarget(state, center, plan);
   }
   function drawFire(ctx, state) {
-    if (state.campLevel === 0 && state.buildWood > 0) {
+    if (constructionStage(state) === 0 && state.buildWood > 0) {
       const s = art.sprites.unlitFire;
       crop(
         ctx,
@@ -104,14 +105,14 @@ export function createConstruction(art, center) {
     }
   }
   function drawTent(ctx, state) {
-    if (state.campLevel !== 1 || state.buildWood <= 0) return;
+    if (constructionStage(state) !== 1 || state.buildWood <= 0) return;
     art.draw(ctx, art.sprites.tentFrame, CAMP.tent.x, CAMP.tent.y);
     const s = art.sprites.tent;
     const width = Math.max(0, (ratio - 0.25) / 0.75) * s.width;
     crop(ctx, s, CAMP.tent.x, CAMP.tent.y, 0, 0, width, s.height);
   }
   function drawHouse(ctx, state) {
-    if (state.campLevel !== 3 || state.buildWood <= 0) return;
+    if (constructionStage(state) !== 3 || state.buildWood <= 0) return;
     const s = art.sprites.house,
       x = CAMP.hut.x,
       y = CAMP.hut.y;
@@ -132,11 +133,11 @@ export function createConstruction(art, center) {
   function previewEntities(state) {
     const list = [];
     if (state.buildWood <= 0) return list;
-    if (state.campLevel === 0)
+    if (constructionStage(state) === 0)
       list.push({ y: center.y + 8, draw: (ctx) => drawFire(ctx, state) });
-    if (state.campLevel === 1)
+    if (constructionStage(state) === 1)
       list.push({ y: CAMP.tent.y, draw: (ctx) => drawTent(ctx, state) });
-    if (state.campLevel === 3)
+    if (constructionStage(state) === 3)
       list.push({ y: CAMP.hut.y, draw: (ctx) => drawHouse(ctx, state) });
     return list;
   }
