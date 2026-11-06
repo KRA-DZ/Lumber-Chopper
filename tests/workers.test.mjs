@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -12,9 +13,9 @@ function ready(g) {
   g.nav.rebuildObstacles();
   const gate = g.regions.frontiers().find((g) => g.region.id === "1:0");
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });
-  g.state.maxWood = 12;
-  for (let i = 0; i < 12; i++) g.forestry.addCargo(10);
-  g.update(2.5);
+  g.state.maxWood = gate.region.cost;
+  for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
+  g.update((gate.region.cost + 1) * .2);
   assert.ok(g.regions.unlocked.has("1:0"));
   Object.assign(g.player, { x: 1600, y: 1720, path: [] });
   g.state.coins = 150;
@@ -40,7 +41,7 @@ test("hiring validates camp, opened oak, daylight, location, funds, cap; chapter
   g.player.x = 2000;
   assert.equal(w.hire(), false);
   g.player.x = 1600;
-  g.state.worldTime = 240;
+  g.state.worldTime = NIGHT_START - 60;
   assert.equal(w.hire(), false);
   g.state.worldTime = 120;
   g.paused = true;
@@ -147,13 +148,13 @@ test("recall preserves cargo, returns to light before night and resumes work aft
   until(g, () => w.crew[0].cargo.length >= 1);
   const npc = w.crew[0],
     before = w.data.delivered + npc.cargo.length;
-  g.state.worldTime = 239.99;
+  g.state.worldTime = NIGHT_START - 60.01;
   until(g, () => npc.phase === "resting", 45);
-  assert.ok(g.state.worldTime < 300);
+  assert.ok(g.state.worldTime < NIGHT_START);
   assert.ok(Math.hypot(npc.x - 1600, npc.y - 1600) < 310);
   assert.ok(w.data.delivered >= before);
   const delivered = w.data.delivered;
-  g.state.worldTime = 350;
+  g.state.worldTime = NIGHT_START + 50;
   g.update(40);
   assert.equal(w.data.delivered, delivered);
   assert.equal(npc.phase, "resting");

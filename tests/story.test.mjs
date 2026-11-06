@@ -8,9 +8,11 @@ function open(g, id) {
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [] });
   while (g.state.wood) g.forestry.takeCargo();
-  g.state.maxWood = 82;
+  g.state.campLevel = Math.max(g.state.campLevel, gate.region.campRequired);
+  g.state.stone = gate.region.stoneCost;
+  g.state.maxWood = Math.max(82,gate.region.cost);
   for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
-  for (let i = 0; i <= gate.region.cost; i++) g.update(0.2);
+  for (let i = 0; i <= gate.region.cost + gate.region.stoneCost * 2; i++) g.update(0.2);
 }
 function visit(g, id) {
   const s = g.exploration.get(id);

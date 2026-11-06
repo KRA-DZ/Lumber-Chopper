@@ -7,24 +7,21 @@ export function stageRatio(state) {
   );
 }
 export function fencePlan(center = { x: 1600, y: 1600 }) {
-  const posts = [];
-  for (let i = 0; i < 33; i++) {
-    const a = (i / 33) * Math.PI * 2;
-    if (Math.sin(a) > 0.65) continue;
-    posts.push({
-      id: i,
-      x: center.x + Math.cos(a) * CAMP.fenceRX,
-      y: center.y + Math.sin(a) * CAMP.fenceRY,
-    });
-  }
-  const byId = new Map(posts.map((p) => [p.id, p]));
-  return {
-    posts,
-    segments: posts.flatMap((p) => {
-      const q = byId.get((p.id + 1) % 33);
-      return q ? [[p, q]] : [];
-    }),
-  };
+  const circle = Array.from({ length: 33 }, (_, id) => {
+    const a = id / 33 * Math.PI * 2;
+    return { id, x: center.x + Math.cos(a) * CAMP.fenceRX, y: center.y + Math.sin(a) * CAMP.fenceRY };
+  });
+  const middles = new Set([0, 8, 16, 24]), posts = circle.filter(p => !middles.has(p.id)),
+    ids = new Set(posts.map(p => p.id));
+  const segments = circle.flatMap(p => {
+    const q = circle[(p.id + 1) % 33];
+    return ids.has(p.id) && ids.has(q.id) ? [[p,q]] : [];
+  });
+  const gates = [0,8,16,24].map((id,i)=>({
+    id: `gate-${i}`, name: ["Восточная калитка","Южная калитка","Западная калитка","Северная калитка"][i],
+    a: circle[(id+32)%33], b: circle[(id+1)%33],
+  }));
+  return { posts, segments, gates };
 }
 export function partialFence(state, plan) {
   if (state.campLevel >= 3) return plan;

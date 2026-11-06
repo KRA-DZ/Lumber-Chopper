@@ -31,6 +31,8 @@ export function createNavigation(
       : { x, y };
   }
   const obstacleBuckets = new Map();
+  let friendlyGates = false;
+  const friendly = body => !["raider", "resident", "watcher"].includes(body.kind);
   let obstacles = [],
     navVersion = 0,
     lastConstructionKey = "";
@@ -65,6 +67,7 @@ export function createNavigation(
         half: Math.max(0, (w - h) / 2),
       });
     for (const t of trees) if (t.hp > 0) circle(t.x, t.y - 3, 8);
+    for (const rock of model.boulders || []) if ((gameState.boulderHP[rock.id] ?? rock.maxHP) > 0) circle(rock.x, rock.y - 6, rock.radius);
     if (!model.regions || model.regions.isOpen(ancientTree))
       circle(ancientTree.x, ancientTree.y - 12, 50);
     // Пни, камни, сундуки, траву и стопки дров можно пересекать свободно.
@@ -92,6 +95,7 @@ export function createNavigation(
         half: 0,
         a,
         b,
+        gate: model.defenses?.all().some(s => s.kind === "gate" && s.a.id === a.id && s.b.id === b.id),
       });
     for (const site of model.defenses?.all() || [])
       if (site.kind === "barricade" && site.hp > 0)
@@ -161,6 +165,7 @@ export function createNavigation(
         bx++
       ) {
         for (const o of obstacleBuckets.get(bx + "," + by) || []) {
+          if (friendlyGates && o.gate) continue;
           let cx = clamp(x, o.x - o.half, o.x + o.half),
             cy = o.y;
           if (o.a) {
@@ -237,6 +242,11 @@ export function createNavigation(
     return true;
   }
   function moveBody(body, dx, dy, r = FOOT_RADIUS) {
+    const previous = friendlyGates;
+    friendlyGates = friendly(body);
+    try { return movePhysical(body, dx, dy, r); } finally { friendlyGates = previous; }
+  }
+  function movePhysical(body, dx, dy, r = FOOT_RADIUS) {
     const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 4));
     let moved = 0;
     for (let i = 0; i < steps; i++) {
@@ -274,6 +284,10 @@ export function createNavigation(
   }
   // A* по сетке; проверка отрезков запрещает срезать углы и проходить через стволы.
   function findPath(start, goal) {
+    const previous = friendlyGates; friendlyGates = friendly(start);
+    try { return searchPath(start,goal); } finally { friendlyGates = previous; }
+  }
+  function searchPath(start, goal) {
     const target = nearestGround(goal.x, goal.y);
     if (clearSegment(start, target)) return [target];
     const walkCache = new Int8Array(GRID * GRID),

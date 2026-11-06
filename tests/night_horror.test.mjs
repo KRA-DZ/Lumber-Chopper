@@ -1,4 +1,5 @@
 import test from "node:test";
+import { NIGHT_START } from "../game/cycle.js";
 import assert from "node:assert/strict";
 import {
   nightOpacity,
@@ -18,15 +19,17 @@ import { createInitialState } from "../game/config.js";
 
 test("night has no residual ambient opacity leak while dusk approaches it smoothly", () => {
   assert.equal(nightOpacity({ worldTime: 120 }), 0);
-  assert.ok(nightOpacity({ worldTime: 280 }) > 0);
-  assert.ok(nightOpacity({ worldTime: 299.9 }) > 0.99);
-  for (const worldTime of [300, 301, 450, 599.9])
+  assert.equal(nightOpacity({ worldTime: 400 }), 0);
+  assert.ok(nightOpacity({ worldTime: NIGHT_START - 5 }) > 0);
+  assert.ok(nightOpacity({ worldTime: NIGHT_START - .1 }) > 0.99);
+  for (const worldTime of [NIGHT_START, NIGHT_START + 1, 500, 599.9])
     assert.equal(nightOpacity({ worldTime }), 1);
   assert.equal(nightOpacity({ worldTime: 0 }), 0);
 });
 test("the personal lantern follows the player and retains every old radius upgrade", () => {
   const state = createInitialState(),
     p = { x: 2300, y: 1700 };
+  state.campLevel = 1; state.campFuel = 60;
   for (let level = 0; level <= 4; level++) {
     state.lanternLevel = level;
     const lights = nightLights(state, p, 310);

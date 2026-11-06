@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -15,15 +16,15 @@ const create = (emit) => createSimulation({ regional: true, emit });
 test("timeline counts active seconds until dusk, dawn and exactly each fifth raid", () => {
   const s = createInitialState();
   let t = dayOverview(s);
-  assert.equal(t.boundarySeconds, 180);
-  assert.equal(t.raidSeconds, 2580);
+  assert.equal(t.boundarySeconds, NIGHT_START - 120);
+  assert.equal(t.raidSeconds, 2400 + NIGHT_START - 120);
   assert.equal(t.nextRaid, 5);
-  s.worldTime = 285;
+  s.worldTime = NIGHT_START - 15;
   assert.ok(dayOverview(s).sunsetUrgent);
-  s.worldTime = 300;
+  s.worldTime = NIGHT_START;
   t = dayOverview(s);
   assert.ok(t.night);
-  assert.equal(t.boundarySeconds, 300);
+  assert.equal(t.boundarySeconds, 600 - NIGHT_START);
   s.calendarDay = 4;
   t = dayOverview(s);
   assert.ok(t.raidActive);
@@ -32,7 +33,7 @@ test("timeline counts active seconds until dusk, dawn and exactly each fifth rai
   s.worldTime = 0;
   t = dayOverview(s);
   assert.equal(t.nextRaid, 10);
-  assert.equal(t.raidSeconds, 2700);
+  assert.equal(t.raidSeconds, 2400 + NIGHT_START);
   assert.equal(countdown(0.01), "00:01");
   assert.equal(countdown(60), "01:00");
   assert.equal(countdown(0), "00:00");
@@ -41,7 +42,7 @@ test("sunset warnings fire once per threshold, even over multiple days and zero-
   const s = createInitialState(),
     events = [],
     clock = createCycleManager(s, (type, e) => events.push([type, e]));
-  clock.update(120);
+  clock.update(NIGHT_START - s.worldTime - 60);
   assert.deepEqual(events, [
     ["sunset-warning", { night: 1, seconds: 60, raid: false }],
   ]);
@@ -60,13 +61,14 @@ test("sunset warnings fire once per threshold, even over multiple days and zero-
     ],
   );
   s.calendarDay = 4;
-  s.worldTime = 239.99;
+  s.worldTime = NIGHT_START - 60.01;
   clock.update(0.02);
   assert.equal(events.at(-1)[1].raid, true);
 });
 test("warning expiry and tutorial safety timers stop while paused", () => {
   const g = create();
-  g.state.worldTime = 239.99;
+  g.state.campLevel = 1; g.state.campFuel = 600;
+  g.state.worldTime = NIGHT_START - 60.01;
   g.update(0.02);
   assert.ok(g.sunsetWarning);
   const until = g.sunsetWarning.until,
@@ -78,7 +80,7 @@ test("warning expiry and tutorial safety timers stop while paused", () => {
   g.paused = false;
   g.update(8);
   assert.equal(g.sunsetWarning, null);
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.paused = true;
   g.update(10);
@@ -89,10 +91,10 @@ test("warning expiry and tutorial safety timers stop while paused", () => {
 });
 test("safety guidance takes priority without marking economic objectives complete", () => {
   const g = create();
-  g.state.worldTime = 250;
+  g.state.worldTime = NIGHT_START - 50;
   assert.equal(g.guide.id, "sunset");
   assert.equal(g.tutorialStep, 0);
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.player.x = 2100;
   g.player.y = 1600;
@@ -116,7 +118,7 @@ test("first-day budget earns carry, a fire and an axe by walking before dusk, th
   assert.equal(g.state.health, 100);
   assert.ok(g.state.coins >= 0);
   assert.equal(g.guide.id, "prepare");
-  g.update(300 - g.state.worldTime + 0.02);
+  g.update(NIGHT_START - g.state.worldTime + 0.02);
   g.update(3.1);
   assert.equal(g.tutorial.sheltered, true);
   g.update(600 - g.state.worldTime + 0.02);

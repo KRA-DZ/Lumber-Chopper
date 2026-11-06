@@ -34,7 +34,7 @@ export class ExplorationView {
     this.line.clear();
     this.rod.setVisible(!!f);
     this.bobber.setVisible(!!f);
-    this.scene.axe.setVisible(!f && !this.scene.heroView.bakedTool);
+    this.scene.axe.setVisible(!f && this.scene.playerModel.swing > 0 && !this.scene.heroView.bakedTool);
     if (f) {
       const site = c.exploration.get(f.siteId),
         bite = f.phase === "bite",

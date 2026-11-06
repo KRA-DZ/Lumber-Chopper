@@ -3,6 +3,7 @@ import { WatcherHud } from "./watcher-hud.js";
 import { DayHud } from "./day-hud.js";
 import { RepairControl } from "./repair-control.js";
 import { DAY_SECONDS } from "../game/config.js";
+import { clockHour } from "../game/cycle.js";
 import { regionAt } from "../game/regions.js";
 export class HudScene extends Phaser.Scene {
   constructor() {
@@ -141,10 +142,10 @@ export class HudScene extends Phaser.Scene {
     this.mapZone.setPosition(left, top).setSize(size, size);
     this.mapZone.input.hitArea.setSize(size, size);
     const phase = c.state.worldTime / DAY_SECONDS,
-      hour = Math.floor((phase * 24 + 6) % 24)
+      hour = Math.floor(clockHour(c.state.worldTime))
         .toString()
         .padStart(2, "0"),
-      minute = Math.floor((phase * 1440) % 60)
+      minute = Math.floor((clockHour(c.state.worldTime) * 60) % 60)
         .toString()
         .padStart(2, "0");
     g.clear()
@@ -152,7 +153,7 @@ export class HudScene extends Phaser.Scene {
       .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Лагерь ${c.state.campLevel}/4\n${regionAt(c.player.x, c.player.y)?.name || "Лес"}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Огонь ${Math.ceil(c.state.campFuel)} с\n${c.player.room ? "Дом лагеря" : regionAt(c.player.x, c.player.y)?.name || "Лес"} · Камень ${c.state.stone}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {

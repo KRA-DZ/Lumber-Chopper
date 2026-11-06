@@ -204,7 +204,7 @@ export class RegionView {
       const near = this.scene.nearView(gate, view, 240);
       objects.forEach((o) => o.setVisible(near));
       label.setText(
-        `Открыть · ${c.state.regionWood[gate.region.id] || 0}/${gate.region.cost} брёвен`,
+        `${c.state.regionWood[gate.region.id] || 0}/${gate.region.cost} брёвен · ${c.state.regionStone[gate.region.id] || 0}/${gate.region.stoneCost} камня\nЛагерь ${gate.region.campRequired}${c.state.campLevel < gate.region.campRequired ? " · сначала улучшите базу" : ""}`,
       );
       this.scene.worldHints.offer(objects[2], gate, { eligible: near, range: 210, priority: 60 });
       this.scene.worldHints.offer(label, gate, { eligible: near, range: 210, priority: 65 });
@@ -246,10 +246,7 @@ export class RegionView {
     // Only cells intersecting the camera emit triangles/lines, never the full 9600² map.
     for (const r of regions.all) {
       if (
-        r.x > view.right ||
-        r.x + r.width < view.x ||
-        r.y > view.bottom ||
-        r.y + r.height < view.y
+        !views.some(v => r.x <= v.right && r.x + r.width >= v.x && r.y <= v.bottom && r.y + r.height >= v.y)
       )
         continue;
       if (!regions.unlocked.has(r.id))
@@ -258,10 +255,7 @@ export class RegionView {
     for (const r of regions.all)
       if (
         regions.unlocked.has(r.id) &&
-        r.x < view.right + 4 &&
-        r.x + r.width > view.x - 4 &&
-        r.y < view.bottom + 4 &&
-        r.y + r.height > view.y - 4
+        views.some(v => r.x < v.right + 4 && r.x + r.width > v.x - 4 && r.y < v.bottom + 4 && r.y + r.height > v.y - 4)
       ) {
         for (const [dx, dy] of [
           [1, 0],

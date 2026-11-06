@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BIOMES } from "../game/biomes.js";
@@ -18,7 +19,7 @@ const ids = {
 function fixture(biome = "forest") {
   const state = createInitialState(),
     region = REGIONS.find((r) => r.id === ids[biome]);
-  state.worldTime = 301;
+  state.worldTime = NIGHT_START + 1;
   const player = { x: region.cx, y: region.cy },
     events = [],
     damage = [];
@@ -116,7 +117,7 @@ test("every family spawns only at night in opened home territory, capped and awa
     f.state.worldTime = 120;
     f.step(3);
     assert.equal(f.model.actors.length, 0);
-    f.state.worldTime = 301;
+    f.state.worldTime = NIGHT_START + 1;
     f.step(0.05);
     assert.equal(f.model.actors.length, 1);
     for (const e of f.model.actors) {
@@ -178,7 +179,7 @@ test("defeated residents do not respawn until a new night or grant wave rewards"
   f.state.worldTime = 0;
   f.step(0.05);
   f.state.calendarDay++;
-  f.state.worldTime = 301;
+  f.state.worldTime = NIGHT_START + 1;
   f.step(0.05);
   assert.equal(f.model.actors.length, 1);
   f.state.gameOver = true;
@@ -214,7 +215,7 @@ test("local enemies are bounded separately from every-fifth-night camp waves; pa
     g.world.generate(r);
   }
   g.nav.rebuildObstacles();
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   Object.assign(g.player, { x: 3500, y: 1800, autoTimer: 1000 });
   g.update(0.02);
   assert.ok(g.survival.monster?.invulnerable);
@@ -241,7 +242,7 @@ test("player selection and guarded axe commands damage residents without contrib
   g.world.generate(region);
   g.nav.rebuildObstacles();
   Object.assign(g.player, { x: 3400, y: 1800, path: [], autoTimer: 1000 });
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(3.2);
   const enemy = g.survival.residents.find((e) => e.regionId === region.id);

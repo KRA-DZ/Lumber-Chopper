@@ -109,6 +109,7 @@ export class HeroView {
     const origin = scene.assets.meta.get(this.player.frame.name);
     if (origin) this.player.setOrigin(origin.originX, origin.originY);
     this.axe
+      .setVisible(striking && !this.bakedTool)
       .setFlipX(striking ? this.strikeFlip : p.direction === "left")
       .setDepth(p.y + (striking && this.strikeDir === "up" ? -0.02 : 0.03));
   }

@@ -9,7 +9,7 @@ import {
 } from "../construction.js";
 import { createEnvironment, ENVIRONMENT_LIMITS } from "../environment.js";
 
-test("partial fence grows through connected sections and keeps the entrance open", () => {
+test("partial fence grows through connected sections and reserves four gate openings", () => {
   const plan = fencePlan();
   let previous = 0;
   for (let paid = 0; paid < STAGE_COSTS[2]; paid++) {
@@ -19,9 +19,10 @@ test("partial fence grows through connected sections and keeps the entrance open
     assert.ok(part.posts.length >= previous);
     previous = part.posts.length;
     assert.ok(part.segments.every(([a, b]) => ids.has(a.id) && ids.has(b.id)));
-    assert.ok(part.posts.every((p) => p.y <= 1600 + 235 * 0.65));
+    assert.ok(part.posts.every(p => ![0,8,16,24].includes(p.id)));
   }
   assert.deepEqual(partialFence({ campLevel: 3, buildWood: 0 }, plan), plan);
+  assert.equal(plan.gates.length,4);
   assert.equal(stageRatio({ campLevel: 3, buildWood: 25 }), 0.5);
   assert.equal(
     constructionCollisionKey({ campLevel: 3, buildWood: 5 }, plan),

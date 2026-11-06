@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -6,13 +7,14 @@ import { createInitialState, CENTER } from "../game/config.js";
 const create = (emit) => createSimulation({ regional: true, emit });
 function night(g, n = 5) {
   g.state.calendarDay = n - 1;
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(0.02);
   g.update(12.1);
   g.player.autoTimer = 1000;
 }
 function build(g, level = 3) {
   g.state.campLevel = level;
+  g.state.campFuel = 600;
   g.nav.rebuildObstacles();
 }
 function cargo(g, count) {
@@ -26,7 +28,7 @@ function near(g, d) {
 test("a broken fence opens a physical gap; exact repair spends one log and safely closes it", () => {
   const g = create();
   build(g);
-  const d = g.defenses.all().find((s) => s.kind === "fence" && s.a.id === 0);
+  const d = g.defenses.all().find((s) => s.kind === "fence" && s.a.id === 1);
   assert.equal(g.nav.isWalkable(d.x, d.y), false);
   const version = g.nav.version;
   assert.ok(g.defenses.damage(d.id, 60));
@@ -139,7 +141,7 @@ test("breaker breaches a fence then advances into camp rather than dismantling t
   build(g);
   night(g);
   const r = g.survival.raiders.find((a) => a.role === "breaker");
-  const d = g.defenses.all().find((s) => s.kind === "fence" && s.a.id === 0);
+  const d = g.defenses.all().find((s) => s.kind === "fence" && s.a.id === 1);
   const dx = d.x - CENTER.x,
     dy = d.y - CENTER.y,
     l = Math.hypot(dx, dy);
@@ -309,8 +311,9 @@ test("an upgraded axe and actual focus pursuit can repel the first full wave wit
         (a, b) =>
           Math.hypot(a.x - g.player.x, a.y - g.player.y) -
           Math.hypot(b.x - g.player.x, b.y - g.player.y),
-      )[0];
+      ).find(e => Math.hypot(e.x-g.player.x,e.y-g.player.y) < 700);
       if (nearest) assert.ok(g.selectEnemy(nearest.id));
+      else g.navigateGuide("camp"); // Return to light instead of selecting an off-screen target beyond pursuit range.
     }
     g.update(0.05);
   }
@@ -326,7 +329,7 @@ test("sunset does not cancel an in-progress defense construction order", () => {
   build(g, 2);
   cargo(g, 3);
   assert.ok(g.orderDefense("barricade-left"));
-  g.state.worldTime = 299.99;
+  g.state.worldTime = NIGHT_START - .01;
   g.update(10);
   assert.ok(g.cycle.isNight);
   assert.equal(g.defenses.get("barricade-left").hp, 60);

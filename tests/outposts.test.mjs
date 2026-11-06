@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -109,7 +110,7 @@ test("light and local safety appear only while fuel burns; courtyard walls and r
 
 test("outpost cancels a ready Watcher strike and repels him around the local fire; expiry restores danger immediately", () => {
   const { g, site } = fixture(true); light(g);
-  g.state.worldTime = 299.99; g.update(.02); g.update(12.1);
+  g.state.worldTime = NIGHT_START - .01; g.update(.02); g.update(12.1);
   const m = g.survival.monster;
   const contact = () => Object.assign(m, { x: site.x, y: site.y - 50, warning: 0,
     phase: "windup", phaseTime: .055, windup: .055, path: [], repath: 0,
@@ -124,7 +125,7 @@ test("outpost cancels a ready Watcher strike and repels him around the local fir
 
 test("a fifth-night minion can still attack a player inside a lit outpost", () => {
   const { g } = fixture(true); light(g);
-  g.state.calendarDay = 4; g.state.worldTime = 299.99; g.update(.02); g.update(3.1);
+  g.state.calendarDay = 4; g.state.worldTime = NIGHT_START - .01; g.update(.02); g.update(3.1);
   assert.ok(g.survival.minionHunt);
   Object.assign(g.survival.monster, { warning: 1000 });
   for (const e of g.survival.regionalBosses) e.warning = 1000;

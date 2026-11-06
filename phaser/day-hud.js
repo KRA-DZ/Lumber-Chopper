@@ -47,7 +47,7 @@ export class DayHud {
     this.infoZone.input.hitArea.setSize(width + 16, 134);
     this.phase
       .setText(
-        `${time.night ? "Ночь · до рассвета" : "День · до заката"} ${countdown(time.boundarySeconds)}`,
+        `${time.period} · ${time.night ? "до рассвета" : "до ночи"} ${countdown(time.boundarySeconds)}`,
       )
       .setColor(
         time.sunsetUrgent ? "#ffc0a0" : time.sunsetSoon ? "#f4c77d" : "#efdb9e",
@@ -55,10 +55,8 @@ export class DayHud {
     const x = 22,
       y = 110,
       g = this.track.clear();
-    g.fillStyle(0x9a8756)
-      .fillRect(x, y, width / 2, 8)
-      .fillStyle(0x293e53)
-      .fillRect(x + width / 2, y, width / 2, 8);
+    for (const [from, to, color] of [[0,.15,0xd6a176],[.15,.6,0x9a8756],[.6,.75,0xb56c53],[.75,1,0x293e53]])
+      g.fillStyle(color).fillRect(x + width * from, y, width * (to - from), 8);
     for (let i = 0; i <= 4; i++)
       g.lineStyle(1, 0xe0c88c, 0.35).lineBetween(
         x + (width * i) / 4,

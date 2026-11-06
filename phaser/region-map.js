@@ -42,7 +42,7 @@ export function createRegionMap(scene) {
       detail.textContent = opened
         ? c.exploration.regionSummary(region.id)
         : gate
-          ? `${c.state.regionWood[region.id] || 0}/${region.cost} брёвен`
+          ? `${c.state.regionWood[region.id] || 0}/${region.cost} брёвен · ${c.state.regionStone[region.id] || 0}/${region.stoneCost} камня · лагерь ${region.campRequired}`
           : "—";
       button.append(title, detail);
       button.addEventListener(

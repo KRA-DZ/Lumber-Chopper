@@ -14,7 +14,8 @@ export class CoopCamera {
     const s = this.scene, [a, b] = s.core.actors.map(c => c.player),
       w = s.scale.width, h = s.scale.height,
       separation = Math.max(Math.abs(a.x - b.x) / (w * .65), Math.abs(a.y - b.y) / (h * .58));
-    if (!this.split && separation > 1) this.split = true;
+    if (a.room || b.room || a.menuOpen || b.menuOpen) this.split = true;
+    else if (!this.split && separation > 1) this.split = true;
     else if (this.split && separation < .72) this.split = false;
     const vertical = w >= h, key = `${this.split}:${w}:${h}`;
     if (key !== this.layout) {

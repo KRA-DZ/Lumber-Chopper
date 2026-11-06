@@ -1,5 +1,16 @@
 import { DAY_SECONDS, RAID_INTERVAL } from "./config.js";
-export const NIGHT_START = DAY_SECONDS / 2; // 18:00; рассвет — 06:00 на границе суток.
+export const MORNING_END = DAY_SECONDS * .15;
+export const EVENING_START = DAY_SECONDS * .6;
+export const NIGHT_START = DAY_SECONDS * .75; // 150 секунд ночи, 450 секунд светлого времени.
+export function timePeriod(time) {
+  return time < MORNING_END ? "Утро" : time < EVENING_START ? "День" : time < NIGHT_START ? "Вечер" : "Ночь";
+}
+export function clockHour(time) {
+  if (time < MORNING_END) return 6 + time / MORNING_END * 3;
+  if (time < EVENING_START) return 9 + (time - MORNING_END) / (EVENING_START - MORNING_END) * 9;
+  if (time < NIGHT_START) return 18 + (time - EVENING_START) / (NIGHT_START - EVENING_START) * 3;
+  return (21 + (time - NIGHT_START) / (DAY_SECONDS - NIGHT_START) * 9) % 24;
+}
 export function createCycleManager(state, emit = () => {}) {
   let observedNight = state.worldTime >= NIGHT_START;
   return {

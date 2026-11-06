@@ -5,9 +5,10 @@ import { FORTRESS, insideLocation } from "./locations.js";
 import { SAWMILL } from "./sawmill.js";
 import { regionTrails } from "./region-trails.js";
 import { biomeDressing } from "./biome-dressing.js";
+import { makeBoulders } from "./mining.js";
 
 export function createRegionWorld(regions) {
-  const trees = [],
+  const trees = [], boulders = [],
     bins = new Map(),
     decorBins = new Map(),
     biomeDetails = new Map(),
@@ -202,7 +203,7 @@ export function createRegionWorld(regions) {
         const x = region.x + 80 + gx * 150 + (rnd() - 0.5) * 75,
           y = region.y + 80 + gy * 150 + (rnd() - 0.5) * 75;
         if (
-          reserved(x, y, region) ||
+          reserved(x, y, region) || (pixelHash(gx + region.gx * 12, gy + region.gy * 12) % 2 === 0) ||
           details.some((p, i) => Math.hypot(p.x - x, p.y - y) < (i < 3 ? 150 : 64)) ||
           (region.biome === "field" && rnd() < 0.55)
         )
@@ -251,6 +252,7 @@ export function createRegionWorld(regions) {
     bins.set(region.id, list);
     decorBins.set(region.id, decor);
     biomeDetails.set(region.id, details);
+    boulders.push(...makeBoulders(region, (x,y,r) => reserved(x,y,r) || list.some(t => Math.hypot(t.x-x,t.y-y) < 150)));
   }
   function treesNear(view) {
     const result = [];
@@ -271,6 +273,7 @@ export function createRegionWorld(regions) {
     bounds: REGION_BOUNDS,
     regions,
     trees,
+    boulders,
     landmarks,
     locations,
     trails,

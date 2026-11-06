@@ -43,7 +43,9 @@ export function playFirstDay(g) {
   }
   if (!g.purchaseUpgrade("axe")) throw new Error("First axe not affordable");
   samples.axeSeconds = g.elapsed;
+  gather(); // Four extra logs sustain the fire through the first short night.
   travel("camp");
+  for (let i=0;i<4;i++) if (!g.camp.stoke()) throw new Error("Could not fuel the first camp night");
   samples.returnSeconds = g.elapsed;
   return samples;
 }

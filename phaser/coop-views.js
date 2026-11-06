@@ -45,7 +45,7 @@ export class CoopViews {
       if (down) entry.axe.setVisible(false);
       this.labels[i].setPosition(a.player.x, a.player.y - 92).setText(down ? `${i + 1} · нужна помощь` : `${i + 1}`);
       const p = s.core.helpProgress(i);
-      const text = `♥ ${a.state.health}/${a.state.maxHealth} · Брёвна ${a.state.wood}/${a.state.maxWood} · Монеты ${a.state.coins} · Топор ${a.state.axeLevel + 1}${p ? ` · Помощь ${Math.round(p * 100)}%` : ""}`;
+      const text = `♥ ${a.state.health}/${a.state.maxHealth} · Брёвна ${a.state.wood}/${a.state.maxWood} · Камень ${a.state.stone}/${a.mining.capacity()} · Монеты ${a.state.coins} · Топор ${a.state.axeLevel + 1}${p ? ` · Помощь ${Math.round(p * 100)}%` : ""}`;
       if (this.cards[i].stats.textContent !== text) this.cards[i].stats.textContent = text;
     }));
     this.cards.forEach((c, i) => {

@@ -7,9 +7,11 @@ function open(g, id) {
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
   assert.ok(gate);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });
-  g.state.maxWood = gate.region.cost;
+  g.state.campLevel = Math.max(g.state.campLevel, gate.region.campRequired);
+  g.state.stone = gate.region.stoneCost;
+  g.state.maxWood = Math.max(82,gate.region.cost);
   for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
-  for (let i = 0; i < gate.region.cost + 1; i++) g.update(0.2);
+  for (let i = 0; i < gate.region.cost + 1 + gate.region.stoneCost * 2; i++) g.update(0.2);
   assert.ok(g.regions.unlocked.has(id));
 }
 test("regional world starts with one whole square, four neighbours and lazy deterministic trees", () => {
@@ -19,7 +21,7 @@ test("regional world starts with one whole square, four neighbours and lazy dete
   assert.equal(REGIONS.length, 25);
   assert.deepEqual(a.state.unlockedRegions, ["0:0"]);
   assert.equal(a.regions.frontiers().length, 4);
-  assert.ok(a.trees.length > 70 && a.trees.length < 150);
+  assert.ok(a.trees.length > 25 && a.trees.length < 75);
   assert.deepEqual(a.trees, b.trees);
   assert.equal(a.world.decorBins.size, 1);
   assert.ok(a.nav.isWalkable(700, 1600));
@@ -37,6 +39,7 @@ test("a border project keeps partial payments, consumes exactly the cost and add
     }),
     initial = g.trees.length,
     gate = g.regions.frontiers().find((p) => p.region.id === "1:0");
+  g.state.campLevel = gate.region.campRequired;
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [] });
   g.forestry.addCargo(10);
   g.update(0);
@@ -49,13 +52,13 @@ test("a border project keeps partial payments, consumes exactly the cost and add
   assert.equal(g.state.regionWood["1:0"], 1);
   assert.equal(g.state.wood, 0);
   assert.ok(!g.nav.isWalkable(2600, 1600));
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < gate.region.cost - 1; i++) {
     g.forestry.addCargo(10);
     g.update(0.2);
   }
   assert.ok(g.regions.unlocked.has("1:0"));
-  assert.equal(g.state.regionWood["1:0"], 12);
-  assert.ok(g.trees.length >= initial + 90);
+  assert.equal(g.state.regionWood["1:0"], gate.region.cost);
+  assert.ok(g.trees.length >= initial + 35);
   assert.equal(g.world.decorBins.size, 2);
   assert.ok(g.nav.isWalkable(2600, 1600));
   assert.ok(g.accessible(g.world.ancientTree));
@@ -101,7 +104,7 @@ test("all 25 squares can be opened, seams and negative-coordinate routes stay na
     open(g, id);
   }
   assert.equal(g.world.decorBins.size, 25);
-  assert.ok(g.trees.length > 2200 && g.trees.length < 3600);
+  assert.ok(g.trees.length > 900 && g.trees.length < 1800);
   assert.ok(g.accessible(g.world.merchant));
   assert.ok(g.accessible(g.world.pond));
   assert.ok(!g.nav.isWalkable(g.world.pond.x, g.world.pond.y));

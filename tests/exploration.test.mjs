@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -9,9 +10,11 @@ function open(g, id) {
   assert.ok(gate);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });
   while (g.state.wood) g.forestry.takeCargo();
-  g.state.maxWood = 82;
+  g.state.campLevel = Math.max(g.state.campLevel, gate.region.campRequired);
+  g.state.stone = gate.region.stoneCost;
+  g.state.maxWood = Math.max(82,gate.region.cost);
   for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
-  for (let i = 0; i <= gate.region.cost; i++) g.update(0.2);
+  for (let i = 0; i <= gate.region.cost + gate.region.stoneCost * 2; i++) g.update(0.2);
   assert.ok(g.regions.unlocked.has(id));
 }
 function visit(g, id) {
@@ -226,7 +229,7 @@ test("movement, explicit navigation, damage, sunset and defeat cancel fishing wi
     if (reason === "move") g.keys.add("KeyD");
     if (reason === "navigate") g.setDestination(g.player.x + 30, g.player.y);
     if (reason === "damage") g.state.health -= 20;
-    if (reason === "night") g.state.worldTime = 299.99;
+    if (reason === "night") g.state.worldTime = NIGHT_START - .01;
     if (reason === "defeat") {
       g.state.gameOver = true;
       m.cancelAll();

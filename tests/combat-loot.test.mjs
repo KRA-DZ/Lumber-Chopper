@@ -1,3 +1,4 @@
+import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createInitialState } from "../game/config.js";
@@ -67,7 +68,7 @@ test("a defeated minion leaves a pile; nearby automatic pickup preserves the log
 test("boss loot is guaranteed once per region/night, not once per replacement actor ID", () => {
   const f = fixture();
   assert.equal(f.loot.drop(f.boss("daytime")), false);
-  f.state.worldTime = 330;
+  f.state.worldTime = NIGHT_START + 30;
   assert.ok(f.loot.drop(f.boss("boss-1")));
   assert.equal(f.loot.drop(f.boss("boss-1")), false);
   assert.equal(f.loot.drop(f.boss("replacement")), false);
@@ -86,7 +87,7 @@ test("day and dusk share the small-enemy budget, no drop rerolls, and only dawn 
   for (let i = 0; i < 90; i++) f.loot.drop(f.minion(`small-${i}`));
   assert.equal(f.state.combatLoot.smallCoins, 24);
   assert.equal(f.state.combatLoot.smallResin, 2);
-  f.state.worldTime = 330;
+  f.state.worldTime = NIGHT_START + 30;
   assert.equal(f.loot.drop(f.minion("dusk-new")), false);
   assert.equal(f.state.combatLoot.smallCoins, 24);
   f.loot.update(COMBAT_LOOT.lifetime + 1);
@@ -100,7 +101,7 @@ test("day and dusk share the small-enemy budget, no drop rerolls, and only dawn 
 });
 test("a full resin bag still accepts coins and retains excess resin for later pickup", () => {
   const f = fixture();
-  f.state.worldTime = 330;
+  f.state.worldTime = NIGHT_START + 30;
   f.state.exploration.items.resin = 6;
   f.loot.drop(f.boss("full-bag"));
   Object.assign(f.player, { x: 0, y: 0 });
@@ -138,7 +139,7 @@ test("pause, zero-time, blocked pickup and active-time expiry cannot create or r
 });
 test("piles remain bounded and earned combat coins enable a real shop purchase only once", () => {
   const f = fixture();
-  f.state.worldTime = 330;
+  f.state.worldTime = NIGHT_START + 30;
   for (let i = 0; i < 25; i++) f.loot.drop(f.boss(`b${i}`, `region-${i}`));
   assert.equal(f.loot.piles.size, COMBAT_LOOT.maxPiles);
   Object.assign(f.player, { x: 0, y: 0 });

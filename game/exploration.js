@@ -33,11 +33,14 @@ export function createExploration({
   canAct,
   getStory = () => null,
   outposts,
+  camp,
+  onSale = null,
   navigate,
   emit = () => {},
 }) {
   const data = state.exploration,
     bag = data.items;
+  const price = base => Math.ceil(base * (state.priceMultiplier || 1));
   const sites = [
     {
       id: "fishing",
@@ -93,7 +96,7 @@ export function createExploration({
     available(s) &&
     distance(player, s) < EXPLORATION.range &&
     nav.hasLineOfSight(player, s);
-  const isDay = () => state.worldTime < DAY_SECONDS / 2;
+  const isDay = () => state.worldTime < DAY_SECONDS * .75;
   const caughtToday = () =>
     data.fishDay === state.calendarDay ? data.fishToday : 0;
   function changed(type, event = {}) {
@@ -156,33 +159,33 @@ export function createExploration({
     if (s.kind === "merchant") {
       add(
         "buy-rod",
-        `Удочка · ${EXPLORATION.rodPrice} монет`,
+        `Удочка · ${price(EXPLORATION.rodPrice)} монет`,
         "Открывает ловлю у западного причала. Удочка остаётся у вас.",
         data.rod
           ? "Удочка уже есть"
-          : state.coins < EXPLORATION.rodPrice
+          : state.coins < price(EXPLORATION.rodPrice)
             ? "Не хватает монет"
             : "",
       );
       add(
         "buy-key",
-        `Ключ с печатью · ${EXPLORATION.keyPrice} монет`,
+        `Ключ с печатью · ${price(EXPLORATION.keyPrice)} монет`,
         "Открывает один сундук в руинах. До трёх ключей в сумке.",
         bag.key >= ITEMS.key.limit
           ? "Сумка ключей полна"
-          : state.coins < EXPLORATION.keyPrice
+          : state.coins < price(EXPLORATION.keyPrice)
             ? "Не хватает монет"
             : "",
       );
       add(
         "buy-salve",
-        `Лесная мазь · ${EXPLORATION.salvePrice} монет + 1 смола`,
+        `Лесная мазь · ${price(EXPLORATION.salvePrice)} монет + 1 смола`,
         `Восстанавливает ${EXPLORATION.salveHeal} HP. Используется из сумки; до трёх штук.`,
         bag.salve >= ITEMS.salve.limit
           ? "Мази достаточно"
           : bag.resin < 1
             ? "Нужна смола древнего дуба"
-            : state.coins < EXPLORATION.salvePrice
+            : state.coins < price(EXPLORATION.salvePrice)
               ? "Не хватает монет"
               : "",
       );
@@ -263,6 +266,11 @@ export function createExploration({
                 : "",
       );
     } else if (s.kind === "kitchen" || s.kind === "outpost") {
+      if (s.kind === "kitchen") {
+        add("stoke-camp", `${camp.lit() ? "Подбросить" : "Разжечь"} · 1 бревно`,
+          `Топливо: ${Math.ceil(state.campFuel)} / 600 с. Бревно даёт 60 с защиты лагеря.`,
+          state.campLevel < 1 ? "Сначала постройте костёр на голубой площадке" : state.wood < 1 ? "Нужно бревно" : state.campFuel > 540 ? "Запас топлива полон" : "");
+      }
       if (s.kind === "outpost") {
         const fuel = outposts.remaining(id), logs = fuel > 0 ? 1 : OUTPOST.ignitionLogs;
         add("stoke-fire", `${fuel > 0 ? "Подбросить" : "Разжечь"} · ${logs} ${logs === 1 ? "бревно" : "бревна"}`,
@@ -295,13 +303,13 @@ export function createExploration({
       return getStory()?.performAt(s, action) || false;
     let event = { site: s, action };
     if (action === "buy-rod") {
-      state.coins -= EXPLORATION.rodPrice;
+      state.coins -= price(EXPLORATION.rodPrice);
       data.rod = true;
     } else if (action === "buy-key") {
-      state.coins -= EXPLORATION.keyPrice;
+      state.coins -= price(EXPLORATION.keyPrice);
       bag.key++;
     } else if (action === "buy-salve") {
-      state.coins -= EXPLORATION.salvePrice;
+      state.coins -= price(EXPLORATION.salvePrice);
       bag.resin--;
       bag.salve++;
     } else if (action === "sell-fish" || action === "sell-relic") {
@@ -309,7 +317,7 @@ export function createExploration({
         coins =
           bag[item] *
           (item === "fish" ? EXPLORATION.fishValue : EXPLORATION.relicValue);
-      state.coins += coins;
+      if (onSale) onSale(coins); else state.coins += coins;
       event.coins = coins;
       bag[item] = 0;
     } else if (action === "open-chest") {
@@ -328,6 +336,8 @@ export function createExploration({
       for (let i = 0; i < EXPLORATION.offeringLogs; i++) forestry.takeCargo();
       data.offeringDay = state.calendarDay;
       bag.resin++;
+    } else if (action === "stoke-camp") {
+      if (!camp.stoke(true)) return false;
     } else if (action === "stoke-fire") {
       if (!outposts.stoke(id)) return false;
     } else if (action === "cook-fish") {

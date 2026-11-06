@@ -10,6 +10,7 @@ import {
 } from "./night-lighting.js";
 import { createWildlife } from "../game/wildlife.js";
 import { DAY_SECONDS, CENTER } from "../game/config.js";
+import { MORNING_END, EVENING_START, NIGHT_START } from "../game/cycle.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
 import { fortressClueKey } from "./fortress-assets.js";
 import { sawmillClueKey } from "./sawmill-assets.js";
@@ -427,7 +428,7 @@ export class Atmosphere {
         .fillStyle(0xffe3a0)
         .fillRect(snap(l.x) - 2, snap(l.y) - 25, 4, 10);
     }
-    if (c.state.campLevel > 0 && !light)
+    if (c.camp.lit() && !light)
       for (let i = 0; i < 7; i++) {
         const f = (t * 0.23 + i / 7) % 1;
         a.fillStyle(0xd9d6bf, (1 - f) * 0.2).fillRect(
@@ -518,8 +519,9 @@ export class Atmosphere {
       }
     }
     this.tint.clear();
-    const dayPhase = c.state.worldTime / DAY_SECONDS;
-    const sunset = Math.max(0, 1 - Math.abs(dayPhase - 0.49) / 0.09) * 0.13;
+    const time = c.state.worldTime;
+    const sunrise = time < MORNING_END ? Math.sin(time / MORNING_END * Math.PI) * .16 : 0,
+      sunset = time >= EVENING_START && time < NIGHT_START ? Math.sin((time - EVENING_START) / (NIGHT_START - EVENING_START) * Math.PI) * .21 : sunrise;
     if (sunset > 0)
       this.tint
         .fillStyle(0xd89660, sunset)
@@ -571,6 +573,7 @@ export class Atmosphere {
       this.core.state.lanternLevel,
       this.core.state.campLevel,
       this.core.outposts.revision,
+      Number(this.core.state.campFuel > 0),
     ].join(":");
     const jumped =
       !buffer.maskView ||
