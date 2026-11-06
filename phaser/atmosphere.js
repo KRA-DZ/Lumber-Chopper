@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "../game/camp-projects.js";
 import { LAYERS } from "./layers.js";
 import { createWeather } from "../weather.js";
 import { createEnvironment } from "../environment.js";
@@ -413,7 +414,7 @@ export class Atmosphere {
         .setScale(1 + f * 1.2)
         .setAlpha((1 - f) * 0.22)
         .setVisible(
-          c.state.campLevel === 4 &&
+          hasCampBuilding(c.state,"house") &&
             !light &&
             near(CAMP.hut.x, CAMP.hut.y, 400),
         );
@@ -438,7 +439,7 @@ export class Atmosphere {
           snap(6 + f * 8),
         );
       }
-    if (c.state.campLevel === 4 && dark > 0.15)
+    if (hasCampBuilding(c.state,"house") && dark > 0.15)
       for (const x of [-68, 78])
         a.fillStyle(0xe5b869, dark * 0.4).fillRect(
           CAMP.hut.x + x - 8,

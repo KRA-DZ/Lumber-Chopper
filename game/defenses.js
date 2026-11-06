@@ -1,5 +1,6 @@
 import { fencePlan, partialFence } from "../construction.js";
 import { CENTER } from "./config.js";
+import { hasCampBuilding } from "./camp-projects.js";
 
 export const DEFENSE = Object.freeze({
   fenceHP: 60,
@@ -52,7 +53,7 @@ export function createDefenses(state, changed = () => {}) {
     cachedKey = "",
     cached = [];
   function all() {
-    const key = `${state.campLevel}:${state.buildWood}:${revision}`;
+    const key = `${state.campLevel}:${state.buildProject}:${JSON.stringify(state.campBuildings)}:${state.buildWood}:${revision}`;
     if (key === cachedKey) return cached;
     cachedKey = key;
     const fence = partialFence(state, plan).segments.map(([a, b]) => {
@@ -73,11 +74,11 @@ export function createDefenses(state, changed = () => {}) {
     });
     cached = [
       ...fence,
-      ...(state.campLevel < 3 ? [] : plan.gates.map(g => ({
+      ...(!hasCampBuilding(state,"fence") ? [] : plan.gates.map(g => ({
         ...g, kind: "gate", x: (g.a.x+g.b.x)/2, y: (g.a.y+g.b.y)/2,
         hp: state.defenseHP[g.id] ?? 90, maxHP: 90, cost: 0, wood: 0, open: !!state.gateOpen[g.id],
       }))),
-      ...(state.campLevel < 2
+      ...(!hasCampBuilding(state,"tent") && !hasCampBuilding(state,"fence")
         ? []
         : SITES.map((s) => ({
             ...s,

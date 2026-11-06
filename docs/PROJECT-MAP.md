@@ -9,6 +9,7 @@
 - `game/simulation.js`: `createSimulation()`, игровые команды и координация независимых систем. Начальное состояние/баланс — `game/config.js`.
 - Локальная игра вдвоём: `game/local-coop.js` координирует две личные симуляции с общим мировым тактом; `game/coop-state.js` задаёт общие поля, `game/local-party.js` — цели врагов и личный урон. Камеры и панели — `phaser/coop-camera.js`, `phaser/coop-views.js`. [Управление и проверки](LOCAL-COOP.md).
 - Топливо, склад и комната дома — `game/camp-services.js`; камень — `game/mining.js`. Ближайшие взаимодействия, клавиатура меню и личные лавки — `phaser/keyboard-interactions.js`; комната и добываемые валуны — `phaser/camp-services-view.js`. [Баланс и проверки обновления](CAMP-PROGRESSION.md).
+- Свободный выбор построек, оплата после повторного входа, независимые эффекты — `game/camp-projects.js`; меню проектов — `phaser/build-ui.js`, общая верхняя шкала топлива — `phaser/day-hud.js`. `campLevel` означает число построек, а не их последовательность.
 - Старая Canvas-игра и режим сравнения графики удалены. Корневые модули экономики, рубки, геометрии и генерации растров используются Phaser; перед очисткой проверять граф импортов.
 
 ## Где искать изменение
@@ -38,6 +39,7 @@
 - `npm run serve`, затем `http://localhost:8000/` — локальный запуск. Открывать через HTTP, не `file://`.
 - `npm run build` — автономная статическая сборка в игнорируемой папке `dist/`; Phaser включён локально.
 - `node --test tests/camp-expansion.test.mjs` и `python tests/camp_expansion_smoke.py` — оплата регионов двумя материалами, топливо, склад, калитки, независимые лавки, E/Enter, комната дома, мышь/тач и перезапуск.
+- `node --test tests/build-projects.test.mjs` и `python tests/build_choice_smoke.py` — любая первая постройка, выбор без списания, обязательный повторный вход, холодный костёр, E днём/ночью, верхняя шкала и W/S для доступных и недоступных покупок.
 - `node --test tests/local-coop.test.mjs` и `python tests/local_coop_smoke.py` — личные счета и общий мир, два комплекта ввода, разделение/слияние камер, фонари, спасение, перезапуск и ограниченный совмещённый замер нагрузки.
 - `node --test tests/watcher.test.mjs tests/night_horror.test.mjs tests/minions.test.mjs` — ночная опасность и малые враги.
 - `node --test tests/defense-preparation.test.mjs tests/defenses.test.mjs tests/first_days.test.mjs` — удержание ремонта, предупреждения и отчёт; UI — `python tests/defense_preparation_smoke.py`.

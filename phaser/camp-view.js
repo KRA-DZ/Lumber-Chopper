@@ -1,4 +1,5 @@
 import { CAMP } from "../pixel-art.js";
+import { CAMP_PROJECTS, hasCampBuilding } from "../game/camp-projects.js";
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export class CampView {
   constructor(scene) {
@@ -44,11 +45,11 @@ export class CampView {
     this.storySeal.setVisible(!!s.story?.completed);
     this.storySeal.setTint(s.story?.ending === "named" ? 0xffedbd : 0xc6ded1);
     for (const prop of this.props) {
-      prop.image.setVisible(s.campLevel >= prop.min);
+      prop.image.setVisible(hasCampBuilding(s,CAMP_PROJECTS[prop.min-1].id));
       if (prop.key === "mat")
         prop.image.setPosition(
-          s.campLevel === 4 ? CAMP.hut.x : CAMP.tent.x,
-          s.campLevel === 4 ? CAMP.hut.y + 23 : CAMP.tent.y + 23,
+          hasCampBuilding(s,"house") ? CAMP.hut.x : CAMP.tent.x,
+          hasCampBuilding(s,"house") ? CAMP.hut.y + 23 : CAMP.tent.y + 23,
         );
     }
     for (const [pad, color] of [
@@ -64,7 +65,7 @@ export class CampView {
           standing ? 0.95 : 0.45,
         ).strokeRoundedRect(pad.x - 63, pad.y - 37, 126, 74, 8);
     }
-    const stage = c.stages[s.campLevel];
+    const stage = c.builder.project;
     if (stage && dist(p, c.build) < 240) {
       const x = c.build.x - 44,
         y = c.build.y + 36;

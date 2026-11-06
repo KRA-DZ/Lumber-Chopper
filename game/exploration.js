@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "./camp-projects.js";
 import { CENTER, DAY_SECONDS } from "./config.js";
 import { passageOpen } from "./locations.js";
 import { OUTPOST } from "./outposts.js";
@@ -89,7 +90,7 @@ export function createExploration({
   const available = (s) =>
     !!s &&
     regions.isOpen(s) &&
-    (s.kind !== "kitchen" || state.campLevel > 0) &&
+    (s.kind !== "kitchen" || hasCampBuilding(state,"fire")) &&
     (!s.requiredPassage || passageOpen(state, s.requiredPassage)) &&
     !(s.kind === "discovery" && data.discoveries.includes(s.id));
   const near = (s) =>
@@ -269,7 +270,7 @@ export function createExploration({
       if (s.kind === "kitchen") {
         add("stoke-camp", `${camp.lit() ? "Подбросить" : "Разжечь"} · 1 бревно`,
           `Топливо: ${Math.ceil(state.campFuel)} / 600 с. Бревно даёт 60 с защиты лагеря.`,
-          state.campLevel < 1 ? "Сначала постройте костёр на голубой площадке" : state.wood < 1 ? "Нужно бревно" : state.campFuel > 540 ? "Запас топлива полон" : "");
+          !hasCampBuilding(state,"fire") ? "Сначала постройте костёр на голубой площадке" : state.wood < 1 ? "Нужно бревно" : state.campFuel > 540 ? "Запас топлива полон" : "");
       }
       if (s.kind === "outpost") {
         const fuel = outposts.remaining(id), logs = fuel > 0 ? 1 : OUTPOST.ignitionLogs;

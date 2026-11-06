@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
 import { REGION_SIZE, REGIONS } from "../game/regions.js";
+import { chooseBuildProject } from "./helpers/build-project.mjs";
 const create = () => createSimulation({ regional: true, survival: false });
 function open(g, id) {
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
@@ -92,6 +93,7 @@ test("camp stages improve buildings without opening regions, and tutorial follow
     while (g.state.wood) g.forestry.takeCargo();
     for (let i = 0; i < cost; i++) g.forestry.addCargo(10);
     Object.assign(g.player, { x: g.build.x, y: g.build.y, path: [] });
+    chooseBuildProject(g,["fire","tent","fence","house"][g.state.campLevel]);
     for (let i = 0; i < cost + 1; i++) g.update(0.2);
   }
   assert.equal(g.state.campLevel, 4);

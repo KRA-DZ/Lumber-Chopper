@@ -1,5 +1,6 @@
 import { CAMP_SERVICE, ROOM } from "../game/camp-services.js";
 import { LAYERS } from "./layers.js";
+import { hasCampBuilding } from "../game/camp-projects.js";
 
 export class CampServicesView {
   constructor(scene) {
@@ -28,7 +29,7 @@ export class CampServicesView {
       s.worldHints.offer(entry.label, entry.rock, { eligible: hp > 0, range: 180, priority: 60 });
     }
     this.label.setText(`Склад · ${c.state.logStore.length}/400 · E/Enter ${c.state.wood ? "сложить" : "взять"}`);
-    this.fireLabel.setText(c.state.campLevel ? `${c.camp.lit() ? "Огонь" : "ПОГАС"} · ${Math.ceil(c.state.campFuel)} с · E/Enter` : "Сначала постройте костёр!");
+    this.fireLabel.setText(hasCampBuilding(c.state,"fire") ? `${c.camp.lit() ? "Огонь" : "ПОТУХШИЙ КОСТЁР"} · ${Math.ceil(c.state.campFuel)} с · E/Enter +1 бревно` : "Сначала постройте костёр!");
     s.worldHints.offer(this.label,CAMP_SERVICE.store,{range:200,priority:70});
     s.worldHints.offer(this.fireLabel,{x:1600,y:1648},{range:210,priority:75});
   }

@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "../game/camp-projects.js";
 import { WORKERS } from "../game/workers.js";
 import { stackOffset } from "../game/stack-layout.js";
 const snap = (v) => Math.round(v / 2) * 2;
@@ -22,7 +23,7 @@ export class WorkerView {
     const scene = this.scene,
       system = scene.core.workers,
       d = system.data,
-      visible = scene.core.state.campLevel >= 2;
+      visible = hasCampBuilding(scene.core.state,"tent");
     this.depot.setVisible(visible);
     this.depot.input.enabled = visible;
     this.label.setVisible(visible);

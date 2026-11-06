@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "../game/camp-projects.js";
 import { NIGHT_START } from "../game/cycle.js";
 import { CENTER } from "../game/config.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
@@ -10,11 +11,11 @@ export function nightOpacity(state) {
   return t * t * (3 - 2 * t);
 }
 export function campLights(state, safeRadius) {
-  if (state.campLevel < 1 || state.campFuel <= 0) return [];
+  if (!hasCampBuilding(state,"fire") || state.campFuel <= 0) return [];
   return [
     { x: CENTER.x, y: CENTER.y, r: safeRadius + 120 },
     { x: CAMP.stall.x + 80, y: CAMP.stall.y - 80, r: 90 },
-    ...(state.campLevel === 4
+    ...(hasCampBuilding(state,"house")
       ? [
           { x: CAMP.hut.x - 68, y: CAMP.hut.y - 68, r: 100 },
           { x: CAMP.hut.x + 78, y: CAMP.hut.y - 68, r: 85 },

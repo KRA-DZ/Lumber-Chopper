@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "./camp-projects.js";
 export const LETTERS = Object.freeze([
   {
     id: "first-dawn",
@@ -31,7 +32,7 @@ export const QUESTS = Object.freeze([
     name: "Первый тёплый рассвет",
     description: "Пережить ночь и построить костёр.",
     reward: 20,
-    ready: (s) => s.nightsSurvived >= 1 && s.campLevel >= 1,
+    ready: (s) => s.nightsSurvived >= 1 && hasCampBuilding(s,"fire"),
   },
   {
     id: "shelter",
@@ -39,7 +40,7 @@ export const QUESTS = Object.freeze([
     name: "Укрытие до налёта",
     description: "Построить палатку и пережить три ночи.",
     reward: 50,
-    ready: (s) => s.nightsSurvived >= 3 && s.campLevel >= 2,
+    ready: (s) => s.nightsSurvived >= 3 && hasCampBuilding(s,"tent"),
   },
   {
     id: "fifth-night",

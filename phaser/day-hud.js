@@ -1,8 +1,11 @@
 import { dayOverview, countdown } from "../game/first-days.js";
+import { CAMP_SERVICE } from "../game/camp-services.js";
+import { hasCampBuilding } from "../game/camp-projects.js";
 export class DayHud {
   constructor(scene) {
     this.scene = scene;
     this.track = scene.add.graphics();
+    this.fuelTrack = scene.add.graphics();
     this.infoZone = scene.add
       .zone(14, 12, 330, 134)
       .setOrigin(0)
@@ -55,6 +58,10 @@ export class DayHud {
     const x = 22,
       y = 110,
       g = this.track.clear();
+    this.fuelRatio = hasCampBuilding(c.state,"fire") ? Math.max(0,Math.min(1,c.state.campFuel/CAMP_SERVICE.maxFuel)) : 0;
+    this.fuelTrack.clear().fillStyle(0x242f28,.95).fillRect(x,80,width,6)
+      .fillStyle(c.state.campFuel <= 30 ? 0xc2694c : 0xe6ad56).fillRect(x,80,width*this.fuelRatio,6)
+      .lineStyle(1,0x998465,.7).strokeRect(x,80,width,6);
     for (const [from, to, color] of [[0,.15,0xd6a176],[.15,.6,0x9a8756],[.6,.75,0xb56c53],[.75,1,0x293e53]])
       g.fillStyle(color).fillRect(x + width * from, y, width * (to - from), 8);
     for (let i = 0; i <= 4; i++)

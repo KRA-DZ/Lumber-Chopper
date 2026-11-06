@@ -1,3 +1,4 @@
+import { hasCampBuilding } from "./camp-projects.js";
 import { CENTER, DAY_SECONDS, STAGES, RAID_INTERVAL } from "./config.js";
 import { NIGHT_START, timePeriod } from "./cycle.js";
 import { upgradeOffer } from "../economy.js";
@@ -55,7 +56,7 @@ export function firstDaysPlan(c) {
       goals: [
         ["Продать древесину", c.tutorial.sold],
         ["Купить переноску", s.carryLevel >= 1],
-        ["Построить костёр", s.campLevel >= 1],
+        ["Построить костёр", hasCampBuilding(s,"fire")],
         ["Пережить ночь", s.nightsSurvived >= 1],
       ],
     },
@@ -63,7 +64,7 @@ export function firstDaysPlan(c) {
       day: 2,
       title: "Обустройте лагерь",
       goals: [
-        ["Построить палатку", s.campLevel >= 2],
+        ["Построить палатку", hasCampBuilding(s,"tent")],
         ["Купить первый топор", s.axeLevel >= 1],
         ["Прочитать первое письмо", s.readClues.includes("first-dawn")],
       ],
@@ -83,7 +84,7 @@ export function firstDaysPlan(c) {
       day: 4,
       title: "Подготовьтесь к пятому закату",
       goals: [
-        ["Построить забор", s.campLevel >= 3],
+        ["Построить забор", hasCampBuilding(s,"fence")],
         ["Вооружиться новым топором", s.axeLevel >= 1],
         [
           "Починить лагерь до полной прочности",
@@ -104,7 +105,7 @@ export function firstDaysGuide(c) {
       ? 1
       : !s.carryLevel
         ? 2
-        : s.campLevel < 1
+        : !hasCampBuilding(s,"fire")
           ? 3
           : !(t.sheltered || s.nightsSurvived)
             ? 4
@@ -158,7 +159,7 @@ export function firstDaysGuide(c) {
               ? "6/7 · Переживите первую ночь"
               : "Вы в круге света",
         text: "Смотритель не атакует в свете горящего костра. Следите за топливом и подбрасывайте дрова через E/Enter. На рассвете придёт письмо. Общие меню останавливают время, личные лавки продолжают смену.",
-        action: s.wood > 0 && s.campLevel < 1 ? "build" : null,
+        action: s.wood > 0 && !hasCampBuilding(s,"fire") ? "build" : null,
         button: "Вложить брёвна в костёр",
       };
   }
@@ -170,7 +171,7 @@ export function firstDaysGuide(c) {
       text: safe
         ? "Вы уже у лагеря. Покупатели уходят с наступлением ночи. Поддерживайте огонь брёвнами: только горящий костёр защищает от Смотрителя, а от налётчиков нужен топор."
         : "Завершите дела и возвращайтесь к свету. Кнопка прокладывает обычный путь, без телепортации.",
-      action: !safe ? "camp" : s.wood > 0 && s.campLevel < 1 ? "build" : null,
+      action: !safe ? "camp" : s.wood > 0 && !hasCampBuilding(s,"fire") ? "build" : null,
       button: !safe ? "К свету лагеря" : "Достроить костёр",
     };
   const guide = (id, title, text, action = null, button = "") => ({

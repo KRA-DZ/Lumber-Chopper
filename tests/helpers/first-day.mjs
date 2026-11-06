@@ -34,6 +34,11 @@ export function playFirstDay(g) {
   while (g.state.campLevel < 1) {
     gather();
     travel("build");
+    if(g.state.campLevel < 1 && !g.builder.project){
+      if(!g.builder.choose("fire"))throw new Error("Could not choose the first fire");
+      g.setDestination(g.build.x+100,g.build.y);tickUntil(()=>!g.player.path.length);
+      travel("build");
+    }
     tickUntil(() => g.state.wood === 0 || g.state.campLevel >= 1);
   }
   samples.fireSeconds = g.elapsed;
@@ -43,9 +48,10 @@ export function playFirstDay(g) {
   }
   if (!g.purchaseUpgrade("axe")) throw new Error("First axe not affordable");
   samples.axeSeconds = g.elapsed;
-  gather(); // Four extra logs sustain the fire through the first short night.
-  travel("camp");
-  for (let i=0;i<4;i++) if (!g.camp.stoke()) throw new Error("Could not fuel the first camp night");
+  for(let trip=0;trip<2;trip++){
+    gather();travel("camp"); // Eight earned logs light and sustain the initially cold fire.
+    for(let i=0;i<4;i++)if(!g.camp.stoke())throw new Error("Could not fuel the first camp night");
+  }
   samples.returnSeconds = g.elapsed;
   return samples;
 }

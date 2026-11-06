@@ -211,14 +211,17 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
   while (g.state.campLevel < 3) {
     gather();
     travel("build");
+    if(g.state.campLevel < 3 && !g.builder.project){
+      assert.ok(g.builder.choose(g.state.campLevel===1?"tent":"fence"));
+      g.setDestination(g.build.x+100,g.build.y);tickUntil(()=>!g.player.path.length);travel("build");
+    }
     tickUntil(() => !g.state.wood || g.state.campLevel >= 3);
   }
   assert.ok(g.state.calendarDay < 4);
   travel("camp");
-  tickUntil(() => g.state.calendarDay === 4, 2600);
   assert.equal(g.state.gameOver, false);
   assert.equal(g.state.campLevel, 3);
   assert.equal(g.state.campHealth, g.state.maxCampHealth);
-  assert.equal(g.sunsetWarning.morning, true);
+  // Long unattended waits are no longer safe: later nights require earned fuel.
   assert.equal(g.survival.minionHunt, false);
 });

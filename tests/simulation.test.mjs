@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
+import { chooseBuildProject } from "./helpers/build-project.mjs";
 
 import { growthStage } from "../forestry.js";
 const step = (g, n, dt = 0.1) => {
@@ -52,6 +53,7 @@ test("all camp stages preserve paths, linked fences and trigger one expansion ea
     g.state.maxWood = cost;
     for (let n = 0; n < cost; n++) g.forestry.addCargo(10);
     Object.assign(g.player, { x: g.build.x, y: g.build.y, path: [] });
+    chooseBuildProject(g,["fire","tent","fence","house"][i]);
     step(g, cost * 3 + 5);
     assert.equal(g.state.campLevel, i + 1);
     assert.equal(g.state.cargoValue, 0);
@@ -75,6 +77,7 @@ test("paused and zero-time updates cannot spend cargo or progress the calendar",
   const g = createSimulation();
   g.forestry.addCargo(10);
   Object.assign(g.player, { x: g.build.x, y: g.build.y });
+  chooseBuildProject(g,"fire");
   const time = g.state.worldTime;
   g.update(0);
   assert.equal(g.state.wood, 1);

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { createLocalCoop } from "../game/local-coop.js";
 import { STAGES } from "../game/config.js";
 import { treeYield } from "../forestry.js";
+import { chooseBuildProject, reenterBuildPad } from "./helpers/build-project.mjs";
 
 const make = (hazards = false) => createLocalCoop({ survival: hazards });
 const place = (a, p) => Object.assign(a.player, p, { path: [], autoTimer: 10000, moving: false });
@@ -54,6 +55,7 @@ test("both players build a common camp and open a common region using their own 
     a.state.maxWood = cost; for (let i = 0; i < cost / 2; i++) a.forestry.addCargo(10);
     place(a, g.build);
   }
+  chooseBuildProject(g.actors[0],"fire");reenterBuildPad(g.actors[1]);
   for (let i = 0; i < 400 && g.state.campLevel === 0; i++) g.update(.05);
   assert.equal(g.actors[0].state.campLevel, 1); assert.equal(g.actors[1].state.campLevel, 1);
   assert.equal(g.actors.reduce((n, a) => n + a.state.wood, 0), 0);

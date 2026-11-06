@@ -5,6 +5,7 @@ import { RepairControl } from "./repair-control.js";
 import { DAY_SECONDS } from "../game/config.js";
 import { clockHour } from "../game/cycle.js";
 import { regionAt } from "../game/regions.js";
+import { hasCampBuilding } from "../game/camp-projects.js";
 export class HudScene extends Phaser.Scene {
   constructor() {
     super("Hud");
@@ -153,7 +154,7 @@ export class HudScene extends Phaser.Scene {
       .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · Огонь ${Math.ceil(c.state.campFuel)} с\n${c.player.room ? "Дом лагеря" : regionAt(c.player.x, c.player.y)?.name || "Лес"} · Камень ${c.state.stone}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${c.player.room ? "Дом лагеря" : regionAt(c.player.x, c.player.y)?.name || "Лес"} · Камень ${c.state.stone}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {

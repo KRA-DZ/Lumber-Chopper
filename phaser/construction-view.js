@@ -1,10 +1,11 @@
 import { CAMP } from "../pixel-art.js";
 import { CENTER, STAGES } from "../game/config.js";
+import { constructionStage } from "../game/camp-projects.js";
 
 // Rebuilt only when wood is deposited, never per frame. Pixel coordinates match
 // the new building sheets; the original Canvas renderer keeps its own previews.
 export function bakeConstruction(ctx, art, state) {
-  const stage = state.campLevel,
+  const stage = constructionStage(state),
     ratio = state.buildWood / STAGES[stage].cost;
   const site = stage === 0 ? CENTER : stage === 1 ? CAMP.tent : CAMP.hut;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
