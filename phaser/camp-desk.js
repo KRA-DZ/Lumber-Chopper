@@ -2,6 +2,7 @@ import { RECIPES, CAMP_UPGRADES, INDUSTRY_PROJECTS, MATERIAL_NAMES, materialCost
 import { BUYER_ORDERS } from "../game/buyer-orders.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { countdown } from "../game/first-days.js";
+import { appendRaidReadiness } from "./camp-progress-ui.js";
 
 export function createCampDesk(scene){
   const dialog=document.querySelector("#campDesk"),content=dialog.querySelector("[data-camp-content]"),message=dialog.querySelector("[data-camp-message]"),
@@ -47,6 +48,7 @@ export function createCampDesk(scene){
       }
       if(c.orders.data.refund.length)row("order:refund",`Забрать возврат · ${c.orders.data.refund.length} брёвен`,"Выдаётся в руки до личной вместимости. Новый заказ доступен после возврата.",()=>c.orders.takeRefund());
     }else{
+      appendRaidReadiness(content,c);
       row("fuel:coal","Уголь в костёр · +180 с",`Запас ${Math.ceil(s.campFuel)}/${c.camp.maxFuel()} с. Нужно подойти к костру.`,()=>c.camp.stoke(true,"coal"));
       row("kit:camp","Ремнабор для лагеря",`Один набор → до 60 HP. Лагерь: ${s.campHealth}/${s.maxCampHealth}. Подойдите к костру.`,()=>c.preparation.repair("camp"));
       for(const d of c.defenses?.all()||[])if(d.hp<d.maxHP&&d.kind!=="trap"&&Math.hypot(d.x-c.player.x,d.y-c.player.y)<110)

@@ -46,9 +46,9 @@ export function createLocalParty(emit) {
     dawn() { for (const a of actors) if (a.state.health > 0) { a.state.health = a.state.maxHealth; a.player.hitCooldown = 0; } },
     reward(coins) { actors.forEach((a, i) => { a.state.coins += Math.floor(coins / actors.length) + (i < coins % actors.length ? 1 : 0); }); },
     sale(coins) { for (const a of actors) a.state.coins += coins; },
-    blast(point, radius, amount) {
+    blast(point, radius, amount, source = "minion") {
       for (const a of actors) if (a.state.health > 0 && Math.hypot(a.player.x - point.x, a.player.y - point.y) < radius) {
-        target = a; party.hurt(amount, "minion");
+        target = a; party.hurt(amount, source);
       }
     },
   };

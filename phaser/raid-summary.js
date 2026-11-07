@@ -1,3 +1,4 @@
+import { raidPlan } from "../game/raid-plans.js";
 // The report is a snapshot; opening this card never pays a reward or repairs anything.
 export function appendRaidSummary(container, report) {
   if (!report) return;
@@ -5,7 +6,7 @@ export function appendRaidSummary(container, report) {
     title = document.createElement("h3"),
     text = document.createElement("p");
   article.dataset.raidReport = String(report.night);
-  title.textContent = `Итоги ночи ${report.night} · ${report.survived ? "пережита" : "поражение"}`;
+  title.textContent = `Итоги ночи ${report.night} · ${raidPlan(report.night).name} · ${report.survived ? "пережита" : "поражение"}`;
   text.style.whiteSpace = "pre-line";
   text.textContent = [
     `Налётчики: ${report.killed}/${report.spawned} побеждено · сбежало ${report.escaped}.`,

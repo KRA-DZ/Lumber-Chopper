@@ -2,6 +2,7 @@ import { renderStoryJournal } from "./story-journal.js";
 import { firstDaysPlan } from "../game/first-days.js";
 import { LETTERS, QUESTS } from "../game/lore.js";
 import { appendRaidSummary } from "./raid-summary.js";
+import { appendCampMilestones, appendRaidReadiness } from "./camp-progress-ui.js";
 export function createSurvivalUi(scene) {
   const journal = document.querySelector("#journalDialog"),
     list = journal.querySelector("[data-journal]"),
@@ -40,6 +41,8 @@ export function createSurvivalUi(scene) {
       return article;
     };
     appendRaidSummary(list, s.lastRaidReport);
+    appendCampMilestones(list,c);
+    appendRaidReadiness(list,c);
     renderStoryJournal(scene, list, (target) => {
       pendingRoute = target;
       journal.close();

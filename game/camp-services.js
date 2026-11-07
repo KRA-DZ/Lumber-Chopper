@@ -20,6 +20,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
       (material==="wood"?!state.wood:!(state.campIndustry?.materials.coal>0)) || state.campFuel > campFuelLimit(state)-seconds) return false;
     if(material==="wood")forestry.takeCargo();else state.campIndustry.materials.coal--;
     state.campFuel += seconds;
+    state.campMilestones.lit=true;
     emit("camp-stoked", {}); return true;
   }
   function store(action = "deposit") {

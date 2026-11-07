@@ -2,6 +2,7 @@ import { hasCampBuilding } from "./camp-projects.js";
 import { CENTER, DAY_SECONDS, STAGES, RAID_INTERVAL } from "./config.js";
 import { NIGHT_START, timePeriod } from "./cycle.js";
 import { upgradeOffer } from "../economy.js";
+import { campMilestones } from "./camp-milestones.js";
 
 export function countdown(seconds) {
   const n = Math.max(0, Math.ceil(seconds - 1e-7));
@@ -57,6 +58,7 @@ export function firstDaysPlan(c) {
         ["Продать древесину", c.tutorial.sold],
         ["Купить переноску", s.carryLevel >= 1],
         ["Построить костёр", hasCampBuilding(s,"fire")],
+        ["Зажечь костёр", s.campMilestones.lit],
         ["Пережить ночь", s.nightsSurvived >= 1],
       ],
     },
@@ -74,6 +76,7 @@ export function firstDaysPlan(c) {
       title: "Исследуйте соседний участок",
       goals: [
         ["Открыть соседний регион", (s.unlockedRegions?.length || 1) > 1],
+        ["Добыть первый камень", s.campMilestones.mined],
         [
           "Прочитать находку за пределами лагеря",
           s.readClues.some((id) => noteIds.has(id)),
@@ -218,13 +221,13 @@ export function firstDaysGuide(c) {
     );
   }
   if (step === 3) {
-    const needed = STAGES[0].cost - s.buildWood,
+    const needed = STAGES[0].cost - (s.buildProject&&s.buildProject!=="fire"?0:s.buildWood),
       batch = Math.min(s.maxWood, needed),
       ready = s.wood >= batch;
     return guide(
       "fire",
       "4/7 · Расширьте круг света",
-      `Костру ещё ${needed} брёвен. Для этого рейса: ${s.wood}/${batch}. Голубая площадка строит, золотая — продаёт. Остатки ждут у пней.`,
+      `Костру ещё ${needed} брёвен. Для этого рейса: ${s.wood}/${batch}. Выберите костёр на голубой площадке; другие проекты можно строить в своём порядке.`,
       ready ? "build" : "trees",
       ready
         ? "К строительству"
@@ -233,6 +236,8 @@ export function firstDaysGuide(c) {
           : "За дровами для костра",
     );
   }
+  if (!s.campMilestones.lit&&hasCampBuilding(s,"fire"))
+    return guide("light","Разожгите построенный костёр","Костёр готов, но не зажжён. Подойдите с бревном и нажмите E/Enter. Запас топлива показан сверху; его можно пополнять днём.",s.wood?"stoke":"trees",s.wood?"К костру":"За топливом");
   if (step === 4)
     return guide(
       "prepare",
@@ -257,6 +262,8 @@ export function firstDaysGuide(c) {
       "journal",
       "Прочитать письмо",
     );
+  const milestones=campMilestones(c),next=milestones.find(goal=>!goal.done);
+  if(next)return guide("settle",`Развитие лагеря · ${milestones.filter(g=>g.done).length}/6`,`${next.name}. ${next.hint} Цели необязательны, порядок свободный.`,next.action,"К цели");
   const plan = firstDaysPlan(c);
   const today = plan[Math.min(3, Math.max(1, s.calendarDay))];
   const goal = today.goals.find(([, done]) => !done);
@@ -281,6 +288,14 @@ export function guideDestination(c, action) {
   if (action === "camp") return { x: CENTER.x, y: CENTER.y + 120 };
   if (action === "sell") return c.sale;
   if (action === "build") return c.build;
+  if (action === "stoke") return {x:CENTER.x,y:CENTER.y+65};
+  if (action === "region") return c.regions?.frontiers().filter(g=>c.state.campLevel>=g.region.campRequired)
+    .sort((a,b)=>a.region.cost-b.region.cost||Math.hypot(a.x-c.player.x,a.y-c.player.y)-Math.hypot(b.x-c.player.x,b.y-c.player.y))[0]||null;
+  if (action === "stone") {
+    const rock=c.world.boulders?.filter(r=>c.accessible(r)&&(c.state.boulderHP[r.id]??r.maxHP)>0)
+      .sort((a,b)=>Math.hypot(a.x-c.player.x,a.y-c.player.y)-Math.hypot(b.x-c.player.x,b.y-c.player.y))[0];
+    return rock?{x:rock.x,y:rock.y+rock.radius+35}:null;
+  }
   if (action !== "trees") return null;
   if (c.state.wood < c.state.maxWood) {
     const piles = [...c.forestry.piles.values()]

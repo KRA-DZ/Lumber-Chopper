@@ -24,6 +24,8 @@
 | Переработка, усиления, башни и фонари | `game/camp-industry-config.js` — баланс; `game/camp-industry.js` — общий запас/очередь/усиления; `game/camp-preparation.js` — ремнаборы, свет, стрельба | `phaser/camp-desk.js`, `phaser/camp-industry-view.js`; [CAMP-ECONOMY.md](CAMP-ECONOMY.md) |
 | Ежедневные заказы покупателей | `game/buyer-orders.js`, общая `state.buyerOrders`; сдача на платформе — `game/simulation.js` | Вкладка заказов `phaser/camp-desk.js`, подпись у продажи и HUD |
 | Итоги налёта | `game/raid-report.js`, `state.lastRaidReport` | `phaser/raid-summary.js`, меню обороны и дневник |
+| Первые цели и готовность лагеря | `game/camp-milestones.js`, `game/raid-readiness.js`, `game/first-days.js` | `phaser/camp-progress-ui.js`, `phaser/day-hud.js`, J/B и хозяйство; [CAMP-LOOP.md](CAMP-LOOP.md) |
+| Составы налётов и метатели | `game/raid-plans.js`, `game/raid-projectiles.js`, `game/raiders.js`, `game/survival.js` | `phaser/enemy-view.js`, прогноз в HUD/B/J, итоговый отчёт |
 | Добыча с врагов и доступные покупки | `game/combat-loot.js`, `state.combatLoot` | `phaser/combat-loot-view.js`, `shop.js` |
 | PNG предметов добычи/находок | `scripts/prepare_loot_items.py`, `src/assets/loot-items/` | `phaser/loot-item-assets.js`, `phaser/exploration-ui.js`, `phaser/exploration-view.js`; [LOOT-ITEM-ART.md](LOOT-ITEM-ART.md) |
 | Пауза, настройки и справка | Прежняя система причин паузы сцены | `phaser/game-menu.js`, `index.html`; [GAME-MENU.md](GAME-MENU.md) |
@@ -46,6 +48,7 @@
 - `node --test tests/local-coop.test.mjs` и `python tests/local_coop_smoke.py` — личные счета и общий мир, два комплекта ввода, разделение/слияние камер, фонари, спасение, перезапуск и ограниченный совмещённый замер нагрузки.
 - `node --test tests/watcher.test.mjs tests/night_horror.test.mjs tests/minions.test.mjs` — ночная опасность и малые враги.
 - `node --test tests/defense-preparation.test.mjs tests/defenses.test.mjs tests/first_days.test.mjs` — удержание ремонта, предупреждения и отчёт; UI — `python tests/defense_preparation_smoke.py`.
+- `node --test tests/camp-loop.test.mjs tests/first_days.test.mjs tests/defenses.test.mjs tests/defense-preparation.test.mjs tests/night_horror.test.mjs tests/camp-industry.test.mjs tests/local-coop.test.mjs tests/minions.test.mjs` — цели/реальные действия, топливо/ограда/боезапас, прогноз и ротация волн, броски/уклонение, кооперативный урон и совместимость прежнего боя. После сборки `python tests/camp_loop_smoke.py` проверяет только новые цели, сводку, прогноз, настоящий налёт и метателя, паузу, отчёт и перезапуск: WebGL вдвоём и мобильный Canvas из `dist/`.
 - `node --test tests/economy_logic.test.mjs tests/simulation.test.mjs` — экономика и команды симуляции.
 - `node --test tests/combat-loot.test.mjs tests/runtime-entry.test.mjs` — добыча, ранний цикл и единственный вход; UI/старая ссылка — `python tests/combat_loot_smoke.py`. Баланс: [COMBAT-LOOT.md](COMBAT-LOOT.md).
 - `node --test tests/regions.test.mjs tests/biomes.test.mjs` — регионы и биомы.

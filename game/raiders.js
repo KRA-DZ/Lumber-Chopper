@@ -1,6 +1,8 @@
 import { CENTER } from "./config.js";
 import { DEFENSE } from "./defenses.js";
+import { RAID_SHOTS } from "./raid-projectiles.js";
 export const RAIDER_ATTACK_COOLDOWN = 1; // Together with the shorter windup, more than twice the previous cadence.
+export const RUNNER_SPEED_MULTIPLIER = 1.25; // Only runners in the fast raid; ordinary roles retain their balance.
 export const RAIDER_ROLES = Object.freeze({
   attacker: {
     name: "Налётчик",
@@ -29,6 +31,10 @@ export const RAIDER_ROLES = Object.freeze({
     windup: 0.6,
     color: 0xe8a18b,
   },
+  thrower: {
+    name:"Метатель налёта",hp:4,speed:90,damage:10,structureDamage:0,windup:.45,color:0xc5c595,
+    spriteRole:"thief", // Reuse the approved PNG frames; attacks are telegraphed arcs.
+  },
 });
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export function createRaiderAI({
@@ -41,6 +47,7 @@ export function createRaiderAI({
   defeat,
   hit,
   escaped,
+  launch = () => false,
 }) {
   function tick(actor, dt, canSearch) {
     const role = RAIDER_ROLES[actor.role || "attacker"];
@@ -57,6 +64,15 @@ export function createRaiderAI({
       hit(actor.id, DEFENSE.trapDamage, false);
       if (actor.hp <= 0) return false;
     }
+    if(actor.role==="thrower"&&state.health>0&&!player.room&&distance(actor,player)<RAID_SHOTS.range){
+      actor.path=[];actor.moving=false;
+      if(actor.cooldown>0){actor.attack=null;actor.windup=0;return false;}
+      if(!actor.attack)actor.attack={x:player.x,y:player.y,radius:RAID_SHOTS.radius};
+      actor.windup+=dt;
+      if(actor.windup>=role.windup){launch(actor,actor.attack);actor.attack=null;actor.windup=0;actor.cooldown=RAID_SHOTS.cooldown;}
+      return false;
+    }
+    actor.attack=null;
     const fleeing = actor.fleeing;
     const playerTarget =
       !fleeing &&
@@ -158,7 +174,7 @@ export function createRaiderAI({
       searched = true;
     }
     actor.moving =
-      nav.followPath(actor, dt, role.speed * (actor.slow > 0 ? 0.45 : 1)) >
+      nav.followPath(actor, dt, role.speed * (actor.fast ? RUNNER_SPEED_MULTIPLIER : 1) * (actor.slow > 0 ? 0.45 : 1)) >
       0.01;
     return searched;
   }

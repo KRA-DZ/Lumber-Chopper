@@ -153,7 +153,7 @@ export class HudScene extends Phaser.Scene {
         .padStart(2, "0");
     g.clear()
       .fillStyle(0x243c2d, 0.95)
-      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 134)
+      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 150)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     const order=c.orders.current,orderProgress=order?.resource==="logs"?c.orders.data.active.logs.length:order?Math.min(order.amount,c.state.campIndustry.materials[order.resource]):0,
       location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:

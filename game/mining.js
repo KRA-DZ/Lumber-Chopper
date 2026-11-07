@@ -30,7 +30,7 @@ export function createMining({ state, player, world, nav, canAct, emit = () => {
     state.boulderHP[id] = Math.max(0, hp - state.axePower);
     player.swing = .32;
     emit("mining-hit", { rock, damage: state.axePower });
-    if (!state.boulderHP[id]) { state.stone += rock.yield; nav.rebuildObstacles(); emit("stone-collected", { rock, count: rock.yield }); }
+    if (!state.boulderHP[id]) { state.stone += rock.yield; state.campMilestones.mined=true; nav.rebuildObstacles(); emit("stone-collected", { rock, count: rock.yield }); }
     return true;
   }
   return { capacity, hit, update };

@@ -5,6 +5,8 @@ import { createMinions } from "./minions.js";
 import { createRaiderAI, RAIDER_ROLES } from "./raiders.js";
 import { createWatcher, WATCHER } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
+import { raidPlan, raidRoster } from "./raid-plans.js";
+import { createRaidProjectiles } from "./raid-projectiles.js";
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 190, // Near the starting hero's 200: little room to waste time while chased.
   monsterDamage: 40,
@@ -30,6 +32,7 @@ export function createSurvival({
   party = null,
 }) {
   const raiders = [];
+  const raidShots=createRaidProjectiles({state,player,party,hurt:hurtPlayer,emit});
   let monster = null,
     pending = 0,
     sequence = 0,
@@ -98,6 +101,7 @@ export function createSurvival({
   function nightStarted({ night }) {
     watcher.reset();
     raiders.length = 0;
+    raidShots.clear();
     warningTimer = SURVIVAL.warningSeconds;
     const p =
       spawnPoint(player, 460, night * 1.7) || spawnPoint(CENTER, 550, night);
@@ -121,6 +125,7 @@ export function createSurvival({
       night % SURVIVAL.waveEvery === 0
         ? {
             night,
+            planId:raidPlan(night).id,
             status: "warning",
             spawned: 0,
             killed: 0,
@@ -139,6 +144,7 @@ export function createSurvival({
     });
   }
   function dawn() {
+    raidShots.clear();
     residents?.dawn();
     if (wave && ["warning", "active"].includes(wave.status)) {
       wave.status = "withdrawn";
@@ -218,6 +224,7 @@ export function createSurvival({
       );
       target.stun = 0.15;
       target.windup = 0;
+      target.attack = null;
       target.path = [];
       target.repath = 0;
     }
@@ -244,26 +251,30 @@ export function createSurvival({
     defeat,
     hit,
     escaped,
+    launch:raidShots.launch,
   });
   function update(dt) {
     if (dt <= 0 || state.gameOver) return;
     residents?.update(dt);
     if (!state.gameOver) minions?.update(dt);
+    if (!state.gameOver) raidShots.update(dt);
     if (state.gameOver) return;
     hitCooldown = Math.max(0, hitCooldown - dt);
     pathCooldown = Math.max(0, pathCooldown - dt);
     warningTimer = Math.max(0, warningTimer - dt);
     if (monster) monster.warning = warningTimer;
     if (pending && warningTimer <= 0) {
+      const roster=raidRoster(wave.night,pending);
       for (let i = 0; i < pending; i++) {
         const p = spawnPoint(CENTER, 530, sequence + i * 1.7);
         if (p) {
-          const role = ["attacker", "thief", "breaker"][i % 3];
+          const {role,fast}=roster[i];
           raiders.push({
             ...p,
             id: `raider-${sequence++}`,
             kind: "raider",
             role,
+            fast,
             home: { ...p },
             hp: RAIDER_ROLES[role].hp + Math.floor(state.calendarDay / 10),
             maxHP: RAIDER_ROLES[role].hp + Math.floor(state.calendarDay / 10),
@@ -280,7 +291,7 @@ export function createSurvival({
         wave.spawned = raiders.length;
         wave.status = "active";
       }
-      emit("wave-started", { count: raiders.length });
+      emit("wave-started", { count: raiders.length,planId:wave.planId });
       finishWave();
     }
     if (monster) {
@@ -351,7 +362,7 @@ export function createSurvival({
       return minions?.actors || [];
     },
     get projectiles() {
-      return minions?.projectiles || [];
+      return [...(minions?.projectiles || []),...raidShots.shots];
     },
     get minionHunt() {
       return minions?.hunt || false;
