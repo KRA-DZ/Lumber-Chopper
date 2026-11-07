@@ -1,5 +1,6 @@
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { appendRaidSummary } from "./raid-summary.js";
+import { appendRaidReadiness } from "./camp-progress-ui.js";
 export function createDefenseUi(scene) {
   const dialog = document.querySelector("#defenseDialog"),
     list = dialog.querySelector("[data-defenses]"),
@@ -10,9 +11,10 @@ export function createDefenseUi(scene) {
     const info = document.createElement("p");
     info.textContent =
       !hasCampBuilding(c.state,"tent") && !hasCampBuilding(c.state,"fence")
-        ? "Сначала постройте костёр и палатку. После этого появятся места для укреплений."
+        ? "Для баррикад и ловушек нужна палатка или ограда. Другие постройки можно выбирать независимо."
         : `В руках: ${c.state.wood}/${c.state.maxWood} брёвен. Рядом с повреждённой секцией удерживайте R или экранную кнопку: каждые 0,6 с одно бревно восстанавливает до 20 HP. Отпускание сбрасывает незавершённый взнос. Поручение ниже работает автоматически; WASD или нажатие на землю отменяют работу. Метатели бросают через ограду — уклоняйтесь.`;
     list.append(info);
+    appendRaidReadiness(list,c);
     appendRaidSummary(list, c.state.lastRaidReport);
     const sections = c.defenses.all();
     for (const s of sections.filter(

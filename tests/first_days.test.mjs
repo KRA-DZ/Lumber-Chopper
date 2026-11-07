@@ -127,7 +127,8 @@ test("first-day budget earns carry, a fire and an axe by walking before dusk, th
   assert.equal(g.guide.id, "letter");
   g.lore.read({ id: "first-dawn" });
   assert.ok(g.lore.claim("warm-dawn"));
-  assert.equal(g.guide.id, "plan");
+  assert.equal(g.guide.id, "settle");
+  assert.equal(g.guide.action, "region");
 });
 test("daily plans remain optional, reflect actual accomplishments and pay no automatic rewards", () => {
   const g = create(),
@@ -140,6 +141,7 @@ test("daily plans remain optional, reflect actual accomplishments and pay no aut
   g.state.campLevel = 3;
   g.state.axeLevel = 1;
   g.state.unlockedRegions.push("1:0");
+  g.state.campMilestones.mined=true;
   g.lore.read({ id: "oak-note" });
   const plan = firstDaysPlan(g);
   assert.ok(plan[2].goals.every(([, done]) => done));

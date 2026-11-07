@@ -59,6 +59,7 @@ export function createRaidReports(state, defenses) {
         night: active.night,
         survived,
         status: wave?.status || "withdrawn",
+        planId: wave?.planId || null,
         spawned: wave?.spawned || 0,
         killed: wave?.killed || 0,
         escaped: wave?.escaped || 0,

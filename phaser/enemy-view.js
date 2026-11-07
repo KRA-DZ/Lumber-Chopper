@@ -85,9 +85,10 @@ export class EnemyView {
       const frame = e.moving ? Math.floor(c.elapsed * 5) % 2 : 0;
       const role = RAIDER_ROLES[e.role] || RAIDER_ROLES.attacker;
       const small = e.tier === "minion";
+      const spriteRole=role.spriteRole||e.role;
       let key =
-        e.kind === "raider" && e.role && e.role !== "attacker"
-          ? `survival.raider.${e.role}${frame}`
+        e.kind === "raider" && spriteRole && spriteRole !== "attacker"
+          ? `survival.raider.${spriteRole}${frame}`
           : `survival.${e.kind}${frame}`;
       if (e.kind === "raider" && e.windup > 0) key = "survival.raider.attack";
       if (e.invulnerable) {
@@ -114,6 +115,7 @@ export class EnemyView {
         Math.max(250, o.image.displayHeight + 24),
       );
       if (e.flash > 0) o.image.setTintFill(0xffedc0);
+      else if(e.kind==="raider"&&e.role==="thrower")o.image.setTint(0xc5c595);
       else o.image.clearTint();
       const selected = (c.actors || [c]).some(a => a.selectedEnemyId === e.id);
       if (selected && visible) {
@@ -148,7 +150,7 @@ export class EnemyView {
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`
@@ -186,8 +188,8 @@ export class EnemyView {
             -Math.PI / 2 + Math.PI * 2 * t,
           )
           .strokePath();
-      } else if (e.kind === "resident" && e.attack) {
-        const radius = small
+      } else if (e.attack) {
+        const radius = e.role==="thrower"?e.attack.radius:small
           ? e.attack.kind === "throw"
             ? MINIONS.blastRadius
             : MINIONS.range

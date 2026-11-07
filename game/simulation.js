@@ -11,6 +11,7 @@ import { createCampPreparation } from "./camp-preparation.js";
 import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
+import { raidPlan } from "./raid-plans.js";
 import { createDefenses } from "./defenses.js";
 import { createDefenseRepair, DEFENSE_REPAIR } from "./defense-repair.js";
 import { createRaidReports } from "./raid-report.js";
@@ -234,7 +235,7 @@ export function createSimulation({
   const industry = createCampIndustry({state:gameState,player,forestry,defenses,emit});
   const preparation = createCampPreparation({state:gameState,player,defenses,nav,getSurvival:()=>survival,canUse:industry.canUse,emit});
   const orders = createBuyerOrders({state:gameState,player,site:sale,forestry,canAct,
-    onIncome:value=>{if(party)party.sale(value);else gameState.coins+=value;},emit});
+    onIncome:value=>{gameState.campMilestones.sold=true;if(party)party.sale(value);else gameState.coins+=value;},emit});
   const defenseRepair = createDefenseRepair({
     canAct,
     get: (id) => defenses?.get(id),
@@ -454,7 +455,7 @@ export function createSimulation({
       showNotice(
         event.seconds === 60
           ? event.raid
-            ? "Через минуту налёт! Подготовьте топор и вернитесь к лагерю."
+            ? `Через минуту налёт «${raidPlan(event.night).name}»! ${raidPlan(event.night).hint}`
             : "До заката одна минута. Закончите продажу и возвращайтесь к свету."
           : "До темноты 15 секунд. Вернитесь в светлый круг лагеря!",
         7,
@@ -465,7 +466,7 @@ export function createSimulation({
       survival?.nightStarted(event);
       showNotice(
         event.night % SURVIVAL.waveEvery === 0 && survival
-          ? `Ночь ${event.night}: налёт! Малые монстры идут за вами до лагеря. Чините забор и уклоняйтесь от снарядов.`
+          ? `Ночь ${event.night}: ${raidPlan(event.night).name}! Малые монстры идут за вами до лагеря. ${raidPlan(event.night).hint}`
           : "Ночь. Смотритель ищет тех, кто покинул свет лагеря.",
         9,
       );
@@ -479,7 +480,7 @@ export function createSimulation({
         sunsetWarning = { raid: true, morning: true, until: elapsed + 10 };
       showNotice(
         raidDay
-          ? "Сегодня налёт с заката. Подготовьте ограду, топор и брёвна для ремонта. Метатели достают через забор!"
+          ? `Сегодня налёт с заката: ${raidPlan(event.day).name}. ${raidPlan(event.day).hint} Подготовка — Оборона (B).`
           : report
             ? `Пережита ночь ${report.night}. Награда: ${report.reward} монет. На восстановление: ${report.repairLogs} брёвен. Итоги — Оборона (B).`
             : `Рассвет. Пережито ночей: ${gameState.nightsSurvived}`,
@@ -704,6 +705,7 @@ export function createSimulation({
       if (party) party.sale(value);
       else gameState.coins += value;
       tutorial.sold = true;
+      gameState.campMilestones.sold=true;
       floatingText(sale.x, sale.y - 35, `+${value} монет`, "#ffe296");
     }
     if (

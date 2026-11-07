@@ -1,5 +1,6 @@
 import { dayOverview, countdown } from "../game/first-days.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
+import { raidReadiness } from "../game/raid-readiness.js";
 export class DayHud {
   constructor(scene) {
     this.scene = scene;
@@ -21,6 +22,9 @@ export class DayHud {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#cbd4ad",
+    });
+    this.raid.setInteractive({useHandCursor:true}).on("pointerdown",(p,x,y,event)=>{
+      event.stopPropagation();if(!scene.world.core.paused)scene.world.defenseUi.open();
     });
     this.warning = scene.add
       .text(0, 168, "", {
@@ -45,8 +49,8 @@ export class DayHud {
       this.phase.setFontSize(mobile ? 13 : 11);
       this.raid.setFontSize(mobile ? 12 : 11);
     }
-    this.infoZone.setSize(width + 16, 134);
-    this.infoZone.input.hitArea.setSize(width + 16, 134);
+    this.infoZone.setSize(width + 16, 150);
+    this.infoZone.input.hitArea.setSize(width + 16, 150);
     this.phase
       .setText(
         `${time.period} · ${time.night ? "до рассвета" : "до ночи"} ${countdown(time.boundarySeconds)}`,
@@ -82,14 +86,15 @@ export class DayHud {
         : c.survival?.raiders.length
           ? `Налёт · осталось врагов: ${c.survival.raiders.length}`
           : c.survival?.wave?.status === "won"
-            ? `Налёт отражён · +${c.survival.wave.reward} монет`
+            ? `Налёт отражён · +${c.survival.wave.reward}`
             : c.survival?.wave?.status === "escaped"
-              ? `Налёт завершён · +${c.survival.wave.reward} монет`
+              ? `Налёт завершён · +${c.survival.wave.reward}`
               : "Налётчики отступили"
       : time.raidTonight
-        ? `Налёт сегодня · через ${countdown(time.raidSeconds)}`
-        : `Налёт · ночь ${time.nextRaid} · через ${countdown(time.raidSeconds)}`;
-    this.raid.setText(text).setColor(time.raidTonight ? "#f1b595" : "#cbd4ad");
+        ? `Налёт сегодня · ${countdown(time.raidSeconds)}`
+        : `Налёт · ночь ${time.nextRaid} · ${countdown(time.raidSeconds)}`;
+    const readiness=raidReadiness(c);
+    this.raid.setText(`${text}\n${readiness.plan.name} · готово ${readiness.ready}/3 · B`).setColor(time.raidTonight ? "#f1b595" : "#cbd4ad");
     const warn = c.sunsetWarning;
     const preparation = !time.night && time.raidTonight && time.sunsetSoon;
     this.warning
@@ -98,11 +103,11 @@ export class DayHud {
       .setVisible(!!warn || preparation);
     if (preparation)
       this.warning.setText(
-        `Налёт через ${countdown(time.boundarySeconds)}\nПочините ограду, возьмите брёвна.\nМетатели бросают через забор — двигайтесь!`,
+        `Налёт через ${countdown(time.boundarySeconds)} · ${readiness.plan.name}\n${readiness.plan.hint}\nГотовность ${readiness.ready}/3 · подробности B`,
       );
     else if (warn?.morning)
       this.warning.setText(
-        "Сегодня налёт с заката!\nПодготовьте ограду, топор и брёвна.\nМетатели достают через забор.",
+        `Сегодня налёт с заката! ${readiness.plan.name}\n${readiness.plan.hint}\nГотовность ${readiness.ready}/3 · подробности B`,
       );
     else if (warn)
       this.warning.setText(
