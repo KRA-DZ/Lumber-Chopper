@@ -33,6 +33,7 @@ export function createExploration({
   forestry,
   canAct,
   getStory = () => null,
+  worldWorks = null,
   outposts,
   camp,
   onSale = null,
@@ -79,6 +80,7 @@ export function createExploration({
       .filter((p) => p.type === "chest")
       .map((p) => ({ ...p, kind: "chest" })),
     ...(world.locations || []).flatMap((l) => l.sites),
+    ...(worldWorks?.sites||[]),
   ];
   const byId = new Map(sites.map((p) => [p.id, p]));
   let context = null,
@@ -90,6 +92,8 @@ export function createExploration({
   const available = (s) =>
     !!s &&
     regions.isOpen(s) &&
+    (!s.requiredWorks||!!state.worldWorks.built[s.requiredWorks]) &&
+    (!s.requiresLow||state.worldWorks.level==="low") &&
     (s.kind !== "kitchen" || hasCampBuilding(state,"fire")) &&
     (!s.requiredPassage || passageOpen(state, s.requiredPassage)) &&
     !(s.kind === "discovery" && data.discoveries.includes(s.id));
@@ -218,6 +222,8 @@ export function createExploration({
                 ? "Сначала освободите место для реликвии"
                 : "",
       );
+    } else if (s.kind === "infrastructure") {
+      rows.push(...worldWorks.offers(id));
     } else if (s.kind === "passage") {
       add(
         "open-passage",
@@ -304,6 +310,10 @@ export function createExploration({
       return false;
     if (action.startsWith("story:"))
       return getStory()?.performAt(s, action) || false;
+    if(action.startsWith("works:")){
+      if(!worldWorks.perform(id,action))return false;
+      changed("infrastructure-used",{site:s,action});return true;
+    }
     let event = { site: s, action };
     if (action === "buy-rod") {
       state.coins -= price(EXPLORATION.rodPrice);
@@ -449,8 +459,10 @@ export function createExploration({
   function regionSummary(regionId) {
     const s = sites.filter((s) => s.regionId === regionId),
       chests = s.filter((s) => s.kind === "chest");
+    const works=regionId==="-1:0"?` · плотина: ${state.worldWorks.level==="low"?"вода опущена":"высокая вода"} · рыба сегодня ${caughtToday()}/${EXPLORATION.fishPerDay}`:
+      regionId==="0:-1"?` · Северный настил: ${state.worldWorks.built["north-boardwalk"]?"восстановлен":"нужен ремонт"}`:"";
     if (chests.length)
-      return `Сундуки: ${chests.filter((s) => !data.openedChests.includes(s.id)).length}/${chests.length}`;
+      return `Сундуки: ${chests.filter((s) => !data.openedChests.includes(s.id)).length}/${chests.length}${works}`;
     if (s.some((s) => s.kind === "pond"))
       return `Рыба сегодня: ${caughtToday()}/${EXPLORATION.fishPerDay}`;
     if (s.some((s) => s.kind === "ancient"))

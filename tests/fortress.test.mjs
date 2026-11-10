@@ -32,7 +32,7 @@ test("fortress reserves a large footprint, keeps all twelve chest IDs and leaves
   const g = create();
   assert.ok(FORTRESS.bounds.width >= 1100 && FORTRESS.bounds.height >= 900);
   assert.equal(
-    g.exploration.sites.filter((s) => s.kind === "chest").length,
+    g.exploration.sites.filter((s) => s.kind === "chest"&&!s.requiredWorks).length,
     12,
   );
   assert.equal(

@@ -2,6 +2,7 @@ import { normalizeAppearance } from "./appearances.js";
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
 import { initialIndustryState } from "./camp-industry-config.js";
+import { initialWorldWorks } from "./world-works-layout.js";
 export const DAY_SECONDS = 600;
 export const RAID_INTERVAL = 5; // Общий интервал налётов для календаря, директора и интерфейса.
 export const WORLD = Object.freeze({ width: 3200, height: 3200 });
@@ -24,6 +25,7 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     buildBlockedPlayers: [], // Стоявшие на платформе при выборе должны сойти и войти повторно.
     campIndustry: initialIndustryState(), // Общие материалы (до 200/300/400), очередь до 3 работ, усиления 0–2 и топливо фонарей.
     campMilestones: {lit:false,sold:false,mined:false}, // Общие необязательные цели: запоминают факт действия даже после расхода/угасания; наград нет.
+    worldWorks: initialWorldWorks(), // Общие взносы/готовые переходы и два положения плотины. Только в текущей игре; revision меняется при смене геометрии.
     buyerOrders: {active:null,refund:[],completedDay:-1,completed:0}, // Один заказ в день; частичные брёвна возвращаются без потери стоимости.
     logStore: [], // Общий склад: храним стоимость каждого бревна без создания мировых объектов.
     stone: 0, // Личный запас камня; вместимость 40 + 10 за уровень переноски.

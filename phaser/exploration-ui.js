@@ -142,13 +142,14 @@ export function createExplorationUi(scene) {
         "ancient-roots",
         "camp-kitchen",
         "chest:0:-1:0",
+        "old-dam","river-bridge","north-boardwalk","sluice-gate",
       ]) {
         const site = m.get(id),
           open = m.available(site),
           row = document.createElement("article");
         row.className = "activity-card";
         paragraph(
-          `${site.name} · ${open ? m.regionSummary(site.regionId) : "Сначала откройте регион или постройте костёр"}`,
+          `${site.name} · ${open ? m.regionSummary(site.regionId) : site.requiresLow&&scene.core.regions.isOpen(site)?"Сначала опустите воду на западной плотине":"Сначала откройте регион или постройте костёр"}`,
           row,
         );
         const route = button(

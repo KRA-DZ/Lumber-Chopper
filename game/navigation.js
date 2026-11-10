@@ -138,6 +138,7 @@ export function createNavigation(
         });
       }
     }
+    for(const wall of model.worksWalls?.()||[])obstacles.push({x:(wall.a.x+wall.b.x)/2,y:(wall.a.y+wall.b.y)/2,half:0,r:wall.r,a:wall.a,b:wall.b});
     for (const o of obstacles) {
       const x0 = (o.a ? Math.min(o.a.x, o.b.x) : o.x - o.half) - o.r,
         y0 = (o.a ? Math.min(o.a.y, o.b.y) : o.y) - o.r,

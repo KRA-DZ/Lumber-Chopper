@@ -15,6 +15,7 @@ export function createForestGround({
   biomeAt = () => "forest",
   materials = null,
   fortressFloor = null,
+  worksSurfaces = () => [],
 }) {
   const cache = new Map();
   function bake(cx, cy) {
@@ -48,6 +49,11 @@ export function createForestGround({
       g.beginPath();
       path.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
       g.stroke();
+    }
+    for(const area of worksSurfaces()){
+      if(area.kind==="water"){g.strokeStyle="#00ff00";g.lineWidth=16;g.strokeRect(area.x,area.y,area.width,area.height);}
+      g.fillStyle=area.kind==="water"?"#0000ff":area.kind==="shore"?"#00ff00":"#ff0000";
+      g.fillRect(area.x,area.y,area.width,area.height);
     }
     for (const outline of [pondOutline, streamOutline]) {
       g.beginPath();
@@ -258,6 +264,7 @@ export function createForestGround({
   return {
     draw,
     getChunk,
+    invalidate(affected){for(const key of cache.keys()){const [x,y]=key.split(",").map(Number);if(affected(x,y))cache.delete(key);}},
     get cachedChunks() {
       return cache.size;
     },

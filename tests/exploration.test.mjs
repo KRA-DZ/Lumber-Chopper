@@ -134,14 +134,14 @@ test("each actual ruin chest consumes one key and grants deterministic coins/rel
   d.items.relic = ITEMS.relic.limit;
   assert.equal(m.perform(m.context, "open-chest"), false);
   assert.equal(d.items.key, 1);
-  assert.equal(m.regionSummary("0:-1"), "Сундуки: 1/2");
+  assert.match(m.regionSummary("0:-1"), /Северный настил/);
 });
 
 test("one chest in every ruin is discoverable through the same model, with finite unique loot", () => {
   const g = create();
   while (g.regions.unlocked.size < 25)
     open(g, g.regions.frontiers()[0].region.id);
-  const chests = g.exploration.sites.filter((s) => s.kind === "chest");
+  const chests = g.exploration.sites.filter((s) => s.kind === "chest"&&!s.requiredWorks);
   assert.equal(chests.length, 12);
   const ids = new Set();
   for (const s of chests) {

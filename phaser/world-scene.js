@@ -48,6 +48,7 @@ import { createBuildUi } from "./build-ui.js";
 import { createCampDesk } from "./camp-desk.js";
 import { CampIndustryView } from "./camp-industry-view.js";
 import { materialCostText } from "../game/camp-industry-config.js";
+import { WorldWorksView } from "./world-works-view.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -149,6 +150,7 @@ export class WorldScene extends Phaser.Scene {
     this.campServicesView = new CampServicesView(this);
     this.houseView = new HouseView(this);
     this.industryView = new CampIndustryView(this);
+    this.worldWorksView = new WorldWorksView(this);
     this.campDesk = createCampDesk(this);
     this.bindInput();
     this.bindDialogs();
@@ -848,6 +850,7 @@ export class WorldScene extends Phaser.Scene {
     this.campServicesView.render();
     this.houseView.render();
     this.industryView.render();
+    this.worldWorksView.render();
     for (const [i, actor] of (c.actors || [c]).entries()) {
       const entry = this.coopViews?.entries[i] || this;
       entry.player.setVisible(!actor.player.room);
@@ -1127,6 +1130,8 @@ export class WorldScene extends Phaser.Scene {
       finally { this.routingCoop = false; }
     }
     if (type === "tower-shot") { this.industryView?.shot(e); return; }
+    if(type==="world-work-completed"){this.core.showNotice(`${e.project.name}: восстановлено! Маршрут изменился.`,7);return;}
+    if(type==="water-level-changed"){this.core.showNotice(e.level==="low"?"Вода отступила. Открыты брод и подход к гидростанции.":"Вода поднялась. Используйте восстановленный мост.",7);return;}
     if (type === "production-ready") { this.core.showNotice(`Готово: ${materialCostText(e.output)}. В общем запасе лагеря.`,4); return; }
     if (type === "order-completed") { this.core.showNotice(`Заказ выполнен: +${e.order.reward} монет!`,6); return; }
     if (type === "order-expired") { this.core.showNotice("Срок заказа истёк. Переданные брёвна можно забрать у продажи.",6); return; }
@@ -1479,6 +1484,7 @@ export class WorldScene extends Phaser.Scene {
   cleanup() {
     this.campDesk?.destroy();
     this.industryView?.destroy();
+    this.worldWorksView?.destroy();
     this.buildUi?.destroy();
     this.houseView?.destroy();
     this.campServicesView?.destroy();
