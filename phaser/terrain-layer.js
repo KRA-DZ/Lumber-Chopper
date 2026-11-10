@@ -1,9 +1,11 @@
 import { createForestGround } from "./art/ground-art.js";
 import { createFortressFloorSampler } from "./fortress-floor.js";
+import { worksChunkAffected } from "../game/world-works-layout.js";
 export const TERRAIN_TEXTURE_LIMIT = 24; // 1.5 MiB RGBA at 128², bounded reuse across camera edges.
 export class TerrainLayer {
   constructor(scene, model) {
     this.scene = scene;
+    this.model=model;this.worksRevision=model.worksRevision?.()||0;
     const fortressFloor = createFortressFloorSampler(
       scene.registry.get("fortressPack"),
       model.locations,
@@ -24,6 +26,11 @@ export class TerrainLayer {
     this.images = new Map();
   }
   update(view) {
+    const revision=this.model.worksRevision?.()||0;
+    if(revision!==this.worksRevision){
+      this.worksRevision=revision;this.source.invalidate(worksChunkAffected);
+      for(const [key,image] of this.images){const [,x,y]=key.split("/").map((v,i)=>i?Number(v):v);if(worksChunkAffected(x,y)){image.destroy();this.scene.textures.remove(key);this.images.delete(key);}}
+    }
     const views = Array.isArray(view) ? view : [view];
     const wanted = new Set();
     for (const view of views) {

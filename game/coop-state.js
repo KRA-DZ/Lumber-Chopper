@@ -6,7 +6,7 @@ const WORLD_KEYS = new Set([
   "unlockedRegions", "regionWood",
   "campFuel", "logStore", "regionStone", "gateOpen", "boulderHP",
   "campBuildings", "buildProject", "buildBlockedPlayers",
-  "campIndustry", "buyerOrders", "campMilestones",
+  "campIndustry", "buyerOrders", "campMilestones", "worldWorks",
 ]);
 const EXPLORATION_KEYS = new Set([
   "openedChests", "openedPassages", "discoveries", "discussedFinds", "debrisHP", "outpostFuel",

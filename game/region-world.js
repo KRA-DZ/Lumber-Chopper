@@ -6,8 +6,9 @@ import { SAWMILL } from "./sawmill.js";
 import { regionTrails } from "./region-trails.js";
 import { biomeDressing } from "./biome-dressing.js";
 import { makeBoulders } from "./mining.js";
+import { initialWorldWorks, worksWater, worksCollision, worksReserved, worksSurfaces, WORKS_WALLS } from "./world-works-layout.js";
 
-export function createRegionWorld(regions) {
+export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks()}) {
   const trees = [], boulders = [],
     bins = new Map(),
     decorBins = new Map(),
@@ -143,13 +144,13 @@ export function createRegionWorld(regions) {
   function inWater(x, y) {
     const dx = (x - pond.x) / pond.rx,
       dy = (y - pond.y) / pond.ry;
-    return dx * dx + dy * dy < 1;
+    return dx * dx + dy * dy < 1 || worksWater(state,x,y);
   }
   function waterCollision(x, y, r = 10) {
     return (
       ((x - pond.x) / (pond.rx + r)) ** 2 +
         ((y - pond.y) / (pond.ry + r)) ** 2 <
-      1
+      1 || worksCollision(state,x,y,r)
     );
   }
   function segmentDistance(p, a, b) {
@@ -171,6 +172,7 @@ export function createRegionWorld(regions) {
   }
   function reserved(x, y, r) {
     return (
+      worksReserved(x,y,75) ||
       locations.some(
         (l) => l.regionId === r.id && insideLocation(l, x, y, 72),
       ) ||
@@ -238,6 +240,7 @@ export function createRegionWorld(regions) {
           (l) => l.regionId === region.id && insideLocation(l, x, y, 32),
         ) ||
         waterCollision(x, y, 20) ||
+        worksReserved(x,y,20) ||
         nearTrail({ x, y }, 45) ||
         (region.id === "0:0" && Math.hypot(x - 1600, y - 1600) < 310)
       )
@@ -286,6 +289,9 @@ export function createRegionWorld(regions) {
     clues,
     inWater,
     waterCollision,
+    worksSurfaces:()=>worksSurfaces(state),
+    worksRevision:()=>state.worldWorks.revision,
+    worksWalls:()=>WORKS_WALLS.filter(w=>regions.isOpen(w.a)&&(!w.project||!state.worldWorks.built[w.project])),
     nearTrail,
     segmentDistance,
     generate,

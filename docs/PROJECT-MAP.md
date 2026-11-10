@@ -30,6 +30,7 @@
 | PNG предметов добычи/находок | `scripts/prepare_loot_items.py`, `src/assets/loot-items/` | `phaser/loot-item-assets.js`, `phaser/exploration-ui.js`, `phaser/exploration-view.js`; [LOOT-ITEM-ART.md](LOOT-ITEM-ART.md) |
 | Пауза, настройки и справка | Прежняя система причин паузы сцены | `phaser/game-menu.js`, `index.html`; [GAME-MENU.md](GAME-MENU.md) |
 | Регионы и биомы | `game/regions.js`, `game/region-world.js`, `game/biomes.js`, `game/region-trails.js`, `game/biome-terrain.js`, `game/biome-dressing.js` | `phaser/region-view.js`, `phaser/region-map.js`, `phaser/terrain-layer.js`; [FOREST-SWAMP.md](FOREST-SWAMP.md) |
+| Плотина, вода, мосты и ворота | `game/world-works-layout.js` — геометрия/цены; `game/world-works.js` — взносы/защита от затопления; общая `state.worldWorks`; навигация/генерация используют тот же макет | `phaser/world-works-view.js`, `phaser/world-works-journal.js`, осмотр через `game/exploration.js`; ограниченная инвалидация земли — `phaser/terrain-layer.js`, `phaser/art/ground-art.js`; [WORLD-WORKS.md](WORLD-WORKS.md) |
 | Крепость, лесопилка, находки | `game/locations.js`, `game/exploration.js`, `game/clearing.js` | `phaser/location-view.js`, `phaser/exploration-view.js`, `phaser/clearing-view.js` |
 | Перевалочный костёр крепости | `game/outposts.js`, `state.exploration.outpostFuel`; действия — `game/exploration.js` | `phaser/outpost-view.js`, `phaser/location-view.js`, `phaser/night-lighting.js`; [OUTPOSTS.md](OUTPOSTS.md) |
 | Сюжет и дневник | `game/story.js`, `game/lore.js`, `game/discovery-dialogue.js` | `phaser/story-journal.js`, `phaser/exploration-ui.js` |
@@ -53,6 +54,7 @@
 - `node --test tests/economy_logic.test.mjs tests/simulation.test.mjs` — экономика и команды симуляции.
 - `node --test tests/combat-loot.test.mjs tests/runtime-entry.test.mjs` — добыча, ранний цикл и единственный вход; UI/старая ссылка — `python tests/combat_loot_smoke.py`. Баланс: [COMBAT-LOOT.md](COMBAT-LOOT.md).
 - `node --test tests/regions.test.mjs tests/biomes.test.mjs` — регионы и биомы.
+- `node --test tests/world-works.test.mjs tests/regions.test.mjs tests/exploration.test.mjs tests/local-coop.test.mjs tests/worker-jobs.test.mjs` — реальные переходы/взносы/затопление/сундук/регенерация окружения и совместимость кооператива/помощников; `tests/fortress.test.mjs tests/biome-atmosphere.test.mjs tests/first_days.test.mjs` — затронутые подходы/земля/ранний цикл. После сборки `python tests/world_works_smoke.py` проверяет только плотину, воду/кеш, мост/настил, ворота, сундук/архив, управление и сброс: WebGL вдвоём и мобильный Canvas из `dist/`. `--mobile-only` повторяет только мобильную часть.
 - `node --test tests/biome-atmosphere.test.mjs` и `python tests/biome_atmosphere_smoke.py` — проходы леса/болота, детерминированный декор, стык грунта, PNG, стереозвук/пауза и ограниченные кеши.
 - `node --test tests/story.test.mjs tests/discovery-dialogue.test.mjs` — сюжет и разговоры о находках.
 - `node --test tests/outposts.test.mjs` и `python tests/outpost_smoke.py` — розжиг/подброс/готовка, топливо/пауза, временная защита от Смотрителя и угроза пятой ночи, свет/ввод/перезапуск.

@@ -12,6 +12,7 @@ import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { raidPlan } from "./raid-plans.js";
+import { createWorldWorks } from "./world-works.js";
 import { createDefenses } from "./defenses.js";
 import { createDefenseRepair, DEFENSE_REPAIR } from "./defense-repair.js";
 import { createRaidReports } from "./raid-report.js";
@@ -51,7 +52,7 @@ export function createSimulation({
   const initialState = createInitialState({ appearance }),
     gameState = shared ? shareWorldState(initialState, shared.state) : initialState,
     regions = shared?.regions || (regional ? createRegions(gameState) : null),
-    world = shared?.world || (regional ? createRegionWorld(regions) : createWorldModel()),
+    world = shared?.world || (regional ? createRegionWorld(regions,gameState) : createWorldModel()),
     { trees } = world;
   const stages = STAGES,
     keys = new Set(),
@@ -185,6 +186,9 @@ export function createSimulation({
         canAct,
       })
     : null;
+  const worldWorks=regional?createWorldWorks({state:gameState,player,regions,nav,forestry,emit,
+    bodies:()=>[...(party?.actors.map(a=>a.player)||[player]),...(workers?.crew||[]),...buyers,
+      ...(survival?.raiders||[]),...(survival?.residents||[]),...(survival?.monster?[survival.monster]:[])]}):null;
   const exploration = regional
     ? createExploration({
         state: gameState,
@@ -195,6 +199,7 @@ export function createSimulation({
         forestry,
         canAct,
         getStory: () => story,
+        worldWorks,
         outposts,
         camp: { lit: () => camp.lit(), stoke: (quoted,material) => camp.stoke(quoted,material), maxFuel:()=>camp.maxFuel() },
         onSale: party ? value => party.sale(value) : null,
@@ -949,6 +954,7 @@ export function createSimulation({
     }
   }
   const core = {
+    worldWorks,
     get guide() {
       return firstDaysGuide(core);
     },
