@@ -1146,7 +1146,7 @@ export class WorldScene extends Phaser.Scene {
     }
     if (type === "worker-hired") {
       this.core.showNotice(
-        "Помощник нанят! Днём он добывает брёвна у древнего дуба. Управление командой — H.",
+        "Помощник нанят! Профессии, назначения и резерв дров — в меню H.",
         7,
       );
       return;

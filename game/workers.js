@@ -1,10 +1,12 @@
 import { hasCampBuilding } from "./camp-projects.js";
 import { workerAppearance } from "./appearances.js";
 import { NIGHT_START } from "./cycle.js";
+import { createWorkerJobs, WORKER_ROLES, workerRole, workerSlots, WORKER_JOBS } from "./worker-jobs.js";
+import { campStorageLimit, materialLimit } from "./camp-industry-config.js";
 
 export const WORKERS = Object.freeze({
-  max: 3,
-  hirePrices: [150, 350, 750],
+  max: 4,
+  hirePrices: [150, 350, 750, 1250],
   upgradePrices: [200, 500],
   stockLimit: 30,
   logValue: 8,
@@ -18,11 +20,13 @@ export const WORKER_PHASES = Object.freeze({
   cutting: "Рубит",
   delivery: "На склад",
   resting: "У костра",
-  waiting: "Склад заполнен",
+  waiting: "Ожидает",
   blocked: "Нет прохода",
+  mining: "Добывает камень",
+  repairing: "Чинит",
 });
 
-// Engine-independent, bounded NPC state machine. Only the ancient oak produces logs.
+// Bounded NPC scheduler; specialists use the same path budget and real shared resources.
 export function createWorkers({
   state,
   player,
@@ -32,6 +36,7 @@ export function createWorkers({
   forestry,
   activeBuyer,
   sale,
+  defenses = null,
   getSurvival,
   onIncome = null,
   playersAtSale = null,
@@ -43,27 +48,36 @@ export function createWorkers({
   let routeBudget = 0,
     routeTurn = 0,
     saleTimer = 0;
-  const available = () =>
-    hasCampBuilding(state,"tent") && regions.isOpen(world.ancientTree);
+  const available = () => hasCampBuilding(state,"tent");
   const atDepot = () =>
-    distance(player, WORKERS.depot) < 140 &&
+    !player.room && !player.menuOpen && distance(player, WORKERS.depot) < 140 &&
     nav.hasLineOfSight(player, WORKERS.depot);
   const speed = () => 140 + data.level * 15;
   const capacity = () => 4 + data.level * 2;
   const chopSeconds = () => 2.5 - data.level * 0.4;
   const daytime = () => state.worldTime < WORKERS.recallTime;
+  const slots=()=>Math.min(WORKERS.max,workerSlots(state));
+  const jobs=createWorkerJobs({state,world,regions,nav,defenses,data,emit});
+  const logStock=()=>data.logTarget==="store"?state.logStore:data.stock;
+  const stockLimit=()=>data.logTarget==="store"?campStorageLimit(state):WORKERS.stockLimit;
+  const canManage=()=>!state.gameOver&&state.health>0&&!player.menuOpen&&!player.room;
   function changed(type, event = {}) {
     emit(type, event);
   }
-  function hire() {
+  function hireReason(role="lumberjack"){
+    if(!WORKER_ROLES[role])return "Неизвестная профессия";
+    if(!canManage())return "Игрок недоступен";
+    if(!atDepot())return "Подойдите к складу работников";
+    if(!available())return "Сначала постройте палатку";
+    if(!daytime())return "Найм доступен утром и днём";
+    if(crew.length>=slots())return "Нет мест: улучшите обустройство дома";
+    if(state.coins<WORKERS.hirePrices[crew.length])return "Недостаточно монет";
+    return "";
+  }
+  function hire(role="lumberjack") {
     const price = WORKERS.hirePrices[crew.length];
     if (
-      state.gameOver || state.health <= 0 ||
-      !atDepot() ||
-      !available() ||
-      !daytime() ||
-      price == null ||
-      state.coins < price
+      hireReason(role)
     )
       return false;
     state.coins -= price;
@@ -71,7 +85,8 @@ export function createWorkers({
       p = nav.nearestGround(1580 + id * 36, 1760);
     crew.push({
       id,
-      name: ["Фома", "Марта", "Лука"][id],
+      name: ["Фома", "Марта", "Лука", "Егор"][id],
+      role, pendingRole:null, stoneCargo:0, workTarget:null, workScan:0, workTimer:0, reason:"Готовится к работе",
       appearance: workerAppearance(id),
       ...p,
       phase: "resting",
@@ -88,13 +103,13 @@ export function createWorkers({
       dangerUntil: 0,
       clock: 0,
     });
-    changed("worker-hired", { id, price });
+    changed("worker-hired", { id, price, role });
     return true;
   }
   function upgrade() {
     const price = WORKERS.upgradePrices[data.level];
     if (
-      state.gameOver || state.health <= 0 ||
+      !canManage() ||
       !atDepot() ||
       !available() ||
       !crew.length ||
@@ -109,18 +124,38 @@ export function createWorkers({
     return true;
   }
   function setRecalled(value) {
-    if (state.gameOver || typeof value !== "boolean" || !crew.length)
+    if (!canManage() || typeof value !== "boolean" || !crew.length)
       return false;
     data.recalled = value;
     changed("workers-recalled", { recalled: value });
     return true;
   }
   function setAutoSell(value) {
-    if (state.gameOver || typeof value !== "boolean" || !crew.length)
+    if (!canManage() || typeof value !== "boolean" || !crew.length)
       return false;
     data.autoSell = value;
     changed("worker-sales-changed");
     return true;
+  }
+  function setLogTarget(value){
+    if(!canManage()||!["sell","store"].includes(value))return false;
+    data.logTarget=value;changed("worker-destination-changed");return true;
+  }
+  function setRepairReserve(value){
+    if(!canManage()||!Number.isInteger(value)||value<0||value>WORKER_JOBS.repairReserveMax)return false;
+    data.repairReserve=value;changed("worker-reserve-changed");return true;
+  }
+  function assign(id,role){
+    const w=crew.find(w=>w.id===id);
+    if(!w||!canManage()||!atDepot()||!WORKER_ROLES[role])return false;
+    w.pendingRole=role===workerRole(w)?null:role;
+    w.path=[];w.routeKey="";w.repath=0;w.workTimer=0;
+    changed("worker-assigned",{id,role});return true;
+  }
+  function transferStock(){
+    if(!canManage()||!atDepot())return 0;
+    let count=0;while(data.stock.length&&state.logStore.length<campStorageLimit(state)){state.logStore.push(data.stock.pop());count++;}
+    if(count)changed("worker-stock-stored",{count});return count;
   }
   function withdraw() {
     if (
@@ -137,6 +172,7 @@ export function createWorkers({
     return true;
   }
   function goalFor(w, kind) {
+    if(kind.startsWith("rock:")||kind.startsWith("repair:"))return jobs.goal(w,kind)||nav.nearestGround(1570+w.id*38,1760);
     if (kind === "oak")
       return nav.nearestGround(
         world.ancientTree.x - 78 + w.id * 64,
@@ -165,6 +201,7 @@ export function createWorkers({
       w.repath = w.path.length ? 1 : 3;
       routeBudget = WORKERS.pathInterval;
       routeTurn = (w.id + 1) % crew.length;
+      if(!w.path.length&&(kind.startsWith("rock:")||kind.startsWith("repair:")))jobs.blocked(w);
     }
     return w.goal;
   }
@@ -190,13 +227,14 @@ export function createWorkers({
     }
   }
   function update(dt) {
-    if (state.gameOver || dt <= 0) return;
+    if (state.gameOver || !Number.isFinite(dt) || dt <= 0) return;
     saleTimer = Math.max(0, saleTimer - dt);
     routeBudget = Math.max(0, routeBudget - dt);
     // The player's own stack always gets first use of a waiting customer's order.
     const buyer = activeBuyer();
     if (
       data.autoSell &&
+      data.logTarget!=="store" &&
       saleTimer <= 0 &&
       data.stock.length &&
       buyer &&
@@ -207,6 +245,7 @@ export function createWorkers({
       buyer.thanks = 1.5;
       if (onIncome) onIncome(value); else state.coins += value;
       data.earned += value;
+      state.campMilestones.sold=true;
       saleTimer = WORKERS.saleInterval;
       changed("worker-log-sold", { buyer, value });
     }
@@ -225,32 +264,39 @@ export function createWorkers({
       w.repath = Math.max(0, w.repath - dt);
       w.swing = Math.max(0, w.swing - dt);
       w.unloadTimer = Math.max(0, w.unloadTimer - dt);
+      w.workScan=Math.max(0,w.workScan-dt);
       w.moving = false;
       if (danger.some((e) => distance(w, e) < 320)) w.dangerUntil = w.clock + 8;
+      const nightRepair=workerRole(w)==="repairer"&&hasCampBuilding(state,"fire")&&state.campFuel>0;
       const retiring =
-        !daytime() || data.recalled || !available() || w.dangerUntil > w.clock;
+        (!daytime()&&!nightRepair) || data.recalled || !available() || w.dangerUntil > w.clock || !!w.pendingRole;
+      const specialist=!retiring&&workerRole(w)!=="lumberjack"?jobs.select(w,danger):null;
       const kind = retiring
-        ? w.cargo.length
+        ? w.cargo.length||w.stoneCargo
           ? "depot"
           : "rest"
-        : w.cargo.length >= capacity() ||
+        : specialist?specialist.kind:!regions.isOpen(world.ancientTree)?"rest":w.cargo.length >= capacity() ||
             (w.job === "depot" && w.cargo.length > 0) ||
-            data.stock.length >= WORKERS.stockLimit
+            logStock().length >= stockLimit()
           ? "depot"
           : "oak";
+      w.reason=retiring?(w.pendingRole?"Возвращается для смены профессии":w.dangerUntil>w.clock?"Рядом враги":data.recalled?"Команда отозвана":!available()?"Нужна палатка":"Отдых до утра"):
+        specialist?.reason||(!regions.isOpen(world.ancientTree)?"Откройте Дубовую рощу":logStock().length>=stockLimit()?"Склад брёвен заполнен":"Добывает брёвна");
       w.job = kind;
       const goal = route(w, kind);
       const arrived = distance(w, goal) < 10;
       if (!arrived) {
         w.phase = w.path.length
-          ? kind === "oak"
+          ? kind === "oak" || kind.startsWith("rock:") || kind.startsWith("repair:")
             ? "outbound"
             : "delivery"
           : "blocked";
+        if(w.phase==="blocked")w.reason="Нет прохода";
         move(w, dt);
         continue;
       }
       w.path = [];
+      if(kind.startsWith("rock:")||kind.startsWith("repair:")){jobs.work(w,kind,dt);continue;}
       if (kind === "oak" && distance(w, world.ancientTree) > 180) {
         // nearestGround may fall back to camp when a site has no valid footing.
         w.phase = "blocked";
@@ -269,16 +315,21 @@ export function createWorkers({
         }
       } else if (kind === "depot" && w.cargo.length) {
         w.phase =
-          data.stock.length >= WORKERS.stockLimit ? "waiting" : "delivery";
-        if (w.unloadTimer <= 0 && data.stock.length < WORKERS.stockLimit) {
-          data.stock.push(w.cargo.pop());
+          logStock().length >= stockLimit() ? "waiting" : "delivery";
+        if (w.unloadTimer <= 0 && logStock().length < stockLimit()) {
+          logStock().push(w.cargo.pop());
           data.delivered++;
           w.unloadTimer = 0.35;
           changed("worker-delivered", { worker: w });
         }
+      } else if(kind==="depot"&&w.stoneCargo){
+        w.phase="delivery";if(!jobs.unload(w)&&state.campIndustry.materials.stone>=materialLimit(state)){w.phase="waiting";w.reason="Общий запас камня заполнен";}
       } else {
         w.phase = retiring ? "resting" : "waiting";
         w.direction = "down";
+        if(kind==="rest"&&w.pendingRole&&!w.cargo.length&&!w.stoneCargo){
+          w.role=w.pendingRole;w.pendingRole=null;w.workTarget=null;w.workTimer=0;w.cutTimer=0;w.workScan=0;w.skipped=[];w.routeKey="";
+        }
       }
     }
   }
@@ -289,6 +340,7 @@ export function createWorkers({
     withdraw,
     setRecalled,
     setAutoSell,
+    setLogTarget,setRepairReserve,assign,transferStock,hireReason,slots,stoneCapacity:jobs.stoneCapacity,
     update,
     available,
     atDepot,
@@ -300,7 +352,7 @@ export function createWorkers({
       return data;
     },
     get hirePrice() {
-      return WORKERS.hirePrices[crew.length] ?? null;
+      return crew.length<slots()?WORKERS.hirePrices[crew.length]??null:null;
     },
     get upgradePrice() {
       return WORKERS.upgradePrices[data.level] ?? null;

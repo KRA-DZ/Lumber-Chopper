@@ -64,7 +64,7 @@ export class KeyboardInteractions {
       this.consume(e); if (e.repeat && !["KeyW","KeyS","ArrowUp","ArrowDown"].includes(e.code)) return;
       if (this.modal !== dialog) { this.modal = dialog; this.selection = 0; }
       const actions = [...dialog.querySelectorAll(dialog.id === "shopDialog" ? "[data-buy]" : "button:not([disabled])")].filter(b => b.offsetParent !== null),
-        primary = actions.filter(b => !b.matches("[data-close],[data-activity-close],[data-journal-close],[data-menu-close],[data-build-close],[data-camp-close]"));
+        primary = actions.filter(b => !b.matches("[data-close],[data-activity-close],[data-journal-close],[data-menu-close],[data-build-close],[data-camp-close],[data-worker-close]"));
       const list = primary.length ? primary : actions; if (!list.length) return;
       if (["KeyS","ArrowDown"].includes(e.code)) this.selection++;
       if (["KeyW","ArrowUp"].includes(e.code)) this.selection--;

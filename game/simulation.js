@@ -587,6 +587,7 @@ export function createSimulation({
         nav,
         forestry,
         activeBuyer,
+        defenses,
         sale,
         onIncome: party ? value => party.sale(value) : null,
         playersAtSale: party ? () => party.actors.some(a => a.state.wood > 0 && distance(a.player, sale) < sale.radius) : null,
