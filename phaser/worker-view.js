@@ -1,8 +1,9 @@
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { WORKERS } from "../game/workers.js";
 import { stackOffset } from "../game/stack-layout.js";
+import { WORKER_ROLES, workerRole } from "../game/worker-jobs.js";
 const snap = (v) => Math.round(v / 2) * 2;
-// At most three people, 24 carried logs and a single stock label; existing atlas and animations.
+// At most four people, 32 log sprites and bounded stone stacks; reuse the existing atlas.
 export class WorkerView {
   constructor(scene) {
     this.scene = scene;
@@ -27,11 +28,11 @@ export class WorkerView {
     this.depot.setVisible(visible);
     this.depot.input.enabled = visible;
     this.label.setVisible(visible);
-    const key = `${d.stock.length}:${system.crew.length}:${d.autoSell}`;
+    const key = `${d.stock.length}:${system.crew.length}:${system.slots()}:${d.autoSell}:${d.logTarget}`;
     if (key !== this.labelKey) {
       this.labelKey = key;
       this.label.setText(
-        `СКЛАД ${d.stock.length}/${WORKERS.stockLimit} · ${system.crew.length}/3\n${d.autoSell ? "Продажа" : "Запас для стройки"} · H`,
+        `СКЛАД ${d.stock.length}/${WORKERS.stockLimit} · ${system.crew.length}/${system.slots()}\n${d.logTarget==="store"?"В общий склад":d.autoSell ? "Продажа" : "Запас для стройки"} · H`,
       );
     }
     scene.worldHints.offer(this.label, WORKERS.depot, { eligible: visible, priority: 50 });
@@ -54,6 +55,7 @@ export class WorkerView {
             .setScale(2),
           axe: scene.addImage("axes.0.0", w.x, w.y),
           logs: Array.from({ length: 8 }, () => scene.addImage("log", 0, 0)),
+          stones:Array.from({length:4},()=>scene.addImage("details.rock.0",0,0).setScale(1.5)),
           label: scene.text(w.name, w.x, w.y + 20, 11),
         };
         this.objects.set(w.id, a);
@@ -62,6 +64,7 @@ export class WorkerView {
       a.sprite.setVisible(nearby);
       a.axe.setVisible(nearby && w.phase === "cutting" && !scene.assets.people);
       a.label.setVisible(nearby);
+      a.stones.forEach((stone,i)=>stone.setVisible(nearby&&i<Math.ceil(w.stoneCargo/4)).setPosition(snap(w.x+(i%2)*16-8),snap(w.y-50-Math.floor(i/2)*14)).setDepth(w.y+.05+i*.001));
       a.logs.forEach((log, i) => {
         log.setVisible(nearby && i < w.cargo.length);
         if (nearby && i < w.cargo.length) {
@@ -93,7 +96,7 @@ export class WorkerView {
         .setPosition(snap(w.x + 18), snap(w.y - 34))
         .setRotation(w.swing > 0 ? -1 : 0.3)
         .setDepth(w.y + 0.02);
-      a.label.setPosition(snap(w.x), snap(w.y + 22)).setDepth(w.y + 0.2);
+      a.label.setText(`${w.name} · ${WORKER_ROLES[workerRole(w)].name}`).setPosition(snap(w.x), snap(w.y + 22)).setDepth(w.y + 0.2);
       scene.worldHints.offer(a.label, w, { eligible: nearby, range: 140, priority: 20 });
     }
   }

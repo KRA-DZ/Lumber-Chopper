@@ -28,7 +28,7 @@ function until(g, predicate, seconds = 90) {
   );
 }
 
-test("hiring validates camp, opened oak, daylight, location, funds, cap; chapter progression is independent", () => {
+test("hiring validates camp, daylight, location, funds and house-expanded cap; chapter progression is independent", () => {
   const g = create(),
     w = g.workers;
   g.state.coins = 1000;
@@ -49,10 +49,14 @@ test("hiring validates camp, opened oak, daylight, location, funds, cap; chapter
   assert.equal(g.state.coins, 0);
   g.state.coins = 1100;
   assert.ok(w.hire());
+  assert.equal(w.hire(),false); // Initially two places, regardless of available money.
+  g.state.campBuildings={fire:true,tent:true,house:true};g.state.campIndustry.upgrades.house=1;
   assert.ok(w.hire());
   assert.equal(g.state.coins, 0);
   g.state.coins = 9999;
   assert.equal(w.hire(), false);
+  g.state.campIndustry.upgrades.house=2;assert.ok(w.hire("miner"));
+  assert.equal(w.hire(),false);
   assert.equal(w.crew.length, WORKERS.max);
   assert.equal(g.state.story.phase, 0);
 });
@@ -281,6 +285,7 @@ test("automation respects customer capacities, stock limits and the player's sal
 
 test("three workers share a timed fair path budget; blocked routes retry slowly without producing remotely", () => {
   const f = fixture();
+  f.state.campLevel=4;f.state.campIndustry.upgrades.house=1;
   for (let i = 0; i < 3; i++) f.system.hire();
   f.block();
   f.step(12);
@@ -338,15 +343,16 @@ test("a fallback ground point at camp never turns into remote oak production", (
   assert.equal(system.crew[0].cargo.length, 0);
 });
 
-test("three upgraded workers retain walkable paths through every camp stage and never exceed storage", () => {
+test("available upgraded workers retain walkable paths through every camp stage and never exceed storage", () => {
   for (const stage of [2, 3, 4]) {
     const g = create();
     ready(g);
     g.state.campLevel = stage;
     g.nav.rebuildObstacles();
     const w = g.workers;
+    if(stage===4)g.state.campIndustry.upgrades.house=1;
     g.state.coins = 10000;
-    for (let i = 0; i < 3; i++) assert.ok(w.hire());
+    for (let i = 0; i < w.slots(); i++) assert.ok(w.hire());
     w.upgrade();
     w.upgrade();
     w.setAutoSell(false);

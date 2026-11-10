@@ -1,5 +1,13 @@
 import { pixelHash } from "../pixel-art.js";
 
+// Shared HP mutation for players and workers; only the final successful hit produces a yield.
+export function strikeBoulder(state,rock,power){
+  const hp=state.boulderHP[rock.id]??rock.maxHP;
+  if(hp<=0||!Number.isFinite(power)||power<=0)return null;
+  state.boulderHP[rock.id]=Math.max(0,hp-power);
+  return {damage:Math.min(hp,power),depleted:state.boulderHP[rock.id]===0};
+}
+
 export function makeBoulders(region, reserved) {
   if (region.id === "0:0") return [];
   const list = [];
@@ -27,10 +35,10 @@ export function createMining({ state, player, world, nav, canAct, emit = () => {
     const hp = state.boulderHP[id] ?? rock.maxHP;
     if (hp <= 0) return false;
     player[timer] = mode === "auto" ? state.autoInterval : state.clickInterval;
-    state.boulderHP[id] = Math.max(0, hp - state.axePower);
+    const hit=strikeBoulder(state,rock,state.axePower);
     player.swing = .32;
     emit("mining-hit", { rock, damage: state.axePower });
-    if (!state.boulderHP[id]) { state.stone += rock.yield; state.campMilestones.mined=true; nav.rebuildObstacles(); emit("stone-collected", { rock, count: rock.yield }); }
+    if (hit.depleted) { state.stone += rock.yield; state.campMilestones.mined=true; nav.rebuildObstacles(); emit("stone-collected", { rock, count: rock.yield }); }
     return true;
   }
   return { capacity, hit, update };

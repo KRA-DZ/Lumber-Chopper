@@ -26,7 +26,7 @@ export const CAMP_UPGRADES = Object.freeze({
   fence:{name:"Усиление ограды",building:"fence",costs:[{boards:8,blocks:6},{boards:18,blocks:14}],
     description:"Ограда: 60 → 100 → 160 HP; калитки: 90 → 140 → 220. Проломы не восстанавливаются бесплатно."},
   house:{name:"Обустройство дома",building:"house",costs:[{boards:8,blocks:4},{boards:16,blocks:10,coal:2}],
-    description:"Склад: 400 → 600 → 800. После 3 с отдыха в комнате восстанавливается 2/4 HP в секунду. Упавших не поднимает."},
+    description:"Склад: 400 → 600 → 800; места помощников: 2 → 3 → 4. После 3 с отдыха в комнате восстанавливается 2/4 HP в секунду. Упавших не поднимает."},
   towers:{name:"Механизмы башен",building:"tower-west",costs:[{boards:10,blocks:6},{boards:20,blocks:12,coal:4}],
     description:"Обе башни: урон 1 → 2 → 3, интервал 1,8 → 1,4 → 1,1 с. Расходуется уголь, Смотритель не получает урон."},
 });

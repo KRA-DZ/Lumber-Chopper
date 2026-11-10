@@ -116,7 +116,7 @@ export function renderGeneratedPerson(
     id = `${role}-gesture-rest`;
     front = true;
   } else {
-    const action = body.cargo?.length ? "carry" : "walk",
+    const action = body.cargo?.length || body.stoneCargo ? "carry" : "walk",
       count =
         dir === "side"
           ? (action === "carry"
