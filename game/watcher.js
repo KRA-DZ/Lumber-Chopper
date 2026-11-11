@@ -145,7 +145,7 @@ export function createWatcher({
         noise &&
         !isSafe(noise) &&
         clock - noise.time < 2 &&
-        dist(m, noise) <= WATCHER.chopHearing;
+        dist(m, noise) <= noise.radius;
       const steps = player.moving && range <= WATCHER.hearing;
       if (seen) {
         m.lastKnown = { x: player.x, y: player.y };
@@ -203,8 +203,8 @@ export function createWatcher({
   }
   return {
     tick,
-    hear(p) {
-      noise = { x: p.x, y: p.y, time: clock };
+    hear(p, radius = WATCHER.chopHearing) {
+      noise = { x: p.x, y: p.y, time: clock, radius };
     },
     reset() {
       clock = 0;

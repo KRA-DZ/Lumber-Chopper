@@ -1,18 +1,20 @@
 import { hasCampBuilding } from "./camp-projects.js";
 import { industryLevel, materialLimit } from "./camp-industry-config.js";
 import { strikeBoulder } from "./mining.js";
+import { MILL } from "./sawmill-production-config.js";
 
 export const WORKER_ROLES=Object.freeze({
   lumberjack:{name:"Дровосек",description:"Рубит бесконечный древний дуб. Брёвна идут покупателям или в общий склад по выбранному назначению."},
   miner:{name:"Каменщик",description:"Добывает настоящие валуны открытых регионов и несёт камень в общий запас. Отступает от врагов."},
   repairer:{name:"Ремонтник",description:"Чинит ограду, калитки и башни за брёвна общего склада, оставляя резерв. Не сражается и не разжигает костёр."},
+  operator:{name:"Оператор",assignmentOnly:true,description:"Одно из прежних мест команды. После возврата груза идёт на восстановленную лесопилку и обслуживает станок; ночью — только с разрешением."},
 });
 export const WORKER_JOBS=Object.freeze({stoneCapacity:8,stonePerLevel:4,mineSeconds:1.2,repairSeconds:2,repairReserveMax:40,scanSeconds:2});
 export const workerSlots=state=>2+(hasCampBuilding(state,"house")?industryLevel(state,"house"):0);
 export const workerRole=w=>w.role||"lumberjack";
 
 // Specialist decisions share the main worker path budget. Scans occur only when a target needs replacement.
-export function createWorkerJobs({state,world,regions,nav,defenses,data,emit}){
+export function createWorkerJobs({state,world,regions,nav,defenses,data,emit,mill}){
   const bank=state.campIndustry.materials;
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const stoneCapacity=()=>WORKER_JOBS.stoneCapacity+data.level*WORKER_JOBS.stonePerLevel;
@@ -22,6 +24,7 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit}){
   const usable=(w,p)=>!(w.skipped||[]).some(s=>s.id===p.id&&s.until>w.clock);
   const repairable=d=>d&&d.hp<d.maxHP&&(d.kind==="tower"||["fence","gate"].includes(d.kind)&&hasCampBuilding(state,"fence"));
   function select(w,danger){
+    if(workerRole(w)==="operator")return {kind:"mill",reason:mill?.status()||"Обслуживает лесопилку"};
     if(workerRole(w)==="miner"){
       if(w.stoneCargo&&(w.stoneCargo+8>stoneCapacity()||w.job==="depot"))return {kind:"depot",reason:"Несёт камень"};
       if(bank.stone>=materialLimit(state))return {kind:w.stoneCargo?"depot":"rest",reason:"Общий запас камня заполнен"};
@@ -52,6 +55,7 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit}){
     return target?{kind:`repair:${target.id}`,reason:"Чинит укрепление"}:{kind:"rest",reason:w.idleReason||"Всё отремонтировано"};
   }
   function goal(w,kind){
+    if(kind==="mill")return nav.nearestGround(MILL.operator.x,MILL.operator.y);
     const target=kind.startsWith("rock:")?rockFor(w):sectionFor(w);
     if(!target)return null;
     const angle=Math.atan2(w.y-target.y,w.x-target.x),radius=kind.startsWith("rock:")?target.radius+35:45;
@@ -66,6 +70,7 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit}){
     w.workTarget=null;w.workScan=0;w.workTimer=0;
   }
   function work(w,kind,dt){
+    if(kind==="mill"){w.phase=mill?.status()?"waiting":"operating";w.direction="up";return;}
     if(kind.startsWith("rock:")){
       const rock=rockFor(w);
       if(!rock||!regions.isOpen(rock)||distance(w,rock)>90){w.phase="blocked";w.reason="Нет прохода к валуну";blocked(w);return;}

@@ -49,6 +49,7 @@ import { createCampDesk } from "./camp-desk.js";
 import { CampIndustryView } from "./camp-industry-view.js";
 import { materialCostText } from "../game/camp-industry-config.js";
 import { WorldWorksView } from "./world-works-view.js";
+import { SawmillProductionView } from "./sawmill-production-view.js";
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -151,6 +152,7 @@ export class WorldScene extends Phaser.Scene {
     this.houseView = new HouseView(this);
     this.industryView = new CampIndustryView(this);
     this.worldWorksView = new WorldWorksView(this);
+    this.sawmillProductionView = new SawmillProductionView(this);
     this.campDesk = createCampDesk(this);
     this.bindInput();
     this.bindDialogs();
@@ -851,6 +853,7 @@ export class WorldScene extends Phaser.Scene {
     this.houseView.render();
     this.industryView.render();
     this.worldWorksView.render();
+    this.sawmillProductionView.render();
     for (const [i, actor] of (c.actors || [c]).entries()) {
       const entry = this.coopViews?.entries[i] || this;
       entry.player.setVisible(!actor.player.room);
@@ -860,6 +863,7 @@ export class WorldScene extends Phaser.Scene {
     this.worldHints.flush();
     const hudKey = [
       s.wood,
+      s.boardCargo,
       s.maxWood,
       s.coins,
       s.campLevel,
@@ -870,7 +874,7 @@ export class WorldScene extends Phaser.Scene {
     ].join(":");
     if (hudKey !== this.lastHudKey) {
       this.lastHudKey = hudKey;
-      document.querySelector("#wood").textContent = `${s.wood} / ${s.maxWood}`;
+      document.querySelector("#wood").textContent = `${s.wood} / ${s.maxWood}${s.boardCargo?` · доски ${s.boardCargo}`:""}`;
       document.querySelector("#coins").textContent = s.coins;
       const shop = document.querySelector("#shopButton"),
         ready = affordableCombatUpgrades(s).length > 0;
@@ -1132,6 +1136,9 @@ export class WorldScene extends Phaser.Scene {
     if (type === "tower-shot") { this.industryView?.shot(e); return; }
     if(type==="world-work-completed"){this.core.showNotice(`${e.project.name}: восстановлено! Маршрут изменился.`,7);return;}
     if(type==="water-level-changed"){this.core.showNotice(e.level==="low"?"Вода отступила. Открыты брод и подход к гидростанции.":"Вода поднялась. Используйте восстановленный мост.",7);return;}
+    if(type==="mill-restored"){this.core.showNotice(`Лесопилка ${e.stage}/3: ${e.name} восстановлено.`,7);return;}
+    if(type==="mill-batch-ready"){this.core.showNotice("Лесопилка: готовы 4 доски. Заберите партию на погрузочной площадке.",5);return;}
+    if(type==="mill-noise"){if((this.core.actors||[this.core]).some(a=>Math.hypot(a.player.x-e.point.x,a.player.y-e.point.y)<650))this.audio?.hit();return;}
     if (type === "production-ready") { this.core.showNotice(`Готово: ${materialCostText(e.output)}. В общем запасе лагеря.`,4); return; }
     if (type === "order-completed") { this.core.showNotice(`Заказ выполнен: +${e.order.reward} монет!`,6); return; }
     if (type === "order-expired") { this.core.showNotice("Срок заказа истёк. Переданные брёвна можно забрать у продажи.",6); return; }
@@ -1485,6 +1492,7 @@ export class WorldScene extends Phaser.Scene {
     this.campDesk?.destroy();
     this.industryView?.destroy();
     this.worldWorksView?.destroy();
+    this.sawmillProductionView?.destroy();
     this.buildUi?.destroy();
     this.houseView?.destroy();
     this.campServicesView?.destroy();

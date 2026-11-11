@@ -57,7 +57,7 @@ export function createWorkerUi(scene) {
         dialog.close();
       },
     );
-    for(const [role,offer] of Object.entries(WORKER_ROLES))action(
+    for(const [role,offer] of Object.entries(WORKER_ROLES).filter(([,o])=>!o.assignmentOnly))action(
       role==="lumberjack"?"hire":`hire:${role}`,
       `Нанять: ${offer.name}${w.hirePrice==null?" · нет мест":` · ${w.hirePrice} монет`}`,
       `${offer.description} ${w.hireReason(role)||"Разовая оплата с личного счёта."}`,
@@ -108,7 +108,8 @@ export function createWorkerUi(scene) {
       const choices=document.createElement("nav");choices.className="worker-roles";choices.setAttribute("aria-label",`Профессия: ${npc.name}`);
       for(const [role,offer] of Object.entries(WORKER_ROLES)){
         const b=document.createElement("button"),id=`assign:${npc.id}:${role}`;b.type="button";b.dataset.workerAction=id;
-        b.textContent=offer.name;b.title=offer.description;b.disabled=!w.atDepot()||workerRole(npc)===role&&!npc.pendingRole;
+        const atAssignment=w.atDepot()||scene.core.sawmill?.nearSite("sawmill-loading")||scene.core.sawmill?.nearSite("sawmill-production");
+        b.textContent=offer.name;b.title=offer.description;b.disabled=!atAssignment||workerRole(npc)===role&&!npc.pendingRole||role==="operator"&&(s.sawmill.stage<3||w.crew.some(n=>n.id!==npc.id&&(n.role==="operator"||n.pendingRole==="operator")));
         b.onclick=()=>{w.assign(npc.id,role);render(id);scene.renderModel();};choices.append(b);
       }
       list.append(choices);

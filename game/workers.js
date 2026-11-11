@@ -24,6 +24,7 @@ export const WORKER_PHASES = Object.freeze({
   blocked: "Нет прохода",
   mining: "Добывает камень",
   repairing: "Чинит",
+  operating: "Пилит доски",
 });
 
 // Bounded NPC scheduler; specialists use the same path budget and real shared resources.
@@ -37,6 +38,7 @@ export function createWorkers({
   activeBuyer,
   sale,
   defenses = null,
+  mill = null,
   getSurvival,
   onIncome = null,
   playersAtSale = null,
@@ -57,7 +59,7 @@ export function createWorkers({
   const chopSeconds = () => 2.5 - data.level * 0.4;
   const daytime = () => state.worldTime < WORKERS.recallTime;
   const slots=()=>Math.min(WORKERS.max,workerSlots(state));
-  const jobs=createWorkerJobs({state,world,regions,nav,defenses,data,emit});
+  const jobs=createWorkerJobs({state,world,regions,nav,defenses,data,emit,mill});
   const logStock=()=>data.logTarget==="store"?state.logStore:data.stock;
   const stockLimit=()=>data.logTarget==="store"?campStorageLimit(state):WORKERS.stockLimit;
   const canManage=()=>!state.gameOver&&state.health>0&&!player.menuOpen&&!player.room;
@@ -66,6 +68,7 @@ export function createWorkers({
   }
   function hireReason(role="lumberjack"){
     if(!WORKER_ROLES[role])return "Неизвестная профессия";
+    if(WORKER_ROLES[role].assignmentOnly)return "Назначьте уже нанятого работника";
     if(!canManage())return "Игрок недоступен";
     if(!atDepot())return "Подойдите к складу работников";
     if(!available())return "Сначала постройте палатку";
@@ -147,7 +150,8 @@ export function createWorkers({
   }
   function assign(id,role){
     const w=crew.find(w=>w.id===id);
-    if(!w||!canManage()||!atDepot()||!WORKER_ROLES[role])return false;
+    if(!w||!canManage()||(!atDepot()&&!mill?.nearSite("sawmill-loading")&&!mill?.nearSite("sawmill-production"))||!WORKER_ROLES[role])return false;
+    if(role==="operator"&&(state.sawmill.stage<3||crew.some(n=>n.id!==id&&(workerRole(n)==="operator"||n.pendingRole==="operator"))))return false;
     w.pendingRole=role===workerRole(w)?null:role;
     w.path=[];w.routeKey="";w.repath=0;w.workTimer=0;
     changed("worker-assigned",{id,role});return true;
@@ -172,7 +176,7 @@ export function createWorkers({
     return true;
   }
   function goalFor(w, kind) {
-    if(kind.startsWith("rock:")||kind.startsWith("repair:"))return jobs.goal(w,kind)||nav.nearestGround(1570+w.id*38,1760);
+    if(kind==="mill"||kind.startsWith("rock:")||kind.startsWith("repair:"))return jobs.goal(w,kind)||nav.nearestGround(1570+w.id*38,1760);
     if (kind === "oak")
       return nav.nearestGround(
         world.ancientTree.x - 78 + w.id * 64,
@@ -268,8 +272,9 @@ export function createWorkers({
       w.moving = false;
       if (danger.some((e) => distance(w, e) < 320)) w.dangerUntil = w.clock + 8;
       const nightRepair=workerRole(w)==="repairer"&&hasCampBuilding(state,"fire")&&state.campFuel>0;
+      const millShift=workerRole(w)==="operator"&&mill?.shift();
       const retiring =
-        (!daytime()&&!nightRepair) || data.recalled || !available() || w.dangerUntil > w.clock || !!w.pendingRole;
+        (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.dangerUntil > w.clock || !!w.pendingRole;
       const specialist=!retiring&&workerRole(w)!=="lumberjack"?jobs.select(w,danger):null;
       const kind = retiring
         ? w.cargo.length||w.stoneCargo
@@ -287,7 +292,7 @@ export function createWorkers({
       const arrived = distance(w, goal) < 10;
       if (!arrived) {
         w.phase = w.path.length
-          ? kind === "oak" || kind.startsWith("rock:") || kind.startsWith("repair:")
+          ? kind === "oak" || kind==="mill" || kind.startsWith("rock:") || kind.startsWith("repair:")
             ? "outbound"
             : "delivery"
           : "blocked";
@@ -296,7 +301,7 @@ export function createWorkers({
         continue;
       }
       w.path = [];
-      if(kind.startsWith("rock:")||kind.startsWith("repair:")){jobs.work(w,kind,dt);continue;}
+      if(kind==="mill"||kind.startsWith("rock:")||kind.startsWith("repair:")){jobs.work(w,kind,dt);continue;}
       if (kind === "oak" && distance(w, world.ancientTree) > 180) {
         // nearestGround may fall back to camp when a site has no valid footing.
         w.phase = "blocked";

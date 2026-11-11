@@ -26,6 +26,9 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     campIndustry: initialIndustryState(), // Общие материалы (до 200/300/400), очередь до 3 работ, усиления 0–2 и топливо фонарей.
     campMilestones: {lit:false,sold:false,mined:false}, // Общие необязательные цели: запоминают факт действия даже после расхода/угасания; наград нет.
     worldWorks: initialWorldWorks(), // Общие взносы/готовые переходы и два положения плотины. Только в текущей игре; revision меняется при смене геометрии.
+    sawmill: {stage:0,paid:{},input:[],output:0,job:null,enabled:false,nightWork:false,batches:0,noise:0,pulse:0,
+      cartPaid:{},cart:{built:false,owner:null,x:1450,y:1790,logs:[],boards:0}}, // Общая лесопилка: сырьё до 48, выход до 24; одна партия и одна тележка на 24 единицы.
+    boardCargo: 0, // Личные доски в пути: занимают те же места, что брёвна, и становятся общими только после разгрузки в лагере.
     buyerOrders: {active:null,refund:[],completedDay:-1,completed:0}, // Один заказ в день; частичные брёвна возвращаются без потери стоимости.
     logStore: [], // Общий склад: храним стоимость каждого бревна без создания мировых объектов.
     stone: 0, // Личный запас камня; вместимость 40 + 10 за уровень переноски.

@@ -116,7 +116,7 @@ export function interactNearby(scene) {
     }})),
     { p: c.build, range:c.build.radius, act:()=>c.builder.requestChoice(true) },
     ...(hasCampBuilding(c.state,"house") ? [{ p: CAMP_SERVICE.door, range: 110, act: () => c.camp.enter() }] : []),
-    ...c.exploration.sites.filter(site => c.exploration.near(site)).map(site => ({ p: site, range: 150, act: () => {
+    ...c.exploration.sites.filter(site => !site.hideFromNearby&&c.exploration.near(site)).map(site => ({ p: site, range: 150, act: () => {
       if (site.kind === "kitchen" && c.state.wood && c.camp.stoke()) c.showNotice(`Огонь: ${Math.ceil(c.state.campFuel)} с. Можно добавлять топливо в любое время суток.`);
       else c.exploration.request(site.id);
     } })),

@@ -8,12 +8,15 @@ export class StackView {
   render() {
     const { core: c, flights, heroView } = this.scene,
       { player: p, state: s, elapsed: t } = c;
-    const count = s.cargo.length,
+    const count = s.cargo.length+s.boardCargo,
       hidden = new Set();
     for (const f of flights) if (f.kind === "pickup" && (!c.coop || f.actor === p.id)) hidden.add(f.index);
     while (this.logs.length < count)
       this.logs.push(this.scene.addImage("log", 0, 0));
     this.logs.forEach((log, i) => {
+      const board=i>=s.cargo.length;
+      this.scene.assets.setFrame(log,board?"sawmill.woodRack":"log");
+      if(board)log.setDisplaySize(48,14);else log.setScale(2);
       const slot = stackOffset(i, count),
         height = (i % 28) / 27,
         load = Math.min(count / 20, 1.5);
