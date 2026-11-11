@@ -125,9 +125,13 @@ export class Atmosphere {
     this.playerStamp = document.createElement("canvas");
     this.playerStamp.width = this.playerStamp.height = 128;
     const playerCtx = this.playerStamp.getContext("2d"),
-      playerGradient = playerCtx.createRadialGradient(64, 64, 18, 64, 64, 64);
+      playerGradient = playerCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
     playerGradient.addColorStop(0, "rgba(0,0,0,1)");
-    playerGradient.addColorStop(0.6, "rgba(0,0,0,.75)");
+    playerGradient.addColorStop(0.18, "rgba(0,0,0,.98)");
+    playerGradient.addColorStop(0.4, "rgba(0,0,0,.82)");
+    playerGradient.addColorStop(0.62, "rgba(0,0,0,.48)");
+    playerGradient.addColorStop(0.8, "rgba(0,0,0,.17)");
+    playerGradient.addColorStop(0.92, "rgba(0,0,0,.035)");
     playerGradient.addColorStop(1, "rgba(0,0,0,0)");
     playerCtx.fillStyle = playerGradient;
     playerCtx.fillRect(0, 0, 128, 128);

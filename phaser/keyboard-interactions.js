@@ -1,4 +1,5 @@
 import { SHOP_IDS, upgradeOffer } from "../economy.js";
+import { shopProgress } from "./shop-progress.js";
 import { CAMP } from "../game/camp-layout.js";
 import { CAMP_SERVICE, ROOM } from "../game/camp-services.js";
 import { CENTER } from "../game/config.js";
@@ -53,6 +54,7 @@ export class KeyboardInteractions {
       }
       e.index=Math.min(e.index,offers.length-1);
       offers.forEach((o,j)=>{const b=e.rows[j];if(b.textContent!==o.text)b.textContent=o.text;
+        if(!e.site)b.append(shopProgress(upgradeOffer(s,o.id)));
         b.dataset.selected=String(j===e.index);b.setAttribute("aria-disabled",String(!o.enabled));});
       e.detail.textContent=offers[e.index]?.description||"";
     }

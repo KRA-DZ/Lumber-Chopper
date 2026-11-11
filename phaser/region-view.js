@@ -243,7 +243,7 @@ export class RegionView {
         if (image.frame.name !== key) this.scene.assets.setFrame(image, key);
       }
     const b = this.border.clear();
-    // Only cells intersecting the camera emit triangles/lines, never the full 9600² map.
+    // Only cells intersecting the camera emit triangles/lines, never the full world map.
     for (const r of regions.all) {
       if (
         !views.some(v => r.x <= v.right && r.x + r.width >= v.x && r.y <= v.bottom && r.y + r.height >= v.y)

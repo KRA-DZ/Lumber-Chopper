@@ -17,15 +17,15 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     trails = [],
     trailBins = new Map();
   const ancientTree = {
-    x: 3520,
-    y: 1600,
+    x: CENTER.x + REGION_SIZE,
+    y: CENTER.y,
     radius: 65,
     workerOnly: true,
     infinite: true,
     regionId: "1:0",
   };
-  const merchant = { x: 1670, y: 3430, regionId: "0:1" };
-  const pond = { x: -320, y: 1600, rx: 235, ry: 165 };
+  const merchant = { x: 1670, y: CENTER.y + REGION_SIZE - 90, regionId: "0:1" };
+  const pond = { x: CENTER.x - REGION_SIZE, y: CENTER.y, rx: 235, ry: 165 };
   const pondOutline = Array.from({ length: 40 }, (_, i) => {
     const a = (i / 40) * Math.PI * 2,
       f = 1 + 0.06 * Math.sin(a * 5);
@@ -202,8 +202,8 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     // Jittered cells preserve generous routes without rendering a huge prebuilt map.
     for (let gy = 0; gy < 12; gy++)
       for (let gx = 0; gx < 12; gx++) {
-        const x = region.x + 80 + gx * 150 + (rnd() - 0.5) * 75,
-          y = region.y + 80 + gy * 150 + (rnd() - 0.5) * 75;
+        const x = region.x + 80 + gx * ((REGION_SIZE - 160) / 12) + (rnd() - 0.5) * 75,
+          y = region.y + 80 + gy * ((REGION_SIZE - 160) / 12) + (rnd() - 0.5) * 75;
         if (
           reserved(x, y, region) || (pixelHash(gx + region.gx * 12, gy + region.gy * 12) % 2 === 0) ||
           details.some((p, i) => Math.hypot(p.x - x, p.y - y) < (i < 3 ? 150 : 64)) ||

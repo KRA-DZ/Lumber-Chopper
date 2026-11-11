@@ -103,7 +103,7 @@ test("global biome weights sum to one, are continuous at seams/corners and deter
       for (const k of Object.keys(BIOMES))
         assert.ok(Math.abs((w[k] || 0) - (next[k] || 0)) < 0.001);
     }
-  assert.ok(Object.keys(biomeWeights(1600, 2560)).length > 1);
+  assert.ok(Object.keys(biomeWeights(1600, 2880)).length > 1);
   const pixels = new Uint8ClampedArray(64 * 64 * 4);
   pixels.set([1, 2, 3, 255], (63 * 64 + 63) * 4);
   assert.deepEqual(

@@ -53,10 +53,10 @@ test("floor selection is local, uses world coordinates including negative Y and 
   );
   assert.equal(sample(1600, 1600, 0), null);
   assert.equal(sample(FORTRESS.bounds.x, 0, 23), null);
-  assert.deepEqual(sample(1600, -200, 0), [32, 28, 1]);
-  assert.deepEqual(sample(1552, -736, 0), [8, 16, 2]);
-  assert.deepEqual(sample(2000, -700, 0), [40, 34, 3]);
-  assert.deepEqual(sample(1168, -600, 0), [8, 20, 2]);
+  assert.deepEqual(sample(1600, -840, 0), [32, 28, 1]);
+  assert.deepEqual(sample(1552, -1376, 0), [8, 16, 2]);
+  assert.deepEqual(sample(2000, -1340, 0), [40, 34, 3]);
+  assert.deepEqual(sample(1168, -1240, 0), [8, 20, 2]);
 });
 
 test("only fortress notes get the new burned-paper textures", () => {

@@ -36,7 +36,7 @@ test("the personal lantern follows the player and retains every old radius upgra
     assert.equal(lights[0].kind, "player");
     assert.equal(lights[0].x, p.x);
     assert.equal(lights[0].y, p.y - 24);
-    assert.equal(lights[0].r, 140 + level * 24);
+    assert.equal(lights[0].r, 160 + level * 64);
     assert.equal(lights[1].r, 430);
     assert.ok(inCampLight(p.x, p.y - 24, lights));
     assert.ok(!inCampLight(5000, 5000, lights));

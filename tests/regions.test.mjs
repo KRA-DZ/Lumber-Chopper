@@ -18,7 +18,7 @@ function open(g, id) {
 test("regional world starts with one whole square, four neighbours and lazy deterministic trees", () => {
   const a = create(),
     b = create();
-  assert.equal(REGION_SIZE, 1920);
+  assert.equal(REGION_SIZE, 2560);
   assert.equal(REGIONS.length, 25);
   assert.deepEqual(a.state.unlockedRegions, ["0:0"]);
   assert.equal(a.regions.frontiers().length, 4);
@@ -26,7 +26,7 @@ test("regional world starts with one whole square, four neighbours and lazy dete
   assert.deepEqual(a.trees, b.trees);
   assert.equal(a.world.decorBins.size, 1);
   assert.ok(a.nav.isWalkable(700, 1600));
-  assert.ok(!a.nav.isWalkable(600, 1600));
+  assert.ok(!a.nav.isWalkable(300, 1600));
   assert.ok(!a.treeAccessible({ x: 3000, y: 1600 }));
   assert.ok(!a.accessible(a.world.ancientTree));
   assert.ok(!a.accessible(a.world.pond));
@@ -52,7 +52,7 @@ test("a border project keeps partial payments, consumes exactly the cost and add
   g.update(0.2);
   assert.equal(g.state.regionWood["1:0"], 1);
   assert.equal(g.state.wood, 0);
-  assert.ok(!g.nav.isWalkable(2600, 1600));
+  assert.ok(!g.nav.isWalkable(3000, 1600));
   for (let i = 0; i < gate.region.cost - 1; i++) {
     g.forestry.addCargo(10);
     g.update(0.2);
@@ -61,7 +61,7 @@ test("a border project keeps partial payments, consumes exactly the cost and add
   assert.equal(g.state.regionWood["1:0"], gate.region.cost);
   assert.ok(g.trees.length >= initial + 35);
   assert.equal(g.world.decorBins.size, 2);
-  assert.ok(g.nav.isWalkable(2600, 1600));
+  assert.ok(g.nav.isWalkable(3000, 1600));
   assert.ok(g.accessible(g.world.ancientTree));
   assert.equal(events.filter((e) => e[0] === "region-open").length, 1);
   assert.equal(g.state.cargoValue, 0);
@@ -120,5 +120,5 @@ test("all 25 squares can be opened, seams and negative-coordinate routes stay na
     last = p;
   }
   assert.ok(Math.hypot(last.x - goal.x, last.y - goal.y) < 1);
-  assert.ok(!g.nav.isWalkable(-3300, 1600));
+  assert.ok(!g.nav.isWalkable(-4900, 1600));
 });

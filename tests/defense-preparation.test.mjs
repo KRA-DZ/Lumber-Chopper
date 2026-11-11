@@ -169,7 +169,7 @@ test("the dawn report covers damage after the paid wave, local kills, repaired b
     boss = g.survival.regionalBosses[0];
   assert.ok(small && boss);
   g.survival.hit(small.id, small.maxHP, false);
-  g.survival.hit(boss.id, boss.maxHP, false);
+  boss.warning=0;g.survival.hit(boss.id, boss.maxHP, false);
   g.defenses.damage(section.id, 999); // Effective damage is 60, not the requested 999.
   g.forestry.addCargo(7);
   Object.assign(g.player, g.nav.nearestGround(section.x, section.y + 40), {

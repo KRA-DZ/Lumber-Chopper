@@ -1,7 +1,7 @@
-// World Y now spans -3200…6400. Ground must remain below northern actors;
+// World Y now spans -4800…8000. Ground must remain below northern actors;
 // screen/weather/interaction layers must stay above the southernmost sprites.
 export const LAYERS = Object.freeze({
-  ground: -4500,
+  ground: -6000,
   border: 10000,
   labels: 10500,
   smoke: 10999,

@@ -87,8 +87,8 @@ test("global pursuit starts at dusk on nights 5,10,...; it never begins in the f
   }
   const f = fixture({ day: 4 });
   let e = f.isolate();
-  Object.assign(f.g.player, f.g.nav.nearestGround(2490, 1800));
-  Object.assign(e, f.g.nav.nearestGround(2600, 1800), {
+  Object.assign(f.g.player, f.g.nav.nearestGround(2810, 1800));
+  Object.assign(e, f.g.nav.nearestGround(2920, 1800), {
     warning: 0,
     path: [],
     repath: 0,
@@ -98,7 +98,7 @@ test("global pursuit starts at dusk on nights 5,10,...; it never begins in the f
   f.g.state.worldTime = NIGHT_START + 1;
   f.step(0.05);
   e = f.isolate();
-  Object.assign(e, f.g.nav.nearestGround(2600, 1800), {
+  Object.assign(e, f.g.nav.nearestGround(2920, 1800), {
     warning: 0,
     path: [],
     repath: 0,
@@ -248,7 +248,7 @@ test("bosses have a narrower notice radius, retain committed strikes after hits 
   e.cooldown = 0;
   bosses.update(0.05);
   assert.ok(e.attack);
-  Object.assign(f.g.player, f.g.nav.nearestGround(e.x + 100, e.y));
+  Object.assign(f.g.player, f.g.nav.nearestGround(e.x, e.y + 140));
   bosses.update(0.05);
   assert.equal(e.attack, null);
   assert.equal(e.phase, "chase");

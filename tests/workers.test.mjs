@@ -70,7 +70,7 @@ test("real outbound, chopping, loaded return, warehouse and customer sale conser
     treeHP = g.trees.map((t) => t.hp);
   assert.ok(w.hire());
   until(g, () => w.crew[0].phase === "cutting");
-  assert.ok(Math.hypot(w.crew[0].x - 3520, w.crew[0].y - 1600) < 160);
+  assert.ok(Math.hypot(w.crew[0].x - g.world.ancientTree.x, w.crew[0].y - 1600) < 160);
   assert.ok(g.nav.isWalkable(w.crew[0].x, w.crew[0].y));
   until(g, () => w.crew[0].cargo.length === 4);
   assert.equal(g.state.workforce.stock.length, 0);

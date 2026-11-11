@@ -22,7 +22,7 @@ export const MYSTERY_CLUES = Object.freeze([
     text: "На камне вырезан незамкнутый круг. Ночью в его трещинах проступает слабое свечение. Торговец отворачивается, когда ты спрашиваешь о нём.",
   },
 ]);
-export const nightSight = (level = 0) => 140 + level * 24;
+export const nightSight = (level = 0) => 160 + Math.max(0, Math.min(4, level)) * 64;
 export function createMystery() {
   const eyes = [],
     read = new Set(),

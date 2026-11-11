@@ -60,7 +60,7 @@ test("forest/swamp fringe preserves source PNG colours and deterministic world s
     return data;
   }, materials = { forest: solid([20, 80, 10]), swamp: solid([30, 50, 70]), field: solid([150, 40, 100]) },
     seen = new Set();
-  for (let y = 1240; y <= 1320; y++) for (let x = 540; x < 600; x++) {
+  for (let y = 1400; y <= 1480; y++) for (let x = 540; x < 600; x++) {
     const rgb = sampleBiomeGround(materials, x, y);
     assert.ok(["20,80,10", "30,50,70"].includes(rgb.join(",")));
     assert.deepEqual(rgb, sampleBiomeGround(materials, x, y));
@@ -69,7 +69,7 @@ test("forest/swamp fringe preserves source PNG colours and deterministic world s
   assert.equal(seen.size, 2);
   assert.deepEqual(sampleBiomeGround(materials, 800, 800), [20, 80, 10]);
   // A third biome entering the corner must not abruptly replace the patchwork with an averaged colour.
-  const corner = sampleBiomeGround(materials, 1169, 1280);
+  const corner = sampleBiomeGround(materials, 1329, 1440);
   assert.ok(Math.min(...[[20, 80, 10], [30, 50, 70]].map(rgb =>
     Math.hypot(...rgb.map((channel, i) => channel - corner[i])))) < 0.02);
 });

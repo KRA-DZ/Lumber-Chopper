@@ -39,6 +39,10 @@
 
 Подробные правила систем: [REGIONAL-HUNT.md](REGIONAL-HUNT.md), [WATCHER.md](WATCHER.md), [REGIONS.md](REGIONS.md), [DEFENSE.md](DEFENSE.md), [STORY.md](STORY.md). Читать нужный документ, а не весь набор.
 
+Размер квадрата: `game/world-grid.js`; регионы/границы — `game/regions.js`, размещение — `game/region-world.js`. Фонарь: `mystery.js`, маска — `phaser/atmosphere.js`; общая шкала магазина — `phaser/shop-progress.js` (модальная и личные лавки).
+
+Целевые проверки увеличенной карты/фонаря: `node --test tests/world-scale.test.mjs tests/regions.test.mjs tests/night_horror.test.mjs tests/economy_logic.test.mjs`; после сборки `python tests/world_scale_smoke.py` проверяет новые шкалы, личную прокачку и альфа-профиль света в WebGL/Canvas. Скриншоты — `docs/shop-progress-*.png`, `docs/lantern-soft-*.png`.
+
 ## Команды по необходимости
 
 Лесопилка: баланс — `game/sawmill-production-config.js`, ремонт/партии — `game/sawmill-production.js`, физические грузы — `game/sawmill-freight.js`, отображение — `phaser/sawmill-production-view.js`. Правила и целевые команды: [SAWMILL-PRODUCTION.md](SAWMILL-PRODUCTION.md).
