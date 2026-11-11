@@ -75,9 +75,9 @@ test("yard, storage and machine floors use periodic world coordinates with soft 
   assert.equal(sample(1600, 1600, 0), null);
   assert.equal(sample(SAWMILL.bounds.x, SAWMILL.bounds.y, 23), null);
   for (const [x, y, expected] of [
-    [3520, 3500, 1],
-    [3104, 3200, 2],
-    [3952, 3200, 3],
+    [4160, 4140, 1],
+    [3744, 3840, 2],
+    [4592, 3840, 3],
   ]) {
     const rgb = sample(x, y, 0);
     assert.equal(rgb[2], expected);

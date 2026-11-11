@@ -191,6 +191,11 @@
     .personal-shop button { display: block; width: 100%; text-align: left; margin: 4px 0; padding: 8px; font-size: 12px; }
     .personal-shop button[data-selected="true"] { outline: 3px solid #f1d88f; background: #506644; }
     .personal-shop button[aria-disabled="true"] { color: #b8afa1; }
+    .shop-progress { display:block; margin-top:8px; color:#d2c6a3; }
+    .shop-progress-cells { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:3px; max-width:240px; margin-bottom:5px; }
+    .shop-progress-cells i { display:block; height:7px; background:#202b26; border:1px solid #626a50; border-radius:2px; }
+    .shop-progress-cells i[data-filled="true"] { background:linear-gradient(#f0d88a,#b88b45); border-color:#e5c879; }
+    .personal-shop .shop-progress { text-align:left; }
     .shop-item[data-selected="true"], .build-option[data-selected="true"] { outline: 3px solid #efd18e; background: #3f543b; }
     .build-option { border: 1px solid #687555; padding: 12px; margin: 8px 0; }
     .build-option h3 { margin: 0; }

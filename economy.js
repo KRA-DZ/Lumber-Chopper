@@ -1,3 +1,4 @@
+import { nightSight } from "./mystery.js";
 // Базовые цены одиночной игры; в кооперативе применяется личный priceMultiplier.
 export const AXE_TIERS = Object.freeze([
   {
@@ -104,13 +105,14 @@ export function upgradeOffer(state, id) {
       : `${AXE_TIERS[Math.min(level + 1, AXE_TIERS.length - 1)].name} · ${AXE_TIERS[Math.min(level + 1, AXE_TIERS.length - 1)].rarity}`,
     boots: `Скорость ${100 + level * 8}% → ${100 + (level + 1) * 8}%`,
     pickup: `Радиус подбора ${68 + level * 12} → ${68 + (level + 1) * 12}`,
-    lantern: `Свет ночью ${140 + level * 24} → ${140 + (level + 1) * 24}`,
+    lantern: `Свет ночью ${nightSight(level)} → ${nightSight(level + 1)}`,
   };
   return {
     id,
     name: d.name,
     level,
     maxed,
+    maxLevel: d.max,
     price,
     description: maxed ? "Все улучшения куплены" : descriptions[id],
     canBuy: !maxed && state.coins >= price,

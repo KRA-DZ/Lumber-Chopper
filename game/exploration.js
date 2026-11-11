@@ -472,7 +472,6 @@ export function createExploration({
       regionId==="0:-1"?` · Северный настил: ${state.worldWorks.built["north-boardwalk"]?"восстановлен":"нужен ремонт"}`:"";
     if (chests.length)
       return `Сундуки: ${chests.filter((s) => !data.openedChests.includes(s.id)).length}/${chests.length}${works}`;
-    if(regionId==="1:1")return `Ремонт ${state.sawmill.stage}/3 · сырьё ${state.sawmill.input.length} · доски ${state.sawmill.output} · завалы ${world.locations.find(l=>l.regionId===regionId)?.debris.filter(d=>data.debrisHP[d.id]===0).length||0}/2`;
     if (s.some((s) => s.kind === "pond"))
       return `Рыба сегодня: ${caughtToday()}/${EXPLORATION.fishPerDay}`;
     if (s.some((s) => s.kind === "ancient"))
@@ -486,6 +485,7 @@ export function createExploration({
       const notes = location.clues || [],
         finds = s.filter((site) => site.kind === "discovery");
       return [
+        ...(regionId==="1:1"?[`Ремонт ${state.sawmill.stage}/3 · сырьё ${state.sawmill.input.length} · доски ${state.sawmill.output}`]:[]),
         `Завалы: ${debris.filter((d) => data.debrisHP[d.id] === 0).length}/${debris.length} расчищено`,
         ...(notes.length
           ? [
@@ -499,7 +499,7 @@ export function createExploration({
           : []),
       ].join(" · ");
     }
-    return "Открыто";
+    return regionId==="1:1"?`Ремонт ${state.sawmill.stage}/3`:"Открыто";
   }
   function regionDestination(region) {
     const location = world.locations.find((l) => l.regionId === region.id);

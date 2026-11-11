@@ -1,4 +1,5 @@
 import { SHOP_IDS, upgradeOffer, buyUpgrade, AXE_TIERS } from "./economy.js";
+import { shopProgress } from "./phaser/shop-progress.js";
 import { affordableCombatUpgrades, COMBAT_LOOT } from "./game/combat-loot.js";
 
 export function createShop(
@@ -77,6 +78,8 @@ export function createShop(
       c.card.dataset.recommended = String(advice?.id === id);
       c.title.textContent = offer.name;
       c.description.textContent = offer.description;
+      c.card.querySelector(".shop-progress")?.remove();
+      c.detail.after(shopProgress(offer));
       c.icon.style.color = offer.color;
       const src = iconFor(id, offer);
       if (src && c.icon.dataset.src !== src) {

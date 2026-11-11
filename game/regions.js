@@ -1,12 +1,14 @@
 import { biomeFor } from "./biomes.js";
 import { CENTER } from "./config.js";
 
-export const REGION_SIZE = 1920;
+import { REGION_SIZE } from "./world-grid.js";
+export { REGION_SIZE } from "./world-grid.js";
+// Keep all 25 regions centred on camp; bounds follow the region size.
 export const REGION_BOUNDS = Object.freeze({
-  x: -3200,
-  y: -3200,
-  width: 9600,
-  height: 9600,
+  x: CENTER.x - REGION_SIZE * 2.5,
+  y: CENTER.y - REGION_SIZE * 2.5,
+  width: REGION_SIZE * 5,
+  height: REGION_SIZE * 5,
 });
 const ORIGIN = CENTER.x - REGION_SIZE / 2;
 const activities = {
@@ -71,7 +73,7 @@ export const regionAt = (x, y) =>
   );
 
 export function createRegions(state) {
-  state.unlockedRegions = ["0:0"]; // One full 1920² tile at start; each opening adds the same area.
+  state.unlockedRegions = ["0:0"]; // One full REGION_SIZE² tile at start; each opening adds the same area.
   state.regionWood = {}; // Logs paid into each border project; never coins, no refunds/duplicate charges.
   const unlocked = new Set(state.unlockedRegions);
   let revision = 0,

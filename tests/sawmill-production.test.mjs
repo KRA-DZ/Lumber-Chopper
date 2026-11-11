@@ -104,7 +104,7 @@ test("regional bosses investigate local noise without acquiring a player outside
   assert.equal(boss.path.at(-1).x,MILL.operator.x);c.state.sawmill.noise=0;enemies.update(.25);assert.equal(boss.phase,"patrol");
 });
 test("machine hearing extends only the explicit noise source, while normal chopping keeps its radius",()=>{
-  const player={x:5000,y:5000},monster={x:3420,y:3616,phase:"waking",phaseTime:0,warning:0,windup:0,path:[]};
+  const player={x:5000,y:5000},monster={x:MILL.operator.x-500,y:MILL.operator.y,phase:"waking",phaseTime:0,warning:0,windup:0,path:[]};
   const ai=createWatcher({player,nav:{nearestGround:(x,y)=>({x,y}),clearSegment:()=>false},accessible:()=>true,isSafe:()=>false,safeRadius:()=>0,emit:()=>{},hurt:()=>{},damage:40,windupSeconds:.06});
   ai.hear(MILL.operator);for(let i=0;i<50;i++)ai.tick(.01,monster,190);assert.equal(monster.lastKnown,undefined);
   ai.hear(MILL.operator,600);for(let i=0;i<50;i++)ai.tick(.01,monster,190);assert.deepEqual(monster.lastKnown,{x:MILL.operator.x,y:MILL.operator.y});

@@ -206,7 +206,7 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
   assert.equal(g.state.combatLoot.coinsCollected, 2);
   gather();
   travel("sell");
-  tickUntil(() => !g.state.wood);
+  tickUntil(() => !g.state.wood, 310);
   assert.ok(g.purchaseUpgrade("carry"));
   while (g.state.campLevel < 3) {
     gather();

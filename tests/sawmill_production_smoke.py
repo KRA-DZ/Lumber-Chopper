@@ -59,7 +59,7 @@ try:
             visit(q,'sawmill-loading');act(q,'mill:deposit').click();act(q,'mill:operator:0').click();act(q,'mill:toggle').click();close(q)
             q.evaluate('g.step(.2)');assert q.evaluate('m.state.sawmill.job===null')
             until(q,'m.state.sawmill.job!==null')
-            assert q.evaluate('Math.hypot(m.workers.crew[0].x-3920,m.workers.crew[0].y-3616)<65&&m.workers.crew.length===1')
+            assert q.evaluate('Math.hypot(m.workers.crew[0].x-(b.exploration.get("sawmill-production").x+96),m.workers.crew[0].y-(b.exploration.get("sawmill-production").y-80))<65&&m.workers.crew.length===1')
             visit(q,'sawmill-loading');q.evaluate('window.remaining=m.state.sawmill.job.remaining;g.step(30)');assert q.evaluate('m.state.sawmill.job.remaining===remaining');close(q)
             q.evaluate('g.step(12.1);window.bankBefore=m.state.campIndustry.materials.boards');visit(q,'sawmill-loading')
             assert q.evaluate('m.state.sawmill.output===4');act(q,'mill:collect').click();act(q,'mill:detach').click();close(q)
@@ -75,7 +75,7 @@ try:
             # Late-night fixture clears newly respawned enemies; attraction is tested separately in the model.
             visit(q,'sawmill-production');act(q,'mill:night').click();act(q,'mill:toggle').click();close(q)
             q.evaluate('''m.state.worldTime=500;g.step(.01);for(const e of [...m.survival.residents]){e.warning=0;m.survival.hit(e.id,10000,false);}
-              Object.assign(m.workers.crew[0],{x:3920,y:3616,path:[],job:'mill',dangerUntil:0});g.step(1.6)''')
+              Object.assign(m.workers.crew[0],{x:(b.exploration.get("sawmill-production").x+96),y:(b.exploration.get("sawmill-production").y-80),path:[],job:'mill',dangerUntil:0});g.step(1.6)''')
             assert q.evaluate('m.sawmill.noise()?.radius===600&&m.state.sawmill.job.remaining<12')
             visit(q,'sawmill-production');act(q,'mill:night').click();close(q);q.evaluate('window.left=m.state.sawmill.job.remaining;g.step(2)');assert q.evaluate('m.state.sawmill.job.remaining===left&&!m.sawmill.noise()')
             q.evaluate('window.old=m;w.scene.restart();void 0');q.wait_for_function('lumberPhaser.core!==old&&lumberPhaser.scene.hudReady')

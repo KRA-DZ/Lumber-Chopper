@@ -67,8 +67,8 @@ test("actual walking reaches both chests, every note and the winch through open 
 
 test("solid walls block movement and sight; their doorways remain wide and walkable", () => {
   const g = create();
-  const a = { x: 1744, y: -640 },
-    b = { x: 1840, y: -640 };
+  const a = { x: 1744, y: -1280 },
+    b = { x: 1840, y: -1280 };
   assert.ok(!g.nav.clearSegment(a, b));
   assert.ok(!g.nav.hasLineOfSight(a, b));
   const body = { ...a };
@@ -76,9 +76,9 @@ test("solid walls block movement and sight; their doorways remain wide and walka
   assert.ok(body.x < 1792 - 12);
   // Main gate, western entrance and eastern entrance have generous clear bases.
   for (const p of [
-    { x: 1600, y: 128 },
-    { x: 1408, y: -432 },
-    { x: 1792, y: -176 },
+    { x: 1600, y: -512 },
+    { x: 1408, y: -1072 },
+    { x: 1792, y: -816 },
   ])
     for (const dy of [-30, 0, 30]) assert.ok(g.nav.isWalkable(p.x, p.y + dy));
   const c = FORTRESS.clues.find((c) => c.id === "ruins-note");

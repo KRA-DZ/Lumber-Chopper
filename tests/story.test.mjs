@@ -237,7 +237,7 @@ test("story routes guide to a locked region's paid frontier and never unlock or 
   assert.ok(g.navigateStory({ kind: "clue", id: "merchant-note" }));
   assert.deepEqual({ x: g.player.x, y: g.player.y }, p);
   assert.equal(g.state.unlockedRegions.length, 1);
-  assert.equal(g.player.targetY, 2488);
+  assert.equal(g.player.targetY, g.regions.frontiers().find(p=>p.region.id==="0:1").y);
   g.paused = true;
   assert.equal(g.navigateStory(), false);
   g.paused = false;
