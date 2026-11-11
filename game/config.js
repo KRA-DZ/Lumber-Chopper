@@ -28,6 +28,9 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     worldWorks: initialWorldWorks(), // Общие взносы/готовые переходы и два положения плотины. Только в текущей игре; revision меняется при смене геометрии.
     sawmill: {stage:0,paid:{},input:[],output:0,job:null,enabled:false,nightWork:false,batches:0,noise:0,pulse:0,
       cartPaid:{},cart:{built:false,owner:null,x:1450,y:1790,logs:[],boards:0}}, // Общая лесопилка: сырьё до 48, выход до 24; одна партия и одна тележка на 24 единицы.
+    cycleSpeed: 1, // Быстрые смены: 2.5× календарь, четыре реальные минуты за сутки; стройка работает с прежней скоростью.
+    runStats: {kills:0,bosses:0}, // Общие победы текущей попытки для рекорда и целей.
+    campCustom: {objects:[],stock:{},sequence:0,revision:0,unlocks:[]}, // До 32 украшений без коллизий; покупки личные, поляна общая.
     boardCargo: 0, // Личные доски в пути: занимают те же места, что брёвна, и становятся общими только после разгрузки в лагере.
     buyerOrders: {active:null,refund:[],completedDay:-1,completed:0}, // Один заказ в день; частичные брёвна возвращаются без потери стоимости.
     logStore: [], // Общий склад: храним стоимость каждого бревна без создания мировых объектов.

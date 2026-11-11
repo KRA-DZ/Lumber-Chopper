@@ -22,6 +22,7 @@ export function createCycleManager(state, emit = () => {}) {
     },
     update(dt) {
       if (!Number.isFinite(dt) || dt <= 0) return;
+      dt *= state.cycleSpeed === 2.5 ? 2.5 : 1;
       while (dt > 1e-9) {
         const night = state.worldTime >= NIGHT_START;
         if (night) observedNight = true;

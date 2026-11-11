@@ -16,6 +16,8 @@ export function selectHero(scene, start) {
     dialog.close();
     scene.registry.set("heroAppearance", id);
     scene.registry.set("playerCount", new FormData(form).get("players") === "2" ? 2 : 1);
+    scene.registry.set("runName",String(new FormData(form).get("runName")||"Лесоруб").trim().slice(0,32));
+    scene.registry.set("cycleSpeed",new FormData(form).get("tempo")==="quick"?2.5:1);
     start();
   };
   function cleanup() {

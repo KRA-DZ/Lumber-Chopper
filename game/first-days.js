@@ -27,10 +27,10 @@ export function dayOverview(state) {
     raidActive,
     nextRaid,
     phase: state.worldTime / DAY_SECONDS,
-    boundarySeconds: (night ? DAY_SECONDS : NIGHT_START) - state.worldTime,
+    boundarySeconds: ((night ? DAY_SECONDS : NIGHT_START) - state.worldTime)/(state.cycleSpeed||1),
     raidSeconds: raidActive
       ? 0
-      : (nextRaid - day) * DAY_SECONDS + NIGHT_START - state.worldTime,
+      : ((nextRaid - day) * DAY_SECONDS + NIGHT_START - state.worldTime)/(state.cycleSpeed||1),
     sunsetSoon: !night && NIGHT_START - state.worldTime <= 60,
     sunsetUrgent: !night && NIGHT_START - state.worldTime <= 15,
   };

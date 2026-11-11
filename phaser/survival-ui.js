@@ -141,7 +141,7 @@ export function createSurvivalUi(scene) {
       ])
         document.querySelector("#" + id).disabled = true;
       death.querySelector("[data-defeat]").textContent =
-        `${event.reason} Пережито ночей: ${event.nightsSurvived}.`;
+        `${event.reason} Пережито ночей: ${event.nightsSurvived}. Побеждено врагов: ${scene.core.state.runStats.kills}. Личный рекорд этого режима: ${scene.customView?.book.best(scene.core.coop?"coop":"solo",scene.core.state.cycleSpeed)?.nights||0} ночей. Начните новую попытку и попробуйте улучшить результат.`;
       if (!death.open) death.showModal();
     },
     destroy() {

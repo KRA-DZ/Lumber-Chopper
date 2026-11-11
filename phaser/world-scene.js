@@ -1,3 +1,4 @@
+import { CampCustomView } from "./camp-custom-view.js";
 import { renderGeneratedPerson } from "./people-assets.js";
 import { WorkerView } from "./worker-view.js";
 import { createWorkerUi } from "./worker-ui.js";
@@ -73,6 +74,8 @@ export class WorldScene extends Phaser.Scene {
       appearance: this.registry.get("heroAppearance"),
       emit: (type, event) => this.onModelEvent(type, event),
     });
+    this.core.state.cycleSpeed=this.registry.get("cycleSpeed")===2.5?2.5:1;
+    if(this.core.state.cycleSpeed===2.5)this.core.state.worldTime=0;
     this.playerModel = this.core.player;
     this.merchantSite = this.core.world.merchant || CAMP.merchant;
     this.terrain = new TerrainLayer(this, this.core.world);
@@ -164,6 +167,8 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#campButton")
       .addEventListener("click", this.returnCamp);
     this.survivalUi = createSurvivalUi(this);
+    this.customView=new CampCustomView(this);
+    this.dayBanner={day:1};
     this.defenseUi = createDefenseUi(this);
     this.explorationUi = createExplorationUi(this);
     this.workerUi = createWorkerUi(this);
@@ -493,6 +498,8 @@ export class WorldScene extends Phaser.Scene {
       if (this.core.paused || pointer.button !== 0) return;
       if (this.coopViews) this.coopViews.focus(this.coopCamera.actorAt(pointer));
       if (this.core.state.health <= 0 || this.core.player.menuOpen) return;
+      if(this.customView?.selection){if(!this.core.coop||this.core.activeActor===this.customView.selection.actor){const camera=this.coopCamera?.second?.visible&&this.core.activeActor===1?this.coopCamera.second:this.camera;this.customView.place(camera.getWorldPoint(pointer.x,pointer.y));}return;}
+      if(over.some(o=>o.getData("customBoard"))){this.customView.open();return;}
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
       const industrySite=over.find(o=>o.getData("industrySite"));
       if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
@@ -860,6 +867,7 @@ export class WorldScene extends Phaser.Scene {
       if (actor.player.room) { entry.axe.setVisible(false); for (const log of entry.cargo) log.setVisible(false); }
     }
     this.keyboardUi?.refresh();
+    this.customView?.render();
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1133,6 +1141,8 @@ export class WorldScene extends Phaser.Scene {
       try { return this.coopViews.withActor(e.actor, () => this.onModelEvent(type, e)); }
       finally { this.routingCoop = false; }
     }
+    this.customView?.onEvent(type);
+    if(type==="day-started")this.dayBanner={day:e.day};
     if (type === "tower-shot") { this.industryView?.shot(e); return; }
     if(type==="world-work-completed"){this.core.showNotice(`${e.project.name}: восстановлено! Маршрут изменился.`,7);return;}
     if(type==="water-level-changed"){this.core.showNotice(e.level==="low"?"Вода отступила. Открыты брод и подход к гидростанции.":"Вода поднялась. Используйте восстановленный мост.",7);return;}
@@ -1530,6 +1540,8 @@ export class WorldScene extends Phaser.Scene {
     document
       .querySelector("#campButton")
       .removeEventListener("click", this.returnCamp);
+    this.customView?.destroy();
+    this.customView=null;
     this.survivalUi?.destroy();
     this.defenseUi?.destroy();
     this.explorationUi?.destroy();
