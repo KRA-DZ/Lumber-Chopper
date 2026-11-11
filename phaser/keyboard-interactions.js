@@ -1,3 +1,4 @@
+import {RECORD_BOARD} from "../game/camp-custom.js";
 import { SHOP_IDS, upgradeOffer } from "../economy.js";
 import { shopProgress } from "./shop-progress.js";
 import { CAMP } from "../game/camp-layout.js";
@@ -107,6 +108,7 @@ export function interactNearby(scene) {
     return;
   }
   const choices = [
+    {p:RECORD_BOARD,range:120,act:()=>scene.customView?.open()},
     { p: { x: CAMP.stall.x, y: CAMP.stall.y + 45 }, range: 155, act: () => scene.shop.open() },
     { p: CAMP_SERVICE.store, range: 110, act: () => { const n = c.camp.store(c.state.wood ? "deposit" : "withdraw"); c.showNotice(n ? `Склад: ${c.state.logStore.length} брёвен` : "Склад пуст или заполнен."); } },
     { p: {x:1710,y:1780}, range:100, act:()=>scene.workerUi.open() },

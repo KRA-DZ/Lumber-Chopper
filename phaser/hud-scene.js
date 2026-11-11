@@ -159,7 +159,7 @@ export class HudScene extends Phaser.Scene {
       location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
         `${c.player.room ? "Дом лагеря" : regionAt(c.player.x,c.player.y)?.name||"Лес"} · Камень ${c.state.stone}`;
     this.clock.setText(
-      `День ${c.dayNumber + 1} · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${location}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+      `День ${c.dayNumber + 1} · ${c.state.nightsSurvived} ночей · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${location}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}♥ ${c.state.health}/${c.state.maxHealth} · База ${c.state.campHealth}/${c.state.maxCampHealth}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {
@@ -271,6 +271,10 @@ export class HudScene extends Phaser.Scene {
       )
       .setPosition(this.scale.width / 2, messageY)
       .setText(this.world.atmosphere.discovery);
+    if(this.world.dayBanner){const day=this.world.dayBanner.day;this.world.dayBanner=null;
+      this.banner.setText(`ДЕНЬ ${day}\nПережито ночей: ${c.state.nightsSurvived}`).setVisible(true).setAlpha(1);
+      this.tweens.killTweensOf(this.banner);this.tweens.add({targets:this.banner,alpha:0,delay:1800,duration:800,onComplete:()=>this.banner.setVisible(false)});
+    }
     if (this.world.expansionBanner) {
       const e = this.world.expansionBanner;
       this.world.expansionBanner = null;

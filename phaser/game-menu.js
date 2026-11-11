@@ -3,7 +3,10 @@ export function createGameMenu(scene) {
   const dialog = document.querySelector("#gameMenu"),
     button = document.querySelector("#menuButton"),
     resume = dialog.querySelector("[data-menu-close]");
-  let returnFocus = button;
+  let returnFocus = button,customPending=false;
+  const custom=dialog.querySelector("[data-custom-open]");
+  const openCustom=()=>{customPending=true;dialog.close();};
+  custom.addEventListener("click",openCustom);
   function open() {
     if (
       scene.core.state.gameOver ||
@@ -31,6 +34,7 @@ export function createGameMenu(scene) {
     button.setAttribute("aria-expanded", "false");
     scene.pause("menu", false);
     returnFocus?.focus({ preventScroll: true });
+    if(customPending){customPending=false;scene.customView?.open();}
   }
   function key(event) {
     if (
@@ -55,6 +59,7 @@ export function createGameMenu(scene) {
     open,
     close,
     destroy() {
+      custom.removeEventListener("click",openCustom);
       button.removeEventListener("click", open);
       resume.removeEventListener("click", close);
       dialog.removeEventListener("close", closed);

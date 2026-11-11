@@ -3,11 +3,11 @@ import { NIGHT_START } from "./cycle.js";
 import { SHOP_IDS, upgradeOffer } from "../economy.js";
 
 export const COMBAT_LOOT = Object.freeze({
-  minionCoins: 2,
-  minionDailyCoins: 24, // Day and its following night share this small-monster budget.
+  minionCoins: 4,
+  minionDailyCoins: 48, // Day and its following night share this small-monster budget.
   minionDailyResin: 2,
   resinEvery: 6, // Deterministic 1-in-6 roll; streaming/reloading an actor cannot reroll it.
-  bossCoins: 20, // Once per region/night; independent of the camp-wave reward.
+  bossCoins: 30, // Once per region/night; independent of the camp-wave reward.
   maxPiles: 24,
   lifetime: 180,
   pickupInterval: 0.15,

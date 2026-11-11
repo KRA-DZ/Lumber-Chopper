@@ -1,3 +1,4 @@
+import { createCampCustom } from "./camp-custom.js";
 import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
 import { createExploration } from "./exploration.js";
@@ -237,6 +238,7 @@ export function createSimulation({
   function canAct() {
     return !paused && !gameState.gameOver && gameState.health > 0 && !player.room && !player.menuOpen;
   }
+  const custom=createCampCustom({state:gameState,player,nav,canAct});
   const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, emit });
   const builder = createCampBuilder({ state: gameState, player, pad: build, forestry, canAct,
     players: () => party?.actors.map(a => a.player) || [player], emit });
@@ -450,7 +452,7 @@ export function createSimulation({
         accessible,
         emit: (type, event) => {
           raidReports.record(type, event);
-          if (type === "enemy-defeated") combatLoot.drop(event);
+          if (type === "enemy-defeated") { combatLoot.drop(event); gameState.runStats.kills++; if(event.kind==="boss")gameState.runStats.bosses++; }
           emit(type, event);
         },
         defeat,
@@ -464,7 +466,7 @@ export function createSimulation({
     if (type === "sunset-warning") {
       sunsetWarning = { ...event, until: elapsed + 7 };
       showNotice(
-        event.seconds === 60
+        gameState.cycleSpeed===2.5?`До темноты ${Math.ceil(event.seconds/2.5)} секунд. Возвращайтесь к огню!` : event.seconds === 60
           ? event.raid
             ? `Через минуту налёт «${raidPlan(event.night).name}»! ${raidPlan(event.night).hint}`
             : "До заката одна минута. Закончите продажу и возвращайтесь к свету."
@@ -1087,7 +1089,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    camp, mining, builder, industry, preparation, orders,
+    custom, camp, mining, builder, industry, preparation, orders,
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },

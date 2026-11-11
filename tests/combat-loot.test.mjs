@@ -58,8 +58,8 @@ test("a defeated minion leaves a pile; nearby automatic pickup preserves the log
   assert.equal(f.state.coins, 0);
   Object.assign(f.player, { x: 0, y: 0 });
   f.loot.update(0.2);
-  assert.equal(f.state.coins, 2);
-  assert.equal(f.state.combatLoot.coinsCollected, 2);
+  assert.equal(f.state.coins, COMBAT_LOOT.minionCoins);
+  assert.equal(f.state.combatLoot.coinsCollected, COMBAT_LOOT.minionCoins);
   assert.equal(f.state.wood, 2);
   assert.equal(f.state.cargoValue, 16);
   assert.deepEqual(f.state.cargo, [7, 9]);
@@ -74,28 +74,28 @@ test("boss loot is guaranteed once per region/night, not once per replacement ac
   assert.equal(f.loot.drop(f.boss("replacement")), false);
   Object.assign(f.player, { x: 0, y: 0 });
   f.loot.update(0.2);
-  assert.equal(f.state.coins, 20);
+  assert.equal(f.state.coins, COMBAT_LOOT.bossCoins);
   assert.equal(f.state.exploration.items.resin, 1);
   f.state.calendarDay++;
   f.loot.update(0.2);
   assert.ok(f.loot.drop(f.boss("next-night")));
   f.loot.update(0.2);
-  assert.equal(f.state.coins, 40);
+  assert.equal(f.state.coins, 2*COMBAT_LOOT.bossCoins);
 });
 test("day and dusk share the small-enemy budget, no drop rerolls, and only dawn renews it", () => {
   const f = fixture();
   for (let i = 0; i < 90; i++) f.loot.drop(f.minion(`small-${i}`));
-  assert.equal(f.state.combatLoot.smallCoins, 24);
+  assert.equal(f.state.combatLoot.smallCoins, COMBAT_LOOT.minionDailyCoins);
   assert.equal(f.state.combatLoot.smallResin, 2);
   f.state.worldTime = NIGHT_START + 30;
   assert.equal(f.loot.drop(f.minion("dusk-new")), false);
-  assert.equal(f.state.combatLoot.smallCoins, 24);
+  assert.equal(f.state.combatLoot.smallCoins, COMBAT_LOOT.minionDailyCoins);
   f.loot.update(COMBAT_LOOT.lifetime + 1);
   assert.equal(f.loot.piles.size, 0);
   assert.equal(f.loot.drop(f.minion("small-0")), false);
   f.state.calendarDay++;
   f.loot.drop(f.minion("next-day"));
-  assert.equal(f.state.combatLoot.smallCoins, 2);
+  assert.equal(f.state.combatLoot.smallCoins, COMBAT_LOOT.minionCoins);
   assert.ok(f.state.combatLoot.smallResin <= 1);
   assert.ok(COMBAT_LOOT.minionDailyCoins < upgradeOffer(f.state, "axe").price);
 });
@@ -106,7 +106,7 @@ test("a full resin bag still accepts coins and retains excess resin for later pi
   f.loot.drop(f.boss("full-bag"));
   Object.assign(f.player, { x: 0, y: 0 });
   f.loot.update(0.2);
-  assert.equal(f.state.coins, 20);
+  assert.equal(f.state.coins, COMBAT_LOOT.bossCoins);
   assert.equal(f.state.exploration.items.resin, 6);
   assert.equal(f.loot.piles.size, 1);
   assert.equal([...f.loot.piles.values()][0].coins, 0);
@@ -114,7 +114,7 @@ test("a full resin bag still accepts coins and retains excess resin for later pi
   f.loot.update(0.2);
   assert.equal(f.state.exploration.items.resin, 6);
   assert.equal(f.loot.piles.size, 0);
-  assert.equal(f.state.coins, 20);
+  assert.equal(f.state.coins, COMBAT_LOOT.bossCoins);
 });
 test("pause, zero-time, blocked pickup and active-time expiry cannot create or remotely collect rewards", () => {
   const f = fixture();
@@ -133,7 +133,7 @@ test("pause, zero-time, blocked pickup and active-time expiry cannot create or r
   assert.equal(f.state.coins, 0);
   f.unblock();
   f.loot.update(0.2);
-  assert.equal(f.state.coins, 2);
+  assert.equal(f.state.coins, COMBAT_LOOT.minionCoins);
   f.pause();
   assert.equal(f.loot.drop(f.minion("defeated")), false);
 });
@@ -147,9 +147,9 @@ test("piles remain bounded and earned combat coins enable a real shop purchase o
   assert.ok(affordableCombatUpgrades(f.state).some((o) => o.id === "carry"));
   assert.ok(buyUpgrade(f.state, "carry"));
   assert.equal(f.state.maxWood, 4);
-  assert.equal(f.state.coins, 0);
+  assert.equal(f.state.coins, COMBAT_LOOT.bossCoins-20);
   assert.equal(buyUpgrade(f.state, "carry"), false);
-  assert.equal(f.state.combatLoot.coinsCollected, 20);
+  assert.equal(f.state.combatLoot.coinsCollected, COMBAT_LOOT.bossCoins);
 });
 
 test("real harvesting funds the first axe, a neighbouring region, combat pickup and a fence before the fifth dusk", () => {
@@ -202,8 +202,8 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
     g.setDestination(pile.x, pile.y);
     tickUntil(() => !g.combatLoot.piles.has(pile.id));
   }
-  assert.equal(g.state.coins, coins + 2);
-  assert.equal(g.state.combatLoot.coinsCollected, 2);
+  assert.equal(g.state.coins, coins + COMBAT_LOOT.minionCoins);
+  assert.equal(g.state.combatLoot.coinsCollected, COMBAT_LOOT.minionCoins);
   gather();
   travel("sell");
   tickUntil(() => !g.state.wood, 310);

@@ -192,6 +192,12 @@
     .personal-shop button[data-selected="true"] { outline: 3px solid #f1d88f; background: #506644; }
     .personal-shop button[aria-disabled="true"] { color: #b8afa1; }
     .shop-progress { display:block; margin-top:8px; color:#d2c6a3; }
+    #customDialog { width:min(650px,90vw); }
+    #customDialog article { padding:10px; margin:8px 0; border:1px solid #7d8058; background:#283e30; }
+    #customDialog button { margin:4px; }
+    #customDialog td { padding:6px; border-bottom:1px solid #64734c; }
+    .placement-toolbar { position:fixed; z-index:25; bottom:14px; left:50%; transform:translateX(-50%); width:min(550px,94vw); background:#243b2af5; border:2px solid #c7a762; padding:10px; color:#f5dfab; text-align:center; }
+    .placement-toolbar[hidden] { display:none; }
     .shop-progress-cells { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:3px; max-width:240px; margin-bottom:5px; }
     .shop-progress-cells i { display:block; height:7px; background:#202b26; border:1px solid #626a50; border-radius:2px; }
     .shop-progress-cells i[data-filled="true"] { background:linear-gradient(#f0d88a,#b88b45); border-color:#e5c879; }
@@ -494,6 +500,7 @@
       <button type="button" data-menu-close>Продолжить</button>
     </div>
     <p data-pause-status>Время, бой и сбор ресурсов приостановлены.</p>
+    <button type="button" data-custom-open>Украшения, цели и рекорды · V</button>
     <h3>Настройки</h3>
     <div class="menu-settings">
       <button id="sound" type="button" aria-pressed="false">
@@ -637,6 +644,9 @@
     <form>
       <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
       <h2 id="heroTitle">Кто отправится в лес?</h2>
+      <label>Имя для местных рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
+      <label>Темп смены <select name="tempo"><option value="normal">Обычный — 10 минут за сутки</option><option value="quick">Быстрый — 3 минуты света и 1 минута ночи</option></select></label>
+      <p>Скорость построек одинакова. Мир начинается заново; рекорды и открытые украшения сохраняются на этом устройстве.</p>
       <fieldset>
         <legend>Режим игры</legend>
         <label><input type="radio" name="players" value="1" checked /> Один игрок</label>

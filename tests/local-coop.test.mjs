@@ -135,8 +135,8 @@ test("a living second player can earn combat loot while the host is down without
   assert.ok(b.tryAttack(enemy.id)); assert.equal(b.tryAttack(enemy.id), false);
   assert.equal(a.combatLoot.piles, b.combatLoot.piles);
   const before = g.state.worldTime; g.update(.1);
-  assert.equal(a.state.coins, 0); assert.equal(b.state.coins, 2);
-  assert.equal(a.state.combatLoot.coinsCollected, 0); assert.equal(b.state.combatLoot.coinsCollected, 2);
+  assert.equal(a.state.coins, 0); assert.equal(b.state.coins, 4);
+  assert.equal(a.state.combatLoot.coinsCollected, 0); assert.equal(b.state.combatLoot.coinsCollected, 4);
   assert.equal(a.state.health, 0); assert.ok(!g.state.gameOver && g.state.worldTime > before);
 });
 
