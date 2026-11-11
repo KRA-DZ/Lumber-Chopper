@@ -39,7 +39,7 @@ export function createExplorationUi(scene) {
     if (siteId) {
       const site = m.get(siteId);
       title.textContent = site.name;
-      paragraph(`Монеты: ${s.coins} · Брёвна: ${s.wood}/${s.maxWood}`);
+      paragraph(`Монеты: ${s.coins} · Брёвна: ${s.wood}/${s.maxWood}${s.boardCargo?` · Доски в пути: ${s.boardCargo}`:""}`);
       const descriptions = {
         chest:
           "Старая печать держит крышку. Ключ после открытия исчезнет, а добыча попадёт в сумку находок.",
@@ -143,6 +143,7 @@ export function createExplorationUi(scene) {
         "camp-kitchen",
         "chest:0:-1:0",
         "old-dam","river-bridge","north-boardwalk","sluice-gate",
+        "sawmill-restoration","sawmill-loading","sawmill-production","camp-freight","freight-cart",
       ]) {
         const site = m.get(id),
           open = m.available(site),

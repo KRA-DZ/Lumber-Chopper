@@ -42,6 +42,7 @@ export function createMinions({
   hurtPlayer,
   emit = () => {},
   party = null,
+  getNoise = () => null,
 }) {
   const actors = [],
     projectiles = [],
@@ -326,6 +327,7 @@ export function createMinions({
           !isSafe(player) &&
           distance(e, player) < MINIONS.sense &&
           nav.hasLineOfSight(e, player));
+      const noise=getNoise(),investigate=!aware&&noise&&homeRegion(noise,e)&&distance(e,noise)<noise.radius&&!isSafe(noise);
       const retreat = !hunt && (!homeRegion(e, e) || isSafe(e));
       const previousBarrier = defenses?.get(e.barrierId);
       if (hunt && previousBarrier?.hp === 0 && !e.breachGoal)
@@ -405,7 +407,7 @@ export function createMinions({
         : e.breachGoal ||
           (aware
             ? player
-            : {
+            : investigate ? noise : {
                 x: e.home.x + Math.cos(e.patrolIndex * 2.399) * 110,
                 y: e.home.y + Math.sin(e.patrolIndex * 2.399) * 110,
               });
@@ -417,7 +419,8 @@ export function createMinions({
         };
       }
       const global = hunt || retreat;
-      e.phase = retreat ? "retreat" : aware ? "chase" : "patrol";
+      e.phase = retreat ? "retreat" : aware ? "chase" : investigate ? "investigate" : "patrol";
+      if(!!e.investigating!==!!investigate){e.investigating=!!investigate;e.path=[];e.repath=0;}
       if (!allowed(goal, e, global)) {
         e.patrolIndex++;
         e.path = [];

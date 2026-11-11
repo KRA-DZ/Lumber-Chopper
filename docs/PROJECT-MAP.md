@@ -41,6 +41,8 @@
 
 ## Команды по необходимости
 
+Лесопилка: баланс — `game/sawmill-production-config.js`, ремонт/партии — `game/sawmill-production.js`, физические грузы — `game/sawmill-freight.js`, отображение — `phaser/sawmill-production-view.js`. Правила и целевые команды: [SAWMILL-PRODUCTION.md](SAWMILL-PRODUCTION.md).
+
 - `npm run serve`, затем `http://localhost:8000/` — локальный запуск. Открывать через HTTP, не `file://`.
 - `npm run build` — автономная статическая сборка в игнорируемой папке `dist/`; Phaser включён локально.
 - `node --test tests/camp-expansion.test.mjs` и `python tests/camp_expansion_smoke.py` — оплата регионов двумя материалами, топливо, склад, калитки, независимые лавки, E/Enter, комната дома, мышь/тач и перезапуск.

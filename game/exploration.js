@@ -34,6 +34,7 @@ export function createExploration({
   canAct,
   getStory = () => null,
   worldWorks = null,
+  sawmill = null,
   outposts,
   camp,
   onSale = null,
@@ -81,6 +82,7 @@ export function createExploration({
       .map((p) => ({ ...p, kind: "chest" })),
     ...(world.locations || []).flatMap((l) => l.sites),
     ...(worldWorks?.sites||[]),
+    ...(sawmill?.sites||[]),
   ];
   const byId = new Map(sites.map((p) => [p.id, p]));
   let context = null,
@@ -94,6 +96,7 @@ export function createExploration({
     regions.isOpen(s) &&
     (!s.requiredWorks||!!state.worldWorks.built[s.requiredWorks]) &&
     (!s.requiresLow||state.worldWorks.level==="low") &&
+    (!s.requiresCart||state.sawmill.cart.built) &&
     (s.kind !== "kitchen" || hasCampBuilding(state,"fire")) &&
     (!s.requiredPassage || passageOpen(state, s.requiredPassage)) &&
     !(s.kind === "discovery" && data.discoveries.includes(s.id));
@@ -222,6 +225,8 @@ export function createExploration({
                 ? "Сначала освободите место для реликвии"
                 : "",
       );
+    } else if (s.kind === "sawmill-service") {
+      rows.push(...sawmill.offers(id));
     } else if (s.kind === "infrastructure") {
       rows.push(...worldWorks.offers(id));
     } else if (s.kind === "passage") {
@@ -313,6 +318,10 @@ export function createExploration({
     if(action.startsWith("works:")){
       if(!worldWorks.perform(id,action))return false;
       changed("infrastructure-used",{site:s,action});return true;
+    }
+    if(action.startsWith("mill:")){
+      if(!sawmill.perform(id,action))return false;
+      changed("sawmill-used",{site:s,action});return true;
     }
     let event = { site: s, action };
     if (action === "buy-rod") {
@@ -463,6 +472,7 @@ export function createExploration({
       regionId==="0:-1"?` · Северный настил: ${state.worldWorks.built["north-boardwalk"]?"восстановлен":"нужен ремонт"}`:"";
     if (chests.length)
       return `Сундуки: ${chests.filter((s) => !data.openedChests.includes(s.id)).length}/${chests.length}${works}`;
+    if(regionId==="1:1")return `Ремонт ${state.sawmill.stage}/3 · сырьё ${state.sawmill.input.length} · доски ${state.sawmill.output} · завалы ${world.locations.find(l=>l.regionId===regionId)?.debris.filter(d=>data.debrisHP[d.id]===0).length||0}/2`;
     if (s.some((s) => s.kind === "pond"))
       return `Рыба сегодня: ${caughtToday()}/${EXPLORATION.fishPerDay}`;
     if (s.some((s) => s.kind === "ancient"))

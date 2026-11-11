@@ -39,6 +39,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     return n;
   }
   function enter() {
+    if(state.sawmill?.cart.owner===(player.id??0))return false;
     if (!canAct() || !hasCampBuilding(state,"house") || !near(CAMP_SERVICE.door)) return false;
     player.path = []; player.room = { x: ROOM.exit.x, y: ROOM.exit.y - 32 };
     emit("house-entered", {}); return true;

@@ -30,6 +30,7 @@ export function createSurvival({
   regions = null,
   sanctuary = () => null,
   party = null,
+  getNoise = () => null,
 }) {
   const raiders = [];
   const raidShots=createRaidProjectiles({state,player,party,hurt:hurtPlayer,emit});
@@ -55,6 +56,7 @@ export function createSurvival({
         hurtPlayer,
         emit,
         party,
+        getNoise,
       })
     : null;
   const minions = regions
@@ -68,6 +70,7 @@ export function createSurvival({
         hurtPlayer,
         emit,
         party,
+        getNoise,
       })
     : null;
   function spawnPoint(around, radius, phase = 0) {

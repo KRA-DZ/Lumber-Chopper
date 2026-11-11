@@ -13,6 +13,7 @@ import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
 import { raidPlan } from "./raid-plans.js";
 import { createWorldWorks } from "./world-works.js";
+import { createSawmillProduction } from "./sawmill-production.js";
 import { createDefenses } from "./defenses.js";
 import { createDefenseRepair, DEFENSE_REPAIR } from "./defense-repair.js";
 import { createRaidReports } from "./raid-report.js";
@@ -186,8 +187,10 @@ export function createSimulation({
         canAct,
       })
     : null;
+  const sawmill=regional?createSawmillProduction({state:gameState,player,regions,nav,forestry,getWorkers:()=>workers,hear:(p,r)=>survival?.hear(p,r),emit}):null;
   const worldWorks=regional?createWorldWorks({state:gameState,player,regions,nav,forestry,emit,
     bodies:()=>[...(party?.actors.map(a=>a.player)||[player]),...(workers?.crew||[]),...buyers,
+      ...(gameState.sawmill.cart.built?[gameState.sawmill.cart]:[]),
       ...(survival?.raiders||[]),...(survival?.residents||[]),...(survival?.monster?[survival.monster]:[])]}):null;
   const exploration = regional
     ? createExploration({
@@ -200,6 +203,7 @@ export function createSimulation({
         canAct,
         getStory: () => story,
         worldWorks,
+        sawmill,
         outposts,
         camp: { lit: () => camp.lit(), stoke: (quoted,material) => camp.stoke(quoted,material), maxFuel:()=>camp.maxFuel() },
         onSale: party ? value => party.sale(value) : null,
@@ -320,7 +324,7 @@ export function createSimulation({
       tree.hp <= 0 ||
       distance(player, tree) >= 72 ||
       player[timer] > 0 ||
-      (mode === "auto" && gameState.wood >= gameState.maxWood)
+      (mode === "auto" && gameState.wood + gameState.boardCargo >= gameState.maxWood)
     )
       return false;
     player[timer] =
@@ -413,6 +417,7 @@ export function createSimulation({
   }
   function defeat(reason) {
     if (gameState.gameOver) return;
+    gameState.sawmill.cart.owner=null;
     exploration?.cancelAll();
     gameState.gameOver = true;
     raidReports.finish(survival?.wave, false);
@@ -452,6 +457,7 @@ export function createSimulation({
         defenses,
         regions,
         sanctuary: p => outposts.safeZone(p),
+        getNoise:()=>sawmill?.noise()||null,
       })
     : null);
   const cycle = createCycleManager(gameState, (type, event) => {
@@ -594,6 +600,7 @@ export function createSimulation({
         activeBuyer,
         defenses,
         sale,
+        mill:sawmill,
         onIncome: party ? value => party.sale(value) : null,
         playersAtSale: party ? () => party.actors.some(a => a.state.wood > 0 && distance(a.player, sale) < sale.radius) : null,
         getSurvival: () => survival,
@@ -793,6 +800,7 @@ export function createSimulation({
     player.clickTimer = Math.max(0, player.clickTimer - dt);
     player.swing = Math.max(0, player.swing - dt);
     const alive = gameState.health > 0;
+    player.speed=gameState.runSpeed*(sawmill?.speedMultiplier()||1);
     if (!alive) { keys.clear(); player.path = []; }
     if (player.room || player.menuOpen) {
       player.path=[];selectedEnemyId=null;pursueEnemy=false;defenseOrder=null;clearingOrder=null;defenseRepair.cancel();
@@ -915,17 +923,19 @@ export function createSimulation({
       !clearingOrder &&
       nearest &&
       player.autoTimer <= 0 &&
-      gameState.wood < gameState.maxWood
+      gameState.wood + gameState.boardCargo < gameState.maxWood
     ) {
       tryChop(nearest.id, "auto");
     }
     const rock = world.boulders?.find(r => (gameState.boulderHP[r.id] ?? r.maxHP) > 0 && distance(player, r) < 90);
     if (!enemy && !nearest && rock) mining.hit(rock.id, "auto");
     if (canAct() && forestry.collect(dt, player)) updateUI();
+    sawmill?.freight.sync();
     if (!actorOnly) survival?.update(dt);
     if (!actorOnly && !gameState.gameOver) preparation.update(dt);
     if (!actorOnly || alive) combatLoot.update(dt);
     if (!actorOnly && !gameState.gameOver) workers?.update(dt);
+    if (!actorOnly && !gameState.gameOver) sawmill?.update(dt);
     if (
       !gameState.gameOver &&
       !tutorial.sheltered &&
@@ -954,6 +964,7 @@ export function createSimulation({
     }
   }
   const core = {
+    sawmill,
     worldWorks,
     get guide() {
       return firstDaysGuide(core);

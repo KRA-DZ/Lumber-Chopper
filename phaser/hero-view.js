@@ -34,7 +34,7 @@ export class HeroView {
     const mood =
       p.celebration > 0
         ? "happy"
-        : s.wood / s.maxWood >= 0.75
+        : (s.wood+s.boardCargo) / s.maxWood >= 0.75
           ? "tired"
           : "neutral";
     this.bob = p.moving
@@ -73,7 +73,7 @@ export class HeroView {
       this.pose = "strike";
     } else {
       if (p.swing <= 0) this.axe.stop();
-      const carry = s.wood > 0 ? (mood === "tired" ? "heavy" : "carry") : null;
+      const carry = s.wood+s.boardCargo > 0 ? (mood === "tired" ? "heavy" : "carry") : null;
       const prefix = carry
         ? `hero.${carry}.${dir}`
         : mood === "neutral"
@@ -81,7 +81,7 @@ export class HeroView {
           : `people.player.${mood}.${dir}`;
       if (p.moving) {
         this.player.play(`walk.player.${carry || mood}.${dir}${this.prefix ? ".coop2" : ""}`, true);
-        this.player.anims.timeScale = s.runSpeed / 200;
+        this.player.anims.timeScale = p.speed / 200;
         this.pose = carry || "walk";
       } else {
         this.player.stop();

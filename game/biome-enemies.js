@@ -28,6 +28,7 @@ export function createBiomeEnemies({
   hurtPlayer,
   emit = () => {},
   party = null,
+  getNoise = () => null,
 }) {
   const actors = [],
     defeated = new Set();
@@ -260,13 +261,15 @@ export function createBiomeEnemies({
         if (e.cooldown <= 0) e.attack = { x: player.x, y: player.y };
         continue;
       }
+      const noise=getNoise(),investigate=!aware&&noise&&belongs(noise,e.regionId)&&distance(e,noise)<noise.radius&&!isSafe(noise);
       const goal = aware
         ? player
-        : {
+        : investigate ? noise : {
             x: e.home.x + Math.cos(e.patrolIndex * 2.399) * 130,
             y: e.home.y + Math.sin(e.patrolIndex * 2.399) * 130,
           };
-      e.phase = aware ? "chase" : "patrol";
+      e.phase = aware ? "chase" : investigate ? "investigate" : "patrol";
+      if(!!e.investigating!==!!investigate){e.investigating=!!investigate;e.path=[];e.repath=0;}
       if (!aware && !inside(goal, e.region)) {
         e.patrolIndex++;
         e.path = [];
