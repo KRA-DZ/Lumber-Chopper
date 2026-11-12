@@ -1,3 +1,4 @@
+import {preloadPlants,retainPlants} from "./plants-assets.js";
 import { preloadPeople, retainPeople } from "./people-assets.js";
 import { preloadTrees, retainTrees } from "./tree-assets.js";
 import { preloadCamp, retainCamp } from "./camp-assets.js";
@@ -25,6 +26,7 @@ class BootScene extends Phaser.Scene {
     preloadItems(this);
     preloadLootItems(this);
     preloadDecor(this);
+    preloadPlants(this);
     preloadFortress(this);
     preloadSawmill(this);
     this.load.json("import.manifest", "./src/assets/manifest.json");
@@ -39,6 +41,7 @@ class BootScene extends Phaser.Scene {
     retainItems(this);
     retainLootItems(this);
     retainDecor(this);
+    retainPlants(this);
     retainFortress(this);
     retainSawmill(this);
     const manifest = this.cache.json.get("import.manifest");

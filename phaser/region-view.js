@@ -23,19 +23,21 @@ export class RegionView {
       result.push(a);
       return a;
     };
-    for (const prop of w.biomeDetails.get(region.id) || [])
-      image(prop.natural?`details.${prop.kind}.${prop.variant}`:`habitat.${prop.kind}`, prop.x, prop.y, prop.ground ? LAYERS.ground + 12 : prop.y)
-        .setData("biomeDetail", prop.kind);
+    const nearBush=p=>w.berryBushes.some(b=>Math.hypot(p.x-b.x,p.y-b.y)<60);
+    for (const prop of (w.biomeDetails.get(region.id) || []).filter(p=>!nearBush(p)))
+      image(prop.natural?(prop.kind==="fern"?"plants.fern":prop.kind==="mushroom"?`plants.mushroom.${Math.abs(Math.round(prop.x+prop.y))%3}`:`details.${prop.kind}.${prop.variant}`):`habitat.${prop.kind}`, prop.x, prop.y, prop.ground ? LAYERS.ground + 12 : prop.y)
+        .setScale(prop.natural&&prop.kind==="fern"?0.95:2).setData("biomeDetail", prop.kind);
+    for(const p of (w.riverPlants||[]).filter(p=>p.regionId===region.id))image("plants.reeds",p.x,p.y).setScale(1.4);
     for(const ford of (w.streamCrossings||[]).filter(f=>f.regionId===region.id)){
       for(const dy of [-22,0,22])image("details.rock.0",ford.x,ford.y+dy,ford.y+dy).setScale(.8).setData("streamFord",ford.id);
     }
-    for (const [index, p] of (w.decorBins.get(region.id) || []).entries())
+    for (const [index, p] of (w.decorBins.get(region.id) || []).filter(p=>!nearBush(p)).entries())
       if (index % 3 === 0)
         image(`biomeprop.${region.biome}`, p.x, p.y).setScale(
           region.biome === "web" ? 1.6 : 1,
         );
       else
-        image(`details.${p.type}.${p.variant}`, p.x, p.y).setData("plant", p);
+        image(p.type==="fern"?"plants.fern":p.type==="mushroom"?`plants.mushroom.${index%3}`:`details.${p.type}.${p.variant}`, p.x, p.y).setScale(p.type==="fern"?0.95:2).setData("plant", p);
     if (region.biome === "web")
       for (const tree of w.trees.filter(
         (t) => t.regionId === region.id && t.legacyIndex % 3 === 0,

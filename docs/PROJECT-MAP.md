@@ -49,6 +49,8 @@
 
 ## Команды по необходимости
 
+Ягоды/растения: `game/berries.js`, размещение в `game/region-world.js`, общие дни урожая — `game/coop-state.js`. PNG выбранного ряда 2: `src/assets/plants/`, подготовка `scripts/prepare_plants.py`; загрузка/кадры — `phaser/plants-assets.js`, вид — `phaser/plants-view.js`. Правила и целевые проверки: [PLANTS.md](PLANTS.md).
+
 Украшения/рекорды: `game/camp-custom.js`, `game/record-book.js`, `phaser/camp-custom-view.js`; баланс/проверки — [CAMP-CUSTOM.md](CAMP-CUSTOM.md). Исключение из сброса прогресса: только местные рекорды и открытые украшения. Быстрый календарь — `state.cycleSpeed`, только `game/cycle.js`; обычный темп выбран по умолчанию.
 
 Лесопилка: баланс — `game/sawmill-production-config.js`, ремонт/партии — `game/sawmill-production.js`, физические грузы — `game/sawmill-freight.js`, отображение — `phaser/sawmill-production-view.js`. Правила и целевые команды: [SAWMILL-PRODUCTION.md](SAWMILL-PRODUCTION.md).

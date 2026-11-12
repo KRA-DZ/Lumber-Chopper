@@ -1,4 +1,5 @@
 import { CampCustomView } from "./camp-custom-view.js";
+import {PlantsView} from "./plants-view.js";
 import { CAMP_SERVICE } from "../game/camp-services.js";
 import { renderGeneratedPerson } from "./people-assets.js";
 import { WorkerView } from "./worker-view.js";
@@ -169,6 +170,7 @@ export class WorldScene extends Phaser.Scene {
       .addEventListener("click", this.returnCamp);
     this.survivalUi = createSurvivalUi(this);
     this.customView=new CampCustomView(this);
+    this.plantsView=new PlantsView(this);
     this.dayBanner={day:1};
     this.defenseUi = createDefenseUi(this);
     this.explorationUi = createExplorationUi(this);
@@ -502,6 +504,7 @@ export class WorldScene extends Phaser.Scene {
       if(this.customView?.selection){if(!this.core.coop||this.core.activeActor===this.customView.selection.actor){const camera=this.coopCamera?.second?.visible&&this.core.activeActor===1?this.coopCamera.second:this.camera;this.customView.place(camera.getWorldPoint(pointer.x,pointer.y));}return;}
       if(over.some(o=>o.getData("customBoard"))){this.customView.open();return;}
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
+      const berry=over.find(o=>o.getData("berry"));if(berry){this.core.berries.order(berry.getData("berry"));return;}
       if(over.some(o=>o.getData("fuelPad"))){const p=CAMP_SERVICE.fuelPad;this.core.setDestination(p.x,p.y);return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
       if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
@@ -870,6 +873,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.keyboardUi?.refresh();
     this.customView?.render();
+    this.plantsView?.render();
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1144,6 +1148,7 @@ export class WorldScene extends Phaser.Scene {
       finally { this.routingCoop = false; }
     }
     this.customView?.onEvent(type);
+    if(type==="berries-picked"){this.core.showNotice("Собрано 2 ягоды. Съесть для лечения — сумка I.",4);return;}
     if(type==="day-started")this.dayBanner={day:e.day};
     if (type === "tower-shot") { this.industryView?.shot(e); return; }
     if(type==="world-work-completed"){this.core.showNotice(`${e.project.name}: восстановлено! Маршрут изменился.`,7);return;}
@@ -1543,6 +1548,7 @@ export class WorldScene extends Phaser.Scene {
       .querySelector("#campButton")
       .removeEventListener("click", this.returnCamp);
     this.customView?.destroy();
+    this.plantsView?.destroy();
     this.customView=null;
     this.survivalUi?.destroy();
     this.defenseUi?.destroy();

@@ -108,6 +108,7 @@ export function interactNearby(scene) {
     return;
   }
   const choices = [
+    ...c.world.berryBushes.filter(b=>c.berries.ready(b)&&c.regions.isOpen(b)).map(b=>({p:b,range:100,act:()=>c.berries.harvest(b.id)})),
     {p:RECORD_BOARD,range:120,act:()=>scene.customView?.open()},
     { p: { x: CAMP.stall.x, y: CAMP.stall.y + 45 }, range: 155, act: () => scene.shop.open() },
     { p: CAMP_SERVICE.store, range: 110, act: () => { const n = c.camp.store(c.state.wood ? "deposit" : "withdraw"); c.showNotice(n ? `Склад: ${c.state.logStore.length} брёвен` : "Склад пуст или заполнен."); } },

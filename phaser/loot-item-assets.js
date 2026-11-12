@@ -11,6 +11,7 @@ const IDS = new Set([
   "fish",
 ]);
 export function lootItemIcon(id) {
+  if(id==="berry")return "./src/assets/plants/berry-icon.png";
   return IDS.has(id) ? `./src/assets/loot-items/icons/${id}.png` : null;
 }
 export function prependLootIcon(element, id, size = 24) {

@@ -1,3 +1,4 @@
+import {BERRIES} from "./berries.js";
 import { hasCampBuilding } from "./camp-projects.js";
 import { CENTER, DAY_SECONDS } from "./config.js";
 import { passageOpen } from "./locations.js";
@@ -17,6 +18,7 @@ export const EXPLORATION = Object.freeze({
   biteWindow: 2.2,
 });
 export const ITEMS = Object.freeze({
+  berry:{name:"Лесные ягоды",limit:BERRIES.limit},
   key: { name: "Ключ с печатью", limit: 3 },
   fish: { name: "Окунь", limit: 12 },
   resin: { name: "Древесная смола", limit: 6 },
@@ -389,17 +391,17 @@ export function createExploration({
   }
   function useItem(id) {
     if (
-      id !== "salve" ||
+      !["salve","berry"].includes(id) ||
       state.gameOver ||
       state.health <= 0 ||
-      !bag.salve ||
+      !bag[id] ||
       state.health >= state.maxHealth
     )
       return false;
-    bag.salve--;
+    bag[id]--;
     state.health = Math.min(
       state.maxHealth,
-      state.health + EXPLORATION.salveHeal,
+      state.health + (id==="berry"?BERRIES.heal:EXPLORATION.salveHeal),
     );
     changed("item-used", { id, health: state.health });
     return true;

@@ -10,7 +10,7 @@ import { makeBoulders } from "./mining.js";
 import { initialWorldWorks, worksWater, worksCollision, worksReserved, worksSurfaces, WORKS_WALLS } from "./world-works-layout.js";
 
 export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks()}) {
-  const trees = [], boulders = [],
+  const trees = [], boulders = [], berryBushes = [],
     bins = new Map(),
     decorBins = new Map(),
     biomeDetails = new Map(),
@@ -174,6 +174,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
   function reserved(x, y, r) {
     return (
       worksReserved(x,y,75) || streamReserved(x,y,75) ||
+      (r.id==="0:0"&&(Math.hypot(x-1184,y-2048)<100||Math.abs(x-1184)<125&&y>1988&&y<2348)) ||
       locations.some(
         (l) => l.regionId === r.id && insideLocation(l, x, y, 72),
       ) ||
@@ -253,10 +254,19 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
         y,
       });
     }
+    if(["forest","swamp","shore","field"].includes(region.biome)){
+      const candidates=[...(region.id==="0:0"?[{x:1184,y:2048}]:[]),...details,...decor],picked=[];
+      for(const p of candidates){
+        if(picked.length>=5)break;
+        if(waterCollision(p.x,p.y,45)||locations.some(l=>insideLocation(l,p.x,p.y,80))||clues.some(c=>Math.hypot(c.x-p.x,c.y-p.y)<100)||
+          Math.hypot(p.x-1600,p.y-1600)<540||Math.hypot(p.x-ancientTree.x,p.y-ancientTree.y)<260||Math.hypot(p.x-merchant.x,p.y-merchant.y)<180||nearTrail(p,60)||(region.id==="-1:0"&&Math.hypot(p.x-pond.x-265,p.y-pond.y-175)<150)||list.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<80||Math.abs(t.x-p.x)<105&&t.y>p.y-30&&t.y<p.y+260)||picked.some(b=>Math.hypot(b.x-p.x,b.y-p.y)<220))continue;
+        const i=picked.length,b={id:`berry:${region.id}:${i}`,x:p.x,y:p.y,variant:i%3,regionId:region.id,decorative:i>=3,flowering:i===3};picked.push(b);berryBushes.push(b);
+      }
+    }
     bins.set(region.id, list);
     decorBins.set(region.id, decor);
     biomeDetails.set(region.id, details);
-    boulders.push(...makeBoulders(region, (x,y,r) => reserved(x,y,r) || list.some(t => Math.hypot(t.x-x,t.y-y) < 150)));
+    boulders.push(...makeBoulders(region, (x,y,r) => reserved(x,y,r) || berryBushes.some(b=>Math.hypot(b.x-x,b.y-y)<90) || list.some(t => Math.hypot(t.x-x,t.y-y) < 150)));
   }
   function treesNear(view) {
     const result = [];
@@ -278,6 +288,8 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     regions,
     trees,
     boulders,
+    berryBushes,
+    riverPlants:[{x:1050,y:2010},{x:650,y:2048},{x:480,y:1910},{x:80,y:1968},{x:-260,y:1920},{x:-600,y:1810}].map(p=>({...p,regionId:regionAt(p.x,p.y)?.id})),
     landmarks,
     locations,
     trails,

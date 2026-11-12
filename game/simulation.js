@@ -1,3 +1,4 @@
+import {createBerries} from "./berries.js";
 import { createCampCustom } from "./camp-custom.js";
 import { createWorkers, WORKERS } from "./workers.js";
 import { createStory } from "./story.js";
@@ -238,6 +239,7 @@ export function createSimulation({
   function canAct() {
     return !paused && !gameState.gameOver && gameState.health > 0 && !player.room && !player.menuOpen;
   }
+  const berries=regional?createBerries({state:gameState,player,world,regions,nav,canAct,navigate:setDestination,emit}):null;
   const custom=createCampCustom({state:gameState,player,nav,canAct});
   const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, emit });
   const builder = createCampBuilder({ state: gameState, player, pad: build, forestry, canAct,
@@ -819,6 +821,7 @@ export function createSimulation({
       oldX = player.x,
       oldY = player.y;
     if (keyboard) {
+      berries?.cancel();
       defenseRepair.cancel();
       exploration?.cancelAll();
       clearingOrder = null;
@@ -934,6 +937,7 @@ export function createSimulation({
     if (canAct() && forestry.collect(dt, player)) updateUI();
     sawmill?.freight.sync();
     camp.updateFuelPad(dt);
+    berries?.update(dt);
     if (!actorOnly) survival?.update(dt);
     if (!actorOnly && !gameState.gameOver) preparation.update(dt);
     if (!actorOnly || alive) combatLoot.update(dt);
@@ -1090,7 +1094,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    custom, camp, mining, builder, industry, preparation, orders,
+    berries, custom, camp, mining, builder, industry, preparation, orders,
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },
