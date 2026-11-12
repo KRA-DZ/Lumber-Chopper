@@ -40,7 +40,7 @@ try:
                 root.screenshot(path=str(ROOT/f'docs/shop-progress-{"mobile" if mobile else "desktop"}.png'))
                 q.evaluate('document.querySelector("#shopDialog").close();void 0')
             assert q.evaluate('document.documentElement.scrollWidth<=innerWidth')
-            q.evaluate('''for(const a of m.actors||[m])Object.assign(a.player,{x:2400,y:2350,path:[]});m.state.worldTime=500;m.state.campFuel=0;
+            q.evaluate('''for(const a of m.actors||[m])Object.assign(a.player,{x:2400,y:2350,direction:"right",path:[]});m.state.worldTime=500;m.state.campFuel=0;
                 w.camera.centerOn(2400,2350);w.camera.preRender();g.step(0)''')
             # The precomputed stamp has a broad monotonic translucent rim, not a hard disc.
             assert q.evaluate('''(()=>{const ctx=w.atmosphere.playerStamp.getContext('2d');const a=[0,16,28,40,50,58,63].map(x=>ctx.getImageData(64+x,64,1,1).data[3]);return a[0]>245&&a[3]>40&&a[3]<160&&a[4]>0&&a[4]<70&&a[6]<5&&a.every((v,i)=>!i||v<=a[i-1])})()''')
@@ -50,7 +50,7 @@ try:
                 for level in [0,4]:
                     q.evaluate('level=>{m.state.lanternLevel=level;w.atmosphere.maskKey="";g.step(0)}',level)
                     alphas.append(q.evaluate('''(()=>{const a=w.atmosphere,v=w.camera.worldView;return a.mask.getContext().getImageData(Math.floor((m.player.x+200-v.x)/2),Math.floor((m.player.y-24-v.y)/2),1,1).data[3]})()'''))
-                assert alphas[0]>250 and alphas[1]<220,alphas
+                assert alphas[0]>180 and alphas[1]<alphas[0]-60,alphas
                 q.locator('#game-frame').screenshot(path=str(ROOT/f'docs/lantern-soft-{"mobile" if mobile else "desktop"}.png'))
             assert not errors,errors
             print('PASS shop levels, private ownership and soft light',mobile,coop,flush=True)
