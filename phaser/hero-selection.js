@@ -14,6 +14,7 @@ export function selectHero(scene, start) {
     }
     cleanup();
     dialog.close();
+    document.body.classList.add("game-live");
     scene.registry.set("heroAppearance", id);
     scene.registry.set("playerCount", new FormData(form).get("players") === "2" ? 2 : 1);
     scene.registry.set("runName",String(new FormData(form).get("runName")||"Лесоруб").trim().slice(0,32));

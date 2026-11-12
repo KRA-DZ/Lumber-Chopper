@@ -8,6 +8,7 @@ import { regionAt } from "../game/regions.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { MATERIAL_NAMES } from "../game/camp-industry-config.js";
 import { countdown } from "../game/first-days.js";
+import { dockInset } from "./viewport.js";
 export class HudScene extends Phaser.Scene {
   constructor() {
     super("Hud");
@@ -244,14 +245,14 @@ export class HudScene extends Phaser.Scene {
       this.guideButton.setFontSize(this.scale.width < 600 ? 14 : 12);
     }
     this.tutorial
-      .setPosition(this.scale.width / 2, this.scale.height - 12)
+      .setPosition(this.scale.width / 2, this.scale.height - dockInset(this) - 12)
       .setText(`${c.coop ? "1: WASD / E · 2: стрелки / Enter · помощь: удерживать E / Enter\n" : ""}${guide.title}\n${guide.text}`)
       .setVisible(true);
     this.guideButton
       .setText(guide.button || "")
       .setPosition(
         this.scale.width / 2,
-        this.scale.height - this.tutorial.height - 20,
+        this.tutorial.y - this.tutorial.height - 8,
       )
       .setVisible(!!guide.action && !c.state.gameOver);
     this.watcherHud.refresh();

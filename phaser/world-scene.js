@@ -144,7 +144,7 @@ export class WorldScene extends Phaser.Scene {
         this.core.world.bounds?.width || WORLD.width,
         this.core.world.bounds?.height || WORLD.height,
       )
-      .startFollow(this.playerModel, true, 1, 1, 0, 160);
+      .startFollow(this.playerModel, true, 1, 1, 0, 80);
     this.camera.roundPixels = true;
     this.boundary = this.add.graphics().setDepth(LAYERS.border);
     this.audio = createForestAudio();

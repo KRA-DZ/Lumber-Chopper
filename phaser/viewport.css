@@ -1,0 +1,30 @@
+/* The canvas fills the browser; HUD and controls float above the world. */
+html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; overscroll-behavior:none; }
+main { width:100%; height:100dvh; margin:0; }
+#game-frame { position:fixed; inset:0; border:0; box-shadow:none; }
+#game-viewport { width:100%; height:100%; max-height:none; aspect-ratio:auto; }
+#game-viewport canvas { margin:0; }
+#loading { position:absolute; inset:40% 10% auto; text-align:center; }
+.visually-hidden, #campInfo, #status { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+footer { position:fixed; z-index:5; bottom:max(8px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); width:min(1000px,calc(100% - 24px)); margin:0; padding:6px; display:none; flex-direction:column; align-items:stretch; gap:4px; border:1px solid #8e7955; border-radius:10px; background:#20392ded; box-shadow:0 3px 12px #101d2380; }
+.game-live footer { display:flex; }
+footer .stats { justify-content:center; gap:16px; }
+footer .stat { padding:0 4px; border:0; box-shadow:none; background:none; font-size:12px; }
+footer .stat b { display:inline; margin:0 0 0 5px; font-size:13px; }
+footer .game-actions { grid-template-columns:repeat(9,minmax(0,1fr)); gap:4px; }
+footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px; min-height:44px; }
+#actionsToggle { display:none; }
+#coopPlayers { margin:0; gap:4px; }
+#coopPlayers article { padding:3px 5px; border-width:1px; border-radius:5px; }
+#coopPlayers button { min-height:32px; padding:3px 5px; font-size:11px; }
+#coopPlayers p { margin:3px 0; font-size:11px; }
+#fishingControls:not([hidden]) { position:fixed; z-index:6; left:50%; bottom:180px; transform:translateX(-50%); width:min(460px,90vw); margin:0; }
+#heroDialog { max-height:calc(100dvh - 24px); overflow:auto; }
+#heroDialog::backdrop { background:radial-gradient(ellipse at center,#344c3bdb,#101f20f5); }
+@media(max-width:900px) {
+  footer { width:calc(100% - 16px); }
+  footer .game-actions { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  footer .game-actions button { display:none; }
+  footer .game-actions :is(#campButton,#shopButton,#menuButton,#actionsToggle) { display:block; order:-1; }
+  footer .game-actions.expanded button { display:block; }
+}

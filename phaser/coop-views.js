@@ -28,7 +28,7 @@ export class CoopViews {
       }
       this.panel.append(card); return { card, stats };
     });
-    document.querySelector("#game-frame").before(this.panel);
+    document.querySelector("footer").prepend(this.panel);
   }
   focus(i) { this.scene.core.focus(i); Object.assign(this.scene, this.entries[i]); }
   withActor(i, fn) {
