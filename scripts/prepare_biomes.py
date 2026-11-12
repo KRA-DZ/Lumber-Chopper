@@ -2,32 +2,13 @@
 """Offline preparation of the approved generated enemy and terrain source sheets."""
 
 from pathlib import Path
-import hashlib
 import json
 from PIL import Image
 from prepare_assets import prepare
+from prepare_ground import prepare_ground
 
 ROOT = Path(__file__).resolve().parents[1]
 FAMILIES = ("doll", "cosmic", "wood", "drowned", "spider", "masked")
-MATERIALS = ("forest", "field", "swamp", "shore", "web", "ruins", "dirt", "water")
-
-
-def periodic(tile):
-    """Blend only opposite eight-pixel edge bands; preserve the generated interior."""
-    size = tile.width
-    for axis in (0, 1):
-        source = tile.copy()
-        for y in range(size):
-            for x in range(size):
-                n = x if axis == 0 else y
-                weight = max(0, (8 - min(n, size - 1 - n)) / 8) * 0.5
-                other = (size - 1 - x, y) if axis == 0 else (x, size - 1 - y)
-                a, b = source.getpixel((x, y)), source.getpixel(other)
-                tile.putpixel(
-                    (x, y),
-                    tuple(round(v * (1 - weight) + w * weight) for v, w in zip(a, b)),
-                )
-    return tile
 
 
 def main():
@@ -122,34 +103,7 @@ def main():
     (props_output / "manifest.json").write_text(
         json.dumps(props_manifest, indent=2) + "\n"
     )
-    source = ROOT / "art/source/biome-terrain-sheet.png"
-    sheet = Image.open(source).convert("RGB")
-    output = ROOT / "src/assets/biomes"
-    output.mkdir(parents=True, exist_ok=True)
-    for index, name in enumerate(MATERIALS):
-        cx, cy = index % 4, index // 4
-        box = (
-            round(cx * sheet.width / 4),
-            round(cy * sheet.height / 2),
-            round((cx + 1) * sheet.width / 4),
-            round((cy + 1) * sheet.height / 2),
-        )
-        tile = periodic(sheet.crop(box).resize((64, 64), Image.Resampling.NEAREST))
-        tile.save(output / f"{name}.png", optimize=True)
-    (output / "manifest.json").write_text(
-        json.dumps(
-            {
-                "version": 1,
-                "source": source.name,
-                "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-                "size": 64,
-                "materials": list(MATERIALS),
-                "edgeBlend": 8,
-            },
-            indent=2,
-        )
-        + "\n"
-    )
+    prepare_ground()
     for meta in manifest["assets"].values():
         meta["width"] = 64
         meta["height"] = 64

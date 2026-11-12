@@ -6,6 +6,7 @@
 
 - `index.html` → `phaser/main.js`: единственная игра, BootScene, загрузка PNG и выбор героя, конфигурация Phaser. `phaser.html` перенаправляет сюда с сохранением параметров/якоря.
 - Полнооконный вид: `phaser/viewport.js` — логическое разрешение/лимиты и раскрытие действий, `phaser/viewport.css` — DOM-панель, `phaser/hud-scene.js` — отступ подсказок над панелью; [VIEWPORT.md](VIEWPORT.md). Проверки: `tests/viewport.test.mjs`, `tests/viewport_smoke.py`.
+- Земля №4: `scripts/prepare_ground.py` → восемь PNG `src/assets/biomes/`; края тропинок — `phaser/art/ground-art.js`, биомы — `game/biome-terrain.js`. Источник и проверки: [TERRAIN-STYLE4.md](TERRAIN-STYLE4.md).
 - `phaser/world-scene.js`: WorldScene, связывание модели с вводом и представлениями; `phaser/hud-scene.js` — HUD.
 - `game/simulation.js`: `createSimulation()`, игровые команды и координация независимых систем. Начальное состояние/баланс — `game/config.js`.
 - Локальная игра вдвоём: `game/local-coop.js` координирует две личные симуляции с общим мировым тактом; `game/coop-state.js` задаёт общие поля, `game/local-party.js` — цели врагов и личный урон. Камеры и панели — `phaser/coop-camera.js`, `phaser/coop-views.js`. [Управление и проверки](LOCAL-COOP.md).
