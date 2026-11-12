@@ -69,8 +69,8 @@ try:
                 'w.assets.meta.has("survival.watcher.windup")&&w.textures.get("forest").getSourceImage().height<=2048'
             )
             # Real spawned actors reuse their PNG frames; only the presentation grows.
-            q.evaluate("const r=m.regions.all.find(r=>r.id==='1:0');m.regions.unlocked.add(r.id);m.world.generate(r);m.nav.rebuildObstacles();m.state.worldTime=299.99;g.step(.02)")
-            assert q.evaluate("m.survival.minions.length>0&&m.survival.regionalBosses.length>0&&m.survival.minions.every(e=>w.enemyView.objects.get(e.id).image.scaleX===3.3)&&m.survival.regionalBosses.every(e=>w.enemyView.objects.get(e.id).image.scaleX===3.375)&&w.enemyView.objects.get('watcher').image.scaleX===2")
+            q.evaluate("const r=m.regions.all.find(r=>r.id==='1:0');m.regions.unlocked.add(r.id);m.world.generate(r);m.nav.rebuildObstacles();m.state.worldTime=449.99;g.step(.02)")
+            assert q.evaluate("m.survival.minions.length>0&&m.survival.regionalBosses.length>0&&m.survival.minions.every(e=>w.enemyView.objects.get(e.id).image.scaleX===3.3)&&m.survival.regionalBosses.every(e=>w.enemyView.objects.get(e.id).image.scaleX===3.375)&&w.enemyView.objects.get('watcher').image.scaleX===4")
             # Keep the boss near the viewport edge: its tall silhouette must not be culled.
             q.evaluate("window.boss=m.survival.regionalBosses[0];window.small=m.survival.minions[0];const v=w.camera.worldView;Object.assign(boss,{x:m.player.x+110,y:v.bottom+150});m.selectedEnemyId=small.id;g.step(0)")
             assert q.evaluate("w.enemyView.objects.get(boss.id).image.visible&&w.enemyView.objects.get(small.id).label.y===small.y-228&&w.enemyView.objects.get(boss.id).label.y===boss.y-210")
@@ -92,7 +92,7 @@ try:
             click_setting(q, "#sound")
             q.wait_for_function('w.audio.context.state==="running"')
             q.evaluate(
-                "window.cues=[];const cue=w.audio.watcherCue.bind(w.audio);w.audio.watcherCue=(...args)=>{cues.push(args[0]);return cue(...args)};m.state.campLevel=1;m.nav.rebuildObstacles();m.state.worldTime=299.99;g.step(.02);g.step(12.1)"
+                "window.cues=[];const cue=w.audio.watcherCue.bind(w.audio);w.audio.watcherCue=(...args)=>{cues.push(args[0]);return cue(...args)};m.state.campLevel=1;m.nav.rebuildObstacles();m.state.worldTime=449.99;g.step(.02);g.step(12.1)"
             )
             assert q.evaluate(
                 'm.survival.monster.phase==="repelled"&&m.state.health===100'
@@ -180,7 +180,7 @@ try:
             q.wait_for_function("!w.enemyView.fade", timeout=3000)
             # In silence the same telegraph remains visible and standing still is lethal.
             q.evaluate(
-                "m.state.worldTime=299.99;g.step(.02);g.step(12.1);const p=m.nav.nearestGround(1600,2000);Object.assign(m.player,p,{path:[],autoTimer:1000});Object.assign(m.survival.monster,{x:p.x+40,y:p.y,repath:100,path:[],senseTimer:0});g.step(.05)"
+                "m.state.worldTime=449.99;g.step(.02);g.step(12.1);const p=m.nav.nearestGround(1600,2000);Object.assign(m.player,p,{path:[],autoTimer:1000});Object.assign(m.survival.monster,{x:p.x+40,y:p.y,repath:100,path:[],senseTimer:0});g.step(.05)"
             )
             phase(q, "windup")
             assert q.evaluate("!w.audio.enabled&&h.watcherHud.label.visible")

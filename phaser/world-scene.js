@@ -1,4 +1,5 @@
 import { CampCustomView } from "./camp-custom-view.js";
+import { CAMP_SERVICE } from "../game/camp-services.js";
 import { renderGeneratedPerson } from "./people-assets.js";
 import { WorkerView } from "./worker-view.js";
 import { createWorkerUi } from "./worker-ui.js";
@@ -501,6 +502,7 @@ export class WorldScene extends Phaser.Scene {
       if(this.customView?.selection){if(!this.core.coop||this.core.activeActor===this.customView.selection.actor){const camera=this.coopCamera?.second?.visible&&this.core.activeActor===1?this.coopCamera.second:this.camera;this.customView.place(camera.getWorldPoint(pointer.x,pointer.y));}return;}
       if(over.some(o=>o.getData("customBoard"))){this.customView.open();return;}
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
+      if(over.some(o=>o.getData("fuelPad"))){const p=CAMP_SERVICE.fuelPad;this.core.setDestination(p.x,p.y);return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
       if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
       const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
