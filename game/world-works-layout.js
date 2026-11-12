@@ -21,6 +21,7 @@ export const WORKS_SITES=Object.freeze([
 ].map(p=>WORKS_PROJECTS.includes(p)?p:move(p,p.regionId)));
 export const WORKS_BASIN=Object.freeze(move({x:-1000,y:800,width:568,height:400},"-1:0"));
 const river=move({x:-432,y:656,width:224,height:784},"-1:0"),bog=move({x:1056,y:300,width:1088,height:192},"0:-1");
+const lowChannels=[{x:-352,y:656,width:64,height:576},{x:-352,y:1328,width:64,height:112}].map(r=>move(r,"-1:0"));
 export const WORKS_TERRAIN_BOUNDS=Object.freeze([river,WORKS_BASIN,bog,...WORKS_PROJECTS.filter(p=>p.deck).map(p=>p.deck)]);
 export const worksChunkAffected=(cx,cy)=>WORKS_TERRAIN_BOUNDS.some(r=>cx*256<r.x+r.width+16&&(cx+1)*256>r.x-16&&cy*256<r.y+r.height+16&&(cy+1)*256>r.y-16);
 const wall=(id,x0,y0,x1,y1,project=null)=>({id,regionId:"-1:0",a:move({x:x0,y:y0},"-1:0"),b:move({x:x1,y:y1},"-1:0"),r:12,project});
@@ -35,14 +36,14 @@ export function worksSurfaces(state){
   const d=state.worldWorks,low=d.level==="low";
   return [
     {...river,kind:"shore"},{...WORKS_BASIN,kind:"shore"},{...bog,kind:"water"},
-    ...(low?[{x:-352,y:656,width:64,height:576,kind:"water"},{x:-352,y:1328,width:64,height:112,kind:"water"}]:[{...river,kind:"water"},{...WORKS_BASIN,kind:"water"}]),
+    ...(low?lowChannels.map(r=>({...r,kind:"water"})):[{...river,kind:"water"},{...WORKS_BASIN,kind:"water"}]),
     ...WORKS_PROJECTS.filter(p=>p.deck&&d.built[p.id]).map(p=>({...p.deck,kind:"deck"})),
   ];
 }
 export function worksWater(state,x,y,r=0){
   const low=state.worldWorks.level==="low";
   return inRect(bog,x,y,r)||(!low&&(inRect(river,x,y,r)||inRect(WORKS_BASIN,x,y,r)))||
-    (low&&(inRect(move({x:-352,y:656,width:64,height:576},"-1:0"),x,y,r)||inRect(move({x:-352,y:1328,width:64,height:112},"-1:0"),x,y,r)));
+    (low&&lowChannels.some(c=>inRect(c,x,y,r)));
 }
 export function worksCollision(state,x,y,r=10){
   if(!worksWater(state,x,y,r))return false;

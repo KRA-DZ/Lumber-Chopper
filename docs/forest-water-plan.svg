@@ -2,7 +2,7 @@
 <rect width="880" height="1030" fill="#162c27"/>
 <style>text{font-family:DejaVu Sans,sans-serif;fill:#efdfb7} .tile{fill:#29483b;stroke:#879674;stroke-width:1} .small{font-size:11px} .label{font-size:13px;font-weight:bold;paint-order:stroke;stroke:#162c27;stroke-width:4px;stroke-linejoin:round}</style>
 <text x="56" y="31" font-size="23">Лес: схема водоёмов и маршрутов</text>
-<text x="56" y="55" font-size="13">Предложение для следующего этапа — вода на карте игры пока не изменена</text>
+<text x="56" y="55" font-size="13">Зелёный участок уже в игре; голубой пунктир — дальнейшее расширение</text>
 <rect class="tile" x="56.0" y="82.0" width="152" height="152"/>
 <text class="small" x="64.0" y="99.0">-2:-2</text>
 <rect class="tile" x="208.0" y="82.0" width="152" height="152"/>
@@ -84,8 +84,9 @@
 <path d="M262.75,220.46875L276.75,234.46875 M262.75,226.46875L270.75,234.46875" stroke="#e9ad65" stroke-width="4"/>
 <path d="M256.8125,544.0625L270.8125,558.0625 M256.8125,550.0625L264.8125,558.0625" stroke="#e9ad65" stroke-width="4"/>
 <path d="M393.375,734.0625L407.375,748.0625 M393.375,740.0625L401.375,748.0625" stroke="#e9ad65" stroke-width="4"/>
-<text x="56" y="881" font-size="15">Пунктир: будущая река и ручьи. Золотые отметки: кандидаты переходов.</text>
-<text x="56" y="908" font-size="13">Первым строим только ручей у лагеря → западное озеро, с доступным бродом.</text>
+<polyline points="284.0,462.0 295.9,464.4 307.8,470.3 325.6,476.8 345.8,479.8 364.8,484.6 379.6,484.6 392.1,483.4 403.9,482.2" fill="none" stroke="#8edb92" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="387.4" y="476.553125" width="6" height="14" fill="#efcf85" stroke="#162c27" stroke-width="1"/><rect x="311.4" y="466.221875" width="6" height="14" fill="#efcf85" stroke="#162c27" stroke-width="1"/>
+<text x="56" y="881" font-size="15">Зелёный: готовый ручей и броды. Пунктир: будущие ветви реки.</text>
+<text x="56" y="908" font-size="13">В игре: ручей у лагеря → западное озеро. Два доступных брода.</text>
 <text x="56" y="934" font-size="13">Плотина, уровни воды, пути рабочих и подходы к зданиям сохраняются.</text>
 <text x="56" y="960" font-size="13">Малые пруды: кандидаты; рыбалка сначала у существующего большого озера.</text>
 <text x="56" y="990" font-size="13">Перед реализацией: проверить коллизии, широкие проходы и согласовать берега.</text>

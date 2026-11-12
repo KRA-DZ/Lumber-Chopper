@@ -26,6 +26,9 @@ export class RegionView {
     for (const prop of w.biomeDetails.get(region.id) || [])
       image(prop.natural?`details.${prop.kind}.${prop.variant}`:`habitat.${prop.kind}`, prop.x, prop.y, prop.ground ? LAYERS.ground + 12 : prop.y)
         .setData("biomeDetail", prop.kind);
+    for(const ford of (w.streamCrossings||[]).filter(f=>f.regionId===region.id)){
+      for(const dy of [-22,0,22])image("details.rock.0",ford.x,ford.y+dy,ford.y+dy).setScale(.8).setData("streamFord",ford.id);
+    }
     for (const [index, p] of (w.decorBins.get(region.id) || []).entries())
       if (index % 3 === 0)
         image(`biomeprop.${region.biome}`, p.x, p.y).setScale(
