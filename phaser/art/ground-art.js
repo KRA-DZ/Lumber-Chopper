@@ -1,8 +1,21 @@
 import { sampleBiomeGround, sampleMaterial } from "../../game/biome-terrain.js";
 import { pixelHash, CAMP } from "../../pixel-art.js";
 const SIZE = 128,
+  PAD = 8,
+  MASK_SIZE = SIZE + PAD * 2,
   WORLD_CHUNK = SIZE * 2,
   MAX_CHUNKS = 28;
+
+// Six baked pixels = twelve world units. Padding keeps the same fringe at chunk seams.
+export function pathGrassWeight(source, stride, x, y, hash) {
+  const alpha=(y*stride+x)*4+3;
+  for (let distance=1; distance<=6; distance++) {
+    const dx=distance*4, dy=dx*stride;
+    if (source[alpha-dx]<60 || source[alpha+dx]<60 || source[alpha-dy]<60 || source[alpha+dy]<60)
+      return Math.min(.9, (7-distance)/7 * (.9+(hash%5)*.05));
+  }
+  return 0;
+}
 export function createForestGround({
   center,
   pondOutline,
@@ -23,9 +36,9 @@ export function createForestGround({
     const bitmap = document.createElement("canvas");
     bitmap.width = bitmap.height = SIZE;
     const mask = document.createElement("canvas");
-    mask.width = mask.height = SIZE + 8;
+    mask.width = mask.height = MASK_SIZE;
     const g = mask.getContext("2d", { willReadFrequently: true });
-    g.setTransform(0.5, 0, 0, 0.5, -cx * SIZE + 4, -cy * SIZE + 4);
+    g.setTransform(0.5, 0, 0, 0.5, -cx * SIZE + PAD, -cy * SIZE + PAD);
     const oval = (x, y, rx, ry) => {
       g.beginPath();
       g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
@@ -69,7 +82,7 @@ export function createForestGround({
     for(const outline of outlines){g.beginPath();outline.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.fillStyle="#0000ff";g.fill();}
     g.save();g.beginPath();for(const outline of outlines){outline.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();}g.clip();
     g.fillStyle="#0080ff";for(const f of streamCrossings)g.fillRect(f.x-f.width/2,f.y-f.height/2,f.width,f.height);g.restore();
-    const source = g.getImageData(0, 0, SIZE + 8, SIZE + 8).data,
+    const source = g.getImageData(0, 0, MASK_SIZE, MASK_SIZE).data,
       out = bitmap.getContext("2d"),
       image = out.createImageData(SIZE, SIZE),
       data = image.data;
@@ -83,7 +96,7 @@ export function createForestGround({
           n = pixelHash(wx, wy),
           dust = n % 101;
         let r, gr, b;
-        const j = ((y + 4) * (SIZE + 8) + x + 4) * 4;
+        const j = ((y + PAD) * MASK_SIZE + x + PAD) * 4;
         const marked = source[j + 3] > 120;
         const water =
           marked && source[j + 2] > source[j] && source[j + 2] > source[j + 1];
@@ -99,31 +112,15 @@ export function createForestGround({
             );
           else [r, gr, b] = sampleBiomeGround(materials, wx, wy);
           if(ford){const shore=sampleMaterial(materials,"shore",wx,wy);r=r*.55+shore[0]*.45;gr=gr*.55+shore[1]*.45;b=b*.55+shore[2]*.45;}
-          // A broken pixel edge merges paths with grass without blurring the image.
+          // Bake a low-contrast, irregular fringe using the same blended biome as the grass.
           if (marked && !water && !bank) {
-            const edge = [
-              [-3, 0],
-              [3, 0],
-              [0, -3],
-              [0, 3],
-            ].some(([dx, dy]) => {
-              const xx = x + dx,
-                yy = y + dy;
-              return (
-                xx >= -3 &&
-                xx < SIZE + 3 &&
-                yy >= -3 &&
-                yy < SIZE + 3 &&
-                source[((yy + 4) * (SIZE + 8) + xx + 4) * 4 + 3] < 60
-              );
-            });
-            if (edge && n % 3 === 0)
-              [r, gr, b] = sampleMaterial(
-                materials,
-                biomeAt(wx * 2, wy * 2),
-                wx,
-                wy,
-              );
+            const weight = pathGrassWeight(source, MASK_SIZE, x+PAD, y+PAD, n);
+            if (weight) {
+              const grass = sampleBiomeGround(materials, wx, wy);
+              r=r*(1-weight)+grass[0]*weight;
+              gr=gr*(1-weight)+grass[1]*weight;
+              b=b*(1-weight)+grass[2]*weight;
+            }
           }
           const floor = fortressFloor?.(wx * 2, wy * 2, n);
           if (floor) [r, gr, b] = floor;
@@ -189,7 +186,7 @@ export function createForestGround({
               xx < SIZE + 3 &&
               yy >= -3 &&
               yy < SIZE + 3 &&
-              source[((yy + 4) * (SIZE + 8) + xx + 4) * 4 + 3] < 60
+              source[((yy + PAD) * MASK_SIZE + xx + PAD) * 4 + 3] < 60
             );
           });
           if (

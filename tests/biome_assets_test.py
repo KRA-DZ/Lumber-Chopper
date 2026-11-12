@@ -1,6 +1,7 @@
 """Prepared PNG contracts: seamless tile edges, fixed frames and metadata."""
 
 import json
+import hashlib
 from pathlib import Path
 import unittest
 from PIL import Image
@@ -9,6 +10,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Assets(unittest.TestCase):
+    def test_approved_terrain_provenance_and_palette(self):
+        directory = ROOT / "src/assets/biomes"
+        manifest = json.loads((directory / "manifest.json").read_text())
+        self.assertEqual(manifest["style"], 4)
+        source = ROOT / "art/source" / manifest["source"]
+        self.assertEqual(hashlib.sha256(source.read_bytes()).hexdigest(), manifest["sha256"])
+        means=[]
+        for name in manifest["materials"]:
+            with Image.open(directory / f"{name}.png") as im:
+                self.assertEqual(im.convert("RGBA").getchannel("A").getextrema(), (255,255))
+                means.append(im.convert("RGB").resize((1,1)).getpixel((0,0)))
+        self.assertEqual(len(set(means)), 8)
+        self.assertGreater(means[0][2], means[0][0])  # Cool forest instead of yellow turf.
+
     def test_tiles_match_opposite_edges(self):
         for file in (ROOT / "src/assets/biomes").glob("*.png"):
             im = Image.open(file).convert("RGB")

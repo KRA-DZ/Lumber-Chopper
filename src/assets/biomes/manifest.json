@@ -1,7 +1,8 @@
 {
-  "version": 1,
-  "source": "biome-terrain-sheet.png",
-  "sha256": "b6f04e67b3f35142c0163ecc1e5f7a1adbf0ef963fe3ff709297a80df4acf777",
+  "version": 2,
+  "style": 4,
+  "source": "terrain-style4-sheet.png",
+  "sha256": "5f7f0d3f712439112a6a7452a7eaf6cae0599c7b667beda92b6f90a86ccb42eb",
   "size": 64,
   "materials": [
     "forest",
@@ -13,5 +14,12 @@
     "dirt",
     "water"
   ],
-  "edgeBlend": 8
+  "edgeBlend": 8,
+  "sourceGrid": [
+    3,
+    3
+  ],
+  "unusedCells": [
+    8
+  ]
 }
