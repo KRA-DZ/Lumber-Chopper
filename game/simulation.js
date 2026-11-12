@@ -1,3 +1,4 @@
+import {createForestTasks} from "./forest-tasks.js";
 import {createBerries} from "./berries.js";
 import { createCampCustom } from "./camp-custom.js";
 import { createWorkers, WORKERS } from "./workers.js";
@@ -190,7 +191,8 @@ export function createSimulation({
       })
     : null;
   const sawmill=regional?createSawmillProduction({state:gameState,player,regions,nav,forestry,getWorkers:()=>workers,hear:(p,r)=>survival?.hear(p,r),emit}):null;
-  const worldWorks=regional?createWorldWorks({state:gameState,player,regions,nav,forestry,emit,
+  const forestTasks=regional?createForestTasks({state:gameState,player,regions,nav,onIncome:v=>party?party.sale(v):gameState.coins+=v,emit}):null;
+  const worldWorks=regional?createWorldWorks({state:gameState,player,regions,nav,forestry,emit:(type,e)=>{if(type==="world-work-completed"&&e.project.id==="lookout-tower")forestTasks.reveal();emit(type,e);},
     bodies:()=>[...(party?.actors.map(a=>a.player)||[player]),...(workers?.crew||[]),...buyers,
       ...(gameState.sawmill.cart.built?[gameState.sawmill.cart]:[]),
       ...(survival?.raiders||[]),...(survival?.residents||[]),...(survival?.monster?[survival.monster]:[])]}):null;
@@ -206,6 +208,7 @@ export function createSimulation({
         getStory: () => story,
         worldWorks,
         sawmill,
+        forestTasks,
         outposts,
         camp: { lit: () => camp.lit(), stoke: (quoted,material) => camp.stoke(quoted,material), maxFuel:()=>camp.maxFuel() },
         onSale: party ? value => party.sale(value) : null,
@@ -454,6 +457,7 @@ export function createSimulation({
         accessible,
         emit: (type, event) => {
           raidReports.record(type, event);
+          forestTasks?.record(type,event);
           if (type === "enemy-defeated") { combatLoot.drop(event); gameState.runStats.kills++; if(event.kind==="boss")gameState.runStats.bosses++; }
           emit(type, event);
         },
@@ -462,6 +466,7 @@ export function createSimulation({
         regions,
         sanctuary: p => outposts.safeZone(p),
         getNoise:()=>sawmill?.noise()||null,
+        encampment:forestTasks?.encampment,
       })
     : null);
   const cycle = createCycleManager(gameState, (type, event) => {
@@ -1094,7 +1099,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    berries, custom, camp, mining, builder, industry, preparation, orders,
+    forestTasks, berries, custom, camp, mining, builder, industry, preparation, orders,
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },

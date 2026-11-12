@@ -1,4 +1,5 @@
 import { normalizeAppearance } from "./appearances.js";
+import {WORLD_CENTER} from "./world-grid.js";
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
 import { initialIndustryState } from "./camp-industry-config.js";
@@ -6,7 +7,7 @@ import { initialWorldWorks } from "./world-works-layout.js";
 export const DAY_SECONDS = 600;
 export const RAID_INTERVAL = 5; // Общий интервал налётов для календаря, директора и интерфейса.
 export const WORLD = Object.freeze({ width: 3200, height: 3200 });
-export const CENTER = Object.freeze({ x: 1600, y: 1600 });
+export const CENTER = WORLD_CENTER;
 export const RADII = Object.freeze([900, 1040, 1180, 1320, 1450]);
 export const STAGES = Object.freeze(
   ["Костёр", "Палатка", "Забор", "Хижина"].map((name, i) => ({
@@ -29,6 +30,7 @@ export function createInitialState({ appearance = "traveler" } = {}) {
     sawmill: {stage:0,paid:{},input:[],output:0,job:null,enabled:false,nightWork:false,batches:0,noise:0,pulse:0,
       cartPaid:{},cart:{built:false,owner:null,x:1450,y:1790,logs:[],boards:0}}, // Общая лесопилка: сырьё до 48, выход до 24; одна партия и одна тележка на 24 единицы.
     cycleSpeed: 1, // Быстрые смены: 2.5× календарь, четыре реальные минуты за сутки; стройка работает с прежней скоростью.
+    forestTasks: {guardHP:{},claimed:false,surveyed:[]}, // Три стража без повторной выплаты; общий ремонт/разведка только текущего забега.
     runStats: {kills:0,bosses:0}, // Общие победы текущей попытки для рекорда и целей.
     campCustom: {objects:[],stock:{},sequence:0,revision:0,unlocks:[]}, // До 32 украшений без коллизий; покупки личные, поляна общая.
     boardCargo: 0, // Личные доски в пути: занимают те же места, что брёвна, и становятся общими только после разгрузки в лагере.

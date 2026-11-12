@@ -31,6 +31,7 @@ export function createSurvival({
   sanctuary = () => null,
   party = null,
   getNoise = () => null,
+  encampment = null,
 }) {
   const raiders = [];
   const raidShots=createRaidProjectiles({state,player,party,hurt:hurtPlayer,emit});
@@ -61,6 +62,7 @@ export function createSurvival({
     : null;
   const minions = regions
     ? createMinions({
+        encampment,
         state,
         player,
         regions,
