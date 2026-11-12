@@ -1,3 +1,5 @@
+import {playerLights} from "../game/light-shapes.js";
+import {createLanternStamps} from "./lantern-stamps.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { LAYERS } from "./layers.js";
 import { createWeather } from "../weather.js";
@@ -135,6 +137,7 @@ export class Atmosphere {
     playerGradient.addColorStop(1, "rgba(0,0,0,0)");
     playerCtx.fillStyle = playerGradient;
     playerCtx.fillRect(0, 0, 128, 128);
+    this.beamStamps=createLanternStamps();
     this.reveal = {
       from: this.core.forestRadius(),
       to: this.core.forestRadius(),
@@ -154,7 +157,7 @@ export class Atmosphere {
       this.core.player,
       this.core.survival?.safeRadius() ?? 210,
       [...this.core.outposts.lights(),...this.core.preparation.lights(), ...(this.core.actors || []).filter((a, i) => i !== this.core.activeActor)
-        .map(a => ({ x: a.player.x, y: a.player.y - 24, r: 140 + a.state.lanternLevel * 24, kind: "player" }))],
+        .flatMap(a => playerLights(a.state,a.player))],
     );
   }
   lanterns() {
@@ -452,7 +455,7 @@ export class Atmosphere {
           22,
         );
     if (dark > 0.15)
-      for (const l of this.lights().slice(1))
+      for (const l of this.lights().filter(l=>!l.kind?.startsWith("player")))
         glow
           .fillStyle(0xf3bb62, dark * 0.1)
           .fillEllipse(snap(l.x), snap(l.y), 28, 12);
@@ -460,9 +463,7 @@ export class Atmosphere {
     if (dark > 0.45)
       for (const e of this.mystery.eyes) {
         if (
-          this.lights().some(
-            (l) => Math.hypot(e.x - l.x, e.y - l.y) < l.r * 0.9,
-          ) ||
+          inCampLight(e.x,e.y,this.lights()) ||
           Math.sin(t * 4 + e.phase) > 0.98
         )
           continue;
@@ -573,6 +574,7 @@ export class Atmosphere {
     const key = [
       w,
       h,
+      ...this.lights().flatMap(l=>[Math.round(l.x),Math.round(l.y),l.r,l.angle||0]),
       Math.floor(t * (this.quality === "light" ? 6 : 10)),
       Math.floor(dark * 50),
       this.core.state.lanternLevel,
@@ -597,14 +599,14 @@ export class Atmosphere {
     ctx.fillStyle = `rgba(0,0,0,${dark})`;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "destination-out";
-    for (const l of this.lights())
-      ctx.drawImage(
-        l.kind === "player" ? this.playerStamp : this.stamp,
-        (l.x - v.x - l.r) / factor,
-        (l.y - v.y - l.r) / factor,
-        (l.r * 2) / factor,
-        (l.r * 2) / factor,
-      );
+    ctx.imageSmoothingEnabled=true;
+    for (const l of this.lights()) {
+      if(l.shape==="cone"){
+        ctx.save();ctx.translate((l.x-v.x)/factor,(l.y-v.y)/factor);ctx.rotate(l.angle);
+        ctx.drawImage(this.beamStamps[l.level],-l.r/factor,-l.r/factor,2*l.r/factor,2*l.r/factor);ctx.restore();
+      }else ctx.drawImage(l.kind==="player-glow"?this.playerStamp:this.stamp,
+        (l.x-v.x-l.r)/factor,(l.y-v.y-l.r)/factor,2*l.r/factor,2*l.r/factor);
+    }
     ctx.globalCompositeOperation = "source-over";
     buffer.mask.refresh();
   }

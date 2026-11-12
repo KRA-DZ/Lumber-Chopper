@@ -2,8 +2,8 @@ import { pixelHash, random } from "../pixel-art.js";
 
 export const BIOME_DETAIL_LIMIT = 12;
 const families = {
-  forest: ["clawMarks", "lostSatchel", "forestTracks"],
-  swamp: ["swampRoots", "sunkenLantern", "swampFungi"],
+  forest: ["fern", "flowers", "mushroom"],
+  swamp: ["swampRoots", "swampFungi"],
 };
 export function biomeDressing(region, paths, canPlace) {
   const kinds = families[region.biome];
@@ -20,7 +20,7 @@ export function biomeDressing(region, paths, canPlace) {
         y < region.y + 48 || y > region.y + region.height - 48 ||
         !canPlace(x, y) || result.some(p => Math.hypot(p.x - x, p.y - y) < 130)) continue;
     const kind = kinds[result.length % kinds.length];
-    result.push({ kind, x, y, regionId: region.id, ground: kind === "forestTracks" });
+    result.push({ kind, x, y, regionId: region.id, natural:region.biome==="forest",variant:result.length%2,ground:false });
   }
   return result;
 }

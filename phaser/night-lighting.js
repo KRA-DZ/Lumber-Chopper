@@ -2,13 +2,13 @@ import { hasCampBuilding } from "../game/camp-projects.js";
 import { NIGHT_START } from "../game/cycle.js";
 import { CENTER } from "../game/config.js";
 import { CAMP, pixelHash } from "../pixel-art.js";
-import { nightSight } from "../mystery.js";
+import { playerLights,lightContains } from "../game/light-shapes.js";
 
-// Night is fully opaque from the boundary onward; dusk only prepares the transition.
+// A trace of ambient light preserves silhouettes outside the lantern without turning night into dusk.
 export function nightOpacity(state) {
-  if (state.worldTime >= NIGHT_START) return 1;
+  if (state.worldTime >= NIGHT_START) return .95;
   const t = Math.max(0, Math.min(1, (state.worldTime - (NIGHT_START - 12)) / 12));
-  return t * t * (3 - 2 * t);
+  return .95*t * t * (3 - 2 * t);
 }
 export function campLights(state, safeRadius) {
   if (!hasCampBuilding(state,"fire") || state.campFuel <= 0) return [];
@@ -25,18 +25,13 @@ export function campLights(state, safeRadius) {
 }
 export function nightLights(state, player, safeRadius, outposts = []) {
   return [
-    {
-      x: player.x,
-      y: player.y - 24,
-      r: nightSight(state.lanternLevel),
-      kind: "player",
-    },
+    ...playerLights(state,player),
     ...campLights(state, safeRadius),
     ...outposts,
   ];
 }
 export function inCampLight(x, y, lights) {
-  return lights.some((l) => Math.hypot(x - l.x, y - l.y) < l.r * 0.9);
+  return lights.some((l) => lightContains(l,x,y));
 }
 // Decorative points never punch holes in the darkness mask or affect safe areas.
 export function nightFireflies(

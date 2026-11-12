@@ -45,6 +45,8 @@
 
 Площадка костра: `CAMP_SERVICE.fuelPad`, `updateFuelPad()` в `game/camp-services.js`; вызов для каждого героя — `game/simulation.js`; вид — `phaser/camp-services-view.js`. Проверки: [CAMP-PROGRESSION.md](CAMP-PROGRESSION.md). Масштаб Смотрителя — `phaser/enemy-view.js`, браузер — `tests/watcher_smoke.py --scale-only`.
 
+Направленный фонарь: `game/light-shapes.js` — форма/проверка освещённости, `phaser/lantern-stamps.js` — пять заранее подготовленных масок; проверки — [NIGHT-HORROR.md](NIGHT-HORROR.md). План водоёмов, ещё без изменений коллизий: [FOREST-WATER-PLAN.md](FOREST-WATER-PLAN.md).
+
 ## Команды по необходимости
 
 Украшения/рекорды: `game/camp-custom.js`, `game/record-book.js`, `phaser/camp-custom-view.js`; баланс/проверки — [CAMP-CUSTOM.md](CAMP-CUSTOM.md). Исключение из сброса прогресса: только местные рекорды и открытые украшения. Быстрый календарь — `state.cycleSpeed`, только `game/cycle.js`; обычный темп выбран по умолчанию.

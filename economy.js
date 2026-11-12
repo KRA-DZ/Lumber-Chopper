@@ -105,7 +105,7 @@ export function upgradeOffer(state, id) {
       : `${AXE_TIERS[Math.min(level + 1, AXE_TIERS.length - 1)].name} · ${AXE_TIERS[Math.min(level + 1, AXE_TIERS.length - 1)].rarity}`,
     boots: `Скорость ${100 + level * 8}% → ${100 + (level + 1) * 8}%`,
     pickup: `Радиус подбора ${68 + level * 12} → ${68 + (level + 1) * 12}`,
-    lantern: `Свет ночью ${nightSight(level)} → ${nightSight(level + 1)}`,
+    lantern: `Дальность луча ${nightSight(level)} → ${nightSight(level + 1)} · ширина увеличивается`,
   };
   return {
     id,

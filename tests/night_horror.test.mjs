@@ -17,16 +17,16 @@ import {
 } from "../game/raiders.js";
 import { createInitialState } from "../game/config.js";
 
-test("night has no residual ambient opacity leak while dusk approaches it smoothly", () => {
+test("night retains only five percent ambient light and dusk approaches it smoothly", () => {
   assert.equal(nightOpacity({ worldTime: 120 }), 0);
   assert.equal(nightOpacity({ worldTime: 400 }), 0);
   assert.ok(nightOpacity({ worldTime: NIGHT_START - 5 }) > 0);
-  assert.ok(nightOpacity({ worldTime: NIGHT_START - .1 }) > 0.99);
+  assert.ok(nightOpacity({ worldTime: NIGHT_START - .1 }) > 0.94);
   for (const worldTime of [NIGHT_START, NIGHT_START + 1, 500, 599.9])
-    assert.equal(nightOpacity({ worldTime }), 1);
+    assert.equal(nightOpacity({ worldTime }), .95);
   assert.equal(nightOpacity({ worldTime: 0 }), 0);
 });
-test("the personal lantern follows the player and retains every old radius upgrade", () => {
+test("the personal lantern follows the player with a cone and a small local glow", () => {
   const state = createInitialState(),
     p = { x: 2300, y: 1700 };
   state.campLevel = 1; state.campFuel = 60;
@@ -36,8 +36,9 @@ test("the personal lantern follows the player and retains every old radius upgra
     assert.equal(lights[0].kind, "player");
     assert.equal(lights[0].x, p.x);
     assert.equal(lights[0].y, p.y - 24);
-    assert.equal(lights[0].r, 160 + level * 64);
-    assert.equal(lights[1].r, 430);
+    assert.equal(lights[0].r, 240 + level * 48);
+    assert.equal(lights[1].r, 56);
+    assert.equal(lights[2].r, 430);
     assert.ok(inCampLight(p.x, p.y - 24, lights));
     assert.ok(!inCampLight(5000, 5000, lights));
   }
@@ -45,7 +46,7 @@ test("the personal lantern follows the player and retains every old radius upgra
   p.x += 300;
   const after = nightLights(state, p, 310);
   assert.equal(after[0].x - before[0].x, 300);
-  assert.deepEqual(after.slice(1), before.slice(1));
+  assert.deepEqual(after.slice(2), before.slice(2));
 });
 test("fireflies are bounded points in accessible darkness, not new light sources", () => {
   const view = { x: 2000, y: 2000, right: 4000, bottom: 3500 };

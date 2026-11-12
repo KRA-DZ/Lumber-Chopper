@@ -22,10 +22,10 @@ test("lantern offers match actual light and expose every finite upgrade limit",(
   for(let i=0;i<4;i++){
     const o=upgradeOffer(c.state,"lantern");assert.equal(o.maxLevel,4);
     assert.ok(o.description.includes(String(nightSight(i+1))));
-    assert.ok(buyUpgrade(c.state,"lantern"));assert.equal(nightSight(i+1)-nightSight(i),64);
+    assert.ok(buyUpgrade(c.state,"lantern"));assert.equal(nightSight(i+1)-nightSight(i),48);
   }
   assert.equal(upgradeOffer(c.state,"lantern").maxed,true);
   assert.equal(buyUpgrade(c.state,"lantern"),false);
-  assert.ok(nightSight(4)>nightSight(0)*2.5);
+  assert.ok(nightSight(4)>nightSight(0)*1.7);
   for(const [id,max] of [["carry",40],["axe",5],["boots",5],["pickup",5]])assert.equal(upgradeOffer(c.state,id).maxLevel,max);
 });

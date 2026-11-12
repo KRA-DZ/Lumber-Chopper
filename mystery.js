@@ -1,4 +1,5 @@
 import { random } from "./pixel-art.js";
+import {lanternRange,lightContains} from "./game/light-shapes.js";
 export const MYSTERY_CLUES = Object.freeze([
   {
     id: "note",
@@ -22,7 +23,7 @@ export const MYSTERY_CLUES = Object.freeze([
     text: "На камне вырезан незамкнутый круг. Ночью в его трещинах проступает слабое свечение. Торговец отворачивается, когда ты спрашиваешь о нём.",
   },
 ]);
-export const nightSight = (level = 0) => 160 + Math.max(0, Math.min(4, level)) * 64;
+export const nightSight = lanternRange;
 export function createMystery() {
   const eyes = [],
     read = new Set(),
@@ -30,7 +31,7 @@ export function createMystery() {
   let timer = 2,
     clock = 0;
   function lit(x, y, lights) {
-    return lights.some((l) => Math.hypot(x - l.x, y - l.y) < l.r * 0.9);
+    return lights.some((l) => lightContains(l,x,y));
   }
   function update(
     dt,

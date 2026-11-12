@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="1030" viewBox="0 0 880 1030">
+<rect width="880" height="1030" fill="#162c27"/>
+<style>text{font-family:DejaVu Sans,sans-serif;fill:#efdfb7} .tile{fill:#29483b;stroke:#879674;stroke-width:1} .small{font-size:11px} .label{font-size:13px;font-weight:bold;paint-order:stroke;stroke:#162c27;stroke-width:4px;stroke-linejoin:round}</style>
+<text x="56" y="31" font-size="23">Лес: схема водоёмов и маршрутов</text>
+<text x="56" y="55" font-size="13">Предложение для следующего этапа — вода на карте игры пока не изменена</text>
+<rect class="tile" x="56.0" y="82.0" width="152" height="152"/>
+<text class="small" x="64.0" y="99.0">-2:-2</text>
+<rect class="tile" x="208.0" y="82.0" width="152" height="152"/>
+<text class="small" x="216.0" y="99.0">-1:-2</text>
+<rect class="tile" x="360.0" y="82.0" width="152" height="152"/>
+<text class="small" x="368.0" y="99.0">0:-2</text>
+<rect class="tile" x="512.0" y="82.0" width="152" height="152"/>
+<text class="small" x="520.0" y="99.0">1:-2</text>
+<rect class="tile" x="664.0" y="82.0" width="152" height="152"/>
+<text class="small" x="672.0" y="99.0">2:-2</text>
+<rect class="tile" x="56.0" y="234.0" width="152" height="152"/>
+<text class="small" x="64.0" y="251.0">-2:-1</text>
+<rect class="tile" x="208.0" y="234.0" width="152" height="152"/>
+<text class="small" x="216.0" y="251.0">-1:-1</text>
+<rect class="tile" x="360.0" y="234.0" width="152" height="152"/>
+<text class="small" x="368.0" y="251.0">0:-1</text>
+<rect class="tile" x="512.0" y="234.0" width="152" height="152"/>
+<text class="small" x="520.0" y="251.0">1:-1</text>
+<rect class="tile" x="664.0" y="234.0" width="152" height="152"/>
+<text class="small" x="672.0" y="251.0">2:-1</text>
+<rect class="tile" x="56.0" y="386.0" width="152" height="152"/>
+<text class="small" x="64.0" y="403.0">-2:0</text>
+<rect class="tile" x="208.0" y="386.0" width="152" height="152"/>
+<text class="small" x="216.0" y="403.0">-1:0</text>
+<rect class="tile" x="360.0" y="386.0" width="152" height="152"/>
+<text class="small" x="368.0" y="403.0">0:0</text>
+<rect class="tile" x="512.0" y="386.0" width="152" height="152"/>
+<text class="small" x="520.0" y="403.0">1:0</text>
+<rect class="tile" x="664.0" y="386.0" width="152" height="152"/>
+<text class="small" x="672.0" y="403.0">2:0</text>
+<rect class="tile" x="56.0" y="538.0" width="152" height="152"/>
+<text class="small" x="64.0" y="555.0">-2:1</text>
+<rect class="tile" x="208.0" y="538.0" width="152" height="152"/>
+<text class="small" x="216.0" y="555.0">-1:1</text>
+<rect class="tile" x="360.0" y="538.0" width="152" height="152"/>
+<text class="small" x="368.0" y="555.0">0:1</text>
+<rect class="tile" x="512.0" y="538.0" width="152" height="152"/>
+<text class="small" x="520.0" y="555.0">1:1</text>
+<rect class="tile" x="664.0" y="538.0" width="152" height="152"/>
+<text class="small" x="672.0" y="555.0">2:1</text>
+<rect class="tile" x="56.0" y="690.0" width="152" height="152"/>
+<text class="small" x="64.0" y="707.0">-2:2</text>
+<rect class="tile" x="208.0" y="690.0" width="152" height="152"/>
+<text class="small" x="216.0" y="707.0">-1:2</text>
+<rect class="tile" x="360.0" y="690.0" width="152" height="152"/>
+<text class="small" x="368.0" y="707.0">0:2</text>
+<rect class="tile" x="512.0" y="690.0" width="152" height="152"/>
+<text class="small" x="520.0" y="707.0">1:2</text>
+<rect class="tile" x="664.0" y="690.0" width="152" height="152"/>
+<text class="small" x="672.0" y="707.0">2:2</text>
+<polyline points="384.9,87.9 349.9,165.1 269.8,227.5 240.1,301.7 275.7,384.8 284.0,417.5 284.0,462.0 257.9,533.2 263.8,551.1 287.6,622.3 382.6,699.5 424.1,836.1" fill="none" stroke="#73c7d6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 10"><title>Основная река</title></polyline>
+<polyline points="284.0,462.0 335.1,479.8 379.6,484.6 403.9,482.2" fill="none" stroke="#73c7d6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 10"><title>Ручей у лагеря</title></polyline>
+<polyline points="240.1,301.7 275.7,277.9 358.8,260.1 483.5,260.1 602.2,242.3 810.1,313.6" fill="none" stroke="#73c7d6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 10"><title>Северное ответвление</title></polyline>
+<polyline points="263.8,551.1 352.9,568.9 430.1,551.1 542.9,539.2 626.0,527.3 810.1,574.8" fill="none" stroke="#73c7d6" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 10"><title>Южное ответвление</title></polyline>
+<ellipse cx="284.0" cy="462.0" rx="29" ry="21" fill="#326d8c" stroke="#73c7d6" stroke-width="2" stroke-dasharray="5 3"/>
+<ellipse cx="151.0" cy="212.625" rx="12" ry="8" fill="none" stroke="#73c7d6" stroke-width="2" stroke-dasharray="3 2"/>
+<ellipse cx="631.9375" cy="188.875" rx="12" ry="8" fill="none" stroke="#73c7d6" stroke-width="2" stroke-dasharray="3 2"/>
+<ellipse cx="679.4375" cy="669.8125" rx="12" ry="8" fill="none" stroke="#73c7d6" stroke-width="2" stroke-dasharray="3 2"/>
+<ellipse cx="145.0625" cy="699.5" rx="12" ry="8" fill="none" stroke="#73c7d6" stroke-width="2" stroke-dasharray="3 2"/>
+<circle cx="436.0" cy="462.0" r="4" fill="#efbd67"/>
+<text class="label" x="443.0" y="455.0">Лагерь</text>
+<circle cx="436.0" cy="310.0" r="4" fill="#efbd67"/>
+<text class="label" x="443.0" y="303.0">Крепость</text>
+<circle cx="588.0" cy="614.0" r="4" fill="#efbd67"/>
+<text class="label" x="595.0" y="607.0">Лесопилка</text>
+<circle cx="293.975" cy="447.75" r="4" fill="#efbd67"/>
+<text class="label" x="300.975" y="440.75">Плотина</text>
+<circle cx="284.0" cy="476.84375" r="4" fill="#efbd67"/>
+<text class="label" x="291.0" y="469.84375">Озеро</text>
+<circle cx="588.0" cy="462.0" r="4" fill="#efbd67"/>
+<text class="label" x="595.0" y="455.0">Древний дуб</text>
+<circle cx="440.15625" cy="608.65625" r="4" fill="#efbd67"/>
+<text class="label" x="447.15625" y="601.65625">Торговец</text>
+<circle cx="403.9375" cy="482.1875" r="4" fill="#efbd67"/>
+<text class="label" x="410.9375" y="475.1875">Ручей рядом</text>
+<path d="M429.0,253.125L443.0,267.125 M429.0,259.125L437.0,267.125" stroke="#e9ad65" stroke-width="4"/>
+<path d="M353.0,474.59375L367.0,488.59375 M353.0,480.59375L361.0,488.59375" stroke="#e9ad65" stroke-width="4"/>
+<path d="M532.90625,532.1875L546.90625,546.1875 M532.90625,538.1875L540.90625,546.1875" stroke="#e9ad65" stroke-width="4"/>
+<path d="M262.75,220.46875L276.75,234.46875 M262.75,226.46875L270.75,234.46875" stroke="#e9ad65" stroke-width="4"/>
+<path d="M256.8125,544.0625L270.8125,558.0625 M256.8125,550.0625L264.8125,558.0625" stroke="#e9ad65" stroke-width="4"/>
+<path d="M393.375,734.0625L407.375,748.0625 M393.375,740.0625L401.375,748.0625" stroke="#e9ad65" stroke-width="4"/>
+<text x="56" y="881" font-size="15">Пунктир: будущая река и ручьи. Золотые отметки: кандидаты переходов.</text>
+<text x="56" y="908" font-size="13">Первым строим только ручей у лагеря → западное озеро, с доступным бродом.</text>
+<text x="56" y="934" font-size="13">Плотина, уровни воды, пути рабочих и подходы к зданиям сохраняются.</text>
+<text x="56" y="960" font-size="13">Малые пруды: кандидаты; рыбалка сначала у существующего большого озера.</text>
+<text x="56" y="990" font-size="13">Перед реализацией: проверить коллизии, широкие проходы и согласовать берега.</text>
+</svg>
