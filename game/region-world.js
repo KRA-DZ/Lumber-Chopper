@@ -1,4 +1,5 @@
 import { CENTER } from "./config.js";
+import {STREAM_OUTLINE,STREAM_CROSSINGS,streamWater,streamCollision,streamReserved} from "./camp-stream.js";
 import { CAMP, random, pixelHash } from "../pixel-art.js";
 import { REGIONS, REGION_BOUNDS, REGION_SIZE, regionAt } from "./regions.js";
 import { FORTRESS, insideLocation } from "./locations.js";
@@ -34,7 +35,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
       y: pond.y + Math.sin(a) * pond.ry * f,
     };
   });
-  const streamOutline = [];
+  const streamOutline = STREAM_OUTLINE;
   for (const r of REGIONS) {
     const type =
       r.activity === "ruins"
@@ -144,13 +145,13 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
   function inWater(x, y) {
     const dx = (x - pond.x) / pond.rx,
       dy = (y - pond.y) / pond.ry;
-    return dx * dx + dy * dy < 1 || worksWater(state,x,y);
+    return dx * dx + dy * dy < 1 || streamWater(x,y) || worksWater(state,x,y);
   }
   function waterCollision(x, y, r = 10) {
     return (
       ((x - pond.x) / (pond.rx + r)) ** 2 +
         ((y - pond.y) / (pond.ry + r)) ** 2 <
-      1 || worksCollision(state,x,y,r)
+      1 || streamCollision(x,y,r) || worksCollision(state,x,y,r)
     );
   }
   function segmentDistance(p, a, b) {
@@ -172,7 +173,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
   }
   function reserved(x, y, r) {
     return (
-      worksReserved(x,y,75) ||
+      worksReserved(x,y,75) || streamReserved(x,y,75) ||
       locations.some(
         (l) => l.regionId === r.id && insideLocation(l, x, y, 72),
       ) ||
@@ -240,7 +241,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
           (l) => l.regionId === region.id && insideLocation(l, x, y, 32),
         ) ||
         waterCollision(x, y, 20) ||
-        worksReserved(x,y,20) ||
+        worksReserved(x,y,20) || streamReserved(x,y,20) ||
         nearTrail({ x, y }, 45) ||
         (region.id === "0:0" && Math.hypot(x - 1600, y - 1600) < 310)
       )
@@ -285,6 +286,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     pond,
     pondOutline,
     streamOutline,
+    streamCrossings:STREAM_CROSSINGS,
     bridge: null,
     clues,
     inWater,

@@ -16,6 +16,7 @@ export function createForestGround({
   materials = null,
   fortressFloor = null,
   worksSurfaces = () => [],
+  streamCrossings = [],
 }) {
   const cache = new Map();
   function bake(cx, cy) {
@@ -55,16 +56,19 @@ export function createForestGround({
       g.fillStyle=area.kind==="water"?"#0000ff":area.kind==="shore"?"#00ff00":"#ff0000";
       g.fillRect(area.x,area.y,area.width,area.height);
     }
-    for (const outline of [pondOutline, streamOutline]) {
+    const outlines=[pondOutline,streamOutline].filter(o=>o?.length);
+    for (const outline of outlines) {
       g.beginPath();
       outline.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
       g.closePath();
       g.strokeStyle = "#00ff00";
       g.lineWidth = 16;
       g.stroke();
-      g.fillStyle = "#0000ff";
-      g.fill();
     }
+    // Fill the union after both bank strokes: no green seam where the stream joins the lake.
+    for(const outline of outlines){g.beginPath();outline.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.fillStyle="#0000ff";g.fill();}
+    g.save();g.beginPath();for(const outline of outlines){outline.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();}g.clip();
+    g.fillStyle="#0080ff";for(const f of streamCrossings)g.fillRect(f.x-f.width/2,f.y-f.height/2,f.width,f.height);g.restore();
     const source = g.getImageData(0, 0, SIZE + 8, SIZE + 8).data,
       out = bitmap.getContext("2d"),
       image = out.createImageData(SIZE, SIZE),
@@ -84,6 +88,7 @@ export function createForestGround({
         const water =
           marked && source[j + 2] > source[j] && source[j + 2] > source[j + 1];
         const bank = marked && !water && source[j + 1] > source[j];
+        const ford=water&&source[j+1]>80;
         if (materials) {
           if (marked)
             [r, gr, b] = sampleMaterial(
@@ -93,6 +98,7 @@ export function createForestGround({
               wy,
             );
           else [r, gr, b] = sampleBiomeGround(materials, wx, wy);
+          if(ford){const shore=sampleMaterial(materials,"shore",wx,wy);r=r*.55+shore[0]*.45;gr=gr*.55+shore[1]*.45;b=b*.55+shore[2]*.45;}
           // A broken pixel edge merges paths with grass without blurring the image.
           if (marked && !water && !bank) {
             const edge = [

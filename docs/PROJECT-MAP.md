@@ -45,7 +45,7 @@
 
 Площадка костра: `CAMP_SERVICE.fuelPad`, `updateFuelPad()` в `game/camp-services.js`; вызов для каждого героя — `game/simulation.js`; вид — `phaser/camp-services-view.js`. Проверки: [CAMP-PROGRESSION.md](CAMP-PROGRESSION.md). Масштаб Смотрителя — `phaser/enemy-view.js`, браузер — `tests/watcher_smoke.py --scale-only`.
 
-Направленный фонарь: `game/light-shapes.js` — форма/проверка освещённости, `phaser/lantern-stamps.js` — пять заранее подготовленных масок; проверки — [NIGHT-HORROR.md](NIGHT-HORROR.md). План водоёмов, ещё без изменений коллизий: [FOREST-WATER-PLAN.md](FOREST-WATER-PLAN.md).
+Направленный фонарь: `game/light-shapes.js` — форма/проверка освещённости, `phaser/lantern-stamps.js` — пять заранее подготовленных масок; проверки — [NIGHT-HORROR.md](NIGHT-HORROR.md). Ручей/броды: `game/camp-stream.js`, общие контуры в `game/region-world.js` и `phaser/art/ground-art.js`. Состояние водного плана и целевые проверки: [FOREST-WATER-PLAN.md](FOREST-WATER-PLAN.md).
 
 ## Команды по необходимости
 

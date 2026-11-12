@@ -215,7 +215,7 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
       assert.ok(g.builder.choose(g.state.campLevel===1?"tent":"fence"));
       g.setDestination(g.build.x+100,g.build.y);tickUntil(()=>!g.player.path.length);travel("build");
     }
-    tickUntil(() => !g.state.wood || g.state.campLevel >= 3);
+    tickUntil(() => !g.state.wood || g.state.campLevel >= 3 || !g.builder.project);
   }
   assert.ok(g.state.calendarDay < 4);
   travel("camp");
