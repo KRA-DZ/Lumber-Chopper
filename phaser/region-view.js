@@ -48,7 +48,7 @@ export class RegionView {
           tree.y - 32,
           tree.y + 0.01,
         ).setScale(1.8);
-    for (const p of w.landmarks.filter((p) => p.regionId === region.id)) {
+    for (const p of w.landmarks.filter((p) => p.regionId === region.id&&p.type!=="task-clearing")) {
       if (p.type === "chest") {
         const generated =
           this.scene.assets.fortress?.manifest.regionId === region.id;

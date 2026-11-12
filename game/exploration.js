@@ -37,6 +37,7 @@ export function createExploration({
   getStory = () => null,
   worldWorks = null,
   sawmill = null,
+  forestTasks = null,
   outposts,
   camp,
   onSale = null,
@@ -85,6 +86,7 @@ export function createExploration({
     ...(world.locations || []).flatMap((l) => l.sites),
     ...(worldWorks?.sites||[]),
     ...(sawmill?.sites||[]),
+    ...(forestTasks?.sites||[]),
   ];
   const byId = new Map(sites.map((p) => [p.id, p]));
   let context = null,
@@ -229,8 +231,9 @@ export function createExploration({
       );
     } else if (s.kind === "sawmill-service") {
       rows.push(...sawmill.offers(id));
+    } else if(s.kind==="encounter"){rows.push(...forestTasks.offers(id));
     } else if (s.kind === "infrastructure") {
-      rows.push(...worldWorks.offers(id));
+      rows.push(...worldWorks.offers(id),...(forestTasks?.offers(id)||[]));
     } else if (s.kind === "passage") {
       add(
         "open-passage",
@@ -321,6 +324,7 @@ export function createExploration({
       if(!worldWorks.perform(id,action))return false;
       changed("infrastructure-used",{site:s,action});return true;
     }
+    if(action.startsWith("forest:")){if(!forestTasks.perform(id,action))return false;changed("forest-task-used",{site:s,action});return true;}
     if(action.startsWith("mill:")){
       if(!sawmill.perform(id,action))return false;
       changed("sawmill-used",{site:s,action});return true;
@@ -472,6 +476,8 @@ export function createExploration({
       chests = s.filter((s) => s.kind === "chest");
     const works=regionId==="-1:0"?` · плотина: ${state.worldWorks.level==="low"?"вода опущена":"высокая вода"} · рыба сегодня ${caughtToday()}/${EXPLORATION.fishPerDay}`:
       regionId==="0:-1"?` · Северный настил: ${state.worldWorks.built["north-boardwalk"]?"восстановлен":"нужен ремонт"}`:"";
+    if(forestTasks&&regionId==="1:0")return `${forestTasks.summary()} · древний дуб`;
+    if(forestTasks&&regionId==="0:1")return `Вышка: ${state.worldWorks.built["lookout-tower"]?"восстановлена":"нужен ремонт"} · торговец`;
     if (chests.length)
       return `Сундуки: ${chests.filter((s) => !data.openedChests.includes(s.id)).length}/${chests.length}${works}`;
     if (s.some((s) => s.kind === "pond"))

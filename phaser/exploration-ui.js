@@ -144,6 +144,7 @@ export function createExplorationUi(scene) {
         "ancient-roots",
         "camp-kitchen",
         "chest:0:-1:0",
+        "forest-camp-cache","lookout-tower",
         "old-dam","river-bridge","north-boardwalk","sluice-gate",
         "sawmill-restoration","sawmill-loading","sawmill-production","camp-freight","freight-cart",
       ]) {

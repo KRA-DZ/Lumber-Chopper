@@ -1,9 +1,11 @@
+import {LOOKOUT} from "./forest-tasks-layout.js";
 import { REGION_SIZE } from "./world-grid.js";
 // Preserve each hand-authored layout at its regional offset as square sizes change.
 const extra = REGION_SIZE - 1920;
 const move = (p, id) => ({...p, x:p.x+(id==="-1:0"?-extra:0), y:p.y+(id==="0:-1"?-extra:0)});
 // Fixed small layouts, shared by terrain, collisions and project UI. Existing regional unlock costs still apply.
 export const WORKS_PROJECTS=Object.freeze([
+  LOOKOUT,
   {id:"old-dam",kind:"infrastructure",name:"Лебёдка старой плотины",regionId:"-1:0",x:-152,y:1360,
     cost:{logs:8,boards:4,blocks:4},description:"Восстановите привод, затем опустите воду. Откроются брод и затопленная гидростанция; озеро для рыбалки останется."},
   {id:"river-bridge",kind:"infrastructure",name:"Западный речной мост",regionId:"-1:0",x:-144,y:760,

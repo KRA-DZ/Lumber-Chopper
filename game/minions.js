@@ -43,6 +43,7 @@ export function createMinions({
   emit = () => {},
   party = null,
   getNoise = () => null,
+  encampment = null,
 }) {
   const actors = [],
     projectiles = [],
@@ -57,6 +58,9 @@ export function createMinions({
   const allowed = (p, e, global) =>
     regions.isOpen(p) && (global || homeRegion(p, e));
   function sync(hunt) {
+    const camp=encampment?.site,guardSlots=camp&&regions.isOpen(camp)?encampment.guards():[],
+      campNear=camp&&(party?.positions()||[player]).some(p=>distance(p,camp)<650),
+      reserve=campNear?guardSlots.filter(g=>!actors.some(e=>e.id===g.id)).length:0;
     const candidates = regions.all
       .filter(
         (r) =>
@@ -79,10 +83,15 @@ export function createMinions({
           (party?.positions() || [player]).every(p => distance(actors[i], p) > 2400)
         )
           actors.splice(i, 1);
+    // A nearby objective has priority within the same global actor cap.
+    while(reserve&&actors.length>MINIONS.max-reserve){
+      const far=actors.filter(e=>!e.campGuard).sort((a,b)=>Math.min(...(party?.positions()||[player]).map(p=>distance(b,p)))-Math.min(...(party?.positions()||[player]).map(p=>distance(a,p))))[0];
+      if(!far)break;actors.splice(actors.indexOf(far),1);
+    }
     for (const region of candidates)
       for (
         let slot = 0;
-        slot < MINIONS.perRegion && actors.length < MINIONS.max;
+        slot < MINIONS.perRegion && actors.length < MINIONS.max-reserve;
         slot++
       ) {
         const id = `minion:${epoch}:${region.id}:${slot}`;
@@ -96,6 +105,7 @@ export function createMinions({
             origin.y + Math.sin(angle) * (380 + i * 12),
           );
           if (
+            (!camp||distance(p,camp)>camp.radius+40) &&
             regionAt(p.x, p.y)?.id === region.id &&
             !isSafe(p) &&
             (party?.positions() || [player]).every(other => distance(p, other) > 330) &&
@@ -139,6 +149,14 @@ export function createMinions({
           phase: "patrol",
         });
       }
+    if(campNear)for(const spec of guardSlots){
+      if(actors.length>=MINIONS.max||actors.some(e=>e.id===spec.id))continue;
+      const region=regions.all.find(r=>r.id===camp.regionId),point=nav.nearestGround(spec.x,spec.y);
+      if(!regions.isOpen(point)||distance(point,spec)>100)continue;
+      actors.push({...point,id:spec.id,kind:"resident",tier:"minion",campGuard:true,role:spec.role,region,regionId:region.id,
+        family:BIOMES[region.biome].enemy,biome:region.biome,hp:spec.hp,maxHP:spec.maxHP,home:{x:spec.x,y:spec.y},path:[],pathVersion:nav.version,
+        warning:MINIONS.spawnDelay,repath:0,cooldown:0,windup:0,flash:0,stun:0,slow:0,attack:null,patrolIndex:0,moving:false,phase:"patrol"});
+    }
   }
   function hit(id, damage, knockback = true) {
     const e = actors.find((e) => e.id === id);
@@ -323,12 +341,12 @@ export function createMinions({
       }
       const aware =
         hunt ||
-        (homeRegion(player, e) &&
+        ((!e.campGuard||distance(player,e.home)<300) && homeRegion(player, e) &&
           !isSafe(player) &&
           distance(e, player) < MINIONS.sense &&
           nav.hasLineOfSight(e, player));
-      const noise=getNoise(),investigate=!aware&&noise&&homeRegion(noise,e)&&distance(e,noise)<noise.radius&&!isSafe(noise);
-      const retreat = !hunt && (!homeRegion(e, e) || isSafe(e));
+      const noise=getNoise(),investigate=!e.campGuard&&!aware&&noise&&homeRegion(noise,e)&&distance(e,noise)<noise.radius&&!isSafe(noise);
+      const retreat = !hunt && (!homeRegion(e, e) || isSafe(e) || e.campGuard&&distance(e,e.home)>300);
       const previousBarrier = defenses?.get(e.barrierId);
       if (hunt && previousBarrier?.hp === 0 && !e.breachGoal)
         enterBreach(e, previousBarrier);

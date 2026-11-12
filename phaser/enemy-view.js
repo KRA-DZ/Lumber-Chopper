@@ -150,7 +150,7 @@ export class EnemyView {
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.campGuard?(e.role==="ranged"?"Страж-метатель":"Страж лагеря"):e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`

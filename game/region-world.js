@@ -1,3 +1,4 @@
+import {FOREST_CAMP,LOOKOUT,forestTaskReserved} from "./forest-tasks-layout.js";
 import { CENTER } from "./config.js";
 import {STREAM_OUTLINE,STREAM_CROSSINGS,streamWater,streamCollision,streamReserved} from "./camp-stream.js";
 import { CAMP, random, pixelHash } from "../pixel-art.js";
@@ -77,6 +78,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     trailBins.set(r.id, paths);
     trails.push(...paths);
   }
+  landmarks.push({...FOREST_CAMP,type:"task-clearing",clearing:300},{...LOOKOUT,type:"task-clearing",clearing:160});
   const locations = [FORTRESS, SAWMILL];
   // Relocate existing IDs: rewards, story evidence and journal routes stay valid.
   for (const chest of FORTRESS.chests)
@@ -173,7 +175,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
   }
   function reserved(x, y, r) {
     return (
-      worksReserved(x,y,75) || streamReserved(x,y,75) ||
+      worksReserved(x,y,75) || streamReserved(x,y,75) || forestTaskReserved(x,y,75) ||
       (r.id==="0:0"&&(Math.hypot(x-1184,y-2048)<100||Math.abs(x-1184)<125&&y>1988&&y<2348)) ||
       locations.some(
         (l) => l.regionId === r.id && insideLocation(l, x, y, 72),
@@ -242,7 +244,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
           (l) => l.regionId === region.id && insideLocation(l, x, y, 32),
         ) ||
         waterCollision(x, y, 20) ||
-        worksReserved(x,y,20) || streamReserved(x,y,20) ||
+        worksReserved(x,y,20) || streamReserved(x,y,20) || forestTaskReserved(x,y,20) ||
         nearTrail({ x, y }, 45) ||
         (region.id === "0:0" && Math.hypot(x - 1600, y - 1600) < 310)
       )
@@ -258,7 +260,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
       const candidates=[...(region.id==="0:0"?[{x:1184,y:2048}]:[]),...details,...decor],picked=[];
       for(const p of candidates){
         if(picked.length>=5)break;
-        if(waterCollision(p.x,p.y,45)||locations.some(l=>insideLocation(l,p.x,p.y,80))||clues.some(c=>Math.hypot(c.x-p.x,c.y-p.y)<100)||
+        if(forestTaskReserved(p.x,p.y,75)||waterCollision(p.x,p.y,45)||locations.some(l=>insideLocation(l,p.x,p.y,80))||clues.some(c=>Math.hypot(c.x-p.x,c.y-p.y)<100)||
           Math.hypot(p.x-1600,p.y-1600)<540||Math.hypot(p.x-ancientTree.x,p.y-ancientTree.y)<260||Math.hypot(p.x-merchant.x,p.y-merchant.y)<180||nearTrail(p,60)||(region.id==="-1:0"&&Math.hypot(p.x-pond.x-265,p.y-pond.y-175)<150)||list.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<80||Math.abs(t.x-p.x)<105&&t.y>p.y-30&&t.y<p.y+260)||picked.some(b=>Math.hypot(b.x-p.x,b.y-p.y)<220))continue;
         const i=picked.length,b={id:`berry:${region.id}:${i}`,x:p.x,y:p.y,variant:i%3,regionId:region.id,decorative:i>=3,flowering:i===3};picked.push(b);berryBushes.push(b);
       }
@@ -299,6 +301,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     pondOutline,
     streamOutline,
     streamCrossings:STREAM_CROSSINGS,
+    taskObstacles:[{x:LOOKOUT.x-36,y:LOOKOUT.y-70,r:14},{x:LOOKOUT.x+36,y:LOOKOUT.y-70,r:14}],
     bridge: null,
     clues,
     inWater,

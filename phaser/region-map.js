@@ -33,10 +33,11 @@ export function createRegionMap(scene) {
           ? "region-adjacent"
           : "region-unknown";
       button.disabled = !opened && !gate;
+      const surveyed=c.forestTasks.survey(region.id);
       const title = document.createElement("span"),
         detail = document.createElement("small");
       title.textContent =
-        opened || gate
+        opened || gate || surveyed
           ? `${region.name} · ${BIOMES[region.biome].name}`
           : "Неизведано";
       detail.textContent = opened
@@ -44,6 +45,7 @@ export function createRegionMap(scene) {
         : gate
           ? `${c.state.regionWood[region.id] || 0}/${region.cost} брёвен · ${c.state.regionStone[region.id] || 0}/${region.stoneCost} камня · лагерь ${region.campRequired}`
           : "—";
+      if(surveyed){detail.textContent=`Разведка: ${surveyed} · ${detail.textContent}`;button.dataset.surveyed="true";}
       button.append(title, detail);
       button.addEventListener(
         "click",

@@ -68,6 +68,7 @@ export function createNavigation(
         r: h / 2,
         half: Math.max(0, (w - h) / 2),
       });
+    for(const p of model.taskObstacles||[])if(!model.regions||model.regions.isOpen(p))circle(p.x,p.y,p.r);
     for (const t of trees) if (t.hp > 0) circle(t.x, t.y - 3, 8);
     for(const p of INDUSTRY_PROJECTS)if(p.kind!=="lamp"&&hasCampBuilding(gameState,p.id))circle(p.site.x,p.site.y,p.kind==="kiln"?24:20);
     for (const rock of model.boulders || []) if ((gameState.boulderHP[rock.id] ?? rock.maxHP) > 0) circle(rock.x, rock.y - 6, rock.radius);
