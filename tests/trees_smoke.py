@@ -53,7 +53,7 @@ try:
             )
             print("READY trees", mode, flush=True)
             assert page.evaluate(
-                "w.assets.art.generatedTrees&&w.registry.get('treePack').manifest.approvedVariant===1"
+                "w.assets.art.generatedTrees&&w.registry.get('treePack').manifest.approvedVariant===4"
             )
             assert page.evaluate(
                 "w.textures.get('forest').getSourceImage().height<=2048&&!w.textures.exists('trees.source')"
