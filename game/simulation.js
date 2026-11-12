@@ -933,6 +933,7 @@ export function createSimulation({
     if (!enemy && !nearest && rock) mining.hit(rock.id, "auto");
     if (canAct() && forestry.collect(dt, player)) updateUI();
     sawmill?.freight.sync();
+    camp.updateFuelPad(dt);
     if (!actorOnly) survival?.update(dt);
     if (!actorOnly && !gameState.gameOver) preparation.update(dt);
     if (!actorOnly || alive) combatLoot.update(dt);

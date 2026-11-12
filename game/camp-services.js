@@ -6,22 +6,31 @@ import { campFuelLimit, campStorageLimit, industryLevel } from "./camp-industry-
 export const CAMP_SERVICE = Object.freeze({
   store: { x: 1480, y: 1740 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
   fuelPerLog: 60, maxFuel: 600, storeLimit: 400,
+  fuelPad: {x:1696,y:1616,radius:32}, fuelPadSeconds:0.8, // Стоя на площадке: одно бревно за 0,8 с, только если помещаются все 60 с топлива.
 });
 export const ROOM = Object.freeze({ width: 480, height: 352, exit: { x: 240, y: 316 }, chest: { x: 100, y: 130 } });
 
 // Shared fuel/storage; personal location and indoor movement. No renderer owns resources.
 export function createCampServices({ state, player, forestry, canAct, nav, emit = () => {} }) {
+  let fuelPadTimer=0;
   const near = p => Math.hypot(player.x - p.x, player.y - p.y) < 110 && nav.hasLineOfSight(player, p);
   const living = () => state.health > 0 && !state.gameOver;
   const lit = () => hasCampBuilding(state,"fire") && state.campFuel > 0;
+  const atFuelPad=()=>Math.hypot(player.x-CAMP_SERVICE.fuelPad.x,player.y-CAMP_SERVICE.fuelPad.y)<=CAMP_SERVICE.fuelPad.radius&&nav.hasLineOfSight(player,{x:CENTER.x,y:CENTER.y+48});
   function stoke(quoted = false, material = "wood") {
     const seconds=material==="coal"?180:CAMP_SERVICE.fuelPerLog;
-    if (!['wood','coal'].includes(material) || !(quoted ? living() : canAct()) || !near({x:CENTER.x,y:CENTER.y+48}) || !hasCampBuilding(state,"fire") ||
+    if (!['wood','coal'].includes(material) || !(quoted ? living() : canAct()) || !(near({x:CENTER.x,y:CENTER.y+48})||atFuelPad()) || !hasCampBuilding(state,"fire") ||
       (material==="wood"?!state.wood:!(state.campIndustry?.materials.coal>0)) || state.campFuel > campFuelLimit(state)-seconds) return false;
     if(material==="wood")forestry.takeCargo();else state.campIndustry.materials.coal--;
     state.campFuel += seconds;
     state.campMilestones.lit=true;
     emit("camp-stoked", {}); return true;
+  }
+  function updateFuelPad(dt){
+    if(!Number.isFinite(dt)||dt<=0)return;
+    if(!canAct()||!atFuelPad()||!hasCampBuilding(state,"fire")||!state.wood||state.campFuel>campFuelLimit(state)-CAMP_SERVICE.fuelPerLog){fuelPadTimer=0;return;}
+    fuelPadTimer+=dt;
+    if(fuelPadTimer>=CAMP_SERVICE.fuelPadSeconds){fuelPadTimer=0;stoke();}
   }
   function store(action = "deposit") {
     const atChest = player.room && Math.hypot(player.room.x - ROOM.chest.x, player.room.y - ROOM.chest.y) < 90;
@@ -73,6 +82,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, emit 
     if (before && !lit()) emit("camp-extinguished", {});
     if (before && state.campFuel <= 30 && state.campFuel + dt > 30) emit("camp-low-fuel", {});
   }
-  return { near, lit, stoke, store, enter, exit, moveRoom, update,
+  return { near, lit, stoke, store, enter, exit, moveRoom, update, atFuelPad, updateFuelPad,
+    get fuelPadProgress(){return fuelPadTimer/CAMP_SERVICE.fuelPadSeconds;},
     maxFuel:()=>campFuelLimit(state),storageLimit:()=>campStorageLimit(state) };
 }

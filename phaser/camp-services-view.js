@@ -10,6 +10,10 @@ export class CampServicesView {
     scene.hut.setInteractive({ pixelPerfect: true }).setData("campHouse", true);
     scene.tent.setInteractive({ pixelPerfect: true }).setData("campTent", true);
     this.fireLabel = scene.text("", 1600, 1672, 11, "#f3d79f", LAYERS.hints);
+    const pad=CAMP_SERVICE.fuelPad;
+    this.fuelPad=scene.add.graphics().setDepth(pad.y-1);
+    this.fuelZone=scene.add.zone(pad.x,pad.y,64,48).setInteractive().setData("fuelPad",true);
+    this.fuelLabel=scene.text("",pad.x,pad.y+38,11,"#f3d79f",LAYERS.hints);
   }
   render() {
     const s = this.scene, c = s.core, wanted = new Set();
@@ -31,9 +35,15 @@ export class CampServicesView {
     this.label.setText(`Склад · ${c.state.logStore.length}/${c.camp.storageLimit()} · E/Enter ${c.state.wood ? "сложить" : "взять"}`);
     this.fireLabel.setText(hasCampBuilding(c.state,"fire") ? `${c.camp.lit() ? "Огонь" : "ПОТУХШИЙ КОСТЁР"} · ${Math.ceil(c.state.campFuel)} с · E/Enter +1 бревно` : "Сначала постройте костёр!");
     s.worldHints.offer(this.label,CAMP_SERVICE.store,{range:200,priority:70});
-    s.worldHints.offer(this.fireLabel,{x:1600,y:1648},{range:210,priority:75});
+    const pad=CAMP_SERVICE.fuelPad,built=hasCampBuilding(c.state,"fire"),active=(c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.health>0&&!a.player.room);
+    s.worldHints.offer(this.fireLabel,{x:1600,y:1648},{eligible:!active,range:210,priority:75});
+    this.fuelZone.setVisible(built);this.fuelZone.input.enabled=built;
+    this.fuelPad.clear();if(built){this.fuelPad.fillStyle(active?0x93733b:0x385546,.8).fillEllipse(pad.x,pad.y,64,40).lineStyle(2,0xe1bf70,.9).strokeEllipse(pad.x,pad.y,64,40);
+      this.fuelPad.lineStyle(3,0xe1bf70).lineBetween(pad.x-9,pad.y,pad.x+9,pad.y).lineBetween(pad.x,pad.y-8,pad.x,pad.y+8);}
+    this.fuelLabel.setText(c.state.campFuel>c.camp.maxFuel()-CAMP_SERVICE.fuelPerLog?"Запас почти полон":active&&!((c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.wood>0))?"Нужны брёвна в руках":"Поддерживать огонь\n1 бревно → +60 с");
+    s.worldHints.offer(this.fuelLabel,pad,{eligible:built,range:180,priority:70});
   }
-  destroy() { for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
+  destroy() { this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
 }
 
 // A separate walkable interior per viewport; the outdoor simulation keeps running.

@@ -101,7 +101,7 @@ export class EnemyView {
         key = `enemy.${e.family}.${e.windup > 0 ? "attack" : frame ? "walk" : "idle"}`;
       s.assets.setFrame(o.image, key);
       o.image.setScale(
-        small
+        e.invulnerable ? 4 : small
           ? 3.3
           : e.tier === "boss"
             ? 3.375
@@ -140,7 +140,7 @@ export class EnemyView {
           e.x,
           e.y -
             (e.invulnerable
-              ? 208
+              ? Math.max(208,o.image.displayHeight*o.image.originY+20)
               : small
                 ? 228
                 : e.tier === "boss"

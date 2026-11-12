@@ -43,6 +43,8 @@
 
 Целевые проверки увеличенной карты/фонаря: `node --test tests/world-scale.test.mjs tests/regions.test.mjs tests/night_horror.test.mjs tests/economy_logic.test.mjs`; после сборки `python tests/world_scale_smoke.py` проверяет новые шкалы, личную прокачку и альфа-профиль света в WebGL/Canvas. Скриншоты — `docs/shop-progress-*.png`, `docs/lantern-soft-*.png`.
 
+Площадка костра: `CAMP_SERVICE.fuelPad`, `updateFuelPad()` в `game/camp-services.js`; вызов для каждого героя — `game/simulation.js`; вид — `phaser/camp-services-view.js`. Проверки: [CAMP-PROGRESSION.md](CAMP-PROGRESSION.md). Масштаб Смотрителя — `phaser/enemy-view.js`, браузер — `tests/watcher_smoke.py --scale-only`.
+
 ## Команды по необходимости
 
 Украшения/рекорды: `game/camp-custom.js`, `game/record-book.js`, `phaser/camp-custom-view.js`; баланс/проверки — [CAMP-CUSTOM.md](CAMP-CUSTOM.md). Исключение из сброса прогресса: только местные рекорды и открытые украшения. Быстрый календарь — `state.cycleSpeed`, только `game/cycle.js`; обычный темп выбран по умолчанию.
