@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class Trees(unittest.TestCase):
     def test_provenance_and_native_transparency(self):
         manifest = json.loads((ROOT / "src/assets/trees/manifest.json").read_text())
-        self.assertEqual(manifest["approvedVariant"], 1)
+        self.assertEqual(manifest["approvedVariant"], 4)
         self.assertFalse(manifest["processing"]["backgroundRemoval"])
         for source in manifest["sources"]:
             path = ROOT / "art/source" / source["file"]

@@ -51,7 +51,7 @@
 
 ## Команды по необходимости
 
-Ягоды/растения: `game/berries.js`, размещение в `game/region-world.js`, общие дни урожая — `game/coop-state.js`. PNG выбранного ряда 2: `src/assets/plants/`, подготовка `scripts/prepare_plants.py`; загрузка/кадры — `phaser/plants-assets.js`, вид — `phaser/plants-view.js`. Правила и целевые проверки: [PLANTS.md](PLANTS.md).
+Ягоды/растения: `game/berries.js`, размещение в `game/region-world.js`, общие дни урожая — `game/coop-state.js`. PNG: `src/assets/plants/`, подготовка `scripts/prepare_plants.py` и `scripts/prepare_bushes.py`; загрузка/кадры — `phaser/plants-assets.js`, вид — `phaser/plants-view.js`. Кусты и деревья теперь в [стиле №4](VEGETATION-STYLE4.md); остальные растения из ряда 2 сохранены. Правила сбора: [PLANTS.md](PLANTS.md).
 
 Лагерь со стражами и вышка: `game/forest-tasks-layout.js` — макет/баланс, `game/forest-tasks.js` — общий результат боя/сундук/разведка; охрана использует `game/minions.js`, ремонт — `game/world-works.js`. Прототип вида — `phaser/forest-tasks-view.js`, сведения карты — `phaser/region-map.js`. Контракты, оформление и целевые тесты: [FOREST-TASKS.md](FOREST-TASKS.md).
 

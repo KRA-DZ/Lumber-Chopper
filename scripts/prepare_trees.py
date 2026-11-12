@@ -13,7 +13,7 @@ TYPES = ("oak", "spruce", "birch", "dead")
 HEIGHTS = {"oak": 168, "spruce": 178, "birch": 168, "dead": 148}
 
 
-def extract(name, columns, actions):
+def extract(name, columns, actions, row_cuts=None):
     path = ROOT / "art/source" / f"{name}.png"
     with Image.open(path) as raw:
         if (
@@ -32,7 +32,8 @@ def extract(name, columns, actions):
     for part in components(mask):
         x0, y0, x1, y1 = part.box
         column = int((x0 + x1) / 2 * columns / image.width)
-        row = int((y0 + y1) / 2 * len(actions) / image.height)
+        middle = (y0+y1)/2/image.height
+        row = next(i for i in range(len(actions)) if row_cuts[i]<=middle<row_cuts[i+1]) if row_cuts else int(middle*len(actions))
         groups[row * columns + column].append(part)
     result = {}
     boxes = {}
@@ -66,6 +67,7 @@ def extract(name, columns, actions):
         "size": list(image.size),
         "columns": columns,
         "rows": len(actions),
+        "rowCuts": row_cuts,
         "boxes": boxes,
         "nativeAlpha": True,
     }
@@ -73,12 +75,11 @@ def extract(name, columns, actions):
 
 def main():
     frames, sources = {}, []
-    for name, columns, actions in [
-        ("trees-mature-sheet", 4, ("mature",)),
-        ("trees-growth-sheet", 4, ("stump", "sprout", "young")),
-        ("tree-ancient-sheet", 1, ("mature",)),
+    for name, columns, actions, row_cuts in [
+        ("trees-style4-sheet", 4, ("mature", "stump", "sprout", "young"), (0,.365,.535,.705,1)),
+        ("tree-ancient-style4-sheet", 1, ("mature",), None),
     ]:
-        images, info = extract(name, columns, actions)
+        images, info = extract(name, columns, actions, row_cuts)
         sources.append(info)
         for key, image in images.items():
             if key == "ancient":
@@ -140,7 +141,7 @@ def main():
     atlas.save(output / "trees.png", optimize=True)
     manifest = {
         "version": 1,
-        "approvedVariant": 1,
+        "approvedVariant": 4,
         "atlas": "trees.png",
         "size": list(atlas.size),
         "sources": sources,

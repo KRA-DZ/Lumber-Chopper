@@ -1,6 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "approvedRow": 2,
+  "bushVariant": 4,
+  "bushSource": {
+    "file": "bushes-style4-sheet.png",
+    "sha256": "c479bd3378ffdbf6e09007feb9b33a2e0cdf957af021d42b2548e9e45b1ca0b6",
+    "nativeAlpha": true,
+    "grid": [
+      3,
+      3
+    ],
+    "alphaThreshold": 176
+  },
   "size": [
     256,
     256

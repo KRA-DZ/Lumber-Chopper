@@ -3,6 +3,7 @@ from pathlib import Path
 import json
 import sys
 from PIL import Image
+from prepare_bushes import apply_bushes
 
 ROOT=Path(__file__).resolve().parents[1]
 source=ROOT/'art/source/plants-approved-row2.png'
@@ -39,6 +40,7 @@ for index,key in enumerate(names):
         icon=Image.new('RGBA',(32,32));icon.alpha_composite(p,((32-p.width)//2,(32-p.height)//2));icon.save(output/'berry-icon.png',optimize=True)
     x,y=index%4*64,index//4*64;atlas.alpha_composite(frame,(x,y))
     frames[key]={'x':x,'y':y,'width':64,'height':64,'anchor':[32,60]}
+bush_source=apply_bushes(atlas,frames,output)
 atlas.save(output/'plants.png',optimize=True)
-(output/'manifest.json').write_text(json.dumps({'version':1,'approvedRow':2,'size':[256,256],'frames':frames},ensure_ascii=False,indent=2)+'\n')
+(output/'manifest.json').write_text(json.dumps({'version':2,'approvedRow':2,'bushVariant':4,'bushSource':bush_source,'size':[256,256],'frames':frames},ensure_ascii=False,indent=2)+'\n')
 print('Prepared 16 aligned native-alpha plant frames and 256² atlas')
