@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "approvedRow": 2,
+  "size": [
+    256,
+    256
+  ],
+  "frames": {
+    "empty.0": {
+      "x": 0,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "empty.1": {
+      "x": 64,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "empty.2": {
+      "x": 128,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "berry": {
+      "x": 192,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "ripe.0": {
+      "x": 0,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "ripe.1": {
+      "x": 64,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "ripe.2": {
+      "x": 128,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "reeds": {
+      "x": 192,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "flower.0": {
+      "x": 0,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "flower.1": {
+      "x": 64,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "flower.2": {
+      "x": 128,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "fern": {
+      "x": 192,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "mushroom.0": {
+      "x": 0,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "mushroom.1": {
+      "x": 64,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "mushroom.2": {
+      "x": 128,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    },
+    "shrub": {
+      "x": 192,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "anchor": [
+        32,
+        60
+      ]
+    }
+  }
+}

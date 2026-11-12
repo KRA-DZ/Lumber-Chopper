@@ -110,6 +110,8 @@ export function createExplorationUi(scene) {
         list.append(li);
       }
       content.append(list);
+      const eat=button("Съесть ягоду · +6 HP",()=>{m.useItem("berry");render();scene.renderModel();});
+      eat.dataset.useItem="berry";eat.disabled=!d.items.berry||s.health>=s.maxHealth;prependLootIcon(eat,"berry");
       if (d.rod) prependLootIcon(paragraph("Снасти: удочка"), "rod", 32);
       const evidence = scene.core.story?.evidence.filter((e) => e.found) || [];
       if (evidence.length)

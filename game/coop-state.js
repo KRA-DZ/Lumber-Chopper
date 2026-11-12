@@ -10,7 +10,7 @@ const WORLD_KEYS = new Set([
   "campIndustry", "buyerOrders", "campMilestones", "worldWorks", "sawmill",
 ]);
 const EXPLORATION_KEYS = new Set([
-  "openedChests", "openedPassages", "discoveries", "discussedFinds", "debrisHP", "outpostFuel",
+  "berryDays", "openedChests", "openedPassages", "discoveries", "discussedFinds", "debrisHP", "outpostFuel",
 ]);
 function overlay(personal, shared, keys) {
   return new Proxy(personal, {

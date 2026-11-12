@@ -1,3 +1,4 @@
+import {applyPlantFrames} from "./plants-assets.js";
 import { applyPeopleFrames } from "./people-assets.js";
 import { applyTreeArt } from "./tree-assets.js";
 import { applyCampArt, applyCampFrames } from "./camp-assets.js";
@@ -136,6 +137,7 @@ export function createAtlas(scene) {
   const people = applyPeopleFrames(scene, sources);
   const camp = applyCampFrames(art, sources);
   applyDecorFrames(decor, sources);
+  applyPlantFrames(scene,sources);
   const fortress = applyFortressFrames(scene, sources);
   const sawmill = applySawmillFrames(scene, sources);
   const lootItems = applyLootItemFrames(scene, sources);
