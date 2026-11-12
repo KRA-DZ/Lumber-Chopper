@@ -447,17 +447,9 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="./phaser/viewport.css" />
   <main>
-    <header>
-      <div>
-        <small>ЛЕСНОЙ ПРОМЫСЕЛ</small>
-        <h1>Лесная смена</h1>
-      </div>
-      <div class="stats">
-        <div class="stat">Брёвна <b id="wood">0 / 2</b></div>
-        <div class="stat">Монеты <b id="coins">0</b></div>
-      </div>
-    </header>
+    <h1 class="visually-hidden">Лесная смена</h1>
     <div id="game-frame">
       <div
         id="game-viewport"
@@ -473,7 +465,11 @@
       <button type="button" data-fish-cancel>Убрать снасти</button>
     </div>
     <footer>
-      <nav class="game-actions" aria-label="Действия игрока">
+      <div class="stats" aria-label="Ресурсы игрока">
+        <div class="stat">Брёвна <b id="wood">0 / 2</b></div>
+        <div class="stat">Монеты <b id="coins">0</b></div>
+      </div>
+      <nav id="gameActions" class="game-actions" aria-label="Действия игрока">
         <button id="industryButton" type="button">Мастерская · C</button>
         <button
           id="campButton"
@@ -489,6 +485,7 @@
         <button id="journalButton" type="button">Дневник · J</button>
         <button id="mapButton" type="button">Карта леса · M</button>
         <button id="menuButton" type="button" aria-controls="gameMenu" aria-haspopup="dialog" aria-expanded="false">Пауза · P/Esc</button>
+        <button id="actionsToggle" type="button" aria-controls="gameActions" aria-expanded="false">Ещё</button>
       </nav>
     </footer>
     <div id="campInfo" class="stat"></div>

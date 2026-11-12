@@ -12,6 +12,7 @@ import { preloadBiomeAssets, retainBiomeAssets } from "./biome-assets.js";
 import { IMPORTED_ASSETS } from "./imported-art.js";
 import { WorldScene } from "./world-scene.js";
 import { HudScene } from "./hud-scene.js";
+import { viewportSize, initializeDock } from "./viewport.js";
 
 if (!window.Phaser) throw new Error("Local Phaser library failed to load");
 class BootScene extends Phaser.Scene {
@@ -68,12 +69,12 @@ class BootScene extends Phaser.Scene {
     selectHero(this, () => this.scene.start("World"));
   }
 }
-const mobile = () => window.innerWidth < 600;
+const initialSize = viewportSize(window.innerWidth, window.innerHeight);
+const disposeDock = initializeDock();
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "game-viewport",
-  width: mobile() ? 512 : 960,
-  height: mobile() ? 704 : 688,
+  ...initialSize,
   backgroundColor: "#203b2b",
   pixelArt: true,
   roundPixels: true,
@@ -85,16 +86,16 @@ const game = new Phaser.Game({
   scene: [BootScene, WorldScene, HudScene],
 });
 function resize() {
-  const width = mobile() ? 512 : 960,
-    height = mobile() ? 704 : 688;
+  const {width, height} = viewportSize(window.innerWidth, window.innerHeight);
+  game.scale.setParentSize(window.innerWidth, window.innerHeight);
   if (game.scale.width !== width || game.scale.height !== height)
-    game.scale.resize(width, height);
-  game.scale.refresh();
+    game.scale.setGameSize(width, height);
 }
 window.addEventListener("resize", resize);
-game.events.once(Phaser.Core.Events.DESTROY, () =>
-  window.removeEventListener("resize", resize),
-);
+game.events.once(Phaser.Core.Events.DESTROY, () => {
+  window.removeEventListener("resize", resize);
+  disposeDock();
+});
 // В пробной сборке, как и в основной, каждая загрузка начинает новую сессию.
 try {
   localStorage.removeItem("lumber-chopper-v1");
