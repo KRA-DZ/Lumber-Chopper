@@ -565,15 +565,15 @@ export function createSimulation({
     );
     return true;
   }
-  function tryAttack(id, mode = "active") {
+  function tryAttack(id, mode = "auto") {
     const enemy =
       [...(survival?.raiders || []), ...(survival?.residents || [])].find(
         (e) => e.id === id,
       ) || (survival?.monster?.id === id ? survival.monster : null);
-    const timer = mode === "auto" ? "autoTimer" : "clickTimer";
+    const timer = "autoTimer";
     if (
       !canAct() ||
-      !["auto", "active"].includes(mode) ||
+      mode !== "auto" ||
       !enemy ||
       (!enemy.invulnerable && enemy.hp<=0) ||
       enemy.warning > 0 ||
@@ -582,13 +582,11 @@ export function createSimulation({
       !nav.clearSegment(player, enemy)
     )
       return false;
-    player[timer] =
-      mode === "auto" ? gameState.autoInterval : gameState.clickInterval;
+    player[timer] = gameState.autoInterval;
     if (enemy.invulnerable) {
       showNotice("Смотритель неуязвим. Бегите к свету лагеря!", 4);
       return false;
     }
-    if (mode === "active") clearingOrder = null;
     player.swing = 0.32;
     faceTarget(enemy);
     survival?.hear(player);
@@ -596,19 +594,8 @@ export function createSimulation({
     party?.focus(core);
     return survival.hit(id, gameState.axePower);
   }
-  // All active inputs use the same range, line-of-sight and cooldown checks.
-  function attackNearby(){
-    if(!canAct()||player.clickTimer>0)return false;
-    const enemies=[...(survival?.raiders||[]),...(survival?.residents||[])].filter(e=>e.hp>0&&!(e.warning>0)&&distance(player,e)<72&&nav.clearSegment(player,e));
-    enemies.sort((a,b)=>Number(b.id===selectedEnemyId)-Number(a.id===selectedEnemyId)||distance(player,a)-distance(player,b));
-    if(enemies[0])return tryAttack(enemies[0].id);
-    if(survival?.monster&&distance(player,survival.monster)<72){
-      const hit=tryAttack(survival.monster.id);if(!hit&&player.clickTimer>0){player.swing=.32;emit('swing',{});}return hit;
-    }
-    const tree=trees.filter(t=>{const d=distance(player,t);return t.hp>0&&treeAccessible(t)&&d<72&&nav.clearSegment(player,{x:t.x+(player.x-t.x)/Math.max(1,d)*22,y:t.y+(player.y-t.y)/Math.max(1,d)*22});}).sort((a,b)=>distance(player,a)-distance(player,b))[0];
-    if(tree)return tryChop(tree.id);
-    player.clickTimer=gameState.clickInterval;player.swing=.32;emit('swing',{});return true;
-  }
+  // Retained for old integrations: combat is exclusively automatic.
+  function attackNearby(){return false;}
   const buyerSystem = shared?.buyerSystem || createBuyers({
     state: gameState,
     player,

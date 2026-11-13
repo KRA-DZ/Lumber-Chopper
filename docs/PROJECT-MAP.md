@@ -99,3 +99,7 @@
 ## Лагерь и интерфейс
 
 `construction.js: fencePlan()` и `game/camp-layout.js` задают квадратный периметр; `phaser/art/ground-art.js` — форму площадки. `game/buyers.js` разрешает точки очереди через навигацию и повторяет застрявшие маршруты. `game/regions.js: unlockEligible()` открывает рощу за костёр/забор; вызов только в общем мировом такте. `phaser/build-ui.js` — общий проект и личные панели владельцев; `phaser/inventory-grid.js` — представление реальных стеков, без изменения экономики. Компактный док/шрифт — `phaser/viewport.css`; постоянная нижняя инструкция скрыта в `phaser/hud-scene.js`. Контракты и точечные проверки: [CAMP-UI.md](CAMP-UI.md).
+
+## Автобой и меню владельца
+
+`game/minions.js` — усиленные профили и сохранение замаха; `game/simulation.js: tryAttack()` — один автоматический таймер, ручной режим запрещён. `game/session-save.js` мигрирует прежнюю прочность стражей; `createMinions.restore()` — живые роли по доле HP. `phaser/menu-navigation.js` — общая четырёхсторонняя навигация/выход; `phaser/exploration-ui.js` фиксирует владельца рюкзака. `phaser/upgrade-cell.js` — общие ячейки магазинов; `phaser/resource-receipts.js` — ограниченные эффекты реального прироста; `phaser/camp-service-view.js` — текстовые вывески и взаимодействия. Контракт и проверки: [COMBAT-MENUS.md](COMBAT-MENUS.md).

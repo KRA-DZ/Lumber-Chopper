@@ -24,7 +24,7 @@ try:
               window.roles=['melee','heavy','ranged'].map(role=>m.survival.minions.find(e=>e.role===role));
               if(roles.some(e=>!e))throw Error('Missing role');
               for(const [i,e] of roles.entries())Object.assign(e,{x:m.player.x+(i-1)*100,y:m.player.y-50,warning:0,stun:1000,path:[]});g.step(0)''')
-            assert q.evaluate('roles.map(e=>e.maxHP).join()===\'6,12,4\'')
+            assert q.evaluate('roles.map(e=>e.maxHP).join()===\'18,32,14\'')
             assert q.evaluate("roles.every((e,i)=>w.enemyView.objects.get(e.id).label.text.includes(['Преследователь','Громила','Метатель'][i]))")
             assert q.evaluate('w.enemyView.objects.get(roles[1].id).image.scaleX>w.enemyView.objects.get(roles[0].id).image.scaleX')
             assert q.evaluate('roles.every(e=>w.combatView.labels.get("enemy:"+e.id).text.includes(e.maxHP+"/"+e.maxHP+" HP"))')

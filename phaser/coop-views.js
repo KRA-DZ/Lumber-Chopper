@@ -20,9 +20,9 @@ export class CoopViews {
       card.dataset.coopPlayer = i; title.textContent = `P${i + 1} · ${i ? "стрелки" : "WASD"}`;
       title.onclick = () => { if (!scene.core.paused) { this.focus(i); scene.renderModel(); } };
       card.append(title, stats);
-      for (const [text, action] of [["Лавка", () => scene.shop.open()], ["Сумка", () => scene.explorationUi.openBag()],[`Удар · ${i?'/':'F'}`,()=>scene.core.attackNearby()]]) {
+      for (const [text, action] of [["Лавка", () => scene.shop.open()], ["Сумка", () => scene.explorationUi.openBag()]]) {
         const button = document.createElement("button"); button.textContent = text;
-        button.dataset.coopAction = text === "Лавка" ? "shop" : text==='Сумка'?'bag':'attack';
+        button.dataset.coopAction = text === "Лавка" ? "shop" : "bag";
         button.onclick = () => { if (!scene.core.paused && a.state.health > 0) { this.focus(i); action(); } };
         card.append(button);
       }

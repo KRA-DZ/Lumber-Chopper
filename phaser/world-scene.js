@@ -1,3 +1,5 @@
+import {CampServiceView} from './camp-service-view.js';
+import {ResourceReceipts} from './resource-receipts.js';
 import {ForestTasksView} from "./forest-tasks-view.js";
 import { CampCustomView } from "./camp-custom-view.js";
 import {PlantsView} from "./plants-view.js";
@@ -125,6 +127,8 @@ export class WorldScene extends Phaser.Scene {
     this.createCamp();
     this.createActors();
     this.campView = new CampView(this);
+    this.serviceView=new CampServiceView(this);
+    this.resourceReceipts=new ResourceReceipts(this);
     this.chips = this.add
       .particles(0, 0, "forest", {
         frame: "chip",
@@ -436,16 +440,11 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
-      if(!this.core.paused&&['KeyF','Slash','Numpad0','Space'].includes(event.code)&&!event.target?.closest?.('input,select,textarea,[contenteditable=true]')){
-        event.preventDefault();
-        if(event.code==='Space'&&this.core.exploration.fishing){this.core.exploration.reel();return;}
-        if(this.coopViews)this.coopViews.focus(['Slash','Numpad0'].includes(event.code)?1:0);
-        this.core.attackNearby();return;
-      }
+      if(event.code==='Space'&&!this.core.paused&&this.core.exploration.fishing){event.preventDefault();this.core.exploration.reel();return;}
       if (this.core.coop && !this.core.paused) {
         if (event.repeat && ["KeyE", "Enter"].includes(event.code)) { event.preventDefault(); return; }
-        if (["KeyE", "KeyI", "KeyR", "KeyF", "Enter", "ShiftRight", "Slash", "KeyO", "KeyL"].includes(event.code))
-          this.coopViews.focus(["Enter", "ShiftRight", "Slash", "KeyO", "KeyL"].includes(event.code) ? 1 : 0);
+        if (["KeyE", "KeyI", "KeyR", "Enter", "ShiftRight", "KeyO", "KeyL"].includes(event.code))
+          this.coopViews.focus(["Enter", "ShiftRight", "KeyO", "KeyL"].includes(event.code) ? 1 : 0);
         const index = this.core.activeActor;
         if (this.core.state.health <= 0) { event.preventDefault(); return; }
         if (["KeyE", "Enter"].includes(event.code) && this.core.helpTarget(index)) {
@@ -522,6 +521,8 @@ export class WorldScene extends Phaser.Scene {
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
       const berry=over.find(o=>o.getData("berry"));if(berry){this.core.berries.order(berry.getData("berry"));return;}
       if(over.some(o=>o.getData("fuelPad"))){const p=CAMP_SERVICE.fuelPad;this.core.setDestination(p.x,p.y);return;}
+      const campService=over.find(o=>o.getData("campService"));
+      if(campService){this.serviceView.open(campService.getData("campService"));return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
       if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
       const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
@@ -568,7 +569,6 @@ export class WorldScene extends Phaser.Scene {
       if (object?.getData("enemy")) {
         const id = object.getData("enemy");
         this.core.selectEnemy(id);
-        this.core.tryAttack(id);
         return;
       }
       if (object?.getData("site")) {
@@ -865,6 +865,8 @@ export class WorldScene extends Phaser.Scene {
     this.refreshView();
     this.atmosphere.render();
     this.campView.render();
+    this.serviceView.render();
+    this.resourceReceipts.sample();
     const openMerchant = this.core.accessible(this.merchantSite);
     this.merchantTent.setVisible(openMerchant);
     this.merchant.setVisible(openMerchant);
@@ -1530,6 +1532,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.serviceView?.destroy();this.resourceReceipts?.destroy();
     this.persistence?.destroy();
     this.combatView?.destroy();
     this.campDesk?.destroy();

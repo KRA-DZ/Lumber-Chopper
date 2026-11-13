@@ -70,7 +70,7 @@ test("regional economic loop earns a real carry purchase and preserves exact res
 });
 test("public transfers reject wrong target, distance, empty cargo and repeated same-tick debits", () => {
   const g = create();
-  const gate = g.regions.frontiers()[0];
+  const gate = g.regions.frontiers().find(g=>g.region.unlockMode!=="camp");
   g.state.campLevel = gate.region.campRequired;
   assert.equal(g.transferOneLog(gate.region.id), false);
   g.forestry.addCargo(12);
@@ -198,11 +198,11 @@ test("raiders can be killed by guarded axe commands without rewarding duplicate 
   const r = g.survival.raiders[0];
   const p = g.nav.nearestGround(1950, 1600);
   Object.assign(r, p, { path: [], repath: 100 });
-  Object.assign(g.player, { x: p.x + 40, y: p.y, path: [], autoTimer: 1000 });
+  Object.assign(g.player, { x: p.x + 40, y: p.y, path: [], autoTimer: 0 });
   assert.equal(g.tryAttack(r.id), true);
   assert.equal(g.tryAttack(r.id), false);
   for (let i = 0; i < 10 && g.survival.raiders.includes(r); i++) {
-    g.update(0.2);
+    g.update(g.state.autoInterval+.01);
     g.tryAttack(r.id);
   }
   assert.ok(!g.survival.raiders.includes(r));

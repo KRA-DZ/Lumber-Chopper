@@ -48,7 +48,7 @@ try:
             q.evaluate('''const actor=b||a;actor.state.exploration.items.berry=2;actor.state.health=70;''')
             if not mobile:q.locator('[data-coop-player="1"] [data-coop-action=bag]').click()
             else:q.locator('#bagButton').click()
-            q.wait_for_selector('#activityDialog[open]');assert q.locator('.inventory-slot').count()==12
+            q.wait_for_selector('#activityDialog[open]');assert q.locator('.inventory-grid:not(.shared-stock) .inventory-slot').count()==12
             q.locator('[data-bag-item=berry]').click();assert '6 HP' in q.locator('.inventory-detail').inner_text()
             q.screenshot(path=f'/tmp/camp-inventory-{mobile}.png')
             q.locator('[data-use-item=berry]').click();assert q.evaluate('(b||a).state.health===76&&(b?a.state.health===100:true)')

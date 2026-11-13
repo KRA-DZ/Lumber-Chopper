@@ -1,3 +1,4 @@
+import {CAMP_GUARDS} from './forest-tasks-layout.js';
 import {createSimulation} from './simulation.js';
 import {createLocalCoop} from './local-coop.js';
 import {createInitialState, DAY_SECONDS} from './config.js';
@@ -40,7 +41,11 @@ function defaults(value, template) {
   return value;
 }
 function validState(s) {
-  check(object(s)); defaults(s, createInitialState());
+  check(object(s));
+  if(s.combatBalanceVersion===undefined&&object(s.forestTasks?.guardHP)){
+    CAMP_GUARDS.forEach((g,i)=>{const hp=s.forestTasks.guardHP[g.id];if(Number.isFinite(hp)&&hp>0)s.forestTasks.guardHP[g.id]=Math.min(g.maxHP,Math.ceil(hp/[10,10,8][i]*g.maxHP));});
+  }
+  defaults(s, createInitialState());
   check(Number.isInteger(s.calendarDay) && s.calendarDay >= 0 && s.worldTime >= 0 && s.worldTime < DAY_SECONDS);
   check(!s.gameOver && s.health >= 0 && s.health <= s.maxHealth && s.coins >= 0);
   check(Array.isArray(s.unlockedRegions) && s.unlockedRegions.includes('0:0') && s.unlockedRegions.every(id => regionIds.has(id)));

@@ -6,21 +6,21 @@ import { regionAt } from "./regions.js";
 export const MINIONS = Object.freeze({
   max: 12,
   perRegion: 3,
-  hp: 6,
-  rangedHP: 4,
+  hp: 18,
+  rangedHP: 14,
   speed: 118,
   rangedSpeed: 105,
   sense: 230,
-  damage: 8,
+  damage: 12,
   structureDamage: 6,
-  windup: 0.34,
-  cooldown: 0.8,
+  windup: 0.24,
+  cooldown: 0.55,
   range: 48,
   throwRange: 245,
-  throwCooldown: 1.4,
+  throwCooldown: 1.1,
   flight: 0.65,
-  blastRadius: 24,
-  projectileDamage: 6,
+  blastRadius: 30,
+  projectileDamage: 10,
   maxProjectiles: 8,
   pathInterval: 0.2,
   streamRange: 1350,
@@ -33,7 +33,7 @@ export const MINION_ROLES = Object.freeze({
   melee: Object.freeze({name:"Преследователь",hp:MINIONS.hp,speed:MINIONS.speed,damage:MINIONS.damage,structureDamage:MINIONS.structureDamage,windup:MINIONS.windup,cooldown:MINIONS.cooldown}),
   ranged: Object.freeze({name:"Метатель",hp:MINIONS.rangedHP,speed:MINIONS.rangedSpeed,damage:MINIONS.projectileDamage,structureDamage:0,windup:MINIONS.windup,cooldown:MINIONS.throwCooldown}),
   // Tougher than ordinary minions, but weaker than the regional boss (120 HP / 12 damage).
-  heavy: Object.freeze({name:"Громила",hp:12,speed:78,damage:10,structureDamage:10,windup:.5,cooldown:1.15}),
+  heavy: Object.freeze({name:"Громила",hp:32,speed:85,damage:18,structureDamage:10,windup:.38,cooldown:.95}),
 });
 export const minionHuntNight = (state) =>
   state.worldTime >= NIGHT_START &&
@@ -180,15 +180,14 @@ export function createMinions({
     const beforeHit={x:e.x,y:e.y},actualDamage=Math.min(e.hp,damage);
     e.hp = Math.max(0, e.hp - damage);
     e.flash = 0.16;
-    e.stun = 0.1;
-    e.attack = null;
-    e.windup = 0;
+    // Hits show recoil but do not indefinitely cancel a committed strike.
+    e.stun = e.attack ? 0 : .05;
     e.path = [];
     e.repath = 0;
     if (knockback) {
       const before = { x: e.x, y: e.y },
         d = Math.max(1, distance(e, player));
-      nav.moveBody(e, ((e.x - player.x) / d) * 10, ((e.y - player.y) / d) * 10);
+      nav.moveBody(e, ((e.x - player.x) / d) * 4, ((e.y - player.y) / d) * 4);
       if (!allowed(e, e, minionHuntNight(state))) Object.assign(e, before);
     }
     emit("enemy-hit", { enemy: e, damage, actualDamage, from:{x:player.x,y:player.y}, push:{x:e.x-beforeHit.x,y:e.y-beforeHit.y} });
@@ -508,6 +507,12 @@ export function createMinions({
     projectiles,
     snapshot(){return {actors:actors.map(({region,...e})=>e),projectiles,defeated:[...defeated],epoch,shotSequence,wasHunt};},
     restore(data){
+      const guards=encampment?.guards()||[];
+      for(const e of data.actors){
+        const guard=guards.find(g=>g.id===e.id),max=guard?.maxHP||MINION_ROLES[e.role]?.hp||e.maxHP;
+        e.hp=Math.min(max,Math.max(1,Math.ceil(e.hp/e.maxHP*max)));e.maxHP=max;
+        if(guard){e.role=guard.role;state.forestTasks.guardHP[e.id]=e.hp;}
+      }
       actors.splice(0,actors.length,...data.actors.map(e=>({...e,
         region:regions.all.find(r=>r.id===e.regionId),path:[],pathVersion:-1,repath:0})));
       projectiles.splice(0,projectiles.length,...data.projectiles);

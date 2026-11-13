@@ -1,3 +1,4 @@
+import {visibleMenuActions} from './menu-navigation.js';
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { WORKERS, WORKER_PHASES } from "../game/workers.js";
 import { WORKER_ROLES, workerRole, WORKER_JOBS } from "../game/worker-jobs.js";
@@ -44,7 +45,7 @@ export function createWorkerUi(scene) {
         render(id);
         scene.renderModel();
       });
-      a.append(h, p, b);
+      const details=document.createElement("details"),summary=document.createElement("summary");summary.textContent=disabled?"Требования и описание":"Подробнее";details.append(summary,p);a.className="worker-cell";a.append(b,details);
       list.append(a);
     }
     action(
@@ -115,7 +116,7 @@ export function createWorkerUi(scene) {
       list.append(choices);
     }
     const buttons=[...list.querySelectorAll("[data-worker-action]:not([disabled])")],target=buttons.find(b=>b.dataset.workerAction===selected)||buttons[0];
-    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=buttons.indexOf(target);target.dataset.selected="true";target.focus({preventScroll:true});}
+    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=visibleMenuActions(dialog).indexOf(target);target.dataset.selected="true";target.focus({preventScroll:true});}
   }
   function resume() {
     if (pendingRoute && !scene.core.paused) {

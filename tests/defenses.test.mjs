@@ -287,7 +287,7 @@ test("axe knockback respects the base of a solid building", () => {
   // Shop occupies x1340..1500, y1588..1620. Push into its southern edge.
   const r = g.survival.raiders[0];
   Object.assign(r, { x: 1450, y: 1631, path: [], repath: 100 });
-  Object.assign(g.player, { x: 1450, y: 1671, path: [], autoTimer: 1000 });
+  Object.assign(g.player, { x: 1450, y: 1671, path: [], autoTimer: 0 });
   assert.ok(g.nav.isWalkable(r.x, r.y));
   assert.ok(g.tryAttack(r.id));
   assert.ok(g.nav.isWalkable(r.x, r.y));

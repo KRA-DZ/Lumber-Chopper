@@ -20,6 +20,7 @@ export function createInitialState({ appearance = "traveler", colors=null } = {}
   const state = {
     appearance: normalizeAppearance(appearance), // Только внешний вид: вариант 2 или 3, характеристики одинаковы.
     heroColors:normalizeHeroColors(colors), // Личные визуальные настройки; не влияют на экономику.
+    combatBalanceVersion: 2, // Save migration preserves wounded ratios when enemy tiers change.
     health: 100, // Три ошибки рядом со Смотрителем смертельны; рассвет восстанавливает здоровье.
     maxHealth: 100,
     campFuel: 0, // Общий костёр строится потухшим; бревно = 60 с, уголь = 180 с, предел 600–1200 с.

@@ -25,5 +25,11 @@ export function inventoryGrid(state){
     grid.append(cell);
   }
   const empty=document.createElement('div');empty.className='inventory-slot inventory-unused';empty.setAttribute('aria-hidden','true');grid.append(empty);
-  root.append(grid,detail);return root;
+  root.append(grid,detail);
+  const heading=document.createElement('h3'),stock=document.createElement('div');heading.textContent='Общий склад лагеря';stock.className='inventory-grid shared-stock';
+  for(const [id,label] of Object.entries({stone:'Камень',boards:'Доски',blocks:'Блоки',coal:'Уголь',kits:'Ремнаборы'})){
+    const cell=document.createElement('div'),name=document.createElement('strong'),count=document.createElement('span');cell.className='inventory-slot';cell.dataset.sharedItem=id;
+    name.textContent=label;count.textContent=state.campIndustry.materials[id];cell.append(name,count);stock.append(cell);
+  }
+  root.append(heading,stock);return root;
 }
