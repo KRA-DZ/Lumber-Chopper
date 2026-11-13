@@ -293,5 +293,13 @@ export function createBiomeEnemies({
       }
     }
   }
-  return { actors, update, hit, dawn };
+  return { actors, update, hit, dawn,
+    snapshot(){return {actors:actors.map(({region,...e})=>e),defeated:[...defeated],observedNight};},
+    restore(data){
+      actors.splice(0,actors.length,...data.actors.map(e=>({...e,
+        region:regions.all.find(r=>r.id===e.regionId),path:[],pathVersion:-1,repath:0})));
+      defeated.clear();for(const id of data.defeated)defeated.add(id);
+      observedNight=data.observedNight;scan=2;
+    },
+  };
 }

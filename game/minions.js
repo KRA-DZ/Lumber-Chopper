@@ -506,6 +506,14 @@ export function createMinions({
   return {
     actors,
     projectiles,
+    snapshot(){return {actors:actors.map(({region,...e})=>e),projectiles,defeated:[...defeated],epoch,shotSequence,wasHunt};},
+    restore(data){
+      actors.splice(0,actors.length,...data.actors.map(e=>({...e,
+        region:regions.all.find(r=>r.id===e.regionId),path:[],pathVersion:-1,repath:0})));
+      projectiles.splice(0,projectiles.length,...data.projectiles);
+      defeated.clear();for(const id of data.defeated)defeated.add(id);
+      ({epoch,shotSequence,wasHunt}=data);scan=2;
+    },
     hit,
     update,
     get hunt() {

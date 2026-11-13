@@ -163,5 +163,13 @@ export function createCombatLoot({
     }
     collect(dt);
   }
-  return { piles, drop: shared?.drop || drop, update, collect };
+  return { piles, drop: shared?.drop || drop, update, collect,
+    snapshot(){return {piles:[...piles],seen:[...seen],bosses:[...bosses],day,sequence,pickupTimer,limitNotice};},
+    restore(data){
+      piles.clear();for(const [id,pile] of data.piles)piles.set(id,pile);
+      seen.clear();for(const id of data.seen)seen.add(id);
+      bosses.clear();for(const id of data.bosses)bosses.add(id);
+      ({day,sequence,pickupTimer,limitNotice}=data);
+    },
+  };
 }

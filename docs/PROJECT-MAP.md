@@ -58,7 +58,7 @@
 
 Лагерь со стражами и вышка: `game/forest-tasks-layout.js` — макет/баланс, `game/forest-tasks.js` — общий результат боя/сундук/разведка; охрана использует `game/minions.js`, ремонт — `game/world-works.js`. Прототип вида — `phaser/forest-tasks-view.js`, сведения карты — `phaser/region-map.js`. Контракты, оформление и целевые тесты: [FOREST-TASKS.md](FOREST-TASKS.md).
 
-Украшения/рекорды: `game/camp-custom.js`, `game/record-book.js`, `phaser/camp-custom-view.js`; баланс/проверки — [CAMP-CUSTOM.md](CAMP-CUSTOM.md). Исключение из сброса прогресса: только местные рекорды и открытые украшения. Быстрый календарь — `state.cycleSpeed`, только `game/cycle.js`; обычный темп выбран по умолчанию.
+Украшения/рекорды: `game/camp-custom.js`, `game/record-book.js`, `phaser/camp-custom-view.js`; баланс/проверки — [CAMP-CUSTOM.md](CAMP-CUSTOM.md). Рекорды и открытые украшения хранятся отдельно от сохранения забега. Быстрый календарь — `state.cycleSpeed`, только `game/cycle.js`; обычный темп выбран по умолчанию.
 
 Лесопилка: баланс — `game/sawmill-production-config.js`, ремонт/партии — `game/sawmill-production.js`, физические грузы — `game/sawmill-freight.js`, отображение — `phaser/sawmill-production-view.js`. Правила и целевые команды: [SAWMILL-PRODUCTION.md](SAWMILL-PRODUCTION.md).
 
@@ -91,3 +91,7 @@
 `game/simulation.js: attackNearby()` объединяет активные удары; `game/hit-impact.js` отвечает за отбрасывание героя через навигацию. `phaser/combat-view.js` — HP над головами, реакции и пул чисел; `phaser/device-profile.js` ограничивает стартовый выбор на сенсорных устройствах. Проверки: `tests/combat-feedback.test.mjs`, `tests/combat_feedback_smoke.py`. [Управление и баланс](COMBAT-FEEDBACK.md).
 
 Роли малых врагов и их параметры: `game/minions.js: MINION_ROLES`; отступление метателя — `retreatPoint()`, HP/сила/скорость берутся из профиля роли. Подписи и масштаб — `phaser/enemy-view.js`; целевая браузерная проверка — `tests/minion_roles_smoke.py`.
+
+## Сохранения забега
+
+`game/session-save.js` — версионированный снимок, проверка данных, восстановление solo/coop и хранилище с резервной копией. Подсистемы сохраняют приватные часы и реестры через `snapshot()/restore()`. `phaser/session-persistence.js` — автосохранение/кнопки/события страницы; `phaser/hero-selection.js` — явное продолжение. Условия генерации воды по регионам — `world.generationLevels`. [Контракт и целевые проверки](SAVES.md).

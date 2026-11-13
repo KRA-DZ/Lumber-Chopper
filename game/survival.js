@@ -355,6 +355,15 @@ export function createSurvival({
     }
   }
   return {
+    snapshot(){return {monster,pending,sequence,warningTimer,hitCooldown,wave,raiders,
+      watcher:watcher.snapshot(),residents:residents?.snapshot(),minions:minions?.snapshot(),raidShots:raidShots.snapshot()};},
+    restore(data){
+      ({monster,pending,sequence,warningTimer,hitCooldown,wave}=data);
+      raiders.splice(0,raiders.length,...data.raiders);
+      for(const e of [...raiders,...(monster?[monster]:[])]){e.path=[];e.repath=0;}
+      watcher.restore(data.watcher);residents?.restore(data.residents);
+      minions?.restore(data.minions);raidShots.restore(data.raidShots);
+    },
     hear: watcher.hear,
     get wave() {
       return wave;

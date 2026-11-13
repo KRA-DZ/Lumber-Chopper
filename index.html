@@ -498,6 +498,9 @@
       <button type="button" data-menu-close>Продолжить</button>
     </div>
     <p data-pause-status>Время, бой и сбор ресурсов приостановлены.</p>
+    <button type="button" data-session-save>Сохранить прогресс</button>
+    <p data-save-status role="status"></p>
+    <button type="button" data-session-new>Новая игра</button>
     <button type="button" data-custom-open>Украшения, цели и рекорды · V</button>
     <h3>Настройки</h3>
     <div class="menu-settings">
@@ -546,7 +549,7 @@
         </p>
 
     </details>
-    <p>Каждая загрузка начинает новую смену. Настройки и прогресс не сохраняются.</p>
+    <p>Забег сохраняется на этом устройстве автоматически и кнопкой в паузе. Вне игры время остановлено. Очистка данных браузера удаляет сохранение.</p>
   </dialog>
   <dialog id="campDesk" aria-labelledby="campDeskTitle">
     <div class="dialog-top"><h2 id="campDeskTitle">Хозяйство лагеря</h2><button type="button" data-camp-close>Закрыть</button></div>
@@ -643,9 +646,13 @@
     <form>
       <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
       <h2 id="heroTitle">Кто отправится в лес?</h2>
+      <section aria-label="Сохранённая игра">
+        <p data-session-info role="status"></p>
+        <button type="button" data-session-continue hidden>Продолжить игру</button>
+      </section>
       <label>Имя для местных рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
       <label>Темп смены <select name="tempo"><option value="normal">Обычный — 10 минут за сутки</option><option value="quick">Быстрый — 3 минуты света и 1 минута ночи</option></select></label>
-      <p>Скорость построек одинакова. Мир начинается заново; рекорды и открытые украшения сохраняются на этом устройстве.</p>
+      <p>Можно продолжить сохранённую игру или начать новую. Новая игра заменяет сохранённый забег; рекорды и открытые украшения остаются.</p>
       <fieldset>
         <legend>Режим игры</legend>
         <label><input type="radio" name="players" value="1" checked /> Один игрок</label>
