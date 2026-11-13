@@ -289,7 +289,7 @@ export function guideDestination(c, action) {
   if (action === "sell") return c.sale;
   if (action === "build") return c.build;
   if (action === "stoke") return {x:CENTER.x,y:CENTER.y+65};
-  if (action === "region") return c.regions?.frontiers().filter(g=>c.state.campLevel>=g.region.campRequired)
+  if (action === "region") return c.regions?.frontiers().filter(g=>g.region.unlockMode!=="camp"&&c.state.campLevel>=g.region.campRequired)
     .sort((a,b)=>a.region.cost-b.region.cost||Math.hypot(a.x-c.player.x,a.y-c.player.y)-Math.hypot(b.x-c.player.x,b.y-c.player.y))[0]||null;
   if (action === "stone") {
     const rock=c.world.boulders?.filter(r=>c.accessible(r)&&(c.state.boulderHP[r.id]??r.maxHP)>0)

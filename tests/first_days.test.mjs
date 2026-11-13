@@ -128,7 +128,7 @@ test("first-day budget earns carry, a fire and an axe by walking before dusk, th
   g.lore.read({ id: "first-dawn" });
   assert.ok(g.lore.claim("warm-dawn"));
   assert.equal(g.guide.id, "settle");
-  assert.equal(g.guide.action, "region");
+  assert.equal(g.guide.action, "build");
 });
 test("daily plans remain optional, reflect actual accomplishments and pay no automatic rewards", () => {
   const g = create(),

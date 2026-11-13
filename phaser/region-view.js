@@ -209,7 +209,7 @@ export class RegionView {
       const near = this.scene.nearView(gate, view, 240);
       objects.forEach((o) => o.setVisible(near));
       label.setText(
-        `${c.state.regionWood[gate.region.id] || 0}/${gate.region.cost} брёвен · ${c.state.regionStone[gate.region.id] || 0}/${gate.region.stoneCost} камня\nЛагерь ${gate.region.campRequired}${c.state.campLevel < gate.region.campRequired ? " · сначала улучшите базу" : ""}`,
+        gate.region.unlockMode==='camp'?'Костёр + забор\nОткроется автоматически':`${c.state.regionWood[gate.region.id] || 0}/${gate.region.cost} брёвен · ${c.state.regionStone[gate.region.id] || 0}/${gate.region.stoneCost} камня\nЛагерь ${gate.region.campRequired}${c.state.campLevel < gate.region.campRequired ? " · сначала улучшите базу" : ""}`,
       );
       this.scene.worldHints.offer(objects[2], gate, { eligible: near, range: 210, priority: 60 });
       this.scene.worldHints.offer(label, gate, { eligible: near, range: 210, priority: 65 });

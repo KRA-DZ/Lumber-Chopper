@@ -8,7 +8,7 @@ export function campMilestones(c) {
     {id:"light",name:"Зажечь костёр",done:flags.lit,action:"stoke",hint:"Подойдите с бревном к построенному костру и нажмите E/Enter. Топливо можно добавлять днём."},
     {id:"sale",name:"Продать древесину",done:flags.sold||actors.some(a=>a.tutorial.sold),action:"sell",hint:"Покупатели ждут на золотой площадке до ночи."},
     {id:"carry",name:"Улучшить переноску",done:actors.some(a=>a.state.carryLevel>0),action:"shop",hint:"Купите силу переноски в личной лавке: 2 → 4 бревна за рейс."},
-    {id:"region",name:"Открыть соседний регион",done:(s.unlockedRegions?.length||1)>1,action:"region",hint:"Постройте хотя бы один объект лагеря и внесите 48 брёвен на соседней границе. Взносы общие."},
+    {id:"region",name:"Открыть соседний регион",done:(s.unlockedRegions?.length||1)>1,action:hasCampBuilding(s,"fire")&&hasCampBuilding(s,"fence")?"region":"build",hint:"Костёр и забор автоматически откроют рощу древнего дуба без платы. Другие соседние регионы требуют брёвна на границе."},
     {id:"stone",name:"Добыть первый камень",done:flags.mined,action:"stone",hint:"В соседнем регионе подойдите к большому валуну: герой добывает камень автоматически. Нужны свободные места в сумке."},
   ];
 }

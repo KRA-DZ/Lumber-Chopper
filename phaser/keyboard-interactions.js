@@ -127,7 +127,7 @@ export function interactNearby(scene) {
     } })),
     ...c.world.clues.filter(site => c.accessible(site)).map(site => ({ p: site, range: 120, act: () => scene.openClue(site) })),
     ...(c.defenses?.all().filter(d => d.kind === "gate") || []).map(d => ({ p: d, range: 110, act: () => c.defenses.toggleGate(d.id) })),
-    ...c.regions.frontiers().map(g => ({ p: g, range: 130, act: () => { c.setDestination(g.x,g.y); c.showNotice(`Нужно: ${g.region.cost} брёвен, ${g.region.stoneCost} камня; лагерь ${g.region.campRequired}.`); } })),
+    ...c.regions.frontiers().map(g => ({ p: g, range: 130, act: () => { c.setDestination(g.x,g.y); c.showNotice(g.region.unlockMode==='camp'?'Роща откроется после постройки костра и забора. Брёвна платить не нужно.':`Нужно: ${g.region.cost} брёвен, ${g.region.stoneCost} камня; лагерь ${g.region.campRequired}.`); } })),
   ];
   const choice = choices.filter(x => near(x.p) < x.range).sort((a,b) => near(a.p)-near(b.p))[0];
   if (choice) { choice.act(); return; }
