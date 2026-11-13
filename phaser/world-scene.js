@@ -75,6 +75,8 @@ export class WorldScene extends Phaser.Scene {
     this.core = (this.registry.get("playerCount") === 2 ? createLocalCoop : createSimulation)({
       regional: true,
       appearance: this.registry.get("heroAppearance"),
+      colors:this.registry.get('heroChoices')?.[0]?.colors,
+      heroChoices:this.registry.get('heroChoices'),
       emit: (type, event) => this.onModelEvent(type, event),
     });
     this.core.state.cycleSpeed=this.registry.get("cycleSpeed")===2.5?2.5:1;

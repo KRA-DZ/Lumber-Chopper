@@ -21,6 +21,15 @@ footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px
 #fishingControls:not([hidden]) { position:fixed; z-index:6; left:50%; bottom:180px; transform:translateX(-50%); width:min(460px,90vw); margin:0; }
 #heroDialog { max-height:calc(100dvh - 24px); overflow:auto; }
 #heroDialog::backdrop { background:radial-gradient(ellipse at center,#344c3bdb,#101f20f5); }
+.hero-customizer { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:10px; }
+.hero-customizer fieldset { min-width:0; border:1px solid #7e8b68; border-radius:6px; padding:8px; }
+.hero-customizer fieldset[hidden] { display:none; }
+.hero-customizer label { display:flex; justify-content:space-between; gap:8px; margin:8px 0; }
+.hero-customizer select { max-width:65%; min-height:36px; color:#f0dfb4; background:#263e31; border:1px solid #7e8b68; border-radius:4px; font:inherit; }
+.hero-live-preview { width:168px; height:182px; aspect-ratio:auto; margin:8px auto; border:1px solid #7e8b68; box-shadow:none; background:#31473e; }
+.hero-preview-controls,.hero-presets { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+.hero-preview-controls button,.hero-presets button { min-height:36px; padding:5px 7px; font-size:11px; }
+.hero-presets { margin:8px 0; }
 @media(max-width:900px) {
   footer { width:calc(100% - 16px); }
   footer .game-actions { grid-template-columns:repeat(4,minmax(0,1fr)); }

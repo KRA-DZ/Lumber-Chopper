@@ -5,6 +5,7 @@
 ## Вход и границы
 
 - `index.html` → `phaser/main.js`: единственная игра, BootScene, загрузка PNG и выбор героя, конфигурация Phaser. `phaser.html` перенаправляет сюда с сохранением параметров/якоря.
+- Цвета героев: `game/hero-colors.js` — палитры и нормализация; `state.heroColors` личный. `phaser/hero-customizer.js` — стартовые панели, `phaser/hero-color-art.js` — общая отрисовка, `phaser/people-assets.js` — выбранные кадры в атласе. Маски — `scripts/prepare_hero_masks.py`; [HERO-COLORS.md](HERO-COLORS.md).
 - Полнооконный вид: `phaser/viewport.js` — логическое разрешение/лимиты и раскрытие действий, `phaser/viewport.css` — DOM-панель, `phaser/hud-scene.js` — отступ подсказок над панелью; [VIEWPORT.md](VIEWPORT.md). Проверки: `tests/viewport.test.mjs`, `tests/viewport_smoke.py`.
 - Земля №4: `scripts/prepare_ground.py` → восемь PNG `src/assets/biomes/`; края тропинок — `phaser/art/ground-art.js`, биомы — `game/biome-terrain.js`. Источник и проверки: [TERRAIN-STYLE4.md](TERRAIN-STYLE4.md).
 - `phaser/world-scene.js`: WorldScene, связывание модели с вводом и представлениями; `phaser/hud-scene.js` — HUD.

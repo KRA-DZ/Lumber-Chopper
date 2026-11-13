@@ -4,8 +4,10 @@ import { createLocalParty } from "./local-party.js";
 export function createLocalCoop(options = {}) {
   const emit = options.emit || (() => {}), party = createLocalParty(emit), actors = party.actors;
   for (let i = 0; i < 2; i++) {
-    const appearance = i ? options.appearance === "woodcutter" ? "traveler" : "woodcutter" : options.appearance;
-    const core = createSimulation({ ...options, appearance, regional: true, party, shared: actors[0] || null,
+    const choice=options.heroChoices?.[i];
+    const appearance = choice?.appearance || (i ? options.appearance === "woodcutter" ? "traveler" : "woodcutter" : options.appearance);
+    const colors=choice?.colors || (i?null:options.colors);
+    const core = createSimulation({ ...options, appearance, colors, regional: true, party, shared: actors[0] || null,
       emit: (type, event) => emit(type, { actor: i, ...event }) });
     core.player.id = i; core.player.x += i ? 34 : -34;
     core.state.priceMultiplier = 1.75;

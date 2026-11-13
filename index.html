@@ -651,16 +651,16 @@
         <label><input type="radio" name="players" value="2" /> Вдвоём на одном компьютере</label>
         <p>Вдвоём: игрок 1 — WASD и E, игрок 2 — стрелки и Enter. При удалении экран разделяется. Для помощи товарищу удерживайте E / Enter рядом с ним 3 секунды.</p>
       </fieldset>
-      <p>Выберите героя. У обоих одинаковые сила, скорость и вместимость. Вдвоём второй игрок получает другого героя; прокачка у каждого своя.</p>
+      <p>Выберите героя и цвета. Сила, скорость и вместимость одинаковы. Вдвоём каждый выбирает внешность и прокачивается отдельно.</p>
       <fieldset class="hero-choices">
-        <legend>Персонаж</legend>
+        <legend>Персонаж игрока 1</legend>
         <label class="hero-card">
           <input type="radio" name="appearance" value="traveler" checked />
           <img
             src="./src/assets/people/hero2-portrait.png"
             alt="Путешественник в бирюзовой куртке"
-            width="110"
-            height="160"
+            width="72"
+            height="104"
           />
           <b>Путешественник</b><span>Вариант 2</span>
         </label>
@@ -669,12 +669,13 @@
           <img
             src="./src/assets/people/hero3-portrait.png"
             alt="Лесорубка с косой и зелёным шарфом"
-            width="110"
-            height="160"
+            width="72"
+            height="104"
           />
           <b>Лесорубка</b><span>Вариант 3</span>
         </label>
       </fieldset>
+      <div data-hero-customizer class="hero-customizer"></div>
       <p data-hero-error role="alert"></p>
       <button type="submit" data-hero-start>Начать смену</button>
     </form>
