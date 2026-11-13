@@ -37,3 +37,69 @@ footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px
   footer .game-actions :is(#campButton,#shopButton,#attackButton,#menuButton,#actionsToggle) { display:block; order:-1; }
   footer .game-actions.expanded button { display:block; }
 }
+
+/* Compact adventure UI: existing item PNGs, readable text, larger click targets. */
+:root { --ui-bg:#182b29f5; --ui-card:#283e37; --ui-line:#71816b; --ui-gold:#e0bd79; --ui-text:#f3ead5; }
+body,button,input,select,textarea,dialog h2,dialog h3 { font-family: "Segoe UI",system-ui,sans-serif; }
+button { min-height:40px; border:1px solid #9a865d; border-radius:7px; background:linear-gradient(#e5c58b,#c8a56a); color:#25382f; font-weight:650; box-shadow:0 2px 0 #15272280; }
+button:hover:not(:disabled) { filter:brightness(1.08); }
+button:focus-visible,summary:focus-visible { outline:3px solid #f6d68c; outline-offset:2px; }
+button:disabled { opacity:.55; }
+dialog { color:var(--ui-text); background:var(--ui-bg); border:1px solid #a28c64; border-radius:14px; box-shadow:0 20px 70px #080f15b3; font-size:15px; line-height:1.5; }
+dialog h2 { font-size:24px; letter-spacing:0; } dialog h3 { font-size:17px; }
+dialog p { color:#d7dfcc; } dialog::backdrop { background:#08131b99; }
+.dialog-top { position:sticky; top:-1px; z-index:1; background:var(--ui-bg); padding-bottom:8px; }
+.game-live footer { width:min(960px,calc(100% - 20px)); padding:5px; border:1px solid #70806b; border-radius:12px; gap:5px; background:#172b29ed; box-shadow:0 4px 18px #0a171b88; }
+.game-live footer:not(.is-coop) { flex-direction:row; align-items:center; }
+footer .stats { flex-wrap:nowrap; flex-shrink:0; gap:8px; }
+footer .stat { color:#d5dfca; font-size:11px; white-space:nowrap; } footer .stat b { color:#f3ce85; font-size:13px; }
+footer .game-actions { flex:1; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+.game-live footer .game-actions button { display:none; min-height:42px; font-size:12px; padding:5px; border-radius:7px; }
+.game-live footer .game-actions :is(#campButton,#shopButton,#attackButton,#bagButton,#menuButton,#actionsToggle) { display:block; order:-1; }
+.game-live footer .game-actions.expanded button { display:block; }
+#attackButton { background:linear-gradient(#e6ac82,#c98262); }
+footer.is-coop>.stats { display:none; }
+#coopPlayers { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+#coopPlayers article { display:grid; grid-template-columns:auto minmax(0,1fr) repeat(3,42px); align-items:center; gap:3px; margin:0; padding:3px; background:#253c34; border:1px solid #526b61; border-radius:8px; }
+#coopPlayers article[data-active=true] { border-color:#d8b475; }
+#coopPlayers button { min-height:36px; padding:3px; margin:0; font-size:11px; }
+#coopPlayers p { margin:0; padding:0 3px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#coopPlayers article[data-coop-player="1"] { border-color:#69949a; }
+.personal-shop,.personal-builder { position:absolute; top:10px; left:10px; right:auto; bottom:auto; width:calc(50% - 20px); max-height:calc(100% - 126px); overflow:auto; z-index:10; padding:14px; box-sizing:border-box; color:var(--ui-text); background:var(--ui-bg); border:1px solid var(--ui-gold); border-radius:12px; box-shadow:0 10px 30px #09151b80; font-size:14px; line-height:1.45; }
+.personal-shop[data-player-shop="1"],.personal-builder[data-player-build="1"] { left:auto; right:10px; border-color:#89bec5; }
+.personal-builder h2 { font-size:20px; margin:0 0 6px; }
+.personal-builder button { width:100%; min-height:42px; }
+.build-option,.activity-card,.camp-card,.shop-item { border:1px solid #617266; border-radius:9px; padding:12px; background:#263d35; }
+.build-option h3 { font-size:16px; } .build-option p { font-size:14px; line-height:1.5; }
+.build-option[data-selected=true] { outline:2px solid #efd18e; background:#354d3d; }
+.inventory-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:14px 0; }
+.inventory-slot { position:relative; display:flex; min-height:100px; flex-direction:column; justify-content:center; align-items:center; gap:5px; margin:0; padding:8px 4px; border:1px solid #73806b; border-radius:9px; background:linear-gradient(#36483b,#293b34); color:#f4e6c6; box-shadow:inset 0 1px 0 #b3b99422; }
+.inventory-slot img { width:40px; height:40px; image-rendering:pixelated; object-fit:contain; }
+.inventory-slot strong { font-size:12px; font-weight:600; }
+.inventory-slot[data-empty=true] img,.inventory-slot[data-empty=true] .inventory-glyph { opacity:.35; }
+.inventory-slot[aria-pressed=true] { outline:2px solid #f2cf84; border-color:#f2cf84; }
+.inventory-count { position:absolute; top:5px; right:6px; padding:1px 4px; border-radius:4px; color:#ffe0a0; background:#102823d9; font-size:12px; }
+.inventory-glyph { font-size:32px; height:40px; color:#b9c5c0; }
+.inventory-unused { opacity:.35; border-style:dashed; }
+.inventory-detail { min-height:42px; padding:10px; background:#132925; border-left:3px solid #b99d68; border-radius:4px; }
+.inventory-routes { margin-top:18px; } .inventory-routes summary { cursor:pointer; font-weight:650; padding:10px 0; }
+@media(max-width:600px) {
+  .game-live footer:not(.is-coop) { flex-direction:column; }
+  .game-live footer { width:calc(100% - 16px); }
+  footer .game-actions { width:100%; }
+  footer .game-actions button { min-width:0; }
+  dialog { width:calc(100% - 36px); padding:14px; font-size:14px; }
+  .inventory-grid { gap:6px; } .inventory-slot { min-height:90px; }
+  .inventory-slot strong { font-size:11px; }
+  #coopPlayers article { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  #coopPlayers p { grid-column:span 3; }
+}
+@media(max-aspect-ratio:1/1) {
+  .personal-shop,.personal-builder { width:calc(100% - 20px); max-height:calc(50% - 20px); }
+  .personal-shop[data-player-shop="1"],.personal-builder[data-player-build="1"] { top:calc(50% + 10px); bottom:auto; right:10px; max-height:calc(50% - 126px); }
+}
+footer :is(#shopButton,#attackButton,#bagButton)::before { content:""; display:inline-block; width:18px; height:18px; margin-right:4px; vertical-align:middle; background:center/contain no-repeat; image-rendering:pixelated; }
+footer #shopButton::before { background-image:url('../src/assets/loot-items/icons/coins.png'); }
+footer #attackButton::before { background-image:url('../src/assets/items/icons/axe-0.png'); }
+footer #bagButton::before { background-image:url('../src/assets/items/icons/wood-bundle.png'); }
+@media(max-width:600px) { footer :is(#shopButton,#attackButton,#bagButton)::before { display:none; } }

@@ -5,7 +5,7 @@ export class WatcherHud {
     this.arrow = scene.add.graphics().setVisible(false);
     this.label = scene.add
       .text(0, 168, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "13px",
         color: "#ead19f",
         backgroundColor: "#3c3436",

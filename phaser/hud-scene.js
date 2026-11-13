@@ -19,13 +19,13 @@ export class HudScene extends Phaser.Scene {
   create() {
     this.panel = this.add.graphics();
     this.clock = this.add.text(22, 18, "", {
-      fontFamily: "monospace",
+      fontFamily: "Arial, sans-serif",
       fontSize: "12px",
       color: "#f2e3af",
     });
     this.banner = this.add
       .text(0, 100, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "15px",
         color: "#ffe2a0",
         backgroundColor: "#263e2b",
@@ -36,7 +36,7 @@ export class HudScene extends Phaser.Scene {
       .setVisible(false);
     this.discovery = this.add
       .text(0, 100, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "12px",
         color: "#f4db9c",
         backgroundColor: "#263e2b",
@@ -46,7 +46,7 @@ export class HudScene extends Phaser.Scene {
       .setVisible(false);
     this.tutorial = this.add
       .text(0, 0, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "12px",
         color: "#eddfad",
         backgroundColor: "#263e2b",
@@ -64,7 +64,7 @@ export class HudScene extends Phaser.Scene {
     this.watcherHud = new WatcherHud(this);
     this.guideButton = this.add
       .text(0, 0, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "12px",
         color: "#2c3c2d",
         backgroundColor: "#d9b66d",
@@ -155,13 +155,13 @@ export class HudScene extends Phaser.Scene {
         .padStart(2, "0");
     g.clear()
       .fillStyle(0x243c2d, 0.95)
-      .fillRect(14, 12, this.scale.width < 600 ? 265 : 330, 150)
+      .fillRoundedRect(14, 12, this.scale.width < 600 ? 265 : 330, 150,10)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     const order=c.orders.current,orderProgress=order?.resource==="logs"?c.orders.data.active.logs.length:order?Math.min(order.amount,c.state.campIndustry.materials[order.resource]):0,
       location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
-        `${c.player.room ? "Дом лагеря" : regionAt(c.player.x,c.player.y)?.name||"Лес"} · Камень ${c.state.stone}`;
-    this.clock.setText(
-      `День ${c.dayNumber + 1} · ${c.state.nightsSurvived} ночей · ${hour}:${minute}\n${this.world.atmosphere.weather.profile.name} · ${hasCampBuilding(c.state,"fire") ? `Огонь ${Math.ceil(c.state.campFuel)} с` : "Нет костра"}\n${location}\n${c.coop ? `Игрок ${c.activeActor + 1} · ` : ""}База ${c.state.campHealth}/${c.state.maxCampHealth}`,
+        `${c.player.room ? "Дом лагеря" : regionAt(c.player.x,c.player.y)?.name||"Лес"}`;
+    this.clock.setFontSize(this.scale.width<600?17:14).setLineSpacing(2).setText(
+      `День ${c.dayNumber+1} · ${c.state.nightsSurvived} ночей · ${hour}:${minute}\n${hasCampBuilding(c.state,"fire")?`Огонь ${Math.ceil(c.state.campFuel)} с`:"Нет костра"} · База ${c.state.campHealth}/${c.state.maxCampHealth}\n${location.length>31?location.slice(0,30)+"…":location}`,
     );
     const adjacent = new Set(c.regions.frontiers().map((g) => g.region.id));
     for (const r of c.regions.all) {
@@ -246,19 +246,19 @@ export class HudScene extends Phaser.Scene {
       this.tutorial
         .setFontSize(this.scale.width < 600 ? 14 : 12)
         .setWordWrapWidth(this.scale.width - 64);
-      this.guideButton.setFontSize(this.scale.width < 600 ? 14 : 12);
+      this.guideButton.setFontSize(14).setWordWrapWidth(Math.min(430,this.scale.width-64));
     }
     this.tutorial
       .setPosition(this.scale.width / 2, this.scale.height - dockInset(this) - 12)
-      .setText(`${c.coop ? "1: WASD / E · 2: стрелки / Enter · помощь: удерживать E / Enter\n" : ""}${guide.title}\n${guide.text}`)
-      .setVisible(!quietPreparation);
+      .setText(guide.text)
+      .setVisible(false);
     this.guideButton
-      .setText(guide.button || "")
+      .setText(fishing ? guide.button || "" : guide.action ? `${guide.title} · ${guide.button || "К цели"}` : "")
       .setPosition(
         this.scale.width / 2,
-        this.tutorial.y - this.tutorial.height - 8,
+        this.scale.height - dockInset(this) - 8,
       )
-      .setVisible(!!guide.action && !c.state.gameOver);
+      .setVisible(!!guide.action && !c.state.gameOver && !c.paused && !(c.actors||[c]).some(a=>a.player.menuOpen));
     this.watcherHud.refresh();
     this.repairControl.refresh();
     const messageY = this.dayHud.warning.visible

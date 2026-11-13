@@ -889,6 +889,7 @@ export class WorldScene extends Phaser.Scene {
       if (actor.player.room) { entry.axe.setVisible(false); for (const log of entry.cargo) log.setVisible(false); }
     }
     this.keyboardUi?.refresh();
+    this.buildUi?.refresh();
     this.customView?.render();
     this.plantsView?.render();
     this.forestTasksView?.render();
@@ -913,7 +914,7 @@ export class WorldScene extends Phaser.Scene {
         ready = affordableCombatUpgrades(s).length > 0;
       const description = `Лавка · ${s.coins} монет${ready ? " · доступно улучшение" : ""}`;
       shop.textContent =
-        this.scale.width < 600 ? `Лавка${ready ? " · +" : ""}` : description;
+        `Лавка${ready ? " · +" : ""}`;
       shop.title = description;
       shop.setAttribute("aria-label", description);
       document.querySelector("#campInfo").textContent = c.regions

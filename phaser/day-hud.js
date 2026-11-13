@@ -14,12 +14,12 @@ export class DayHud {
       event.stopPropagation(),
     );
     this.phase = scene.add.text(22, 91, "", {
-      fontFamily: "monospace",
+      fontFamily: "Arial, sans-serif",
       fontSize: "11px",
       color: "#efdb9e",
     });
     this.raid = scene.add.text(22, 124, "", {
-      fontFamily: "monospace",
+      fontFamily: "Arial, sans-serif",
       fontSize: "11px",
       color: "#cbd4ad",
     });
@@ -28,7 +28,7 @@ export class DayHud {
     });
     this.warning = scene.add
       .text(0, 168, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial, sans-serif",
         fontSize: "13px",
         color: "#ffe3b0",
         backgroundColor: "#633f31",

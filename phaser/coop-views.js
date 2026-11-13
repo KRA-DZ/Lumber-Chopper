@@ -17,7 +17,7 @@ export class CoopViews {
     this.panel = document.createElement("div"); this.panel.id = "coopPlayers";
     this.cards = scene.core.actors.map((a, i) => {
       const card = document.createElement("article"), title = document.createElement("button"), stats = document.createElement("p");
-      card.dataset.coopPlayer = i; title.textContent = `Игрок ${i + 1} · ${i ? "стрелки / Enter" : "WASD / E"}`;
+      card.dataset.coopPlayer = i; title.textContent = `P${i + 1} · ${i ? "стрелки" : "WASD"}`;
       title.onclick = () => { if (!scene.core.paused) { this.focus(i); scene.renderModel(); } };
       card.append(title, stats);
       for (const [text, action] of [["Лавка", () => scene.shop.open()], ["Сумка", () => scene.explorationUi.openBag()],[`Удар · ${i?'/':'F'}`,()=>scene.core.attackNearby()]]) {
@@ -29,6 +29,7 @@ export class CoopViews {
       this.panel.append(card); return { card, stats };
     });
     document.querySelector("footer").prepend(this.panel);
+    document.querySelector("footer").classList.add("is-coop");
   }
   focus(i) { this.scene.core.focus(i); Object.assign(this.scene, this.entries[i]); }
   withActor(i, fn) {
@@ -45,7 +46,7 @@ export class CoopViews {
       if (down) entry.axe.setVisible(false);
       this.labels[i].setPosition(a.player.x, a.player.y - 137).setText(down ? `${i + 1} · нужна помощь` : `${i + 1}`);
       const p = s.core.helpProgress(i);
-      const text = `Брёвна ${a.state.wood}/${a.state.maxWood}${a.state.boardCargo?` · Доски ${a.state.boardCargo}`:""} · Камень ${a.state.stone}/${a.mining.capacity()} · Монеты ${a.state.coins} · Топор ${a.state.axeLevel + 1}${p ? ` · Помощь ${Math.round(p * 100)}%` : ""}`;
+      const text = `${a.state.wood}/${a.state.maxWood} бр. · ${a.state.coins} мон.${p ? ` · помощь ${Math.round(p * 100)}%` : ""}`;
       if (this.cards[i].stats.textContent !== text) this.cards[i].stats.textContent = text;
     }));
     this.cards.forEach((c, i) => {
@@ -54,6 +55,7 @@ export class CoopViews {
     });
   }
   destroy() {
+    document.querySelector("footer").classList.remove("is-coop");
     this.panel.remove(); for (const label of this.labels) label.destroy();
   }
 }
