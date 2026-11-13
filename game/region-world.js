@@ -11,7 +11,9 @@ import { makeBoulders } from "./mining.js";
 import {composeForest,activityBranches} from './forest-composition.js';
 import { initialWorldWorks, worksWater, worksCollision, worksReserved, worksSurfaces, WORKS_WALLS } from "./world-works-layout.js";
 
-export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks()}) {
+export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks()}, generationLevels = {}) {
+  // Recreate each tile with the water level at its first generation, then apply live water.
+  let generationState=null;
   const trees = [], boulders = [], berryBushes = [],
     bins = new Map(),
     decorBins = new Map(),
@@ -155,7 +157,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     return (
       ((x - pond.x) / (pond.rx + r)) ** 2 +
         ((y - pond.y) / (pond.ry + r)) ** 2 <
-      1 || streamCollision(x,y,r) || worksCollision(state,x,y,r)
+      1 || streamCollision(x,y,r) || worksCollision(generationState||state,x,y,r)
     );
   }
   function segmentDistance(p, a, b) {
@@ -197,6 +199,13 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     );
   }
   function generate(region) {
+    if(bins.has(region.id))return;
+    const level=generationLevels[region.id]??state.worldWorks.level;
+    generationLevels[region.id]=level;
+    generationState={worldWorks:{...state.worldWorks,level}};
+    try{buildRegion(region);}finally{generationState=null;}
+  }
+  function buildRegion(region) {
     if (bins.has(region.id)) return;
     const rnd = random(pixelHash(region.gx, region.gy)),
       list = [],
@@ -303,11 +312,12 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
         result.push(...bins.get(r.id));
     return result;
   }
-  generate(REGIONS.find((r) => r.id === "0:0"));
+  for(const id of regions.unlocked)generate(REGIONS.find(r=>r.id===id));
   return {
     regional: true,
     bounds: REGION_BOUNDS,
     regions,
+    generationLevels,
     trees,
     boulders,
     berryBushes,

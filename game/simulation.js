@@ -54,11 +54,13 @@ export function createSimulation({
   survival: hazards = regional,
   shared = null,
   party = null,
+  savedState = null,
+  generationLevels = {},
 } = {}) {
-  const initialState = createInitialState({ appearance, colors }),
+  const initialState = Object.assign(createInitialState({ appearance, colors }), savedState),
     gameState = shared ? shareWorldState(initialState, shared.state) : initialState,
     regions = shared?.regions || (regional ? createRegions(gameState) : null),
-    world = shared?.world || (regional ? createRegionWorld(regions,gameState) : createWorldModel()),
+    world = shared?.world || (regional ? createRegionWorld(regions,gameState,generationLevels) : createWorldModel()),
     { trees } = world;
   const stages = STAGES,
     keys = new Set(),
@@ -1129,6 +1131,8 @@ export function createSimulation({
     accessible,
     regions,
     tutorial,
+    snapshotRuntime(){return {elapsed,tutorial:{...tutorial}};},
+    restoreRuntime(data){elapsed=data.elapsed;Object.assign(tutorial,data.tutorial);},
     // Legacy three-step counter; the current seven-step HUD uses core.guide.
     get tutorialStep() {
       return !tutorial.cut

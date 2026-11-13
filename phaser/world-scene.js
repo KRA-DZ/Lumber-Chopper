@@ -55,6 +55,8 @@ import { CampIndustryView } from "./camp-industry-view.js";
 import { materialCostText } from "../game/camp-industry-config.js";
 import { WorldWorksView } from "./world-works-view.js";
 import { SawmillProductionView } from "./sawmill-production-view.js";
+import {restoreSession} from '../game/session-save.js';
+import {SessionPersistence} from './session-persistence.js';
 
 const snap = (v) => Math.round(v / 2) * 2;
 export class WorldScene extends Phaser.Scene {
@@ -63,6 +65,7 @@ export class WorldScene extends Phaser.Scene {
     this.manual = false;
   }
   create() {
+    this.persistence=null;
     this.coopViews = this.coopCamera = null;
     this.routingCoop = false;
     this.manual = false;
@@ -73,15 +76,23 @@ export class WorldScene extends Phaser.Scene {
     this.lastHudKey = null;
     this.assets = createAtlas(this);
     this.anims.resumeAll();
-    this.core = (this.registry.get("playerCount") === 2 ? createLocalCoop : createSimulation)({
+    const options={
       regional: true,
       appearance: this.registry.get("heroAppearance"),
       colors:this.registry.get('heroChoices')?.[0]?.colors,
       heroChoices:this.registry.get('heroChoices'),
       emit: (type, event) => this.onModelEvent(type, event),
-    });
-    this.core.state.cycleSpeed=this.registry.get("cycleSpeed")===2.5?2.5:1;
-    if(this.core.state.cycleSpeed===2.5)this.core.state.worldTime=0;
+    };
+    const saved=this.registry.get('resumeSave');this.registry.remove('resumeSave');
+    try{this.core=saved?restoreSession(saved,options):(this.registry.get('playerCount')===2?createLocalCoop:createSimulation)(options);}
+    catch{
+      this.registry.set('saveLoadError','Не удалось восстановить мир из сохранения. Оно не удалено; можно начать новую игру.');
+      document.body.classList.remove('game-live');this.scene.start('Boot');return;
+    }
+    if(!saved){
+      this.core.state.cycleSpeed=this.registry.get("cycleSpeed")===2.5?2.5:1;
+      if(this.core.state.cycleSpeed===2.5)this.core.state.worldTime=0;
+    }
     this.playerModel = this.core.player;
     this.merchantSite = this.core.world.merchant || CAMP.merchant;
     this.terrain = new TerrainLayer(this, this.core.world);
@@ -177,7 +188,7 @@ export class WorldScene extends Phaser.Scene {
     this.customView=new CampCustomView(this);
     this.plantsView=new PlantsView(this);
     this.forestTasksView=new ForestTasksView(this);
-    this.dayBanner={day:1};
+    this.dayBanner={day:this.core.state.calendarDay+1};
     this.defenseUi = createDefenseUi(this);
     this.explorationUi = createExplorationUi(this);
     this.workerUi = createWorkerUi(this);
@@ -203,6 +214,7 @@ export class WorldScene extends Phaser.Scene {
         return this.game.renderer.type === Phaser.WEBGL ? "WebGL" : "Canvas";
       },
     };
+    this.persistence=new SessionPersistence(this);
   }
   addImage(key, x, y, depth = y) {
     return this.assets.image(key, snap(x), snap(y), depth);
@@ -741,6 +753,7 @@ export class WorldScene extends Phaser.Scene {
     this.renderModel();
   }
   update(time, delta) {
+    this.persistence?.update();
     if (this.manual) {
       this.renderModel();
       return;
@@ -1361,6 +1374,7 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     if (type === "game-over") {
+      this.persistence?.finish();
       this.survivalUi?.defeat(e);
       return;
     }
@@ -1515,6 +1529,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.persistence?.destroy();
     this.combatView?.destroy();
     this.campDesk?.destroy();
     this.industryView?.destroy();

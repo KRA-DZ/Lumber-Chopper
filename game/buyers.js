@@ -112,5 +112,8 @@ export function createBuyers({ state: gameState, player, nav, getElapsed }) {
       }
     }
   }
-  return { buyers, activeBuyer, update: updateBuyers };
+  return { buyers, activeBuyer, update: updateBuyers,
+    snapshot(){return {buyers,buyerSequence,buyerSpawnTimer};},
+    restore(data){buyers.splice(0,buyers.length,...data.buyers);buyerSequence=data.buyerSequence;buyerSpawnTimer=data.buyerSpawnTimer;for(const b of buyers){b.path=[];b.routeKey="";}},
+  };
 }

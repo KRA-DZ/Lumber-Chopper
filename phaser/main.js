@@ -96,9 +96,3 @@ game.events.once(Phaser.Core.Events.DESTROY, () => {
   window.removeEventListener("resize", resize);
   disposeDock();
 });
-// В пробной сборке, как и в основной, каждая загрузка начинает новую сессию.
-try {
-  localStorage.removeItem("lumber-chopper-v1");
-} catch {
-  /* Storage is optional. */
-}

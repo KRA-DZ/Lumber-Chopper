@@ -202,6 +202,8 @@ export function createWatcher({
     }
   }
   return {
+    snapshot(){return {clock,noise};},
+    restore(data){clock=data.clock;noise=data.noise;},
     tick,
     hear(p, radius = WATCHER.chopHearing) {
       noise = { x: p.x, y: p.y, time: clock, radius };

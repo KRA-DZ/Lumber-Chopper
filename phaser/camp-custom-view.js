@@ -5,7 +5,8 @@ export class CampCustomView {
   constructor(scene){
     this.scene=scene;this.images=new Map();this.selection=null;
     let storage;try{storage=window.localStorage;}catch{storage={getItem(){throw Error();},setItem(){throw Error();}};}
-    this.book=createRecordBook(storage);this.runId=`${Date.now()}-${Math.random()}`;
+    this.book=createRecordBook(storage);this.runId=scene.registry.get('runId')||`${Date.now()}-${Math.random()}`;
+    scene.registry.set('runId',this.runId);
     scene.core.state.campCustom.unlocks=[...this.book.data.goals];
     this.sign=scene.addImage("camp.gateSign",RECORD_BOARD.x,RECORD_BOARD.y).setInteractive().setData("customBoard",true);
     this.label=scene.text("Рекорды и украшения · V",RECORD_BOARD.x,RECORD_BOARD.y-70,11,"#f4dea3",11003);

@@ -73,8 +73,8 @@ export const regionAt = (x, y) =>
   );
 
 export function createRegions(state) {
-  state.unlockedRegions = ["0:0"]; // One full REGION_SIZE² tile at start; each opening adds the same area.
-  state.regionWood = {}; // Logs paid into each border project; never coins, no refunds/duplicate charges.
+  state.unlockedRegions ??= ["0:0"]; // A fresh run opens one tile; a resumed run keeps its borders.
+  state.regionWood ??= {}; // Logs paid into each border project; never coins, no refunds/duplicate charges.
   const unlocked = new Set(state.unlockedRegions);
   let revision = 0,
     frontierCache = null;

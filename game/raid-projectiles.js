@@ -5,6 +5,8 @@ export function createRaidProjectiles({state,player,party,hurt,emit}) {
   const shots=[];let sequence=0;
   return {
     shots,
+    snapshot(){return {shots,sequence};},
+    restore(data){shots.splice(0,shots.length,...data.shots);sequence=data.sequence;},
     launch(enemy,target) {
       if(state.gameOver||shots.length>=RAID_SHOTS.max)return false;
       shots.push({id:`raid-shot:${sequence++}`,x:target.x,y:target.y,fromX:enemy.x,fromY:enemy.y-25,
