@@ -1,4 +1,5 @@
-import { ITEMS, EXPLORATION } from "../game/exploration.js";
+import {inventoryGrid} from './inventory-grid.js';
+import { EXPLORATION } from "../game/exploration.js";
 import { prependLootIcon } from "./loot-item-assets.js";
 
 export function createExplorationUi(scene) {
@@ -97,19 +98,11 @@ export function createExplorationUi(scene) {
         content.append(row);
       }
     } else {
-      title.textContent = "Сумка находок";
+      title.textContent = "Рюкзак и снаряжение";
       paragraph(
         `Монеты: ${s.coins} · Удочка: ${d.rod ? "есть" : "нет"}. Брёвна переносятся отдельно за спиной.`,
       );
-      const list = document.createElement("ul");
-      for (const [id, item] of Object.entries(ITEMS)) {
-        const li = document.createElement("li");
-        li.dataset.bagItem = id;
-        li.textContent = `${item.name}: ${d.items[id]}/${item.limit}`;
-        if (!prependLootIcon(li, id, 32)) li.classList.add("no-item-icon");
-        list.append(li);
-      }
-      content.append(list);
+      content.append(inventoryGrid(s));
       const eat=button("Съесть ягоду · +6 HP",()=>{m.useItem("berry");render();scene.renderModel();});
       eat.dataset.useItem="berry";eat.disabled=!d.items.berry||s.health>=s.maxHealth;prependLootIcon(eat,"berry");
       if (d.rod) prependLootIcon(paragraph("Снасти: удочка"), "rod", 32);
@@ -135,9 +128,8 @@ export function createExplorationUi(scene) {
       prependLootIcon(heal, "salve");
       heal.disabled = !d.items.salve || s.health >= s.maxHealth;
       paragraph(`Здоровье: ${s.health}/${s.maxHealth}`);
-      const heading = document.createElement("h3");
-      heading.textContent = "Места для исследования";
-      content.append(heading);
+      const routes=document.createElement("details"),heading=document.createElement("summary");
+      heading.textContent="Места для исследования и маршруты";routes.className="inventory-routes";routes.append(heading);content.append(routes);
       for (const id of [
         "mysterious-merchant",
         "fishing",
@@ -166,7 +158,7 @@ export function createExplorationUi(scene) {
         );
         route.dataset.siteRoute = id;
         route.disabled = !open;
-        content.append(row);
+        routes.append(row);
       }
     }
   }
