@@ -132,7 +132,7 @@ export function createWatcher({
           !isSafe(player);
         phase(m, "strike");
         m.cooldown = WATCHER.recovery;
-        if (hit) hurt(damage, "watcher");
+        if (hit) hurt(damage, "watcher",m);
         emit("watcher-strike", { area, hit, x: m.x, y: m.y });
       }
       return;

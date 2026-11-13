@@ -573,6 +573,7 @@ export function createSimulation({
       !canAct() ||
       !["auto", "active"].includes(mode) ||
       !enemy ||
+      (!enemy.invulnerable && enemy.hp<=0) ||
       enemy.warning > 0 ||
       distance(player, enemy) >= 72 ||
       player[timer] > 0 ||
@@ -592,6 +593,19 @@ export function createSimulation({
     emit("attack", { enemy, damage: gameState.axePower });
     party?.focus(core);
     return survival.hit(id, gameState.axePower);
+  }
+  // All active inputs use the same range, line-of-sight and cooldown checks.
+  function attackNearby(){
+    if(!canAct()||player.clickTimer>0)return false;
+    const enemies=[...(survival?.raiders||[]),...(survival?.residents||[])].filter(e=>e.hp>0&&!(e.warning>0)&&distance(player,e)<72&&nav.clearSegment(player,e));
+    enemies.sort((a,b)=>Number(b.id===selectedEnemyId)-Number(a.id===selectedEnemyId)||distance(player,a)-distance(player,b));
+    if(enemies[0])return tryAttack(enemies[0].id);
+    if(survival?.monster&&distance(player,survival.monster)<72){
+      const hit=tryAttack(survival.monster.id);if(!hit&&player.clickTimer>0){player.swing=.32;emit('swing',{});}return hit;
+    }
+    const tree=trees.filter(t=>{const d=distance(player,t);return t.hp>0&&treeAccessible(t)&&d<72&&nav.clearSegment(player,{x:t.x+(player.x-t.x)/Math.max(1,d)*22,y:t.y+(player.y-t.y)/Math.max(1,d)*22});}).sort((a,b)=>distance(player,a)-distance(player,b))[0];
+    if(tree)return tryChop(tree.id);
+    player.clickTimer=gameState.clickInterval;player.swing=.32;emit('swing',{});return true;
   }
   const buyerSystem = shared?.buyerSystem || createBuyers({
     state: gameState,
@@ -1082,6 +1096,7 @@ export function createSimulation({
       return clearingOrder;
     },
     tryAttack,
+    attackNearby,
     purchaseUpgrade,
     transferOneLog,
     cycle,

@@ -16,7 +16,7 @@ export function createRaidProjectiles({state,player,party,hurt,emit}) {
         const shot=shots[i];shot.age+=dt;if(shot.age<shot.duration)continue;
         shots.splice(i,1);
         if(party)party.blast(shot,shot.radius,RAID_SHOTS.damage,"raider");
-        else if(state.health>0&&!player.room&&Math.hypot(player.x-shot.x,player.y-shot.y)<shot.radius)hurt(RAID_SHOTS.damage,"raider");
+        else if(state.health>0&&!player.room&&Math.hypot(player.x-shot.x,player.y-shot.y)<shot.radius)hurt(RAID_SHOTS.damage,"raider",{x:shot.fromX,y:shot.fromY});
         emit("minion-projectile-impact",{x:shot.x,y:shot.y,radius:shot.radius});
         if(state.gameOver)return;
       }

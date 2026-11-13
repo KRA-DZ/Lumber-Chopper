@@ -66,10 +66,11 @@ export class HouseView {
       add("fortress.chest.closed",ROOM.chest.x,ROOM.chest.y);add("camp.crate",365,125);add("camp.mat",ROOM.exit.x,ROOM.exit.y);
       add("world.supplies",365,225);
       const avatars=actors.map((_,j)=>add(`${j?"coop2.":""}characters.player.down.0`,240,240));
+      const healthBars=scene.add.graphics(),health=actors.map(()=>scene.add.text(0,0,'',{fontFamily:'monospace',fontSize:'10px',color:'#f1dfb5'}).setOrigin(.5,1));room.add([healthBars,...health]);
       const title=scene.add.text(ROOM.width/2,20,"Дом лагеря",{fontFamily:"monospace",fontSize:"14px",color:"#f0d39c"}).setOrigin(.5,0),
         hint=scene.add.text(ROOM.width/2,ROOM.height-22,"",{fontFamily:"monospace",fontSize:"10px",color:"#f0d39c"}).setOrigin(.5,0);room.add([title,hint]);
       if(scene.coopCamera) (i?scene.camera:scene.coopCamera.second).ignore(root);
-      this.entries.push({root,bg,room,avatars,hint});
+      this.entries.push({root,bg,room,avatars,hint,healthBars,health});
     });
   }
   render() {
@@ -80,11 +81,14 @@ export class HouseView {
       e.bg.clear().fillStyle(0x121914).fillRect(0,0,camera.width,camera.height);
       const scale=Math.min(camera.width/ROOM.width,camera.height/ROOM.height);
       e.room.setScale(scale).setPosition((camera.width-ROOM.width*scale)/2,(camera.height-ROOM.height*scale)/2);
-      actors.forEach((actor,j)=>{
-        const p=actor.player, avatar=e.avatars[j];avatar.setVisible(!!p.room);if(!p.room)return;
+      e.healthBars.clear();actors.forEach((actor,j)=>{
+        const p=actor.player, avatar=e.avatars[j];avatar.setVisible(!!p.room);e.health[j].setVisible(!!p.room);if(!p.room)return;
         const dir=p.direction==="up"?"up":["left","right"].includes(p.direction)?"side":"down",
           key=`${j?"coop2.":""}characters.player.${dir}.${p.room.moving?Math.floor(s.core.elapsed*10)%4:0}`;
         s.assets.setFrame(avatar,key);avatar.setPosition(p.room.x,p.room.y).setFlipX(p.direction==="left");
+        const y=p.room.y-avatar.displayHeight*avatar.originY-12;
+        e.healthBars.fillStyle(0x1a2422).fillRect(p.room.x-23,y-1,46,6).fillStyle(0x7fb582).fillRect(p.room.x-22,y,44*actor.state.health/actor.state.maxHealth,4);
+        e.health[j].setText(`${actor.state.health}/${actor.state.maxHealth} HP`).setPosition(p.room.x,y-3);
       });
       e.hint.setText(`Склад ${a.state.logStore.length}/${a.camp.storageLimit()} · E/Enter у сундука: ${a.state.wood?"сложить":"взять"} · у двери: выйти · C мастерская`);
     });

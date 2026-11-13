@@ -168,6 +168,7 @@ export function createMinions({
       damage <= 0
     )
       return false;
+    const beforeHit={x:e.x,y:e.y},actualDamage=Math.min(e.hp,damage);
     e.hp = Math.max(0, e.hp - damage);
     e.flash = 0.16;
     e.stun = 0.1;
@@ -181,7 +182,7 @@ export function createMinions({
       nav.moveBody(e, ((e.x - player.x) / d) * 10, ((e.y - player.y) / d) * 10);
       if (!allowed(e, e, minionHuntNight(state))) Object.assign(e, before);
     }
-    emit("enemy-hit", { enemy: e, damage });
+    emit("enemy-hit", { enemy: e, damage, actualDamage, from:{x:player.x,y:player.y}, push:{x:e.x-beforeHit.x,y:e.y-beforeHit.y} });
     if (!e.hp) {
       defeated.add(id);
       actors.splice(actors.indexOf(e), 1);
@@ -269,7 +270,7 @@ export function createMinions({
       projectiles.splice(i, 1);
       if (party) party.blast(p, p.radius, MINIONS.projectileDamage);
       else if (distance(player, p) < p.radius && regions.isOpen(player))
-        hurtPlayer(MINIONS.projectileDamage, "minion");
+        hurtPlayer(MINIONS.projectileDamage, "minion",{x:p.fromX,y:p.fromY});
       emit("minion-projectile-impact", { x: p.x, y: p.y, radius: p.radius });
       if (state.gameOver) return;
     }
@@ -409,7 +410,7 @@ export function createMinions({
               distance(player, a) < MINIONS.range &&
               nav.clearSegment(e, player)
             )
-              hurtPlayer(MINIONS.damage, "minion");
+              hurtPlayer(MINIONS.damage, "minion",e);
             e.attack = null;
             e.windup = 0;
             e.cooldown = ranged ? MINIONS.throwCooldown : MINIONS.cooldown;

@@ -85,3 +85,7 @@
 - `node --test tests/world-readability.test.mjs` и `python tests/world_readability_smoke.py` — кроны/основания, ввод, восстановление и приоритеты подписей. `python tests/phaser_performance.py --combined-only` — только дождь + ночь + 82 бревна + налёт, полные/лёгкие эффекты.
 - `npm test` запускает все Node-тесты: применять для широких изменений или обоснованной регрессии, а не автоматически после каждой правки.
 - `git diff --check` — проверка патча перед коммитом. Итоговый отчёт называет только действительно выполненные проверки.
+
+## Обратная связь боя
+
+`game/simulation.js: attackNearby()` объединяет активные удары; `game/hit-impact.js` отвечает за отбрасывание героя через навигацию. `phaser/combat-view.js` — HP над головами, реакции и пул чисел; `phaser/device-profile.js` ограничивает стартовый выбор на сенсорных устройствах. Проверки: `tests/combat-feedback.test.mjs`, `tests/combat_feedback_smoke.py`. [Управление и баланс](COMBAT-FEEDBACK.md).

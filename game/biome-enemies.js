@@ -166,6 +166,7 @@ export function createBiomeEnemies({
       damage <= 0
     )
       return false;
+    const beforeHit={x:e.x,y:e.y},actualDamage=Math.min(e.hp,damage);
     e.hp = Math.max(0, e.hp - damage);
     e.flash = 0.16;
     e.stun = BIOME_ENEMIES.hitStun;
@@ -178,7 +179,7 @@ export function createBiomeEnemies({
       nav.moveBody(e, ((e.x - player.x) / d) * 10, ((e.y - player.y) / d) * 10);
       if (!inside(e, e.region)) Object.assign(e, old);
     }
-    emit("enemy-hit", { enemy: e, damage });
+    emit("enemy-hit", { enemy: e, damage, actualDamage, from:{x:player.x,y:player.y}, push:{x:e.x-beforeHit.x,y:e.y-beforeHit.y} });
     if (e.hp === 0) {
       defeated.add(e.id);
       actors.splice(actors.indexOf(e), 1);
@@ -242,7 +243,7 @@ export function createBiomeEnemies({
               distance(player, e.attack) < BIOME_ENEMIES.range &&
               nav.clearSegment(e, player)
             )
-              hurtPlayer(BIOME_ENEMIES.damage, "resident");
+              hurtPlayer(BIOME_ENEMIES.damage, "resident",e);
             e.attack = null;
             e.windup = 0;
             e.cooldown = BIOME_ENEMIES.cooldown;

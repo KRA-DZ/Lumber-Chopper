@@ -38,6 +38,7 @@ import { growthStage } from "../forestry.js";
 import { createShop } from "../shop.js";
 import { createAtlas } from "./atlas.js";
 import { TerrainLayer } from "./terrain-layer.js";
+import {CombatView} from './combat-view.js';
 import { CrownOcclusion } from "./tree-occlusion.js";
 import { WorldHints } from "./world-hints.js";
 import { OutpostView } from "./outpost-view.js";
@@ -133,6 +134,7 @@ export class WorldScene extends Phaser.Scene {
     this.cargo = this.stackView.logs;
     this.buyerView = new BuyerView(this);
     this.enemyView = new EnemyView(this);
+    this.combatView = new CombatView(this);
     this.combatLootView = new CombatLootView(this);
     this.defenseView = new DefenseView(this);
     this.explorationView = new ExplorationView(this);
@@ -422,6 +424,12 @@ export class WorldScene extends Phaser.Scene {
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
     this.input.keyboard.on("keydown", (event) => {
+      if(!this.core.paused&&['KeyF','Slash','Numpad0','Space'].includes(event.code)&&!event.target?.closest?.('input,select,textarea,[contenteditable=true]')){
+        event.preventDefault();
+        if(event.code==='Space'&&this.core.exploration.fishing){this.core.exploration.reel();return;}
+        if(this.coopViews)this.coopViews.focus(['Slash','Numpad0'].includes(event.code)?1:0);
+        this.core.attackNearby();return;
+      }
       if (this.core.coop && !this.core.paused) {
         if (event.repeat && ["KeyE", "Enter"].includes(event.code)) { event.preventDefault(); return; }
         if (["KeyE", "KeyI", "KeyR", "KeyF", "Enter", "ShiftRight", "Slash", "KeyO", "KeyL"].includes(event.code))
@@ -436,14 +444,6 @@ export class WorldScene extends Phaser.Scene {
         }
         if (event.code === "ShiftRight") {
           event.preventDefault(); this.core.setDefenseRepairHeld(true); return;
-        }
-        if (["KeyF", "Slash"].includes(event.code)) {
-          event.preventDefault();
-          const c = this.core, p = c.player, e = [...c.survival.raiders, ...c.survival.residents]
-            .find(e => Math.hypot(e.x - p.x, e.y - p.y) < 72);
-          if (e) c.tryAttack(e.id);
-          else { const t = c.world.trees.find(t => t.hp > 0 && Math.hypot(t.x - p.x, t.y - p.y) < 72); if (t) c.tryChop(t.id); }
-          return;
         }
         if (event.code === "KeyO") { event.preventDefault(); this.shop.open(); return; }
         if (event.code === "KeyL") { event.preventDefault(); this.explorationUi.openBag(); return; }
@@ -879,6 +879,7 @@ export class WorldScene extends Phaser.Scene {
     this.customView?.render();
     this.plantsView?.render();
     this.forestTasksView?.render();
+    this.combatView.render();
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1153,6 +1154,8 @@ export class WorldScene extends Phaser.Scene {
       finally { this.routingCoop = false; }
     }
     this.customView?.onEvent(type);
+    if(type==='enemy-hit'||type==='player-hurt'){this.combatView?.hit(type,e);return;}
+    if(type==='swing'){this.heroView?.hit();return;}
     if(type==="forest-surveyed"){this.core.showNotice("Вышка: новые ориентиры отмечены на карте M.",7);return;}
     if(type==="forest-cache-claimed"){this.core.showNotice("Лагерь зачищен: +60 монет, +4 доски, +2 угля.",7);return;}
     if(type==="berries-picked"){this.core.showNotice("Собрано 2 ягоды. Съесть для лечения — сумка I.",4);return;}
@@ -1355,7 +1358,6 @@ export class WorldScene extends Phaser.Scene {
     if (type === "attack") {
       this.audio?.hit();
       this.heroView?.hit();
-      this.float(`−${e.damage}`, e.enemy.x, e.enemy.y - 70, "#e8bc8d");
       return;
     }
     if (type === "game-over") {
@@ -1513,6 +1515,7 @@ export class WorldScene extends Phaser.Scene {
     });
   }
   cleanup() {
+    this.combatView?.destroy();
     this.campDesk?.destroy();
     this.industryView?.destroy();
     this.worldWorksView?.destroy();
