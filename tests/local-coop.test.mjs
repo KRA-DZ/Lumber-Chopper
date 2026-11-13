@@ -130,7 +130,7 @@ test("a living second player can earn combat loot while the host is down without
   g.state.worldTime = NIGHT_START - .01; g.update(.02);
   const enemy = g.survival.minions.find(e => e.regionId === forest.id);
   assert.ok(enemy); enemy.warning = 0;
-  place(b, enemy); b.state.axePower = 1000; b.player.clickTimer = 0;
+  place(b, enemy); b.state.axePower = 1000; b.player.autoTimer = 0;
   g.party.focus(a); g.party.hurt(100, "watcher");
   assert.ok(b.tryAttack(enemy.id)); assert.equal(b.tryAttack(enemy.id), false);
   assert.equal(a.combatLoot.piles, b.combatLoot.piles);

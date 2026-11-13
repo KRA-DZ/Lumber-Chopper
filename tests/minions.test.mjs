@@ -53,10 +53,10 @@ test("small monsters exist by day, persist through dawn, reset at each dusk and 
   );
   assert.deepEqual(
     f.m.actors.map((e) => e.maxHP),
-    [6, 12, 4],
+    [18, 32, 14],
   );
   const e = f.isolate();
-  assert.ok(f.m.hit(e.id, 6, false));
+  assert.ok(f.m.hit(e.id, 18, false));
   f.step(4);
   assert.ok(!f.m.actors.some((a) => a.id === e.id));
   f.g.state.worldTime = NIGHT_START + 1;
@@ -208,21 +208,21 @@ test("the same purchased axe damage and cadence apply to small monsters; pause a
   enemy.warning = 1;
   assert.equal(g.tryAttack(enemy.id), false);
   assert.equal(g.player.clickTimer, 0);
-  enemy.warning = 0;
+  enemy.warning = 0;g.player.autoTimer=0;
   assert.ok(g.tryAttack(enemy.id));
-  assert.equal(enemy.hp, 4);
+  assert.equal(enemy.hp, 16);
   assert.equal(g.tryAttack(enemy.id), false);
   g.update(0);
-  assert.equal(enemy.hp, 4);
+  assert.equal(enemy.hp, 16);
   g.paused = true;
   g.update(10);
-  assert.equal(enemy.hp, 4);
+  assert.equal(enemy.hp, 16);
   assert.equal(g.tryAttack(enemy.id), false);
   g.paused = false;
   g.player.autoTimer = 0;
   g.update(0.01);
-  assert.equal(enemy.hp, 2);
-  g.update(g.state.autoInterval + 0.01);
+  assert.equal(enemy.hp, 14);
+  for(let i=0;i<12&&g.survival.minions.includes(enemy);i++)g.update(g.state.autoInterval+.01);
   assert.ok(!g.survival.minions.includes(enemy));
   assert.equal(g.state.raidsWon, 0);
   assert.equal(g.survival.wave, null);
@@ -271,11 +271,11 @@ function roleArena(){
 test('pursuer closes distance, while heavy closes more slowly and hits harder after a longer windup',()=>{
   const melee=roleArena(),a=melee.isolate('melee'),heavy=roleArena(),b=heavy.isolate('heavy');
   melee.step(.5);heavy.step(.5);
-  assert.ok(a.x<b.x,'pursuer closes the same gap faster');assert.equal(b.maxHP,12);
+  assert.ok(a.x<b.x,'pursuer closes the same gap faster');assert.equal(b.maxHP,32);
   for(const f of [melee,heavy]){const e=f.m.actors.find(e=>e.warning===0);Object.assign(e,{x:3550,y:1600,path:[],repath:0,cooldown:0,windup:0,attack:null});}
-  melee.step(.4);heavy.step(.4);assert.equal(melee.damage[0][0],8);assert.equal(heavy.damage.length,0);
-  heavy.step(.2);assert.equal(heavy.damage[0][0],10);
-  melee.step(1.3);heavy.step(1.3);assert.equal(melee.damage.length,2);assert.equal(heavy.damage.length,1);
+  melee.step(.3);heavy.step(.3);assert.equal(melee.damage[0][0],12);assert.equal(heavy.damage.length,0);
+  heavy.step(.2);assert.equal(heavy.damage[0][0],18);
+  melee.step(.8);heavy.step(.8);assert.equal(melee.damage.length,2);assert.equal(heavy.damage.length,1);
   assert.ok(b.hp<BIOME_ENEMIES.hp&&MINION_ROLES.heavy.damage<BIOME_ENEMIES.damage);
 });
 test('thrower creates distance when approached, stops fleeing at its preferred range, then fires',()=>{

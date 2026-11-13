@@ -13,7 +13,9 @@ export function createExplorationUi(scene) {
     fishStatus = controls.querySelector("[data-fish-status]"),
     reelButton = controls.querySelector("[data-reel]"),
     cancelButton = controls.querySelector("[data-fish-cancel]");
-  const model = () => scene.core.exploration;
+  let owner=null;
+  const actor=()=>owner||scene.core;
+  const model = () => actor().exploration;
   let siteId = null,
     queuedRoute = null,
     lastFishText = "";
@@ -33,7 +35,7 @@ export function createExplorationUi(scene) {
   }
   function render() {
     const m = model(),
-      s = scene.core.state,
+      s = actor().state,
       d = s.exploration;
     content.replaceChildren();
     message.textContent = "";
@@ -53,7 +55,7 @@ export function createExplorationUi(scene) {
           "Тёплая еда восстанавливает здоровье героя. Для приготовления нужна одна рыба.",
       };
       paragraph(site.description || descriptions[site.kind]);
-      const conversation = scene.core.story?.conversation(site.id);
+      const conversation = actor().story?.conversation(site.id);
       if (conversation) paragraph(conversation).dataset.storyDialogue = site.id;
       for (const offer of m.offers(siteId)) {
         const row = document.createElement("article");
@@ -98,7 +100,7 @@ export function createExplorationUi(scene) {
         content.append(row);
       }
     } else {
-      title.textContent = "Рюкзак и снаряжение";
+      title.textContent = `Рюкзак${scene.core.coop?` · игрок ${(owner.player.id??0)+1}`:""}`;
       paragraph(
         `Монеты: ${s.coins} · Удочка: ${d.rod ? "есть" : "нет"}. Брёвна переносятся отдельно за спиной.`,
       );
@@ -106,7 +108,7 @@ export function createExplorationUi(scene) {
       const eat=button("Съесть ягоду · +6 HP",()=>{m.useItem("berry");render();scene.renderModel();});
       eat.dataset.useItem="berry";eat.disabled=!d.items.berry||s.health>=s.maxHealth;prependLootIcon(eat,"berry");
       if (d.rod) prependLootIcon(paragraph("Снасти: удочка"), "rod", 32);
-      const evidence = scene.core.story?.evidence.filter((e) => e.found) || [];
+      const evidence = actor().story?.evidence.filter((e) => e.found) || [];
       if (evidence.length)
         paragraph(
           `Сюжетные находки: ${evidence.map((e) => e.name).join(", ")}. Хранятся в дневнике.`,
@@ -163,6 +165,7 @@ export function createExplorationUi(scene) {
     }
   }
   function openSite(site) {
+    owner=scene.core.actors?.[scene.core.activeActor]||scene.core;dialog.dataset.owner=scene.core.coop?String(scene.core.activeActor):"";
     if (scene.core.state.gameOver) return;
     siteId = site.id;
     render();
@@ -170,6 +173,7 @@ export function createExplorationUi(scene) {
     if (!dialog.open) dialog.showModal();
   }
   function openBag() {
+    owner=scene.core.actors?.[scene.core.activeActor]||scene.core;dialog.dataset.owner=scene.core.coop?String(scene.core.activeActor):"";
     if (scene.core.state.gameOver) return;
     model().cancelAll();
     siteId = null;

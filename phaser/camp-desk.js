@@ -1,3 +1,4 @@
+import {visibleMenuActions} from './menu-navigation.js';
 import { RECIPES, CAMP_UPGRADES, INDUSTRY_PROJECTS, MATERIAL_NAMES, materialCostText, materialLimit } from "../game/camp-industry-config.js";
 import { BUYER_ORDERS } from "../game/buyer-orders.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
@@ -13,7 +14,7 @@ export function createCampDesk(scene){
     card.className="camp-card";heading.textContent=title;p.textContent=detail+(reason?` ${reason}.`:"");
     b.textContent=title;b.type="button";b.dataset.campAction=key;b.setAttribute("aria-disabled",String(!!reason));
     b.onclick=()=>{const result=action();render(key);message.textContent=result?"Готово.":reason||"Сейчас недоступно: проверьте материалы и расстояние.";scene.renderModel();};
-    card.append(heading,p,b);content.append(card);
+    const details=document.createElement("details"),summary=document.createElement("summary");summary.textContent=reason?"Требования и описание":"Подробнее";details.append(summary,p);card.append(b,details);content.append(card);
   }
   function render(selected=""){
     const c=owner,s=c.state,industry=c.industry,bank=s.campIndustry.materials;
@@ -60,7 +61,7 @@ export function createCampDesk(scene){
         row(`lamp:${p.id}`,`Заправить: ${p.name}`,`${Math.ceil(s.campIndustry.lampFuel[p.id]||0)}/540 с. Один уголь → 180 с света; подойдите к фонарю. Защиту от Смотрителя даёт только костёр.`,()=>c.preparation.refuelLamp(p.id));
     }
     const all=[...dialog.querySelectorAll("[data-camp-action]")],target=all.find(b=>b.dataset.campAction===selected)||all.find(b=>!b.dataset.campAction.startsWith("tab:"));
-    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=all.indexOf(target);(target.closest(".camp-card")||target).dataset.selected="true";target.focus({preventScroll:true});}
+    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=visibleMenuActions(dialog).indexOf(target);(target.closest(".camp-card")||target).dataset.selected="true";target.focus({preventScroll:true});}
   }
   function open(tab="production"){
     if(scene.core.paused||document.querySelector("dialog[open]"))return false;

@@ -1,4 +1,4 @@
-"""Only attack inputs, HP/impact presentation, mobile solo and feedback lifecycle."""
+"""Only automatic attacks, HP/impact presentation, mobile solo and feedback lifecycle."""
 from functools import partial
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from pathlib import Path
@@ -30,14 +30,10 @@ try:
                 assert not q.locator('[name=players][value="2"]').is_visible()
             else:q.locator('[name=players][value="2"]').check()
             choose_hero(q);q.evaluate(SETUP)
-            if mobile:
-                assert q.evaluate('!m.coop');q.locator('#attackButton').tap()
-            else:
-                q.keyboard.press('f');q.keyboard.press('Slash')
-                assert q.evaluate('targets[0].hp===5&&targets[1].hp===5')
-                q.evaluate('m.actors[1].player.clickTimer=0');q.locator('[data-coop-player="1"] [data-coop-action=attack]').click()
-                assert q.evaluate('targets[1].hp===4&&targets[0].hp===5')
-                q.evaluate('a.player.clickTimer=0');q.keyboard.press('Space')
+            q.evaluate("for(const [i,a] of (m.actors||[m]).entries()){a.player.autoTimer=0;a.tryAttack(targets[i].id)};void 0")
+            if not mobile:
+                q.evaluate("for(const [i,a] of m.actors.entries()){a.player.autoTimer=0;a.tryAttack(targets[i].id)};void 0")
+            assert not q.locator('#attackButton').count()
             q.evaluate('g.step(0)')
             assert q.evaluate('w.combatView.labels.get("enemy:feedback-0").text.includes(targets[0].hp+"/6 HP")')
             assert q.evaluate('!w.scene.get("Hud").clock.text.includes("♥")')
@@ -56,11 +52,9 @@ try:
             assert q.evaluate('!w.combatView.labels.has("enemy:watcher")&&w.enemyView.objects.get("watcher").label.text.includes("НЕУЯЗВИМ")')
             q.evaluate('window.old=m;w.scene.restart();void 0');q.wait_for_function('lumberPhaser.core!==old&&lumberPhaser.scene.hudReady')
             q.evaluate(SETUP)
-            q.evaluate('window.calls=0;const command=m.attackNearby.bind(m);m.attackNearby=()=>{calls++;return command()};void 0')
-            if mobile:q.locator('#attackButton').tap()
-            else:q.locator('#attackButton').click()
-            result=q.evaluate('({calls,hp:targets.map(e=>e.hp),focus:m.activeActor,disabled:w.combatView.button.disabled,paused:m.paused,timer:a.player.clickTimer})')
-            assert result['calls']==1 and result['hp'][0]==5,result
+            q.keyboard.press('f');assert q.evaluate('targets[0].hp===6')
+            q.evaluate('a.player.autoTimer=0;a.tryAttack(targets[0].id);void 0')
+            assert q.evaluate('targets[0].hp===5');assert not q.locator('#attackButton').count()
             assert not errors,errors
             print('PASS attacks, overhead HP, hit reactions, bounded pool, watcher and restart',mobile,flush=True)
             browser.close()

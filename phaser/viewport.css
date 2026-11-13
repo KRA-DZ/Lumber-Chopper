@@ -34,7 +34,7 @@ footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px
   footer { width:calc(100% - 16px); }
   footer .game-actions { grid-template-columns:repeat(5,minmax(0,1fr)); }
   footer .game-actions button { display:none; }
-  footer .game-actions :is(#campButton,#shopButton,#attackButton,#menuButton,#actionsToggle) { display:block; order:-1; }
+  footer .game-actions :is(#campButton,#shopButton,#menuButton,#actionsToggle) { display:block; order:-1; }
   footer .game-actions.expanded button { display:block; }
 }
 
@@ -55,9 +55,8 @@ footer .stats { flex-wrap:nowrap; flex-shrink:0; gap:8px; }
 footer .stat { color:#d5dfca; font-size:11px; white-space:nowrap; } footer .stat b { color:#f3ce85; font-size:13px; }
 footer .game-actions { flex:1; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
 .game-live footer .game-actions button { display:none; min-height:42px; font-size:12px; padding:5px; border-radius:7px; }
-.game-live footer .game-actions :is(#campButton,#shopButton,#attackButton,#bagButton,#menuButton,#actionsToggle) { display:block; order:-1; }
+.game-live footer .game-actions :is(#campButton,#shopButton,#bagButton,#menuButton,#actionsToggle) { display:block; order:-1; }
 .game-live footer .game-actions.expanded button { display:block; }
-#attackButton { background:linear-gradient(#e6ac82,#c98262); }
 footer.is-coop>.stats { display:none; }
 #coopPlayers { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
 #coopPlayers article { display:grid; grid-template-columns:auto minmax(0,1fr) repeat(3,42px); align-items:center; gap:3px; margin:0; padding:3px; background:#253c34; border:1px solid #526b61; border-radius:8px; }
@@ -98,8 +97,32 @@ footer.is-coop>.stats { display:none; }
   .personal-shop,.personal-builder { width:calc(100% - 20px); max-height:calc(50% - 20px); }
   .personal-shop[data-player-shop="1"],.personal-builder[data-player-build="1"] { top:calc(50% + 10px); bottom:auto; right:10px; max-height:calc(50% - 126px); }
 }
-footer :is(#shopButton,#attackButton,#bagButton)::before { content:""; display:inline-block; width:18px; height:18px; margin-right:4px; vertical-align:middle; background:center/contain no-repeat; image-rendering:pixelated; }
+footer :is(#shopButton,#bagButton)::before { content:""; display:inline-block; width:18px; height:18px; margin-right:4px; vertical-align:middle; background:center/contain no-repeat; image-rendering:pixelated; }
 footer #shopButton::before { background-image:url('../src/assets/loot-items/icons/coins.png'); }
-footer #attackButton::before { background-image:url('../src/assets/items/icons/axe-0.png'); }
 footer #bagButton::before { background-image:url('../src/assets/items/icons/wood-bundle.png'); }
-@media(max-width:600px) { footer :is(#shopButton,#attackButton,#bagButton)::before { display:none; } }
+@media(max-width:600px) { footer :is(#shopButton,#bagButton)::before { display:none; } }
+/* Automatic combat leaves five primary dock actions. */
+footer .game-actions { grid-template-columns:repeat(5,minmax(0,1fr)); }
+#coopPlayers article { grid-template-columns:auto minmax(0,1fr) repeat(2,48px); }
+.upgrade-grid,[data-items].upgrade-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.upgrade-cell,.personal-shop .upgrade-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; width:100%; min-height:150px; margin:0; padding:12px; text-align:center; background:#30463a; color:#f5dfb5; border:1px solid #899475; border-radius:10px; }
+.upgrade-cell img { width:40px; height:40px; object-fit:contain; image-rendering:pixelated; }
+.upgrade-cell>span { font-size:34px; line-height:40px; }
+.upgrade-cell meter { width:90%; height:9px; accent-color:#e5bf72; }
+.upgrade-cell:active { transform:scale(.97); }
+.shop-item { display:block; padding:0; border:0; background:none; }
+.shop-item[data-selected=true],.upgrade-cell[data-selected=true],[data-menu-back][data-selected=true] { outline:3px solid #f5d58c; outline-offset:2px; }
+.personal-shop .upgrade-cell[aria-disabled=true] { opacity:.65; }
+.shared-stock .inventory-slot { min-height:64px; }
+.resource-receipt { position:fixed; display:flex; align-items:center; gap:5px; z-index:15; pointer-events:none; padding:5px 9px; border-radius:8px; background:#18362ee8; color:#ffe1a0; border:1px solid #a7ba87; font:600 14px system-ui,sans-serif; animation:resource-arrival 1.3s ease-out forwards; }
+.resource-receipt img { width:28px; height:28px; object-fit:contain; image-rendering:pixelated; }
+@keyframes resource-arrival { 0% { opacity:0;transform:translate(35px,25px) scale(.6); } 20% { opacity:1;transform:translate(0,0) scale(1.08); } 70% {opacity:1;} 100% {opacity:0;transform:translate(0,-38px) scale(1);} }
+.upgrade-cell meter::-webkit-meter-bar { background:#172c27; border:0; border-radius:4px; }
+.upgrade-cell meter::-webkit-meter-optimum-value { background:#e2ba72; }
+[data-workers],[data-camp-content] { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+[data-workers]>.worker-cell,[data-camp-content]>.camp-card { margin:0;padding:10px;border:1px solid #657a66;border-radius:9px;background:#253c33; }
+[data-workers]>:not(.worker-cell),[data-camp-content]>:not(.camp-card) { grid-column:1/-1; }
+.worker-cell>button,.camp-card>button { width:100%;min-height:62px; }
+.worker-cell summary,.camp-card summary { cursor:pointer;font-size:13px;padding-top:8px;color:#c2d0bb; }
+.worker-cell p,.camp-card p { font-size:13px;line-height:1.45; }
+@media(max-width:500px) { [data-workers],[data-camp-content] {grid-template-columns:1fr;} }

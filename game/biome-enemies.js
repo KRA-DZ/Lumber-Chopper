@@ -6,7 +6,7 @@ export const BIOME_ENEMIES = Object.freeze({
   max: 6,
   perRegion: 1,
   sense: 170,
-  damage: 12,
+  damage: 22,
   hp: 120, // Regional bosses: three times the previous HP; small monsters are separate.
   speed: 104,
   windup: 0.22,

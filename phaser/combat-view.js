@@ -7,7 +7,6 @@ export class CombatView{
     this.bars=scene.add.graphics().setDepth(LAYERS.health);
     this.sparks=scene.add.graphics().setDepth(LAYERS.floating);
     this.numbers=Array.from({length:12},()=>({text:scene.text('',0,0,14,'#ffe2a0',LAYERS.floating).setVisible(false),until:0}));
-    this.button=document.querySelector('#attackButton');this.onAttack=()=>scene.core.attackNearby();this.button.addEventListener('click',this.onAttack);
   }
   hit(type,event){
     const s=this.scene,c=s.core,hero=type==='player-hurt';
@@ -55,7 +54,6 @@ export class CombatView{
     for(const [key,label] of this.labels)if(!seen.has(key)){label.destroy();this.labels.delete(key);}
     for(const [key,r] of this.reactions)if(c.elapsed-r.time>.4)this.reactions.delete(key);
     for(const n of this.numbers){const left=n.until-c.elapsed;n.text.setVisible(left>0);if(left>0)n.text.setPosition(n.x,n.y-(.65-left)*36).setAlpha(Math.min(1,left/.2));}
-    this.button.disabled=c.paused||c.state.health<=0||c.state.gameOver||!!c.player.menuOpen;
   }
-  destroy(){this.button.removeEventListener('click',this.onAttack);this.bars.destroy();this.sparks.destroy();for(const l of this.labels.values())l.destroy();for(const n of this.numbers)n.text.destroy();this.reactions.clear();}
+  destroy(){this.bars.destroy();this.sparks.destroy();for(const l of this.labels.values())l.destroy();for(const n of this.numbers)n.text.destroy();this.reactions.clear();}
 }

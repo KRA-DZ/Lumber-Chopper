@@ -13,25 +13,20 @@ function dummy(g,hp=6,id='dummy'){
   const p=g.nav.nearestGround(g.player.x+35,g.player.y);
   const e={id,kind:'raider',role:'attacker',...p,hp,maxHP:hp,path:[],home:p,windup:0,cooldown:1000,stun:1000,repath:0};g.survival.raiders.push(e);return e;
 }
-test('active command respects cooldown, selects nearest living enemy and stops at obstacles',()=>{
-  const g=create(),far=dummy(g,6,'far'),near=dummy(g,6,'near');near.x=g.player.x+25;far.x=g.player.x+55;
-  assert.ok(g.attackNearby());assert.equal(near.hp,5);assert.equal(far.hp,6);assert.equal(g.attackNearby(),false);assert.equal(near.hp,5);
-  g.player.clickTimer=0;const clear=g.nav.clearSegment;g.nav.clearSegment=()=>false;g.attackNearby();assert.equal(near.hp,5);assert.equal(far.hp,6);g.nav.clearSegment=clear;
-  g.player.clickTimer=0;g.player.menuOpen=true;assert.equal(g.attackNearby(),false);g.player.menuOpen=false;g.paused=true;assert.equal(g.attackNearby(),false);
+test('combat shares the automatic axe timer and manual spam cannot add damage',()=>{
+  const g=create(),e=dummy(g);g.player.autoTimer=0;assert.ok(g.tryAttack(e.id));assert.equal(e.hp,5);
+  for(let i=0;i<100;i++){g.player.clickTimer=0;g.selectEnemy(e.id);assert.equal(g.attackNearby(),false);assert.equal(g.tryAttack(e.id,'active'),false);assert.equal(g.tryAttack(e.id),false);}
+  assert.equal(e.hp,5);g.player.autoTimer=0;g.nav.clearSegment=()=>false;assert.equal(g.tryAttack(e.id),false);
 });
-test('axe upgrades reduce actual strikes while overkill reports only HP really removed',()=>{
+test('all axe tiers keep their damage and actual HP loss clamps overkill',()=>{
   for(let level=0;level<AXE_TIERS.length;level++){
     const events=[],g=create((t,e)=>events.push([t,e]));g.state.axeLevel=level;applyUpgrades(g.state);const e=dummy(g);let strikes=0;
-    while(e.hp>0&&strikes<10){Object.assign(g.player,g.nav.nearestGround(e.x-28,e.y));g.player.clickTimer=0;assert.ok(g.attackNearby());strikes++;}
-    assert.equal(strikes,Math.ceil(6/AXE_TIERS[level].power));
-    const hits=events.filter(([t])=>t==='enemy-hit').map(([,e])=>e);assert.equal(hits.reduce((n,e)=>n+e.actualDamage,0),6);
-    assert.equal(g.attackNearby(),false);assert.equal(events.filter(([t])=>t==='enemy-defeated').length,1);
+    while(e.hp>0&&strikes<10){Object.assign(g.player,g.nav.nearestGround(e.x-28,e.y));g.player.autoTimer=0;assert.ok(g.tryAttack(e.id));strikes++;}
+    assert.equal(strikes,Math.ceil(6/AXE_TIERS[level].power));assert.equal(events.filter(([t])=>t==='enemy-hit').reduce((n,[,e])=>n+e.actualDamage,0),6);
   }
 });
-test('active tree strikes reach the trunk edge and idle swings never create resources',()=>{
-  const g=create(),t=g.trees.find(t=>g.nav.isWalkable(t.x+50,t.y)&&g.nav.clearSegment({x:t.x+50,y:t.y},{x:t.x+22,y:t.y}));
-  Object.assign(g.player,{x:t.x+50,y:t.y});const hp=t.hp;assert.ok(g.attackNearby());assert.equal(t.hp,hp-g.state.axePower);
-  const empty=create(),before=empty.state.coins;assert.ok(empty.attackNearby());assert.equal(empty.state.wood,0);assert.equal(empty.state.coins,before);assert.equal(empty.attackNearby(),false);
+test('manual combat command has no effect in empty space or beside a tree',()=>{
+  const g=create(),before=JSON.stringify(g.state);assert.equal(g.attackNearby(),false);assert.equal(JSON.stringify(g.state),before);
 });
 test('damage tiers remain distinct, immunity prevents repeated damage/push and knockback stays walkable',()=>{
   assert.ok(MINIONS.hp<BIOME_ENEMIES.hp);assert.ok(MINIONS.damage<BIOME_ENEMIES.damage&&BIOME_ENEMIES.damage<SURVIVAL.monsterDamage);
@@ -68,5 +63,5 @@ test('balance keeps early trading useful rather than making one monster pay for 
   const g=create(),price=upgradeOffer(g.state,'axe').price;assert.equal(price,75);
   assert.equal(Math.ceil(price/COMBAT_LOOT.minionCoins),19);assert.equal(Math.ceil(price/COMBAT_LOOT.bossCoins),3);
   assert.equal(Math.ceil(price/COMBAT_LOOT.minionDailyCoins),2);assert.equal(Math.ceil(price/g.trees.find(t=>t.type==='oak').value),8);
-  assert.equal(Math.ceil(MINIONS.hp/AXE_TIERS[0].power),6);assert.equal(Math.ceil(BIOME_ENEMIES.hp/AXE_TIERS[0].power),120);
+  assert.equal(Math.ceil(MINIONS.hp/AXE_TIERS[0].power),18);assert.equal(Math.ceil(BIOME_ENEMIES.hp/AXE_TIERS[0].power),120);
 });

@@ -11,7 +11,7 @@ function clear(c){for(const e of spawn(c)){e.warning=0;assert.ok(c.survival.hit(
 test("the camp is physically reachable, spawns three existing minion roles, and axe damage really defeats a guard",()=>{
   const c=make(),guards=spawn(c);assert.equal(guards.length,3);assert.equal(guards.filter(g=>g.role==="ranged").length,1);
   assert.ok(c.nav.findPath(c.player,CAMP).length);assert.equal(c.forestTasks.claim(),false);
-  const e=guards[0];e.warning=0;place(c,c.nav.nearestGround(e.x+30,e.y));c.state.axePower=100;c.player.clickTimer=0;assert.ok(c.tryAttack(e.id));
+  const e=guards[0];e.warning=0;place(c,c.nav.nearestGround(e.x+30,e.y));c.state.axePower=100;c.player.autoTimer=0;assert.ok(c.tryAttack(e.id));
   assert.equal(c.state.forestTasks.guardHP[e.id],0);assert.equal(c.forestTasks.guards().length,2);
 });
 test("partial guard HP and defeats survive day/stream changes, without respawning the paid camp",()=>{
