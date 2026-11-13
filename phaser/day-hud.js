@@ -100,7 +100,7 @@ export class DayHud {
     this.warning
       .setPosition(s.scale.width / 2, 168)
       .setWordWrapWidth(s.scale.width - 80)
-      .setVisible(!!warn || preparation);
+      .setVisible((!!warn || preparation)&&!c.contextHints?.preparing);
     if (preparation)
       this.warning.setText(
         `Налёт через ${countdown(time.boundarySeconds)} · ${readiness.plan.name}\n${readiness.plan.hint}\nГотовность ${readiness.ready}/3 · подробности B`,

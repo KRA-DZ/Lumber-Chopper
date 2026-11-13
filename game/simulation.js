@@ -14,6 +14,7 @@ import { createCampPreparation } from "./camp-preparation.js";
 import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
 import { firstDaysGuide, guideDestination } from "./first-days.js";
+import {createContextHints} from './context-hints.js';
 import { raidPlan } from "./raid-plans.js";
 import { createWorldWorks } from "./world-works.js";
 import { createSawmillProduction } from "./sawmill-production.js";
@@ -944,6 +945,7 @@ export function createSimulation({
     sawmill?.freight.sync();
     camp.updateFuelPad(dt);
     berries?.update(dt);
+    contextHints?.update(dt);
     if (!actorOnly) survival?.update(dt);
     if (!actorOnly && !gameState.gameOver) preparation.update(dt);
     if (!actorOnly || alive) combatLoot.update(dt);
@@ -1101,6 +1103,7 @@ export function createSimulation({
     update,
     buyerSystem,
     forestTasks, berries, custom, camp, mining, builder, industry, preparation, orders,
+    get contextHints(){return contextHints;},
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
     stepActor(dt) { if (!paused && !gameState.gameOver && Number.isFinite(dt) && dt > 0) updateStep(dt, true); },
@@ -1144,5 +1147,6 @@ export function createSimulation({
       if (paused) clearKeys();
     },
   };
+  const contextHints=regional?createContextHints(core):null;
   return core;
 }
