@@ -28,6 +28,7 @@
 | Ежедневные заказы покупателей | `game/buyer-orders.js`, общая `state.buyerOrders`; сдача на платформе — `game/simulation.js` | Вкладка заказов `phaser/camp-desk.js`, подпись у продажи и HUD |
 | Итоги налёта | `game/raid-report.js`, `state.lastRaidReport` | `phaser/raid-summary.js`, меню обороны и дневник |
 | Первые цели и готовность лагеря | `game/camp-milestones.js`, `game/raid-readiness.js`, `game/first-days.js` | `phaser/camp-progress-ui.js`, `phaser/day-hud.js`, J/B и хозяйство; [CAMP-LOOP.md](CAMP-LOOP.md) |
+| Одно открытие и вечерний совет | Личный `core.contextHints`, `game/context-hints.js`; существующие команды ягод/навигации без новых наград | `phaser/hud-scene.js`, `phaser/day-hud.js`; [CONTEXT-HINTS.md](CONTEXT-HINTS.md) |
 | Составы налётов и метатели | `game/raid-plans.js`, `game/raid-projectiles.js`, `game/raiders.js`, `game/survival.js` | `phaser/enemy-view.js`, прогноз в HUD/B/J, итоговый отчёт |
 | Добыча с врагов и доступные покупки | `game/combat-loot.js`, `state.combatLoot` | `phaser/combat-loot-view.js`, `shop.js` |
 | PNG предметов добычи/находок | `scripts/prepare_loot_items.py`, `src/assets/loot-items/` | `phaser/loot-item-assets.js`, `phaser/exploration-ui.js`, `phaser/exploration-view.js`; [LOOT-ITEM-ART.md](LOOT-ITEM-ART.md) |

@@ -82,6 +82,7 @@ export class HudScene extends Phaser.Scene {
         else c.exploration.cancelFishing();
         return;
       }
+      if(this.contextGuide){if(c.contextHints.activate(this.contextGuide)==='bag')this.world.explorationUi.openBag();return;}
       if (this.storyGuide) {
         c.navigateStory();
         return;
@@ -206,8 +207,11 @@ export class HudScene extends Phaser.Scene {
         top + (actor.player.y - b.y) * scale - 1, 3, 3);
     this.dayHud.refresh();
     const fishing = c.exploration?.fishing;
+    this.contextGuide=!fishing?c.contextHints?.current:null;
+    const quietPreparation=!fishing&&c.contextHints?.preparing&&!this.contextGuide;
     this.storyGuide =
       !fishing &&
+      !this.contextGuide && !quietPreparation &&
       c.guide.id === "free" &&
       !!c.story &&
       !c.story.overview().completed &&
@@ -229,14 +233,14 @@ export class HudScene extends Phaser.Scene {
               : "Убрать снасти",
           action: "fishing",
         }
-      : storyGoal
+      : this.contextGuide || (quietPreparation?{title:'',text:'',action:null}:null) || (storyGoal
         ? {
             title: storyGoal.chapter,
             text: `${storyGoal.title}. ${storyGoal.text}`,
             button: "К цели главы",
             action: "story",
           }
-        : c.guide;
+        : c.guide);
     if (this.guideWidth !== this.scale.width) {
       this.guideWidth = this.scale.width;
       this.tutorial
@@ -247,7 +251,7 @@ export class HudScene extends Phaser.Scene {
     this.tutorial
       .setPosition(this.scale.width / 2, this.scale.height - dockInset(this) - 12)
       .setText(`${c.coop ? "1: WASD / E · 2: стрелки / Enter · помощь: удерживать E / Enter\n" : ""}${guide.title}\n${guide.text}`)
-      .setVisible(true);
+      .setVisible(!quietPreparation);
     this.guideButton
       .setText(guide.button || "")
       .setPosition(
