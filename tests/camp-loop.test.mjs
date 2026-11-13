@@ -22,7 +22,7 @@ test("early goals are optional, shared and keep actual lighting/mining after res
   b.forestry.addCargo(8);assert.ok(b.camp.stoke());a.state.campFuel=0;
   assert.ok(campMilestones(g).find(x=>x.id==="light").done);
   const gate=a.regions.frontiers().find(x=>x.region.id==="1:0");
-  for(let i=0;i<48;i++)a.regions.deposit(gate.region.id);
+  build(a,["fire","fence"]);g.update(.01);
   a.world.generate(gate.region);a.refreshWorld();b.refreshWorld();
   const rock=a.world.boulders.find(r=>r.regionId===gate.region.id);
   place(b,b.nav.nearestGround(rock.x,rock.y+rock.radius+35));

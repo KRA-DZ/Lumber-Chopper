@@ -59,15 +59,15 @@ test("both players build a common camp and open a common region using their own 
   for (let i = 0; i < 400 && g.state.campLevel === 0; i++) g.update(.05);
   assert.equal(g.actors[0].state.campLevel, 1); assert.equal(g.actors[1].state.campLevel, 1);
   assert.equal(g.actors.reduce((n, a) => n + a.state.wood, 0), 0);
-  const gate = g.regions.frontiers().find(g => g.region.id === "1:0");
+  const gate = g.regions.frontiers().find(g => g.region.id === "0:1");
   for (const a of g.actors) {
     a.state.maxWood = gate.region.cost / 2;
     for (let i = 0; i < gate.region.cost / 2; i++) a.forestry.addCargo(10);
     place(a, gate);
   }
-  for (let i = 0; i < 100 && !g.regions.unlocked.has("1:0"); i++) g.update(.05);
-  assert.ok(g.actors[1].regions.isOpen({ x: 3520, y: 1600 }));
-  const tree = g.world.trees.find(t => t.regionId === "1:0");
+  for (let i = 0; i < 100 && !g.regions.unlocked.has("0:1"); i++) g.update(.05);
+  assert.ok(g.actors[1].regions.isOpen({ x: 1600, y: 3520 }));
+  const tree = g.world.trees.find(t => t.regionId === "0:1");
   place(g.actors[1], { x: tree.x, y: tree.y + 40 });
   assert.ok(g.actors[1].tryChop(tree.id), "Player two indexes newly opened trees too");
 });

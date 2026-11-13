@@ -8,19 +8,21 @@ export function stageRatio(state) {
   );
 }
 export function fencePlan(center = { x: 1600, y: 1600 }) {
-  const circle = Array.from({ length: 33 }, (_, id) => {
-    const a = id / 33 * Math.PI * 2;
-    return { id, x: center.x + Math.cos(a) * CAMP.fenceRX, y: center.y + Math.sin(a) * CAMP.fenceRY };
+  const perimeter = Array.from({ length: 32 }, (_, id) => {
+    const side=Math.floor((id+4)/8)%4,t=((id+4)%8)/8;
+    const points=[[1,-1+2*t],[1-2*t,1],[-1,1-2*t],[-1+2*t,-1]];
+    const [x,y]=points[side];
+    return { id, x:center.x+x*CAMP.fenceRX, y:center.y+y*CAMP.fenceRY };
   });
-  const middles = new Set([0, 8, 16, 24]), posts = circle.filter(p => !middles.has(p.id)),
+  const middles = new Set([0, 8, 16, 24]), posts = perimeter.filter(p => !middles.has(p.id)),
     ids = new Set(posts.map(p => p.id));
-  const segments = circle.flatMap(p => {
-    const q = circle[(p.id + 1) % 33];
+  const segments = perimeter.flatMap(p => {
+    const q = perimeter[(p.id + 1) % perimeter.length];
     return ids.has(p.id) && ids.has(q.id) ? [[p,q]] : [];
   });
   const gates = [0,8,16,24].map((id,i)=>({
     id: `gate-${i}`, name: ["Восточная калитка","Южная калитка","Западная калитка","Северная калитка"][i],
-    a: circle[(id+32)%33], b: circle[(id+1)%33],
+    a: perimeter[(id+perimeter.length-1)%perimeter.length], b: perimeter[(id+1)%perimeter.length],
   }));
   return { posts, segments, gates };
 }

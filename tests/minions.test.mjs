@@ -141,8 +141,8 @@ test("a melee pursuer actually damages and breaches the real camp fence, then ad
 test("ranged attacks arc over an intact fence, lock their landing point and allow a dodge", () => {
   const f = fixture({ day: 4, time: NIGHT_START + 1, fence: true }),
     e = f.isolate("ranged");
-  Object.assign(f.g.player, f.g.nav.nearestGround(1795, 1640));
-  Object.assign(e, f.g.nav.nearestGround(1925, 1640), {
+  Object.assign(f.g.player, f.g.nav.nearestGround(1880, 1750));
+  Object.assign(e, f.g.nav.nearestGround(2010, 1750), {
     path: [],
     repath: 0,
     warning: 0,

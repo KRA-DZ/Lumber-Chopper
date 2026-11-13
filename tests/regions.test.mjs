@@ -5,6 +5,7 @@ import { REGION_SIZE, REGIONS } from "../game/regions.js";
 import { chooseBuildProject } from "./helpers/build-project.mjs";
 const create = () => createSimulation({ regional: true, survival: false });
 function open(g, id) {
+  if(id==="1:0"){g.state.campBuildings={fire:true,fence:true};g.state.campLevel=Math.max(2,g.state.campLevel);g.update(.01);return;}
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
   assert.ok(gate);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });
@@ -39,39 +40,39 @@ test("a border project keeps partial payments, consumes exactly the cost and add
       emit: (type, e) => events.push([type, e]),
     }),
     initial = g.trees.length,
-    gate = g.regions.frontiers().find((p) => p.region.id === "1:0");
+    gate = g.regions.frontiers().find((p) => p.region.id === "0:1");
   g.state.campLevel = gate.region.campRequired;
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [] });
   g.forestry.addCargo(10);
   g.update(0);
-  assert.equal(g.state.regionWood["1:0"], undefined);
+  assert.equal(g.state.regionWood["0:1"], undefined);
   g.paused = true;
   g.update(5);
   assert.equal(g.state.wood, 1);
   g.paused = false;
   g.update(0.2);
-  assert.equal(g.state.regionWood["1:0"], 1);
+  assert.equal(g.state.regionWood["0:1"], 1);
   assert.equal(g.state.wood, 0);
-  assert.ok(!g.nav.isWalkable(3000, 1600));
+  assert.ok(!g.nav.isWalkable(1600, 3000));
   for (let i = 0; i < gate.region.cost - 1; i++) {
     g.forestry.addCargo(10);
     g.update(0.2);
   }
-  assert.ok(g.regions.unlocked.has("1:0"));
-  assert.equal(g.state.regionWood["1:0"], gate.region.cost);
+  assert.ok(g.regions.unlocked.has("0:1"));
+  assert.equal(g.state.regionWood["0:1"], gate.region.cost);
   assert.ok(g.trees.length >= initial + 35);
   assert.equal(g.world.decorBins.size, 2);
-  assert.ok(g.nav.isWalkable(3000, 1600));
-  assert.ok(g.accessible(g.world.ancientTree));
+  assert.ok(g.nav.isWalkable(1600, 3000));
+  assert.ok(g.accessible(g.world.merchant));
   assert.equal(events.filter((e) => e[0] === "region-open").length, 1);
   assert.equal(g.state.cargoValue, 0);
   const count = g.trees.length;
   g.update(1);
   assert.equal(g.trees.length, count);
-  assert.equal(g.regions.deposit("1:0"), null);
+  assert.equal(g.regions.deposit("0:1"), null);
   assert.equal(g.regions.deposit("2:2"), null);
 });
-test("camp stages improve buildings without opening regions, and tutorial follows real actions", () => {
+test("camp stages open the ancient grove after fire and fence, and tutorial follows real actions", () => {
   const g = create(),
     t = g.trees.find((t) => t.type === "oak" && t.size === 2);
   assert.equal(g.tutorialStep, 0);
@@ -97,7 +98,8 @@ test("camp stages improve buildings without opening regions, and tutorial follow
     for (let i = 0; i < cost + 1; i++) g.update(0.2);
   }
   assert.equal(g.state.campLevel, 4);
-  assert.equal(g.state.unlockedRegions.length, 1);
+  assert.equal(g.state.unlockedRegions.length, 2);
+  assert.ok(g.regions.unlocked.has("1:0"));
 });
 test("all 25 squares can be opened, seams and negative-coordinate routes stay navigable", () => {
   const g = create();

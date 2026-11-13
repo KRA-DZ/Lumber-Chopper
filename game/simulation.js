@@ -802,6 +802,7 @@ export function createSimulation({
     else elapsed += dt;
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
     if (!actorOnly) {
+      for(const region of regions?.unlockEligible()||[])openRegion(region);
       cycle.update(dt);
       outposts.update(dt);
       camp.update(dt);

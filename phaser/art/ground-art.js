@@ -45,7 +45,7 @@ export function createForestGround({
       g.fill();
     };
     g.fillStyle = "#ff0000";
-    oval(center.x, center.y, 305, 265);
+    g.beginPath();g.roundRect(center.x-375,center.y-375,750,750,28);g.fill();
     oval(merchant.x, merchant.y + 12, 116, 92);
     oval(ancientTree.x, ancientTree.y, 190, 150);
     for (const site of clearings)

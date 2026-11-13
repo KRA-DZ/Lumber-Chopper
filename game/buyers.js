@@ -60,12 +60,16 @@ export function createBuyers({ state: gameState, player, nav, getElapsed }) {
     queue.forEach((b, i) => (b.slot = i));
     for (let i = buyers.length - 1; i >= 0; i--) {
       const b = buyers[i],
-        target =
+        requested =
           b.phase === "leaving"
             ? buyerExit
             : { x: 1420, y: 1775 + b.slot * 64 },
         key = `${b.phase === "leaving" ? "exit" : b.slot}:${nav.version}`;
-      if (b.routeKey !== key) {
+      b.repath=Math.max(0,(b.repath||0)-dt);
+      // A newly built fence can cover a queue slot. Arrival uses the resolved ground point.
+      if(b.routeKey!==key||!b.queueTarget)b.queueTarget=nav.nearestGround(requested.x,requested.y);
+      const target=b.queueTarget;
+      if (b.routeKey !== key || !b.path.length&&distance(b,target)>5&&b.repath<=0) {
         const changedTarget = b.routeKey.split(":")[0] !== key.split(":")[0];
         if (
           changedTarget ||
@@ -74,6 +78,7 @@ export function createBuyers({ state: gameState, player, nav, getElapsed }) {
         )
           b.path = findPath(b, target);
         b.routeKey = key;
+        b.repath=1;
       }
       const ox = b.x,
         oy = b.y,

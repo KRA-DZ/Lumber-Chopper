@@ -1,5 +1,6 @@
 import { biomeFor } from "./biomes.js";
 import { CENTER } from "./config.js";
+import {hasCampBuilding} from './camp-projects.js';
 
 import { REGION_SIZE } from "./world-grid.js";
 export { REGION_SIZE } from "./world-grid.js";
@@ -60,7 +61,8 @@ export const REGIONS = Object.freeze(
       height: REGION_SIZE,
       cx: CENTER.x + gx * REGION_SIZE,
       cy: CENTER.y + gy * REGION_SIZE,
-      cost: 48 * Math.max(1, Math.abs(gx) + Math.abs(gy)) ** 2,
+      cost: id==='1:0'?0:48 * Math.max(1, Math.abs(gx) + Math.abs(gy)) ** 2,
+      unlockMode:id==='1:0'?'camp':'resources',
       stoneCost: Math.max(0, Math.abs(gx) + Math.abs(gy) - 1) * 20,
       campRequired: Math.min(3, Math.max(1, Math.abs(gx) + Math.abs(gy))),
     });
@@ -140,7 +142,7 @@ export function createRegions(state) {
   function deposit(id, material = "wood") {
     const region = byId.get(id);
     if (
-      !region ||
+      !region || region.unlockMode==='camp' ||
       state.campLevel < region.campRequired ||
       unlocked.has(id) ||
       !frontiers().some((g) => g.region.id === id)
@@ -159,6 +161,11 @@ export function createRegions(state) {
     return { region, opened: true, material };
   }
   return {
+    unlockEligible(){
+      if(unlocked.has('1:0')||!hasCampBuilding(state,'fire')||!hasCampBuilding(state,'fence'))return [];
+      unlocked.add('1:0');state.unlockedRegions.push('1:0');revision++;frontierCache=null;
+      return [byId.get('1:0')];
+    },
     all: REGIONS,
     bounds: REGION_BOUNDS,
     unlocked,

@@ -13,7 +13,8 @@ export const WATCHER = Object.freeze({
   attackReach: 96, // Contact tolerance while tracking; never hit across the map.
   strikeSeconds: 0.09,
   recovery: 0.18,
-  retreatMargin: 90,
+  retreatMargin: 500,
+  retreatSpeed: 225,
 });
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 // The state machine chooses goals only; Survival owns the shared path-search budget.
@@ -87,19 +88,22 @@ export function createWatcher({
       return;
     }
     // Sanctuary protection cancels even a fully prepared strike.
-    if (isSafe(player) || isSafe(m)) {
+    const protectedNow=isSafe(player)||isSafe(m),
+      fleeing=m.phase==='repelled'&&m.retreatGoal&&dist(m,m.retreatGoal)>30&&m.phaseTime<12;
+    if (protectedNow || fleeing) {
+      const entering=m.phase!=='repelled';
       phase(m, "repelled");
-      const center = sanctuary(player) || sanctuary(m) || { ...CENTER, r: safeRadius() },
-        radius = center.r + WATCHER.retreatMargin;
-      if (dist(m, center) < radius - 8) {
-        const d = Math.max(1, dist(m, center)),
-          dx = m.x === center.x && m.y === center.y ? 1 : m.x - center.x,
-          p = nav.nearestGround(
-            center.x + (dx / d) * radius,
-            center.y + ((m.y - center.y) / d) * radius,
-          );
-        if (accessible(p) && !isSafe(p)) setGoal(m, p, WATCHER.patrolSpeed);
+      if(entering){m.retreatGoal=null;m.lastKnown=null;m.seesPlayer=false;}
+      const center = sanctuary(player) || sanctuary(m) || m.retreatCenter || { ...CENTER, r: safeRadius() };
+      m.retreatCenter=center;
+      if(!m.retreatGoal||dist(m,m.retreatGoal)<30){
+        const radius=center.r+WATCHER.retreatMargin,angle=Math.atan2(m.y-center.y,m.x-center.x);
+        for(const turn of [0,.5,-.5,1,-1,1.7,-1.7,Math.PI]){
+          const p=nav.nearestGround(center.x+Math.cos(angle+turn)*radius,center.y+Math.sin(angle+turn)*radius);
+          if(accessible(p)&&!isSafe(p)&&dist(p,center)>radius-60&&dist(p,m)>45){m.retreatGoal=p;break;}
+        }
       }
+      if(m.retreatGoal)setGoal(m,m.retreatGoal,WATCHER.retreatSpeed);
       return;
     }
     if (!m.phase || m.phase === "waking" || m.phase === "repelled") {
