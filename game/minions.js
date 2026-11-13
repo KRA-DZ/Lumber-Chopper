@@ -25,6 +25,15 @@ export const MINIONS = Object.freeze({
   pathInterval: 0.2,
   streamRange: 1350,
   spawnDelay: 3,
+  // Hysteresis keeps throwers from switching direction every frame.
+  retreatStart: 110,
+  retreatEnd: 165,
+});
+export const MINION_ROLES = Object.freeze({
+  melee: Object.freeze({name:"Преследователь",hp:MINIONS.hp,speed:MINIONS.speed,damage:MINIONS.damage,structureDamage:MINIONS.structureDamage,windup:MINIONS.windup,cooldown:MINIONS.cooldown}),
+  ranged: Object.freeze({name:"Метатель",hp:MINIONS.rangedHP,speed:MINIONS.rangedSpeed,damage:MINIONS.projectileDamage,structureDamage:0,windup:MINIONS.windup,cooldown:MINIONS.throwCooldown}),
+  // Tougher than ordinary minions, but weaker than the regional boss (120 HP / 12 damage).
+  heavy: Object.freeze({name:"Громила",hp:12,speed:78,damage:10,structureDamage:10,windup:.5,cooldown:1.15}),
 });
 export const minionHuntNight = (state) =>
   state.worldTime >= NIGHT_START &&
@@ -119,14 +128,14 @@ export function createMinions({
           }
         }
         if (!point) continue;
-        const ranged = slot === MINIONS.perRegion - 1,
-          hp = ranged ? MINIONS.rangedHP : MINIONS.hp;
+        const role = ["melee","heavy","ranged"][slot % 3],
+          hp = MINION_ROLES[role].hp;
         actors.push({
           ...point,
           id,
           kind: "resident",
           tier: "minion",
-          role: ranged ? "ranged" : "melee",
+          role,
           region,
           regionId: region.id,
           family: BIOMES[region.biome].enemy,
@@ -262,6 +271,16 @@ export function createMinions({
       e.windup = 0;
     }
   }
+  // Only use short, directly reachable escape points; normal routing keeps its shared budget.
+  function retreatPoint(e,hunt){
+    const angle=Math.atan2(e.y-player.y,e.x-player.x);
+    for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2]){
+      const p=nav.nearestGround(e.x+Math.cos(angle+turn)*85,e.y+Math.sin(angle+turn)*85);
+      if(distance(p,player)>distance(e,player)+15&&allowed(p,e,hunt)&&
+        (hunt||!isSafe(p))&&(!e.campGuard||hunt||distance(p,e.home)<=300)&&nav.clearSegment(e,p))return p;
+    }
+    return null;
+  }
   function updateProjectiles(dt) {
     for (let i = projectiles.length - 1; i >= 0; i--) {
       const p = projectiles[i];
@@ -351,11 +370,18 @@ export function createMinions({
       const previousBarrier = defenses?.get(e.barrierId);
       if (hunt && previousBarrier?.hp === 0 && !e.breachGoal)
         enterBreach(e, previousBarrier);
+      const profile = MINION_ROLES[e.role] || MINION_ROLES.melee;
       const ranged = e.role === "ranged",
         structure = aware && !ranged ? barrier(e, hunt) : null;
+      const wasEvading=!!e.evading;
+      e.evading=ranged&&aware&&!retreat&&distance(e,player)<(wasEvading?MINIONS.retreatEnd:MINIONS.retreatStart);
+      if(wasEvading!==e.evading){e.path=[];e.repath=0;e.escapeGoal=null;}
+      if(e.evading&&e.repath<=0)e.escapeGoal=retreatPoint(e,hunt);
+      const escape=e.evading?e.escapeGoal:null;
       e.barrierId = structure?.id || null;
       const inRange =
         !retreat &&
+        !escape &&
         aware &&
         (structure
           ? distance(e, structure) < 60
@@ -383,12 +409,12 @@ export function createMinions({
         attack(e, kind, structure || player);
         if (e.attack) {
           e.windup += dt;
-          if (e.windup >= MINIONS.windup) {
+          if (e.windup >= profile.windup) {
             const a = e.attack;
             if (a.kind === "structure") {
               const section = defenses.get(a.id);
               if (section?.hp > 0) {
-                defenses.damage(a.id, MINIONS.structureDamage);
+                defenses.damage(a.id, profile.structureDamage);
                 if (defenses.get(a.id)?.hp === 0) {
                   enterBreach(e, section);
                 }
@@ -410,10 +436,10 @@ export function createMinions({
               distance(player, a) < MINIONS.range &&
               nav.clearSegment(e, player)
             )
-              hurtPlayer(MINIONS.damage, "minion",e);
+              hurtPlayer(profile.damage, "minion",e);
             e.attack = null;
             e.windup = 0;
-            e.cooldown = ranged ? MINIONS.throwCooldown : MINIONS.cooldown;
+            e.cooldown = profile.cooldown;
           }
         }
         if (state.gameOver) return;
@@ -423,7 +449,7 @@ export function createMinions({
       e.windup = 0;
       let goal = retreat
         ? e.home
-        : e.breachGoal ||
+        : escape || e.breachGoal ||
           (aware
             ? player
             : investigate ? noise : {
@@ -438,7 +464,7 @@ export function createMinions({
         };
       }
       const global = hunt || retreat;
-      e.phase = retreat ? "retreat" : aware ? "chase" : investigate ? "investigate" : "patrol";
+      e.phase = retreat ? "retreat" : escape ? "evade" : aware ? "chase" : investigate ? "investigate" : "patrol";
       if(!!e.investigating!==!!investigate){e.investigating=!!investigate;e.path=[];e.repath=0;}
       if (!allowed(goal, e, global)) {
         e.patrolIndex++;
@@ -467,7 +493,7 @@ export function createMinions({
         nav.followPath(
           e,
           dt,
-          (ranged ? MINIONS.rangedSpeed : MINIONS.speed) *
+          profile.speed *
             (e.slow > 0 ? 0.45 : 1),
         ) > 0.01;
       if (!allowed(e, e, global)) {

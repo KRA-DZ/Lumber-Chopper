@@ -89,3 +89,5 @@
 ## Обратная связь боя
 
 `game/simulation.js: attackNearby()` объединяет активные удары; `game/hit-impact.js` отвечает за отбрасывание героя через навигацию. `phaser/combat-view.js` — HP над головами, реакции и пул чисел; `phaser/device-profile.js` ограничивает стартовый выбор на сенсорных устройствах. Проверки: `tests/combat-feedback.test.mjs`, `tests/combat_feedback_smoke.py`. [Управление и баланс](COMBAT-FEEDBACK.md).
+
+Роли малых врагов и их параметры: `game/minions.js: MINION_ROLES`; отступление метателя — `retreatPoint()`, HP/сила/скорость берутся из профиля роли. Подписи и масштаб — `phaser/enemy-view.js`; целевая браузерная проверка — `tests/minion_roles_smoke.py`.

@@ -2,7 +2,7 @@ import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
-import { createMinions, MINIONS, minionHuntNight } from "../game/minions.js";
+import { createMinions, MINIONS, MINION_ROLES, minionHuntNight } from "../game/minions.js";
 import { createBiomeEnemies, BIOME_ENEMIES } from "../game/biome-enemies.js";
 import { regionAt } from "../game/regions.js";
 
@@ -53,7 +53,7 @@ test("small monsters exist by day, persist through dawn, reset at each dusk and 
   );
   assert.deepEqual(
     f.m.actors.map((e) => e.maxHP),
-    [6, 6, 4],
+    [6, 12, 4],
   );
   const e = f.isolate();
   assert.ok(f.m.hit(e.id, 6, false));
@@ -254,4 +254,48 @@ test("bosses have a narrower notice radius, retain committed strikes after hits 
   assert.equal(e.attack, null);
   assert.equal(e.phase, "chase");
   assert.ok(BIOME_ENEMIES.sense < 280);
+});
+
+// Flat, open arena isolates tactics; tests above cover real terrain, fences and navigation.
+function roleArena(){
+  const f=fixture(),nav={...f.g.nav,
+    nearestGround:(x,y)=>({x,y}),isWalkable:()=>true,hasLineOfSight:()=>true,clearSegment:()=>true,
+    followPath(e,dt,speed){const p=e.path[0];if(!p)return 0;const d=Math.hypot(p.x-e.x,p.y-e.y),n=Math.min(d,dt*speed);if(d){e.x+=(p.x-e.x)*n/d;e.y+=(p.y-e.y)*n/d;}if(n>=d)e.path.shift();return n;},
+  };
+  const m=createMinions({...f.options,nav});m.update(3.2);
+  Object.assign(f.g.player,{x:3520,y:1600});
+  const isolate=role=>{const e=m.actors.find(e=>e.role===role);assert.ok(e);for(const other of m.actors)other.warning=1000;Object.assign(e,{x:3700,y:1600,warning:0,path:[],repath:0,cooldown:0,attack:null,windup:0});return e;};
+  const step=t=>{for(let i=0;i<t-1e-9;i+=.05)m.update(Math.min(.05,t-i));};
+  return {...f,m,nav,isolate,step};
+}
+test('pursuer closes distance, while heavy closes more slowly and hits harder after a longer windup',()=>{
+  const melee=roleArena(),a=melee.isolate('melee'),heavy=roleArena(),b=heavy.isolate('heavy');
+  melee.step(.5);heavy.step(.5);
+  assert.ok(a.x<b.x,'pursuer closes the same gap faster');assert.equal(b.maxHP,12);
+  for(const f of [melee,heavy]){const e=f.m.actors.find(e=>e.warning===0);Object.assign(e,{x:3550,y:1600,path:[],repath:0,cooldown:0,windup:0,attack:null});}
+  melee.step(.4);heavy.step(.4);assert.equal(melee.damage[0][0],8);assert.equal(heavy.damage.length,0);
+  heavy.step(.2);assert.equal(heavy.damage[0][0],10);
+  melee.step(1.3);heavy.step(1.3);assert.equal(melee.damage.length,2);assert.equal(heavy.damage.length,1);
+  assert.ok(b.hp<BIOME_ENEMIES.hp&&MINION_ROLES.heavy.damage<BIOME_ENEMIES.damage);
+});
+test('thrower creates distance when approached, stops fleeing at its preferred range, then fires',()=>{
+  const f=roleArena(),e=f.isolate('ranged');e.x=3590;
+  f.step(.05);assert.equal(e.phase,'evade');assert.ok(e.x>3590);assert.equal(f.m.projectiles.length,0);
+  f.step(1.5);assert.ok(Math.hypot(e.x-f.g.player.x,e.y-f.g.player.y)>=MINIONS.retreatEnd);
+  assert.equal(e.phase,'aim');assert.ok(f.m.projectiles.length>0);
+  const position=e.x;f.step(.2);assert.equal(e.x,position,'no back-and-forth jitter at preferred range');
+});
+test('a cornered thrower attacks rather than retreating through walls or across its region boundary',()=>{
+  const f=roleArena(),e=f.isolate('ranged');e.x=3590;
+  f.nav.clearSegment=(a,b)=>Math.hypot(b.x-f.g.player.x,b.y-f.g.player.y)<=100;
+  f.step(.4);assert.equal(e.x,3590);assert.equal(e.phase,'aim');assert.equal(f.m.projectiles.length,1);
+  const edge=roleArena(),r=edge.g.regions.all.find(r=>r.id==='1:0'),b=edge.isolate('ranged');
+  Object.assign(edge.g.player,{x:r.x+r.width-75,y:r.cy});Object.assign(b,{x:r.x+r.width-5,y:r.cy});
+  edge.step(3);assert.equal(regionAt(b.x,b.y)?.id,r.id);assert.ok(edge.m.projectiles.length||edge.events.some(([type])=>type==='minion-projectile-impact'));
+});
+test('all three roles revive at dusk and keep the existing cap and fifth-night global hunt',()=>{
+  const f=fixture({day:4}),roles=()=>f.m.actors.map(e=>e.role).sort();
+  assert.deepEqual(roles(),['heavy','melee','ranged']);for(const e of [...f.m.actors])f.m.hit(e.id,1000,false);
+  assert.equal(f.m.actors.length,0);f.g.state.worldTime=NIGHT_START+1;f.step(.05);
+  assert.deepEqual(roles(),['heavy','melee','ranged']);assert.ok(f.m.hunt);assert.ok(f.m.actors.length<=MINIONS.max);
 });
