@@ -3,7 +3,7 @@ import { RAIDER_ROLES } from "../game/raiders.js";
 import { CENTER } from "../game/config.js";
 import { WATCHER_LABELS } from "../game/watcher.js";
 import { LAYERS } from "./layers.js";
-import { MINIONS } from "../game/minions.js";
+import { MINIONS, MINION_ROLES } from "../game/minions.js";
 export class EnemyView {
   constructor(scene) {
     this.scene = scene;
@@ -102,7 +102,7 @@ export class EnemyView {
       s.assets.setFrame(o.image, key);
       o.image.setScale(
         e.invulnerable ? 4 : small
-          ? 3.3
+          ? e.role === "heavy" ? 3.65 : 3.3
           : e.tier === "boss"
             ? 3.375
             : e.role === "breaker"
@@ -141,7 +141,7 @@ export class EnemyView {
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.campGuard?(e.role==="ranged"?"Страж-метатель":"Страж лагеря"):e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name}${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.campGuard?(e.role==="ranged"?"Страж-метатель":"Страж лагеря"):MINION_ROLES[e.role]?.name || "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name}${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`
