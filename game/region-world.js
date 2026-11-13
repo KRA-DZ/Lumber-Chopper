@@ -8,6 +8,7 @@ import { SAWMILL } from "./sawmill.js";
 import { regionTrails } from "./region-trails.js";
 import { biomeDressing } from "./biome-dressing.js";
 import { makeBoulders } from "./mining.js";
+import {composeForest,activityBranches} from './forest-composition.js';
 import { initialWorldWorks, worksWater, worksCollision, worksReserved, worksSurfaces, WORKS_WALLS } from "./world-works-layout.js";
 
 export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks()}) {
@@ -17,7 +18,8 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     biomeDetails = new Map(),
     landmarks = [],
     trails = [],
-    trailBins = new Map();
+    trailBins = new Map(),
+    forestLayouts = new Map();
   const ancientTree = {
     x: CENTER.x + REGION_SIZE,
     y: CENTER.y,
@@ -269,6 +271,24 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     decorBins.set(region.id, decor);
     biomeDetails.set(region.id, details);
     boulders.push(...makeBoulders(region, (x,y,r) => reserved(x,y,r) || berryBushes.some(b=>Math.hypot(b.x-x,b.y-y)<90) || list.some(t => Math.hypot(t.x-x,t.y-y) < 150)));
+    // Keep original RNG/resource identities, berries and stone; compose only afterwards.
+    const bushes=berryBushes.filter(p=>p.regionId===region.id),rocks=boulders.filter(p=>p.regionId===region.id);
+    const targets=[...bushes.filter(p=>!p.decorative),...locations.filter(p=>p.regionId===region.id).map(p=>p.entrance),
+      ...[FOREST_CAMP,LOOKOUT].filter(p=>p.regionId===region.id),...clues.filter(p=>regionAt(p.x,p.y)?.id===region.id)];
+    const branchSafe=(x,y)=>!waterCollision(x,y,28)&&!worksReserved(x,y,35)&&
+      !locations.some(l=>insideLocation(l,x,y,40))&&rocks.every(p=>Math.hypot(p.x-x,p.y-y)>85);
+    const branches=activityBranches(trailBins.get(region.id),targets,branchSafe);
+    trailBins.get(region.id).push(...branches);trails.push(...branches);
+    const focus=[ancientTree,merchant,...bushes,...landmarks.filter(p=>p.regionId===region.id),...clues,
+      ...locations.filter(p=>p.regionId===region.id).map(p=>p.entrance)];
+    const canPlant=(x,y)=>!reserved(x,y,region)&&!waterCollision(x,y,130)&&
+      rocks.every(p=>Math.hypot(p.x-x,p.y-y)>150)&&details.every(p=>Math.hypot(p.x-x,p.y-y)>80)&&
+      focus.every(p=>Math.hypot(p.x-x,p.y-y)>100&&!(Math.abs(p.x-x)<145&&y>p.y-30&&y<p.y+340));
+    forestLayouts.set(region.id,composeForest(region,list,canPlant));
+    // Keep small passable decor off the new paths and open clearings.
+    const layout=forestLayouts.get(region.id);
+    for(let i=decor.length-1;i>=0;i--){const p=decor[i];if(nearTrail(p,60)||layout.clearings.some(c=>Math.hypot(c.x-p.x,c.y-p.y)<c.radius)||list.some(t=>Math.hypot(t.x-p.x,t.y-p.y)<45))decor.splice(i,1);}
+    for(let i=details.length-1;i>=0;i--)if(nearTrail(details[i],90)||layout.clearings.some(c=>Math.hypot(c.x-details[i].x,c.y-details[i].y)<c.radius))details.splice(i,1);
   }
   function treesNear(view) {
     const result = [];
@@ -315,6 +335,7 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     treesNear,
     decorBins,
     biomeDetails,
+    forestLayouts,
     biomeAt: (x, y) => regionAt(x, y)?.biome || "forest",
     campItems: [
       { type: "tools", x: 1640, y: 1645, min: 0 },
