@@ -8,6 +8,7 @@ import math
 from PIL import Image, ImageChops
 from prepare_assets import components, remove_background, clean_mask, unmatte_white
 from prepare_camp import extract as extract_native
+from prepare_hero_masks import prepare_hero_masks
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRS = ("down", "up", "side")
@@ -274,6 +275,7 @@ def main():
         "metalPixels": metal_counts,
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    prepare_hero_masks(output)
     print(f"Prepared {len(frames)} PNG frames in {width}x{height} and two portraits.")
 
 

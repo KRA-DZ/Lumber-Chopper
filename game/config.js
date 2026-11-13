@@ -1,4 +1,5 @@
 import { normalizeAppearance } from "./appearances.js";
+import {normalizeHeroColors} from './hero-colors.js';
 import {WORLD_CENTER} from "./world-grid.js";
 import { applyUpgrades } from "../economy.js";
 import { STAGE_COSTS } from "../construction.js";
@@ -15,9 +16,10 @@ export const STAGES = Object.freeze(
     cost: STAGE_COSTS[i],
   })),
 );
-export function createInitialState({ appearance = "traveler" } = {}) {
+export function createInitialState({ appearance = "traveler", colors=null } = {}) {
   const state = {
     appearance: normalizeAppearance(appearance), // Только внешний вид: вариант 2 или 3, характеристики одинаковы.
+    heroColors:normalizeHeroColors(colors), // Личные визуальные настройки; не влияют на экономику.
     health: 100, // Три ошибки рядом со Смотрителем смертельны; рассвет восстанавливает здоровье.
     maxHealth: 100,
     campFuel: 0, // Общий костёр строится потухшим; бревно = 60 с, уголь = 180 с, предел 600–1200 с.

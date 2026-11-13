@@ -49,11 +49,12 @@ export function createSimulation({
   emit = () => {},
   regional = false,
   appearance = "traveler",
+  colors = null,
   survival: hazards = regional,
   shared = null,
   party = null,
 } = {}) {
-  const initialState = createInitialState({ appearance }),
+  const initialState = createInitialState({ appearance, colors }),
     gameState = shared ? shareWorldState(initialState, shared.state) : initialState,
     regions = shared?.regions || (regional ? createRegions(gameState) : null),
     world = shared?.world || (regional ? createRegionWorld(regions,gameState) : createWorldModel()),

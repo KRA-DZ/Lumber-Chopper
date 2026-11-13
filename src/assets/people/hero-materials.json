@@ -1,0 +1,826 @@
+{
+  "version": 1,
+  "sourceSha256": "410ea4bcbe398f81831053b3baed809aac54b6065d6e7d697439123db84990d2",
+  "labels": [
+    "unchanged",
+    "hair",
+    "jacket",
+    "pants"
+  ],
+  "size": [
+    1024,
+    1024
+  ],
+  "counts": {
+    "hero2-strike-down-0-tier0": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-0-tier1": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-0-tier2": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-0-tier3": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-0-tier4": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-0-tier5": [
+      109,
+      92,
+      130
+    ],
+    "hero2-strike-down-1-tier0": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-1-tier1": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-1-tier2": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-1-tier3": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-1-tier4": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-1-tier5": [
+      122,
+      60,
+      122
+    ],
+    "hero2-strike-down-2-tier0": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-down-2-tier1": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-down-2-tier2": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-down-2-tier3": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-down-2-tier4": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-down-2-tier5": [
+      117,
+      79,
+      148
+    ],
+    "hero2-strike-side-0-tier0": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-0-tier1": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-0-tier2": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-0-tier3": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-0-tier4": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-0-tier5": [
+      105,
+      51,
+      96
+    ],
+    "hero2-strike-side-1-tier0": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-1-tier1": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-1-tier2": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-1-tier3": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-1-tier4": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-1-tier5": [
+      139,
+      44,
+      92
+    ],
+    "hero2-strike-side-2-tier0": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-side-2-tier1": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-side-2-tier2": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-side-2-tier3": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-side-2-tier4": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-side-2-tier5": [
+      131,
+      64,
+      76
+    ],
+    "hero2-strike-up-0-tier0": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-0-tier1": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-0-tier2": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-0-tier3": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-0-tier4": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-0-tier5": [
+      133,
+      18,
+      85
+    ],
+    "hero2-strike-up-1-tier0": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-1-tier1": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-1-tier2": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-1-tier3": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-1-tier4": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-1-tier5": [
+      136,
+      5,
+      90
+    ],
+    "hero2-strike-up-2-tier0": [
+      149,
+      9,
+      111
+    ],
+    "hero2-strike-up-2-tier1": [
+      149,
+      9,
+      111
+    ],
+    "hero2-strike-up-2-tier2": [
+      149,
+      9,
+      111
+    ],
+    "hero2-strike-up-2-tier3": [
+      149,
+      9,
+      111
+    ],
+    "hero2-strike-up-2-tier4": [
+      149,
+      9,
+      111
+    ],
+    "hero2-strike-up-2-tier5": [
+      149,
+      9,
+      111
+    ],
+    "hero3-strike-down-0-tier0": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-0-tier1": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-0-tier2": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-0-tier3": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-0-tier4": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-0-tier5": [
+      156,
+      184,
+      99
+    ],
+    "hero3-strike-down-1-tier0": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-1-tier1": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-1-tier2": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-1-tier3": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-1-tier4": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-1-tier5": [
+      164,
+      99,
+      68
+    ],
+    "hero3-strike-down-2-tier0": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-down-2-tier1": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-down-2-tier2": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-down-2-tier3": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-down-2-tier4": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-down-2-tier5": [
+      159,
+      164,
+      92
+    ],
+    "hero3-strike-side-0-tier0": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-0-tier1": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-0-tier2": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-0-tier3": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-0-tier4": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-0-tier5": [
+      195,
+      138,
+      65
+    ],
+    "hero3-strike-side-1-tier0": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-1-tier1": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-1-tier2": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-1-tier3": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-1-tier4": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-1-tier5": [
+      192,
+      74,
+      39
+    ],
+    "hero3-strike-side-2-tier0": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-side-2-tier1": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-side-2-tier2": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-side-2-tier3": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-side-2-tier4": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-side-2-tier5": [
+      193,
+      131,
+      35
+    ],
+    "hero3-strike-up-0-tier0": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-0-tier1": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-0-tier2": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-0-tier3": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-0-tier4": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-0-tier5": [
+      220,
+      42,
+      48
+    ],
+    "hero3-strike-up-1-tier0": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-1-tier1": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-1-tier2": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-1-tier3": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-1-tier4": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-1-tier5": [
+      184,
+      34,
+      34
+    ],
+    "hero3-strike-up-2-tier0": [
+      185,
+      91,
+      43
+    ],
+    "hero3-strike-up-2-tier1": [
+      185,
+      91,
+      43
+    ],
+    "hero3-strike-up-2-tier2": [
+      185,
+      91,
+      43
+    ],
+    "hero3-strike-up-2-tier3": [
+      185,
+      91,
+      43
+    ],
+    "hero3-strike-up-2-tier4": [
+      185,
+      91,
+      43
+    ],
+    "hero3-strike-up-2-tier5": [
+      185,
+      91,
+      43
+    ],
+    "hero2-carry-down-0": [
+      99,
+      90,
+      98
+    ],
+    "hero2-carry-down-1": [
+      113,
+      83,
+      85
+    ],
+    "hero2-carry-down-2": [
+      114,
+      85,
+      90
+    ],
+    "hero2-carry-down-3": [
+      108,
+      85,
+      81
+    ],
+    "hero2-carry-side-0": [
+      122,
+      47,
+      79
+    ],
+    "hero2-carry-side-1": [
+      121,
+      46,
+      54
+    ],
+    "hero2-carry-side-2": [
+      120,
+      43,
+      69
+    ],
+    "hero2-carry-side-3": [
+      130,
+      48,
+      63
+    ],
+    "hero2-carry-up-0": [
+      151,
+      32,
+      64
+    ],
+    "hero2-carry-up-1": [
+      143,
+      30,
+      65
+    ],
+    "hero2-carry-up-2": [
+      143,
+      29,
+      61
+    ],
+    "hero2-carry-up-3": [
+      143,
+      29,
+      53
+    ],
+    "hero2-gesture-carry": [
+      128,
+      104,
+      116
+    ],
+    "hero2-gesture-cheer": [
+      143,
+      98,
+      110
+    ],
+    "hero2-gesture-rest": [
+      149,
+      97,
+      119
+    ],
+    "hero2-walk-down-0": [
+      102,
+      92,
+      105
+    ],
+    "hero2-walk-down-1": [
+      91,
+      86,
+      90
+    ],
+    "hero2-walk-down-2": [
+      88,
+      90,
+      86
+    ],
+    "hero2-walk-down-3": [
+      81,
+      77,
+      102
+    ],
+    "hero2-walk-side-0": [
+      107,
+      53,
+      71
+    ],
+    "hero2-walk-side-1": [
+      114,
+      48,
+      57
+    ],
+    "hero2-walk-side-2": [
+      119,
+      53,
+      68
+    ],
+    "hero2-walk-side-3": [
+      123,
+      41,
+      56
+    ],
+    "hero2-walk-up-0": [
+      126,
+      18,
+      71
+    ],
+    "hero2-walk-up-1": [
+      113,
+      17,
+      63
+    ],
+    "hero2-walk-up-2": [
+      126,
+      12,
+      63
+    ],
+    "hero2-walk-up-3": [
+      124,
+      16,
+      64
+    ],
+    "hero3-carry-down-0": [
+      152,
+      111,
+      70
+    ],
+    "hero3-carry-down-1": [
+      154,
+      98,
+      65
+    ],
+    "hero3-carry-down-2": [
+      151,
+      107,
+      62
+    ],
+    "hero3-carry-down-3": [
+      138,
+      95,
+      62
+    ],
+    "hero3-carry-side-0": [
+      173,
+      105,
+      61
+    ],
+    "hero3-carry-side-1": [
+      162,
+      92,
+      48
+    ],
+    "hero3-carry-side-2": [
+      179,
+      87,
+      60
+    ],
+    "hero3-carry-side-3": [
+      167,
+      91,
+      51
+    ],
+    "hero3-carry-up-0": [
+      216,
+      37,
+      42
+    ],
+    "hero3-carry-up-1": [
+      205,
+      33,
+      42
+    ],
+    "hero3-carry-up-2": [
+      192,
+      32,
+      39
+    ],
+    "hero3-carry-up-3": [
+      202,
+      39,
+      43
+    ],
+    "hero3-gesture-carry": [
+      173,
+      115,
+      115
+    ],
+    "hero3-gesture-cheer": [
+      173,
+      115,
+      104
+    ],
+    "hero3-gesture-rest": [
+      181,
+      123,
+      76
+    ],
+    "hero3-walk-down-0": [
+      135,
+      124,
+      74
+    ],
+    "hero3-walk-down-1": [
+      138,
+      98,
+      60
+    ],
+    "hero3-walk-down-2": [
+      117,
+      98,
+      57
+    ],
+    "hero3-walk-down-3": [
+      119,
+      91,
+      67
+    ],
+    "hero3-walk-side-0": [
+      164,
+      111,
+      57
+    ],
+    "hero3-walk-side-1": [
+      155,
+      99,
+      51
+    ],
+    "hero3-walk-side-2": [
+      163,
+      99,
+      55
+    ],
+    "hero3-walk-side-3": [
+      168,
+      98,
+      45
+    ],
+    "hero3-walk-up-0": [
+      171,
+      46,
+      37
+    ],
+    "hero3-walk-up-1": [
+      162,
+      49,
+      43
+    ],
+    "hero3-walk-up-2": [
+      159,
+      47,
+      41
+    ],
+    "hero3-walk-up-3": [
+      160,
+      40,
+      41
+    ]
+  }
+}

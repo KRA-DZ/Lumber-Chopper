@@ -1,33 +1,43 @@
 import { sprite } from "../pixel-art.js";
 import { HERO_APPEARANCES, normalizeAppearance } from "../game/appearances.js";
+import {heroColorKey} from '../game/hero-colors.js';
+import {paintHeroFrame} from './hero-color-art.js';
 export function preloadPeople(scene) {
   scene.load.json("people.manifest", "./src/assets/people/manifest.json");
   scene.load.image("people.source", "./src/assets/people/people.png");
+  scene.load.image("people.materials", "./src/assets/people/hero-materials.png");
 }
 export function retainPeople(scene) {
   const manifest = scene.cache.json.get("people.manifest");
   if (!manifest?.frames || !scene.textures.exists("people.source"))
     throw Error("Generated people assets failed to load");
+  if(!scene.textures.exists('people.materials'))throw Error('Hero material masks failed to load');
+  const canvas=document.createElement('canvas');[canvas.width,canvas.height]=manifest.size;
+  const ctx=canvas.getContext('2d');ctx.drawImage(scene.textures.get('people.materials').getSourceImage(),0,0);
+  const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data,materials=new Uint8Array(canvas.width*canvas.height);
+  for(let i=0;i<materials.length;i++)materials[i]=Math.round(rgba[i*4]/85);
   scene.registry.set("peoplePack", {
     manifest,
+    materials,
     image: scene.textures.get("people.source").getSourceImage(),
   });
   scene.textures.remove("people.source");
+  scene.textures.remove('people.materials');
 }
 export function applyPeopleFrames(scene, sources) {
   const pack = scene.registry.get("peoplePack");
   if (!pack) return null;
-  const role =
+  const choices=scene.registry.get('heroChoices')||[],role =
       HERO_APPEARANCES[
-        normalizeAppearance(scene.registry.get("heroAppearance"))
+        normalizeAppearance(choices[0]?.appearance||scene.registry.get("heroAppearance"))
       ].role,
     cached = new Map();
-  const get = (id) => {
-    if (cached.has(id)) return cached.get(id);
+  const get = (id,colors=null) => {
+    const cacheKey=id+':'+heroColorKey(colors);
+    if (cached.has(cacheKey)) return cached.get(cacheKey);
     const f = pack.manifest.frames[id];
     if (!f) throw Error(`Missing character frame: ${id}`);
-    const image = sprite(f.width, f.height, ...f.anchor, (p) =>
-      p.g.drawImage(
+    const image = sprite(f.width, f.height, ...f.anchor, (p) => colors ? paintHeroFrame(p.g,pack,id,colors) : p.g.drawImage(
         pack.image,
         f.x,
         f.y,
@@ -39,17 +49,18 @@ export function applyPeopleFrames(scene, sources) {
         f.height,
       ),
     );
-    cached.set(id, image);
+    cached.set(cacheKey, image);
     return image;
   };
   for (const id of Object.keys(pack.manifest.frames))
     if (!id.startsWith("hero")) sources.set(`person.${id}`, get(id));
-  function heroFrames(role, prefix = "") {
+  function heroFrames(role, prefix = "",colors=null) {
+  const heroGet=id=>get(id,colors);
   const put = (key, value) => sources.set(prefix + key, value);
   for (const dir of ["down", "up", "side"]) {
     for (let i = 0; i < 8; i++) {
-      const walk = get(`${role}-walk-${dir}-${i % 4}`),
-        carry = get(`${role}-carry-${dir}-${i % 4}`);
+      const walk = heroGet(`${role}-walk-${dir}-${i % 4}`),
+        carry = heroGet(`${role}-carry-${dir}-${i % 4}`);
       put(`characters.player.${dir}.${i}`, walk);
       for (const mood of ["happy", "tired", "focused"])
         put(`people.player.${mood}.${dir}.${i}`, walk);
@@ -58,22 +69,22 @@ export function applyPeopleFrames(scene, sources) {
     }
     for (let tier = 0; tier < 6; tier++)
       for (let phase = 0; phase < 6; phase++) {
-        const frame = get(
+        const frame = heroGet(
           `${role}-strike-${dir}-${Math.floor(phase / 2)}-tier${tier}`,
         );
         put(`hero.strike.${tier}.${dir}.${phase}`, frame);
         if (tier === 0) put(`hero.strike.${dir}.${phase}`, frame);
       }
     for (let i = 0; i < 2; i++)
-      put(`hero.cheer.${dir}.${i}`, get(`${role}-gesture-cheer`));
+      put(`hero.cheer.${dir}.${i}`, heroGet(`${role}-gesture-cheer`));
   }
   for (const mood of ["blink", "yawn"])
-    put(`idle.player.${mood}`, get(`${role}-gesture-rest`));
-  put("idle.player.cheer", get(`${role}-gesture-cheer`));
+    put(`idle.player.${mood}`, heroGet(`${role}-gesture-rest`));
+  put("idle.player.cheer", heroGet(`${role}-gesture-cheer`));
   }
-  heroFrames(role);
+  heroFrames(role,'',choices[0]?.colors);
   if (scene.registry.get("playerCount") === 2)
-    heroFrames(role === HERO_APPEARANCES.traveler.role ? HERO_APPEARANCES.woodcutter.role : HERO_APPEARANCES.traveler.role, "coop2.");
+    heroFrames(choices[1]?.appearance?HERO_APPEARANCES[normalizeAppearance(choices[1].appearance)].role:role === HERO_APPEARANCES.traveler.role ? HERO_APPEARANCES.woodcutter.role : HERO_APPEARANCES.traveler.role, "coop2.",choices[1]?.colors);
   sources.set("merchant", get("merchant-idle"));
   for (const action of ["idle", "adjust", "read", "look", "peek", "greet"])
     for (let i = 0; i < 2; i++)
