@@ -11,7 +11,7 @@ footer { position:fixed; z-index:5; bottom:max(8px,env(safe-area-inset-bottom));
 footer .stats { justify-content:center; gap:16px; }
 footer .stat { padding:0 4px; border:0; box-shadow:none; background:none; font-size:12px; }
 footer .stat b { display:inline; margin:0 0 0 5px; font-size:13px; }
-footer .game-actions { grid-template-columns:repeat(9,minmax(0,1fr)); gap:4px; }
+footer .game-actions { grid-template-columns:repeat(10,minmax(0,1fr)); gap:4px; }
 footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px; min-height:44px; }
 #actionsToggle { display:none; }
 #coopPlayers { margin:0; gap:4px; }
@@ -32,8 +32,8 @@ footer .game-actions button { padding:6px 3px; font-size:11px; border-radius:5px
 .hero-presets { margin:8px 0; }
 @media(max-width:900px) {
   footer { width:calc(100% - 16px); }
-  footer .game-actions { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  footer .game-actions { grid-template-columns:repeat(5,minmax(0,1fr)); }
   footer .game-actions button { display:none; }
-  footer .game-actions :is(#campButton,#shopButton,#menuButton,#actionsToggle) { display:block; order:-1; }
+  footer .game-actions :is(#campButton,#shopButton,#attackButton,#menuButton,#actionsToggle) { display:block; order:-1; }
   footer .game-actions.expanded button { display:block; }
 }

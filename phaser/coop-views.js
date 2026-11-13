@@ -20,9 +20,9 @@ export class CoopViews {
       card.dataset.coopPlayer = i; title.textContent = `Игрок ${i + 1} · ${i ? "стрелки / Enter" : "WASD / E"}`;
       title.onclick = () => { if (!scene.core.paused) { this.focus(i); scene.renderModel(); } };
       card.append(title, stats);
-      for (const [text, action] of [["Лавка", () => scene.shop.open()], ["Сумка", () => scene.explorationUi.openBag()]]) {
+      for (const [text, action] of [["Лавка", () => scene.shop.open()], ["Сумка", () => scene.explorationUi.openBag()],[`Удар · ${i?'/':'F'}`,()=>scene.core.attackNearby()]]) {
         const button = document.createElement("button"); button.textContent = text;
-        button.dataset.coopAction = text === "Лавка" ? "shop" : "bag";
+        button.dataset.coopAction = text === "Лавка" ? "shop" : text==='Сумка'?'bag':'attack';
         button.onclick = () => { if (!scene.core.paused && a.state.health > 0) { this.focus(i); action(); } };
         card.append(button);
       }
@@ -43,9 +43,9 @@ export class CoopViews {
       entry.heroView.render(); entry.stackView.render(); entry.explorationView.render(); entry.feedback.render();
       entry.player.setAngle(down ? 75 : 0).setAlpha(down ? .55 : a.player.hitCooldown > 0 && Math.floor(s.core.elapsed * 12) % 2 ? .45 : 1);
       if (down) entry.axe.setVisible(false);
-      this.labels[i].setPosition(a.player.x, a.player.y - 92).setText(down ? `${i + 1} · нужна помощь` : `${i + 1}`);
+      this.labels[i].setPosition(a.player.x, a.player.y - 137).setText(down ? `${i + 1} · нужна помощь` : `${i + 1}`);
       const p = s.core.helpProgress(i);
-      const text = `♥ ${a.state.health}/${a.state.maxHealth} · Брёвна ${a.state.wood}/${a.state.maxWood}${a.state.boardCargo?` · Доски ${a.state.boardCargo}`:""} · Камень ${a.state.stone}/${a.mining.capacity()} · Монеты ${a.state.coins} · Топор ${a.state.axeLevel + 1}${p ? ` · Помощь ${Math.round(p * 100)}%` : ""}`;
+      const text = `Брёвна ${a.state.wood}/${a.state.maxWood}${a.state.boardCargo?` · Доски ${a.state.boardCargo}`:""} · Камень ${a.state.stone}/${a.mining.capacity()} · Монеты ${a.state.coins} · Топор ${a.state.axeLevel + 1}${p ? ` · Помощь ${Math.round(p * 100)}%` : ""}`;
       if (this.cards[i].stats.textContent !== text) this.cards[i].stats.textContent = text;
     }));
     this.cards.forEach((c, i) => {

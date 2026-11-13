@@ -7,6 +7,7 @@ import { createWatcher, WATCHER } from "./watcher.js";
 import { CENTER, RAID_INTERVAL } from "./config.js";
 import { raidPlan, raidRoster } from "./raid-plans.js";
 import { createRaidProjectiles } from "./raid-projectiles.js";
+import {pushPlayer} from './hit-impact.js';
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 190, // Near the starting hero's 200: little room to waste time while chased.
   monsterDamage: 40,
@@ -164,10 +165,10 @@ export function createSurvival({
     hitCooldown = 0;
     if (party) party.dawn(); else state.health = state.maxHealth;
   }
-  function hurtPlayer(amount, source = "raider") {
-    if (player.room) return;
+  function hurtPlayer(amount, source = "raider", from=null) {
+    if (player.room || !Number.isFinite(amount) || amount<=0) return;
     if (party) {
-      if (source !== "watcher" || !isSafe(player)) party.hurt(amount, source);
+      if (source !== "watcher" || !isSafe(player)) party.hurt(amount, source,from);
       return;
     }
     if (
@@ -176,9 +177,10 @@ export function createSurvival({
       (source === "watcher" && isSafe(player))
     )
       return;
+    const actualDamage=Math.min(state.health,amount),push=pushPlayer(nav,player,from,source);
     state.health = Math.max(0, state.health - amount);
     hitCooldown = SURVIVAL.playerInvulnerability;
-    emit("player-hurt", { health: state.health, damage: amount, source });
+    emit("player-hurt", { health: state.health, damage: amount, actualDamage, push, from, source });
     if (!state.health)
       defeat(
         source === "watcher"
@@ -218,6 +220,7 @@ export function createSurvival({
     const target = raiders.find((r) => r.id === id);
     if (!target || target.hp <= 0 || !Number.isFinite(damage) || damage <= 0)
       return false;
+    const before={x:target.x,y:target.y},actualDamage=Math.min(target.hp,damage);
     target.hp = Math.max(0, target.hp - damage);
     target.flash = 0.16;
     if (knockback) {
@@ -233,7 +236,7 @@ export function createSurvival({
       target.path = [];
       target.repath = 0;
     }
-    emit("enemy-hit", { enemy: target, damage });
+    emit("enemy-hit", { enemy: target, damage, actualDamage, from:{x:player.x,y:player.y}, push:{x:target.x-before.x,y:target.y-before.y} });
     if (!target.hp) {
       raiders.splice(raiders.indexOf(target), 1);
       if (wave) wave.killed++;

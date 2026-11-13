@@ -120,11 +120,6 @@ export class EnemyView {
       const selected = (c.actors || [c]).some(a => a.selectedEnemyId === e.id);
       if (selected && visible) {
         g.lineStyle(3, 0xffe5a2, 0.95).strokeEllipse(e.x, e.y, 48, 24);
-        const barY = e.y - (small ? 195 : e.tier === "boss" ? 185 : 123);
-        g.fillStyle(0x302f29, 0.95)
-          .fillRect(e.x - 26, barY, 52, 6)
-          .fillStyle(role.color)
-          .fillRect(e.x - 25, barY + 1, (50 * e.hp) / e.maxHP, 4);
       }
       o.image
         .setPosition(Math.round(e.x / 2) * 2, Math.round(e.y / 2) * 2)
@@ -141,16 +136,12 @@ export class EnemyView {
           e.y -
             (e.invulnerable
               ? Math.max(208,o.image.displayHeight*o.image.originY+20)
-              : small
-                ? 228
-                : e.tier === "boss"
-                  ? 210
-                  : 110),
+              : o.image.displayHeight*o.image.originY+45),
         )
         .setText(
           e.invulnerable
             ? `СМОТРИТЕЛЬ · НЕУЯЗВИМ\n${WATCHER_LABELS[e.phase] || "РЯДОМ"}${e.phase === "windup" ? ` · ${Math.max(0, (e.attack?.duration || 1.2) - e.windup).toFixed(1)} с` : ""}`
-            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.campGuard?(e.role==="ranged"?"Страж-метатель":"Страж лагеря"):e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name} · ${e.hp} HP${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
+            : `${selected ? "▾ " : ""}${e.kind === "resident" ? `${small ? (e.campGuard?(e.role==="ranged"?"Страж-метатель":"Страж лагеря"):e.role === "ranged" ? "Метатель" : "Малый") : "Босс"} · ${BIOMES[e.biome].creature}` : e.fast ? "Бегун" : role.name}${e.warning > 0 && e.kind === "resident" ? " · появляется" : ""}${
                 e.fleeing
                   ? `
 Убегает · ${e.stolen} монет`

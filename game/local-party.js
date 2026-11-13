@@ -1,5 +1,6 @@
 import { regionAt } from "./regions.js";
 import { minionHuntNight } from "./minions.js";
+import {pushPlayer} from './hit-impact.js';
 
 export function createLocalParty(emit) {
   const actors = [];
@@ -31,12 +32,13 @@ export function createLocalParty(emit) {
     },
     positions() { return actors.filter(a => a.state.health > 0 && !a.player.room).map(a => a.player); },
     tick(dt) { for (const a of actors) a.player.hitCooldown = Math.max(0, (a.player.hitCooldown || 0) - dt); },
-    hurt(amount, source) {
+    hurt(amount, source, from=null) {
       const a = current();
-      if (!a || a.player.room || a.state.health <= 0 || a.player.hitCooldown > 0 || a.state.gameOver) return;
+      if (!a || a.player.room || a.state.health <= 0 || a.player.hitCooldown > 0 || a.state.gameOver || !Number.isFinite(amount) || amount<=0) return;
+      const actualDamage=Math.min(a.state.health,amount),push=pushPlayer(a.nav,a.player,from,source);
       a.state.health = Math.max(0, a.state.health - amount);
       a.player.hitCooldown = 1.4;
-      emit("player-hurt", { actor: a.player.id, health: a.state.health, damage: amount, source });
+      emit("player-hurt", { actor: a.player.id, health: a.state.health, damage: amount, actualDamage, push, from, source });
       if (!a.state.health) {
         a.clearKeys(); a.exploration.cancelAll(); a.player.moving = false;
         emit("player-down", { actor: a.player.id });
@@ -48,7 +50,7 @@ export function createLocalParty(emit) {
     sale(coins) { for (const a of actors) a.state.coins += coins; },
     blast(point, radius, amount, source = "minion") {
       for (const a of actors) if (a.state.health > 0 && Math.hypot(a.player.x - point.x, a.player.y - point.y) < radius) {
-        target = a; party.hurt(amount, source);
+        target = a; party.hurt(amount, source,{x:point.fromX??point.x,y:point.fromY??point.y});
       }
     },
   };

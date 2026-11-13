@@ -140,7 +140,7 @@ export function createRaiderAI({
       if (actor.windup >= role.windup) {
         actor.windup = 0;
         actor.cooldown = RAIDER_ATTACK_COOLDOWN;
-        if (playerTarget) hurtPlayer(20);
+        if (playerTarget) hurtPlayer(20,'raider',actor);
         else if (structure) defenses.damage(structure.id, role.structureDamage);
         else if (actor.role === "thief") {
           actor.stolen = Math.min(15, state.coins);

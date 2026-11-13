@@ -163,7 +163,8 @@ test("ranged attacks arc over an intact fence, lock their landing point and allo
   for (let i = 0; i < 50 && !f.m.projectiles.length; i++) f.step(0.05);
   assert.ok(f.m.projectiles.length);
   f.step(0.7);
-  assert.deepEqual(f.damage[0], [MINIONS.projectileDamage, "minion"]);
+  assert.deepEqual(f.damage[0].slice(0,2), [MINIONS.projectileDamage, "minion"]);
+  assert.ok(Number.isFinite(f.damage[0][2].x));
   assert.equal(JSON.stringify(f.g.state.defenseHP), fences);
   f.g.state.calendarDay = 5;
   f.g.state.worldTime = 0;

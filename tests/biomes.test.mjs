@@ -164,7 +164,8 @@ test("a telegraphed local attack can be dodged, damages with shared player coold
   Object.assign(f.player, { x: e.x + 30, y: e.y });
   f.step(4);
   assert.ok(f.damage.length > 0);
-  assert.deepEqual(f.damage[0], [12, "resident"]);
+  assert.deepEqual(f.damage[0].slice(0,2), [12, "resident"]);
+  assert.ok(Number.isFinite(f.damage[0][2].x));
   assert.equal(f.state.campHealth, 200);
 });
 test("defeated residents do not respawn until a new night or grant wave rewards", () => {
