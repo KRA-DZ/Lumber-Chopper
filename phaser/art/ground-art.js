@@ -60,6 +60,7 @@ export function createForestGround({
     g.lineCap = g.lineJoin = "round";
     g.lineWidth = 64;
     for (const path of trails) {
+      g.lineWidth = path.width || 64;
       g.beginPath();
       path.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
       g.stroke();

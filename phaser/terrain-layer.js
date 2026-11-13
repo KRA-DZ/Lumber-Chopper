@@ -1,11 +1,13 @@
 import { createForestGround } from "./art/ground-art.js";
 import { createFortressFloorSampler } from "./fortress-floor.js";
 import { worksChunkAffected } from "../game/world-works-layout.js";
+import {compositionChunkAffected} from '../game/forest-composition.js';
 export const TERRAIN_TEXTURE_LIMIT = 24; // 1.5 MiB RGBA at 128², bounded reuse across camera edges.
 export class TerrainLayer {
   constructor(scene, model) {
     this.scene = scene;
     this.model=model;this.worksRevision=model.worksRevision?.()||0;
+    this.layoutRegions=new Set(model.forestLayouts?.keys());
     const fortressFloor = createFortressFloorSampler(
       scene.registry.get("fortressPack"),
       model.locations,
@@ -26,6 +28,14 @@ export class TerrainLayer {
     this.images = new Map();
   }
   update(view) {
+    const added=this.layoutRegions.size!==(this.model.forestLayouts?.size||0)?[...(this.model.forestLayouts?.keys()||[])].filter(id=>!this.layoutRegions.has(id)):[];
+    if(added.length){
+      const regions=this.model.regions.all.filter(r=>added.includes(r.id));
+      const affected=(x,y)=>regions.some(r=>compositionChunkAffected(r,x,y));
+      this.source.invalidate(affected);
+      for(const [key,image] of this.images){const [,x,y]=key.split('/');if(affected(+x,+y)){image.destroy();this.scene.textures.remove(key);this.images.delete(key);}}
+      for(const id of added)this.layoutRegions.add(id);
+    }
     const revision=this.model.worksRevision?.()||0;
     if(revision!==this.worksRevision){
       this.worksRevision=revision;this.source.invalidate(worksChunkAffected);
