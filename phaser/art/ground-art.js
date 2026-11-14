@@ -1,4 +1,5 @@
-import { sampleBiomeGround, sampleMaterial } from "../../game/biome-terrain.js";
+import {prepareGroundMaterials,sampleNaturalGround} from '../../game/ground-surfaces.js';
+import { sampleMaterial } from "../../game/biome-terrain.js";
 import { pixelHash, CAMP } from "../../pixel-art.js";
 const SIZE = 128,
   PAD = 8,
@@ -30,8 +31,10 @@ export function createForestGround({
   fortressFloor = null,
   worksSurfaces = () => [],
   streamCrossings = [],
+  sceneryTrails = () => [],
 }) {
   const cache = new Map();
+  if(materials)materials=prepareGroundMaterials(materials);
   function bake(cx, cy) {
     const bitmap = document.createElement("canvas");
     bitmap.width = bitmap.height = SIZE;
@@ -59,10 +62,15 @@ export function createForestGround({
     g.strokeStyle = "#ff0000";
     g.lineCap = g.lineJoin = "round";
     g.lineWidth = 64;
-    for (const path of trails) {
+    for (const path of [...trails,...sceneryTrails()]) {
       g.lineWidth = path.width || 64;
       g.beginPath();
-      path.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+      g.moveTo(path[0].x,path[0].y);
+      if(path.scenic||path.length<3)for(const p of path.slice(1))g.lineTo(p.x,p.y);
+      else{
+        for(let i=1;i<path.length-1;i++){const p=path[i],next=path[i+1];g.quadraticCurveTo(p.x,p.y,(p.x+next.x)/2,(p.y+next.y)/2);}
+        const end=path.at(-1);g.lineTo(end.x,end.y);
+      }
       g.stroke();
     }
     for(const area of worksSurfaces()){
@@ -111,13 +119,13 @@ export function createForestGround({
               wx,
               wy,
             );
-          else [r, gr, b] = sampleBiomeGround(materials, wx, wy);
+          else [r, gr, b] = sampleNaturalGround(materials, wx, wy);
           if(ford){const shore=sampleMaterial(materials,"shore",wx,wy);r=r*.55+shore[0]*.45;gr=gr*.55+shore[1]*.45;b=b*.55+shore[2]*.45;}
           // Bake a low-contrast, irregular fringe using the same blended biome as the grass.
           if (marked && !water && !bank) {
             const weight = pathGrassWeight(source, MASK_SIZE, x+PAD, y+PAD, n);
             if (weight) {
-              const grass = sampleBiomeGround(materials, wx, wy);
+              const grass = sampleNaturalGround(materials, wx, wy);
               r=r*(1-weight)+grass[0]*weight;
               gr=gr*(1-weight)+grass[1]*weight;
               b=b*(1-weight)+grass[2]*weight;

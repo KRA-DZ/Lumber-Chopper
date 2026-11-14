@@ -31,10 +31,10 @@ try:
               m.nav.rebuildObstacles();m.player.autoTimer=10000;w.camera.stopFollow();g.step(0)}""")
             assert q.evaluate("!w.audio.context&&w.assets.decor.manifest.sources.length===3&&w.textures.get('forest').getSourceImage().height<=2048")
             # Compare the baked pixels on both sides of a chunk border with the global sampler.
-            assert q.evaluate("""async()=>{const {sampleBiomeGround}=await import('./game/biome-terrain.js');
+            assert q.evaluate("""async()=>{const {sampleNaturalGround,prepareGroundMaterials}=await import('./game/ground-surfaces.js');
               for(const y of [2558,2560]){const x=1100,c=w.terrain.source.getChunk(Math.floor(x/256),Math.floor(y/256)),
                 actual=[...c.getContext('2d').getImageData((x%256)/2,(y%256)/2,1,1).data].slice(0,3),
-                expected=[...new Uint8ClampedArray(sampleBiomeGround(w.registry.get('biomePack').materials,x/2,y/2))];
+                expected=[...new Uint8ClampedArray(sampleNaturalGround(prepareGroundMaterials(w.registry.get('biomePack').materials),x/2,y/2))];
                 if(actual.join()!==expected.join())return false}return true}""")
             for id in ("1:0", "0:1"):
                 q.evaluate("""id=>{const p=m.world.biomeDetails.get(id)[0];Object.assign(m.player,m.nav.nearestGround(p.x,p.y+75),{path:[]});w.camera.centerOn(p.x,p.y);for(let i=0;i<10;i++)g.step(.05)}""", id)

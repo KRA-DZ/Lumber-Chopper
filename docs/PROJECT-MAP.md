@@ -103,3 +103,7 @@
 ## Автобой и меню владельца
 
 `game/minions.js` — усиленные профили и сохранение замаха; `game/simulation.js: tryAttack()` — один автоматический таймер, ручной режим запрещён. `game/session-save.js` мигрирует прежнюю прочность стражей; `createMinions.restore()` — живые роли по доле HP. `phaser/menu-navigation.js` — общая четырёхсторонняя навигация/выход; `phaser/exploration-ui.js` фиксирует владельца рюкзака. `phaser/upgrade-cell.js` — общие ячейки магазинов; `phaser/resource-receipts.js` — ограниченные эффекты реального прироста; `phaser/camp-service-view.js` — текстовые вывески и взаимодействия. Контракт и проверки: [COMBAT-MENUS.md](COMBAT-MENUS.md).
+
+## Естественный грунт
+
+`game/ground-surfaces.js` — подготовка PNG и непрерывное смешивание внутренних покрытий; `game/scenery-trails.js` — только декоративные проходимые ответвления к полянам. Не использовать их для повторной расстановки ресурсов. `phaser/art/ground-art.js` запекает материалы/плавные тропы; `phaser/terrain-layer.js` кеширует ветви по региону. Контракт, лимиты и целевые проверки: [NATURAL-GROUND.md](NATURAL-GROUND.md).

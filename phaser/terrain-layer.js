@@ -1,3 +1,4 @@
+import {scenicBranches} from '../game/scenery-trails.js';
 import { createForestGround } from "./art/ground-art.js";
 import { createFortressFloorSampler } from "./fortress-floor.js";
 import { worksChunkAffected } from "../game/world-works-layout.js";
@@ -17,7 +18,13 @@ export class TerrainLayer {
       model.locations,
       (r) => (r.name === "Машинный зал" ? "hall" : "room"),
     );
+    this.scenicRoutes=new Map();
+    const sceneryTrails=()=>{
+      for(const id of model.forestLayouts?.keys()||[])if(!this.scenicRoutes.has(id))this.scenicRoutes.set(id,scenicBranches(model,model.regions.all.find(r=>r.id===id)));
+      return [...this.scenicRoutes.values()].flat();
+    };
     this.source = createForestGround({
+      sceneryTrails,
       ...model,
       materials: scene.registry.get("biomePack")?.materials,
       center: { x: 1600, y: 1600 },
