@@ -6,7 +6,9 @@ import { createWorkers, WORKERS } from "../game/workers.js";
 import { createInitialState } from "../game/config.js";
 
 function create(emit = () => {}) {
-  return createSimulation({ regional: true, survival: false, emit });
+  const g=createSimulation({ regional: true, survival: false, emit });
+  // Keep coverage of the supported legacy worker-sales mode after the new default changed.
+  Object.assign(g.state.workforce,{logTarget:'sell',autoSell:true});return g;
 }
 function ready(g) {
   g.state.campBuildings = { fire: true, fence: true, tent: true };
@@ -196,6 +198,7 @@ function fixture() {
   const state = createInitialState();
   state.campLevel = 2;
   state.coins = 10000;
+  Object.assign(state.workforce,{logTarget:'sell',autoSell:true});
   const player = { x: 1710, y: 1780 },
     buyer = { load: 0, capacity: 5 },
     searches = [],

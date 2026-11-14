@@ -10,6 +10,7 @@ export function inventoryGrid(state){
     {id:'logs',name:'Брёвна',count:state.wood,limit:state.maxWood,icon:'./src/assets/items/icons/wood-bundle.png',note:'Переносятся за спиной. Продайте покупателям, вложите в стройку или сложите на склад.'},
     {id:'stone',name:'Камень',count:state.stone,glyph:'◆',note:'Добывается из валунов. Нужен для строительства и дальних регионов.'},
     {id:'boards',name:'Доски',count:state.boardCargo,glyph:'▰',note:'Доски в пути занимают места переносимого груза. Разгрузите на площадке лагеря.'},
+    ...Object.entries({blocks:'Блоки',coal:'Уголь',kits:'Ремнаборы'}).map(([id,name])=>({id,name,count:state.materialCargo?.[id]||0,glyph:id==='kits'?'▣':'◆',note:'Взято со склада. Отнесите на площадку улучшения или верните на склад.'})),
     ...Object.entries(ITEMS).map(([id,item])=>({id,name:item.name,count:state.exploration.items[id],limit:item.limit,icon:lootItemIcon(id),
       note:({berry:'Восстанавливает 6 HP. Используйте кнопку еды ниже.',salve:'Восстанавливает 35 HP. Используйте кнопку лечения ниже.',key:'Открывает запечатанный сундук и расходуется.',fish:'Можно продать торговцу или приготовить у костра.',resin:'Материал для полезных покупок и обмена.',relic:'Находка из руин. Можно продать загадочному торговцу.'})[id]})),
     {id:'rod',name:'Удочка',count:state.exploration.rod?1:0,icon:lootItemIcon('rod'),note:'Снасть для рыбалки у пруда. Не расходуется после улова.'},

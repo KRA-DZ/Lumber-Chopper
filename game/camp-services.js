@@ -4,7 +4,7 @@ import { hasCampBuilding } from "./camp-projects.js";
 import { campFuelLimit, campStorageLimit, industryLevel } from "./camp-industry-config.js";
 
 export const CAMP_SERVICE = Object.freeze({
-  store: { x: 1480, y: 1740 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
+  store: { x: 1400, y: 1840 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
   fuelPerLog: 60, maxFuel: 600, storeLimit: 400,
   fuelPad: {x:1696,y:1616,radius:32}, fuelPadSeconds:0.8, // Стоя на площадке: одно бревно за 0,8 с, только если помещаются все 60 с топлива.
 });

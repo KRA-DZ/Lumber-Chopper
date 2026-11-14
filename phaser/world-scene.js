@@ -524,10 +524,10 @@ export class WorldScene extends Phaser.Scene {
       const campService=over.find(o=>o.getData("campService"));
       if(campService){this.serviceView.open(campService.getData("campService"));return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
-      if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith("lamp")||id.startsWith("tower")?"defense":"production");return;}
+      if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith('tower')?'upgrades':id.startsWith('lamp')?'defense':'production',id.startsWith('tower')?(id==='tower-east'?'towers-east':'towers'):id);return;}
       const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
       if (service) {
-        if (service.getData("campStore")) this.core.camp.store(this.core.state.wood ? "deposit" : "withdraw");
+        if (service.getData("campStore")) this.campDesk.open('storage');
         else if (service.getData("campHouse")) this.core.camp.enter();
         else this.core.showNotice("Палатка — этап лагеря. Закончите хижину, чтобы войти внутрь.");
         return;

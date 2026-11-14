@@ -42,6 +42,7 @@ export class CampView {
       s = c.state,
       p = c.player,
       g = this.g.clear();
+    g.lineStyle(3,0xbca675,.25).strokeRoundedRect(1600-CAMP.fenceRX+16,1600-CAMP.fenceRY+16,CAMP.fenceRX*2-32,CAMP.fenceRY*2-32,12);
     this.storySeal.setVisible(!!s.story?.completed);
     this.storySeal.setTint(s.story?.ending === "named" ? 0xffedbd : 0xc6ded1);
     for (const prop of this.props) {

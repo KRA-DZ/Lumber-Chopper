@@ -1,8 +1,8 @@
 // Fixed sites and bounded processing keep the expanded camp small in the browser.
 export const INDUSTRY_PROJECTS = Object.freeze([
-  { id:"workbench",stage:4,name:"Верстак",cost:18,kind:"workbench",site:{x:1510,y:1420},
+  { id:"workbench",stage:4,name:"Верстак",cost:18,kind:"workbench",site:{x:1340,y:1470},
     description:"Доски, каменные блоки и ремонтные наборы. Материалы и очередь общие для лагеря." },
-  { id:"kiln",stage:5,name:"Угольная яма",cost:24,kind:"kiln",site:{x:1840,y:1550},requires:["workbench"],materials:{blocks:4},
+  { id:"kiln",stage:5,name:"Угольная яма",cost:24,kind:"kiln",site:{x:1850,y:1480},requires:["workbench"],materials:{blocks:4},
     description:"Три бревна превращаются в два угля. Уголь даёт 180 с огня, питает фонари и башни." },
   { id:"tower-west",stage:6,name:"Западная башня",cost:20,kind:"tower",site:{x:1310,y:1390},requires:["workbench","fence"],materials:{boards:8,blocks:6},
     description:"Стреляет ночью по обычным врагам. Один уголь даёт 8 выстрелов. 120 HP, можно ремонтировать. Смотритель неуязвим." },
@@ -37,5 +37,5 @@ export const materialLimit = state => 200 + industryLevel(state,"house") * 100;
 export const materialCostText = cost => Object.entries(cost||{}).map(([id,n])=>`${n} ${MATERIAL_NAMES[id]}`).join(" · ");
 export function initialIndustryState() {
   return {materials:{stone:0,boards:0,blocks:0,coal:0,kits:0},queue:[],nextJob:0,
-    upgrades:{fire:0,fence:0,house:0,towers:0},lampFuel:{},towerAmmo:{},towerCooldown:{}};
+    upgrades:{fire:0,fence:0,house:0,towers:0},upgradePaid:{},upgradeSelected:{},lampFuel:{},towerAmmo:{},towerCooldown:{}};
 }

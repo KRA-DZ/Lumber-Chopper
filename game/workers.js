@@ -144,6 +144,11 @@ export function createWorkers({
     if(!canManage()||!["sell","store"].includes(value))return false;
     data.logTarget=value;changed("worker-destination-changed");return true;
   }
+  function useSharedStore(){
+    if(!canManage()||!atDepot())return false;
+    data.logTarget='store';data.autoSell=false;data.recalled=false;
+    transferStock();return true;
+  }
   function setRepairReserve(value){
     if(!canManage()||!Number.isInteger(value)||value<0||value>WORKER_JOBS.repairReserveMax)return false;
     data.repairReserve=value;changed("worker-reserve-changed");return true;
@@ -293,7 +298,7 @@ export function createWorkers({
       const nightRepair=workerRole(w)==="repairer"&&hasCampBuilding(state,"fire")&&state.campFuel>0;
       const millShift=workerRole(w)==="operator"&&mill?.shift();
       const retiring =
-        (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.retreating || w.dangerUntil > w.clock || !!w.pendingRole;
+        workerRole(w)==='rest' || (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.retreating || w.dangerUntil > w.clock || !!w.pendingRole;
       const specialist=!retiring&&workerRole(w)!=="lumberjack"?jobs.select(w,danger):null;
       const kind = retiring
         ? w.cargo.length||w.stoneCargo
@@ -306,6 +311,7 @@ export function createWorkers({
           : "oak";
       w.reason=retiring?(w.pendingRole?"Возвращается для смены профессии":w.dangerUntil>w.clock?"Рядом враги":data.recalled?"Команда отозвана":!available()?"Нужна палатка":"Отдых до утра"):
         specialist?.reason||(!regions.isOpen(world.ancientTree)?"Откройте Дубовую рощу":logStock().length>=stockLimit()?"Склад брёвен заполнен":"Добывает брёвна");
+      if (workerRole(w)==='rest') w.reason = 'Отдыхает в лагере';
       if (w.retreating) w.reason = "Рядом враги: возвращается в лагерь";
       w.job = kind;
       const goal = route(w, kind);
@@ -371,7 +377,7 @@ export function createWorkers({
     withdraw,
     setRecalled,
     setAutoSell,
-    setLogTarget,setRepairReserve,assign,transferStock,hireReason,slots,stoneCapacity:jobs.stoneCapacity,
+    setLogTarget,setRepairReserve,assign,transferStock,useSharedStore,hireReason,slots,stoneCapacity:jobs.stoneCapacity,
     update,
     available,
     atDepot,

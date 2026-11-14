@@ -40,6 +40,7 @@
 | Перевалочный костёр крепости | `game/outposts.js`, `state.exploration.outpostFuel`; действия — `game/exploration.js` | `phaser/outpost-view.js`, `phaser/location-view.js`, `phaser/night-lighting.js`; [OUTPOSTS.md](OUTPOSTS.md) |
 | Сюжет и дневник | `game/story.js`, `game/lore.js`, `game/discovery-dialogue.js` | `phaser/story-journal.js`, `phaser/exploration-ui.js` |
 | Работники и профессии | `game/workers.js` — общий планировщик/команды; `game/worker-jobs.js` — каменщик/ремонтник/места; `game/mining.js` — общая прочность валунов | `phaser/worker-view.js`, `phaser/worker-ui.js`; [WORKER-JOBS.md](WORKER-JOBS.md) |
+| Площадки улучшений и личный груз материалов | `game/camp-layout.js` — позиции; `game/camp-storage.js`, `game/material-cargo.js` — перемещения; `game/camp-industry.js` — частичные взносы | `phaser/camp-desk.js`, `phaser/camp-service-view.js`, `phaser/camp-icons.js`, `phaser/stack-view.js`; актуальный интерфейс и проверки — [CAMP-STATIONS.md](CAMP-STATIONS.md) |
 | PNG, кадры, звук | `src/assets/`, `scripts/prepare_*.py` — только по задаче; выбор фоновых сигналов — `game/biome-soundscape.js` | `phaser/*-assets.js`, `phaser/atlas.js`, `phaser/forest-audio.js` |
 
 Подробные правила систем: [REGIONAL-HUNT.md](REGIONAL-HUNT.md), [WATCHER.md](WATCHER.md), [REGIONS.md](REGIONS.md), [DEFENSE.md](DEFENSE.md), [STORY.md](STORY.md). Читать нужный документ, а не весь набор.

@@ -23,11 +23,11 @@ test("night is the last quarter; morning/evening trade and night events have one
 });
 
 test("regions require camp stage and full wood plus stone; duplicate payments cannot consume resources",()=>{
-  const c=make(),r=c.regions.all.find(r=>r.id==="1:0");
+  const c=make(),r=c.regions.all.find(r=>r.id==="-1:0");
   assert.equal(c.regions.deposit(r.id),null);c.state.campLevel=1;
   for(let i=0;i<r.cost;i++)c.regions.deposit(r.id);
   assert.ok(c.regions.unlocked.has(r.id));assert.equal(c.regions.deposit(r.id),null);
-  const far=c.regions.all.find(r=>r.id==="2:0");assert.ok(far.cost>r.cost*2&&far.stoneCost>0);
+  const far=c.regions.all.find(r=>r.id==="-2:0");assert.ok(far.cost>r.cost*2&&far.stoneCost>0);
   assert.equal(c.regions.deposit(far.id),null);c.state.campLevel=2;
   for(let i=0;i<far.cost;i++)c.regions.deposit(far.id);
   assert.ok(!c.regions.unlocked.has(far.id));

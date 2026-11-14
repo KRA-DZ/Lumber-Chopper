@@ -1,4 +1,5 @@
 import { heroDirection, STRIKE_HANDS } from "./art/hero-motion.js";
+import {carriedAmount} from '../game/material-cargo.js';
 
 const snap = (v) => Math.round(v / 2) * 2;
 // Only presentation. No animation callback awards wood, damage, or coins.
@@ -34,7 +35,7 @@ export class HeroView {
     const mood =
       p.celebration > 0
         ? "happy"
-        : (s.wood+s.boardCargo) / s.maxWood >= 0.75
+        : carriedAmount(s) / s.maxWood >= 0.75
           ? "tired"
           : "neutral";
     this.bob = p.moving
@@ -73,7 +74,7 @@ export class HeroView {
       this.pose = "strike";
     } else {
       if (p.swing <= 0) this.axe.stop();
-      const carry = s.wood+s.boardCargo > 0 ? (mood === "tired" ? "heavy" : "carry") : null;
+      const carry = carriedAmount(s) > 0 ? (mood === "tired" ? "heavy" : "carry") : null;
       const prefix = carry
         ? `hero.${carry}.${dir}`
         : mood === "neutral"

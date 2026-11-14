@@ -28,17 +28,18 @@ export class WorkerView {
     this.depot.setVisible(visible);
     this.depot.input.enabled = visible;
     this.label.setVisible(visible);
-    const key = `${d.stock.length}:${system.crew.length}:${system.slots()}:${d.autoSell}:${d.logTarget}`;
+    const stored=d.logTarget==='store'?scene.core.state.logStore.length:d.stock.length;
+    const key = `${stored}:${system.crew.length}:${system.slots()}:${d.autoSell}:${d.logTarget}`;
     if (key !== this.labelKey) {
       this.labelKey = key;
       this.label.setText(
-        `СКЛАД ${d.stock.length}/${WORKERS.stockLimit} · ${system.crew.length}/${system.slots()}\n${d.logTarget==="store"?"В общий склад":d.autoSell ? "Продажа" : "Запас для стройки"} · H`,
+        `Помощники ${system.crew.length}/${system.slots()} · E/Enter`,
       );
     }
     scene.worldHints.offer(this.label, WORKERS.depot, { eligible: visible, priority: 50 });
     this.stock.forEach((log, i) =>
       log
-        .setVisible(visible && i < d.stock.length)
+        .setVisible(visible && i < stored)
         .setPosition(
           WORKERS.depot.x + 12 + (i % 2) * 24,
           WORKERS.depot.y - 8 - Math.floor(i / 2) * 9,

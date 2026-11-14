@@ -10,6 +10,8 @@ import { createCampServices } from "./camp-services.js";
 import { createMining } from "./mining.js";
 import { createCampBuilder } from "./camp-projects.js";
 import { createCampIndustry } from "./camp-industry.js";
+import {createCampStorage} from './camp-storage.js';
+import {occupiedHands} from './material-cargo.js';
 import { createCampPreparation } from "./camp-preparation.js";
 import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
@@ -253,6 +255,7 @@ export function createSimulation({
     players: () => party?.actors.map(a => a.player) || [player], emit });
   const mining = createMining({ state: gameState, player, world, nav, canAct, emit });
   const industry = createCampIndustry({state:gameState,player,forestry,defenses,emit});
+  const storage = createCampStorage({state:gameState,player,forestry,nav,emit});
   const preparation = createCampPreparation({state:gameState,player,defenses,nav,getSurvival:()=>survival,canUse:industry.canUse,emit});
   const orders = createBuyerOrders({state:gameState,player,site:sale,forestry,canAct,
     onIncome:value=>{gameState.campMilestones.sold=true;if(party)party.sale(value);else gameState.coins+=value;},emit});
@@ -335,7 +338,7 @@ export function createSimulation({
       tree.hp <= 0 ||
       distance(player, tree) >= 72 ||
       player[timer] > 0 ||
-      (mode === "auto" && gameState.wood + gameState.boardCargo >= gameState.maxWood)
+      (mode === "auto" && occupiedHands(gameState) >= gameState.maxWood)
     )
       return false;
     player[timer] =
@@ -788,6 +791,7 @@ export function createSimulation({
     if (shared) elapsed = shared.elapsed;
     else elapsed += dt;
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
+    industry.deliverUpgrade(dt);
     if (!actorOnly) {
       for(const region of regions?.unlockEligible()||[])openRegion(region);
       cycle.update(dt);
@@ -939,7 +943,7 @@ export function createSimulation({
       !clearingOrder &&
       nearest &&
       player.autoTimer <= 0 &&
-      gameState.wood + gameState.boardCargo < gameState.maxWood
+      occupiedHands(gameState) < gameState.maxWood
     ) {
       tryChop(nearest.id, "auto");
     }
@@ -1107,7 +1111,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    forestTasks, berries, custom, camp, mining, builder, industry, preparation, orders,
+    forestTasks, berries, custom, camp, mining, builder, industry, storage, preparation, orders,
     get contextHints(){return contextHints;},
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },
