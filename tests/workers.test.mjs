@@ -9,13 +9,10 @@ function create(emit = () => {}) {
   return createSimulation({ regional: true, survival: false, emit });
 }
 function ready(g) {
-  g.state.campLevel = 2;
+  g.state.campBuildings = { fire: true, fence: true, tent: true };
+  g.state.campLevel = 3;
   g.nav.rebuildObstacles();
-  const gate = g.regions.frontiers().find((g) => g.region.id === "1:0");
-  Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });
-  g.state.maxWood = gate.region.cost;
-  for (let i = 0; i < gate.region.cost; i++) g.forestry.addCargo(10);
-  g.update((gate.region.cost + 1) * .2);
+  g.update(.05);
   assert.ok(g.regions.unlocked.has("1:0"));
   Object.assign(g.player, { x: 1600, y: 1720, path: [] });
   g.state.coins = 150;
@@ -249,6 +246,8 @@ function fixture() {
       blocked = true;
       version++;
     },
+    rebuild() { version++; },
+    nav,
     step(seconds) {
       for (let i = 0; i < seconds * 20; i++) {
         now += 0.05;
@@ -343,11 +342,73 @@ test("a fallback ground point at camp never turns into remote oak production", (
   assert.equal(system.crew[0].cargo.length, 0);
 });
 
+test("gate revisions preserve a valid journey and do not bypass blocked-route backoff", () => {
+  const f = fixture();
+  f.system.hire();
+  for (let i = 0; i < 20; i++) { f.rebuild(); f.step(.1); }
+  assert.equal(f.searches.length, 1);
+  f.nav.canTraverse = () => false;
+  f.block();
+  for (let i = 0; i < 120; i++) { f.rebuild(); f.step(.1); }
+  assert.ok(f.searches.length <= 6);
+  assert.equal(f.system.crew[0].cargo.length, 0);
+});
+
+test("worker route validation allows closed friendly gates without opening them to enemies", () => {
+  const g = createSimulation({regional:true, survival:true});
+  ready(g);
+  const gate = g.defenses.all().find(s => s.kind === "gate" && s.x > 1900);
+  const start = {x:gate.x - 36, y:gate.y}, target = {x:gate.x + 36, y:gate.y};
+  assert.equal(gate.open, false);
+  assert.equal(g.nav.canTraverse(start, target), true);
+  assert.equal(g.nav.canTraverse({...start, kind:"raider"}, target), false);
+  assert.equal(g.nav.clearSegment(start, target), false);
+});
+
+test("an unreachable oak footing is replaced without resetting the delivery task", () => {
+  const f = fixture(), original = f.nav.findPath, goals = [];
+  f.nav.findPath = (w, goal) => {
+    goals.push({...goal});
+    return goals.length === 1 ? [] : original(w, goal);
+  };
+  f.system.hire();
+  f.step(40);
+  assert.notDeepEqual(goals[0], goals[1]);
+  assert.ok(f.system.data.delivered >= 4);
+});
+
+test("retreat reaches camp even when the danger memory expires halfway home", () => {
+  const f = fixture();
+  f.system.hire();
+  f.step(20);
+  const w = f.system.crew[0];
+  f.threats.monster = {x: w.x, y: w.y};
+  f.step(.1);
+  f.threats.monster = null;
+  f.step(9);
+  assert.equal(w.job, "depot");
+  for (let i = 0; i < 400 && w.phase !== "resting"; i++) f.step(.05);
+  assert.equal(w.phase, "resting");
+  assert.ok(Math.hypot(w.x - 1600, w.y - 1600) < 310);
+  f.step(20);
+  assert.equal(w.phase, "cutting");
+});
+
+test("dead enemies do not interrupt oak work", () => {
+  const f = fixture();
+  f.system.hire(); f.step(20);
+  const w = f.system.crew[0];
+  f.threats.raiders = [{x:w.x, y:w.y, hp:0}];
+  f.step(.1);
+  assert.equal(w.phase, "cutting");
+});
+
 test("available upgraded workers retain walkable paths through every camp stage and never exceed storage", () => {
   for (const stage of [2, 3, 4]) {
     const g = create();
     ready(g);
     g.state.campLevel = stage;
+    g.state.campBuildings = {fire:true, tent:true, ...(stage>=3?{fence:true}:{}), ...(stage===4?{house:true}:{})};
     g.nav.rebuildObstacles();
     const w = g.workers;
     if(stage===4)g.state.campIndustry.upgrades.house=1;

@@ -12,7 +12,7 @@ function open(g){const r=g.regions.all.find(r=>r.id==="1:0");g.regions.unlocked.
 function until(g,predicate,seconds=90){for(let i=0;i<seconds*20&&!predicate();i++)g.update(.05);assert.ok(predicate(),JSON.stringify(g.workers.crew.map(w=>({role:w.role,phase:w.phase,reason:w.reason,job:w.job,cargo:w.cargo,stone:w.stoneCargo,x:w.x,y:w.y}))));}
 
 test("all professions hire without an open oak, base places are limited and house upgrades unlock exactly four",()=>{
-  const g=make();base(g);const w=g.workers;
+  const g=make();base(g);g.state.campBuildings.fire=false;g.state.campLevel=2;g.refreshWorld();const w=g.workers;
   assert.ok(w.hire("miner"));assert.ok(w.hire("repairer"));const coins=g.state.coins;
   assert.equal(w.hire("lumberjack"),false);assert.equal(g.state.coins,coins);assert.equal(w.slots(),2);
   g.state.campIndustry.upgrades.house=1;assert.equal(w.slots(),2); // A nonexistent house grants no effects.
