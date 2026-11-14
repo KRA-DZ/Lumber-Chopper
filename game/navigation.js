@@ -246,6 +246,11 @@ export function createNavigation(
         return false;
     return true;
   }
+  function canTraverse(body, target) {
+    const previous = friendlyGates;
+    friendlyGates = friendly(body);
+    try { return clearSegment(body, target); } finally { friendlyGates = previous; }
+  }
   function moveBody(body, dx, dy, r = FOOT_RADIUS) {
     const previous = friendlyGates;
     friendlyGates = friendly(body);
@@ -459,6 +464,7 @@ export function createNavigation(
     isWalkable,
     nearestGround,
     clearSegment,
+    canTraverse,
     hasLineOfSight,
     moveBody,
     findPath,

@@ -177,6 +177,11 @@ export function createWorkers({
   }
   function goalFor(w, kind) {
     if(kind==="mill"||kind.startsWith("rock:")||kind.startsWith("repair:"))return jobs.goal(w,kind)||nav.nearestGround(1570+w.id*38,1760);
+    if (kind === "oak" && w.approach > 0) {
+      const angle = Math.PI / 2 + (w.id + w.approach * 3) * Math.PI / 4;
+      return nav.nearestGround(world.ancientTree.x + Math.cos(angle) * 128,
+        world.ancientTree.y + Math.sin(angle) * 128);
+    }
     if (kind === "oak")
       return nav.nearestGround(
         world.ancientTree.x - 78 + w.id * 64,
@@ -187,24 +192,35 @@ export function createWorkers({
     return nav.nearestGround(1570 + w.id * 38, 1760);
   }
   function route(w, kind) {
-    const key = `${kind}:${nav.version}`;
+    // Gate toggles must not change the destination or restart an intact journey.
+    const key = kind;
     if (w.routeKey !== key) {
       w.path = [];
       w.routeKey = key;
+      w.approach = 0; // Bounded alternate footings around the infinite oak.
       w.goal = goalFor(w, kind);
       w.repath = 0;
+    }
+    if (w.path.length && w.pathVersion !== nav.version) {
+      if (nav.canTraverse && !nav.canTraverse(w, w.path[0])) {
+        w.path = [];
+        w.repath = 0;
+      }
+      w.pathVersion = nav.version;
     }
     if (
       distance(w, w.goal) >= 10 &&
       w.repath <= 0 &&
-      (!w.path.length || w.pathVersion !== nav.version) &&
+      !w.path.length &&
       routeBudget <= 0
     ) {
+      if (kind === "oak" && w.approach > 0) w.goal = goalFor(w, kind);
       w.path = nav.findPath(w, w.goal);
       w.pathVersion = nav.version;
       w.repath = w.path.length ? 1 : 3;
       routeBudget = WORKERS.pathInterval;
       routeTurn = (w.id + 1) % crew.length;
+      if (!w.path.length && kind === "oak") w.approach = (w.approach + 1) % 8;
       if(!w.path.length&&(kind.startsWith("rock:")||kind.startsWith("repair:")))jobs.blocked(w);
     }
     return w.goal;
@@ -259,7 +275,7 @@ export function createWorkers({
         ...(threats?.raiders || []),
         ...(threats?.residents || []),
         ...(threats?.monster ? [threats.monster] : []),
-      ];
+      ].filter(e => !(e.hp <= 0));
     // Rotate consideration, never more than one A* every 0.3 active seconds.
     const first = routeTurn;
     for (let i = 0; i < crew.length; i++) {
@@ -270,11 +286,14 @@ export function createWorkers({
       w.unloadTimer = Math.max(0, w.unloadTimer - dt);
       w.workScan=Math.max(0,w.workScan-dt);
       w.moving = false;
-      if (danger.some((e) => distance(w, e) < 320)) w.dangerUntil = w.clock + 8;
+      if (danger.some((e) => distance(w, e) < 320)) {
+        w.dangerUntil = w.clock + 8;
+        w.retreating = true; // Finish the safe return before considering another trip.
+      }
       const nightRepair=workerRole(w)==="repairer"&&hasCampBuilding(state,"fire")&&state.campFuel>0;
       const millShift=workerRole(w)==="operator"&&mill?.shift();
       const retiring =
-        (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.dangerUntil > w.clock || !!w.pendingRole;
+        (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.retreating || w.dangerUntil > w.clock || !!w.pendingRole;
       const specialist=!retiring&&workerRole(w)!=="lumberjack"?jobs.select(w,danger):null;
       const kind = retiring
         ? w.cargo.length||w.stoneCargo
@@ -287,6 +306,7 @@ export function createWorkers({
           : "oak";
       w.reason=retiring?(w.pendingRole?"Возвращается для смены профессии":w.dangerUntil>w.clock?"Рядом враги":data.recalled?"Команда отозвана":!available()?"Нужна палатка":"Отдых до утра"):
         specialist?.reason||(!regions.isOpen(world.ancientTree)?"Откройте Дубовую рощу":logStock().length>=stockLimit()?"Склад брёвен заполнен":"Добывает брёвна");
+      if (w.retreating) w.reason = "Рядом враги: возвращается в лагерь";
       w.job = kind;
       const goal = route(w, kind);
       const arrived = distance(w, goal) < 10;
@@ -305,6 +325,11 @@ export function createWorkers({
       if (kind === "oak" && distance(w, world.ancientTree) > 180) {
         // nearestGround may fall back to camp when a site has no valid footing.
         w.phase = "blocked";
+        if (w.repath <= 0) {
+          w.approach = (w.approach + 1) % 8;
+          w.goal = goalFor(w, kind);
+          w.repath = 3;
+        }
         continue;
       }
       if (kind === "oak") {
@@ -332,6 +357,7 @@ export function createWorkers({
       } else {
         w.phase = retiring ? "resting" : "waiting";
         w.direction = "down";
+        if (kind === "rest" && w.dangerUntil <= w.clock) w.retreating = false;
         if(kind==="rest"&&w.pendingRole&&!w.cargo.length&&!w.stoneCargo){
           w.role=w.pendingRole;w.pendingRole=null;w.workTarget=null;w.workTimer=0;w.cutTimer=0;w.workScan=0;w.skipped=[];w.routeKey="";
         }
