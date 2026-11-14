@@ -1,3 +1,4 @@
+import {occupiedHands} from './game/material-cargo.js';
 export const growthStage = (tree, day) =>
   tree.hp > 0
     ? 3
@@ -13,7 +14,7 @@ export function createForestry(state, { onPickup = () => {}, sharedPiles = null 
   let pickupTimer = 0,
     lastDay = -1;
   function addCargo(value) {
-    if (state.cargo.length + (state.boardCargo||0) >= state.maxWood) return false;
+    if (occupiedHands(state) >= state.maxWood) return false;
     state.cargo.push(value);
     state.wood = state.cargo.length;
     state.cargoValue += value;
@@ -41,7 +42,7 @@ export function createForestry(state, { onPickup = () => {}, sharedPiles = null 
   function collect(dt, player) {
     if (dt <= 0) return false;
     pickupTimer = Math.max(0, pickupTimer - dt);
-    if (pickupTimer > 0 || state.wood + (state.boardCargo||0) >= state.maxWood) return false;
+    if (pickupTimer > 0 || occupiedHands(state) >= state.maxWood) return false;
     let nearest = null,
       distance = state.pickupRadius;
     for (const pile of piles.values()) {

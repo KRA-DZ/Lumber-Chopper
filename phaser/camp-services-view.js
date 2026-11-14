@@ -32,7 +32,7 @@ export class CampServicesView {
       entry.label.setText(`Камень · ${hp}/${entry.rock.maxHP} · +8`);
       s.worldHints.offer(entry.label, entry.rock, { eligible: hp > 0, range: 180, priority: 60 });
     }
-    this.label.setText(`Склад · ${c.state.logStore.length}/${c.camp.storageLimit()} · E/Enter ${c.state.wood ? "сложить" : "взять"}`);
+    this.label.setText(`Склад · E/Enter\nВыбрать ресурс и количество`);
     this.fireLabel.setText(hasCampBuilding(c.state,"fire") ? `${c.camp.lit() ? "Огонь" : "ПОТУХШИЙ КОСТЁР"} · ${Math.ceil(c.state.campFuel)} с · E/Enter +1 бревно` : "Сначала постройте костёр!");
     s.worldHints.offer(this.label,CAMP_SERVICE.store,{range:200,priority:70});
     const pad=CAMP_SERVICE.fuelPad,built=hasCampBuilding(c.state,"fire"),active=(c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.health>0&&!a.player.room);
@@ -90,7 +90,7 @@ export class HouseView {
         e.healthBars.fillStyle(0x1a2422).fillRect(p.room.x-23,y-1,46,6).fillStyle(0x7fb582).fillRect(p.room.x-22,y,44*actor.state.health/actor.state.maxHealth,4);
         e.health[j].setText(`${actor.state.health}/${actor.state.maxHealth} HP`).setPosition(p.room.x,y-3);
       });
-      e.hint.setText(`Склад ${a.state.logStore.length}/${a.camp.storageLimit()} · E/Enter у сундука: ${a.state.wood?"сложить":"взять"} · у двери: выйти · C мастерская`);
+      e.hint.setText('E/Enter: сундук — выбрать ресурсы · дверь — выйти');
     });
   }
   pointer(pointer,i) {
@@ -99,7 +99,7 @@ export class HouseView {
     const scale=Math.min(camera.width/ROOM.width,camera.height/ROOM.height),
       target={x:(pointer.x-camera.x-(camera.width-ROOM.width*scale)/2)/scale,y:(pointer.y-camera.y-(camera.height-ROOM.height*scale)/2)/scale};
     if(Math.hypot(target.x-ROOM.exit.x,target.y-ROOM.exit.y)<45 && c.camp.exit()) return;
-    if(Math.hypot(target.x-ROOM.chest.x,target.y-ROOM.chest.y)<55 && Math.hypot(p.x-ROOM.chest.x,p.y-ROOM.chest.y)<90){c.camp.store(c.state.wood?"deposit":"withdraw");return;}
+    if(Math.hypot(target.x-ROOM.chest.x,target.y-ROOM.chest.y)<55 && Math.hypot(p.x-ROOM.chest.x,p.y-ROOM.chest.y)<90){s.campDesk.open('storage');return;}
     p.target={x:Math.max(30,Math.min(ROOM.width-30,target.x)),y:Math.max(100,Math.min(ROOM.height-28,target.y))};
   }
   destroy(){for(const e of this.entries)e.root.destroy(true);this.scene.textures.remove("camp-room-floor");}

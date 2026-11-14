@@ -4,6 +4,7 @@ import { strikeBoulder } from "./mining.js";
 import { MILL } from "./sawmill-production-config.js";
 
 export const WORKER_ROLES=Object.freeze({
+  rest:{name:'Отдых',assignmentOnly:true,description:'Возвращается с грузом в лагерь и отдыхает до нового назначения.'},
   lumberjack:{name:"Дровосек",description:"Рубит бесконечный древний дуб. Брёвна идут покупателям или в общий склад по выбранному назначению."},
   miner:{name:"Каменщик",description:"Добывает настоящие валуны открытых регионов и несёт камень в общий запас. Отступает от врагов."},
   repairer:{name:"Ремонтник",description:"Чинит ограду, калитки и башни за брёвна общего склада, оставляя резерв. Не сражается и не разжигает костёр."},

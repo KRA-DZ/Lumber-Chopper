@@ -105,7 +105,7 @@ export class KeyboardInteractions {
 export function interactNearby(scene) {
   const c = scene.core, p = c.player, near = target => Math.hypot(p.x - target.x, p.y - target.y);
   if (p.room) {
-    if (Math.hypot(p.room.x - ROOM.chest.x, p.room.y - ROOM.chest.y) < 90) c.camp.store(c.state.wood ? "deposit" : "withdraw");
+    if (Math.hypot(p.room.x - ROOM.chest.x, p.room.y - ROOM.chest.y) < 90) scene.campDesk.open('storage');
     else c.camp.exit();
     return;
   }
@@ -114,13 +114,14 @@ export function interactNearby(scene) {
     ...c.world.berryBushes.filter(b=>c.berries.ready(b)&&c.regions.isOpen(b)).map(b=>({p:b,range:100,act:()=>c.berries.harvest(b.id)})),
     {p:RECORD_BOARD,range:120,act:()=>scene.customView?.open()},
     { p: { x: CAMP.stall.x, y: CAMP.stall.y + 45 }, range: 155, act: () => scene.shop.open() },
-    { p: CAMP_SERVICE.store, range: 110, act: () => { const n = c.camp.store(c.state.wood ? "deposit" : "withdraw"); c.showNotice(n ? `Склад: ${c.state.logStore.length} брёвен` : "Склад пуст или заполнен."); } },
+    { p: CAMP_SERVICE.store, range: 110, act: () => scene.campDesk.open('storage') },
     { p: {x:1710,y:1780}, range:100, act:()=>scene.workerUi.open() },
     ...(hasCampBuilding(c.state,"tent") ? [{ p: CAMP.tent, range:100, act:()=>c.showNotice("Палатка позволяет нанимать помощников. Для отдельной комнаты выберите хижину на платформе стройки.") }] : []),
     { p: c.sale, range:90, act:()=>scene.campDesk.open("orders") },
     ...INDUSTRY_PROJECTS.filter(p=>hasCampBuilding(c.state,p.id)).map(p=>({p:p.site,range:110,act:()=>{
       if(p.kind==="lamp"&&c.preparation.refuelLamp(p.id))c.showNotice("Фонарь заправлен углём.");
-      else scene.campDesk.open(p.kind==="tower"||p.kind==="lamp"?"defense":"production");
+      else if(p.kind==='tower')scene.campDesk.open('upgrades',p.id==='tower-east'?'towers-east':'towers');
+      else scene.campDesk.open(p.kind==="lamp"?"defense":"production",p.id);
     }})),
     { p: c.build, range:c.build.radius, act:()=>c.builder.requestChoice(true) },
     ...(hasCampBuilding(c.state,"house") ? [{ p: CAMP_SERVICE.door, range: 110, act: () => c.camp.enter() }] : []),

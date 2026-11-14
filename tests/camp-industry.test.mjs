@@ -62,7 +62,7 @@ test("reinforcement adds real HP without reviving breaches; kits repair nearby s
 });
 test("house improvements expand storage and heal only living stationary indoor players",()=>{
   const c=make();built(c,["house","workbench"]);supply(c);assert.ok(c.industry.upgrade("house"));assert.equal(c.camp.storageLimit(),600);
-  place(c,{x:1680,y:1500});assert.ok(c.camp.enter());c.state.health=80;c.update(4.1);assert.equal(c.state.health,82);
+  place(c,{x:1775,y:1430});assert.ok(c.camp.enter());c.state.health=80;c.update(4.1);assert.equal(c.state.health,82);
   c.paused=true;c.update(10);assert.equal(c.state.health,82);c.paused=false;
   c.keys.add("KeyD");c.update(1);assert.equal(c.state.health,82);
 });

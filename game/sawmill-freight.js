@@ -1,4 +1,5 @@
 import { MILL } from "./sawmill-production-config.js";
+import {occupiedHands} from './material-cargo.js';
 import { campStorageLimit, materialLimit } from "./camp-industry-config.js";
 
 // One real vehicle, with exact log values. Board hand cargo occupies the same carry slots as logs.
@@ -35,7 +36,7 @@ export function createSawmillFreight({state,player,forestry,nav,nearSite,living}
     let count=0;
     // Load the vehicle first when present; otherwise carry boards in the freed personal slots.
     if(accessible())while(data.output>0&&free()>0){data.output--;cart.boards++;count++;}
-    while(data.output>0&&state.cargo.length+state.boardCargo<state.maxWood){data.output--;state.boardCargo++;count++;}
+    while(data.output>0&&occupiedHands(state)<state.maxWood){data.output--;state.boardCargo++;count++;}
     return count>0;
   }
   function takeInput(){

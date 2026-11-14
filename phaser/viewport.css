@@ -126,3 +126,43 @@ footer .game-actions { grid-template-columns:repeat(5,minmax(0,1fr)); }
 .worker-cell summary,.camp-card summary { cursor:pointer;font-size:13px;padding-top:8px;color:#c2d0bb; }
 .worker-cell p,.camp-card p { font-size:13px;line-height:1.45; }
 @media(max-width:500px) { [data-workers],[data-camp-content] {grid-template-columns:1fr;} }
+
+/* Camp stations: one purpose per card, reused PNG icons and short effects. */
+#campDesk,#workerDialog { width:min(820px,calc(100vw - 24px));max-height:calc(100dvh - 28px);padding:20px; }
+#campDesk .dialog-top,#workerDialog .dialog-top { position:sticky;top:-20px;z-index:2;background:#192f2b;padding:12px 0; }
+#campDesk h2,#workerDialog h2 {font-size:24px;margin:0;}
+#campDesk[data-single=true] {width:min(480px,calc(100vw - 24px));}
+#campDesk[data-single=true] [data-camp-content] {grid-template-columns:1fr;}
+.camp-help,.camp-muted,.worker-training {font-size:12px;line-height:1.4;color:#bdc8b5;}
+.camp-icon {image-rendering:pixelated;object-fit:contain;flex-shrink:0;}
+.camp-stock-strip {background:#142923;border:1px solid #4a6555;border-radius:10px;padding:6px;}
+.material-chips {display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.material-chips>span {display:inline-flex;align-items:center;gap:4px;color:#f4db9c;font:600 14px system-ui,sans-serif;}
+[data-camp-content]>.camp-product {display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:14px;}
+.camp-product h3 {font-size:17px;line-height:1.3;margin:0;}
+.camp-product p {margin:0;min-height:32px;color:#ccd5be;}
+.camp-product>button {min-height:38px;padding:8px 12px;font-size:14px;}
+.camp-product>button:first-of-type {margin-top:auto;}
+.camp-product small {font-size:12px;}
+.quantity-picker {display:flex;gap:5px;align-items:center;}
+.quantity-picker button {padding:6px 10px;min-height:34px;min-width:32px;font-size:14px;}
+.worker-toolbar {display:flex;gap:10px;flex-wrap:wrap;}
+.worker-toolbar button {flex:1;font-size:15px;min-height:40px;}
+[data-workers]>.worker-person {padding:12px;}
+.worker-person-head {display:flex;gap:8px;align-items:center;min-height:78px;}
+.worker-person-head h3 {margin:0;font-size:18px;}
+.worker-person-head p {margin:4px 0;font-size:12px;}
+.worker-roles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+.worker-roles button {padding:8px 4px;font-size:12px;min-height:36px;margin:0;}
+.worker-roles button[aria-pressed=true] {background:#dcc084;color:#23392f;outline:2px solid #f2dca4;}
+[data-workers]>p {margin:4px 0;}
+@media(max-width:500px) {
+  #campDesk,#workerDialog {padding:12px;width:calc(100vw - 12px);}
+  #campDesk h2,#workerDialog h2 {font-size:20px;}
+  [data-camp-content] {grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+  [data-camp-content]>.camp-product {padding:9px;gap:5px;}
+  .camp-product>.camp-icon {width:48px;height:48px;}
+  .camp-product h3 {font-size:14px;}
+  .quantity-picker {gap:2px;flex-wrap:wrap;justify-content:center;}
+  .quantity-picker button {padding:5px 7px;font-size:12px;min-width:27px;}
+}

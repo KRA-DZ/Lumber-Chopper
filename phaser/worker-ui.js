@@ -1,7 +1,7 @@
+import {campIcon} from './camp-icons.js';
 import {visibleMenuActions} from './menu-navigation.js';
-import { hasCampBuilding } from "../game/camp-projects.js";
-import { WORKERS, WORKER_PHASES } from "../game/workers.js";
-import { WORKER_ROLES, workerRole, WORKER_JOBS } from "../game/worker-jobs.js";
+import { WORKER_PHASES } from "../game/workers.js";
+import { WORKER_ROLES, workerRole } from "../game/worker-jobs.js";
 
 export function createWorkerUi(scene) {
   const dialog = document.querySelector("#workerDialog"),
@@ -10,113 +10,46 @@ export function createWorkerUi(scene) {
     closeButton = dialog.querySelector("[data-worker-close]");
   let pendingRoute = false;
   function render(selected="") {
-    const w = scene.core.workers,
-      d = w.data,
-      s = scene.core.state;
+    const w=scene.core.workers,s=scene.core.state;
     list.replaceChildren();
-    const info = document.createElement("p");
-    info.dataset.workerSummary = "";
-    info.textContent = `Помощники: ${w.crew.length}/${w.slots()} (до ${WORKERS.max} с обустройством дома). Склад работников: ${d.stock.length}/${WORKERS.stockLimit}. Общие брёвна: ${s.logStore.length}. Монеты игрока: ${s.coins}. Доставлено: ${d.delivered} брёвен, ${d.stoneDelivered} камня; заработано: ${d.earned}.`;
-    list.append(info);
-    const requirements = document.createElement("p");
-    requirements.dataset.workerRequirements = "";
-    requirements.textContent =
-      !hasCampBuilding(s,"tent")
-        ? "Сначала постройте палатку. Костёр строится отдельно. Изначально два места; каждый уровень обустройства дома добавляет одно."
-        : !w.daytime()
-            ? "Команда отдыхает. Найм и обучение снова доступны утром."
-            : !w.atDepot()
-              ? "Подойдите к складу лагеря кнопкой ниже."
-              : "Найм без зарплаты и питания. Дровосеку нужна открытая Дубовая роща, каменщику — валуны открытых регионов. Смена профессии выполняется после возврата груза.";
-    list.append(requirements);
-    function action(id, title, text, disabled, run) {
-      const a = document.createElement("article"),
-        h = document.createElement("h3"),
-        p = document.createElement("p"),
-        b = document.createElement("button");
-      h.textContent = title;
-      p.textContent = text;
-      b.type = "button";
-      b.dataset.workerAction = id;
-      b.textContent = title;
-      b.disabled = disabled;
-      b.addEventListener("click", () => {
-        run();
-        render(id);
-        scene.renderModel();
-      });
-      const details=document.createElement("details"),summary=document.createElement("summary");summary.textContent=disabled?"Требования и описание":"Подробнее";details.append(summary,p);a.className="worker-cell";a.append(b,details);
-      list.append(a);
+    const summary=document.createElement('p');summary.dataset.workerSummary='';
+    summary.textContent=`Команда ${w.crew.length}/${w.slots()} · ${s.coins} монет`;
+    list.append(summary);
+    function button(id,label,run,disabled=false){
+      const b=document.createElement('button');b.type='button';b.dataset.workerAction=id;b.textContent=label;b.disabled=disabled;
+      b.onclick=()=>{run();render(id);scene.renderModel();};return b;
     }
-    action(
-      "route",
-      "К складу лагеря",
-      "Найм, обучение и выдача брёвен — только рядом со складом. Меню можно открыть из любой точки леса.",
-      false,
-      () => {
-        pendingRoute = true;
-        dialog.close();
-      },
-    );
-    for(const [role,offer] of Object.entries(WORKER_ROLES).filter(([,o])=>!o.assignmentOnly))action(
-      role==="lumberjack"?"hire":`hire:${role}`,
-      `Нанять: ${offer.name}${w.hirePrice==null?" · нет мест":` · ${w.hirePrice} монет`}`,
-      `${offer.description} ${w.hireReason(role)||"Разовая оплата с личного счёта."}`,
-      !!w.hireReason(role),()=>w.hire(role));
-    action(
-      "upgrade",
-      w.upgradePrice == null
-        ? "Оснастка улучшена полностью"
-        : `Обучить команду · ${w.upgradePrice} монет`,
-      `Оснастка ${d.level}/2: ${w.capacity()} брёвен / ${w.stoneCapacity()} камня, скорость ${w.speed()}, бревно за ${w.chopSeconds().toFixed(1)} с. Также ускоряет добычу камня и ремонт; места открывает обустройство дома через C.`,
-      !w.atDepot() ||
-        !w.available() ||
-        !w.crew.length ||
-        !w.daytime() ||
-        w.upgradePrice == null ||
-        s.coins < w.upgradePrice,
-      () => w.upgrade(),
-    );
-    action(
-      "withdraw",
-      "Взять одно бревно",
-      "Выдаётся в стопку героя для строительства, ремонта или самостоятельной продажи. Каждое нажатие перекладывает ровно одно бревно; вместимость стопки героя сохраняется.",
-      !w.atDepot() || !d.stock.length || s.wood >= s.maxWood,
-      () => w.withdraw(),
-    );
-    action(
-      "sell",
-      d.autoSell ? "Оставлять брёвна для стройки" : "Включить продажу склада",
-      "Автопродажа со склада работников: 8 монет за бревно, раз в 0,8 с, только при назначении «Продажа». Покупатели 5/15. Игрок на площадке получает приоритет.",
-      !w.crew.length,
-      () => w.setAutoSell(!d.autoSell),
-    );
-    action("target",d.logTarget==="store"?"Брёвна → общий склад":"Брёвна → продажа",`Сейчас: ${d.logTarget==="store"?"новый груз идёт в общий logStore для стройки, переработки и ремонта; продажи работников приостановлены":"новый груз идёт на склад работников для продажи"}. Нажмите для переключения. Груз в пути сохраняется.`,false,()=>w.setLogTarget(d.logTarget==="store"?"sell":"store"));
-    action("store-stock","Переложить запас в общий склад","Переносит старые брёвна склада работников в общий запас с сохранением стоимости. Нужна близость к складу и свободные места.",!w.atDepot()||!d.stock.length,()=>w.transferStock());
-    for(const [id,delta] of [["reserve-less",-2],["reserve-more",2]])action(id,`${delta<0?"Уменьшить":"Увеличить"} резерв дров · ${d.repairReserve}`,"Ремонтник не берёт последние брёвна общего склада. Резерв 0–40 с шагом 2; игроки и производство по-прежнему распоряжаются ими сами.",d.repairReserve+delta<0||d.repairReserve+delta>WORKER_JOBS.repairReserveMax,()=>w.setRepairReserve(d.repairReserve+delta));
-    action(
-      "recall",
-      d.recalled ? "Отпустить команду на работу" : "Отозвать команду",
-      "Добытчики возвращаются за минуту до ночи. Ремонтник может работать ночью при горящем костре, пока рядом нет врагов. При угрозе все отступают; ручной отзыв останавливает всю команду.",
-      !w.crew.length,
-      () => w.setRecalled(!d.recalled),
-    );
-    for (const npc of w.crew) {
-      const p = document.createElement("p");
-      p.dataset.workerId = npc.id;
-      p.textContent = `${npc.name} · ${WORKER_ROLES[workerRole(npc)].name}${npc.pendingRole?` → ${WORKER_ROLES[npc.pendingRole].name} после возврата`:""} · ${WORKER_PHASES[npc.phase]} · ${npc.reason} · груз ${npc.cargo.length}/${w.capacity()} бр., ${npc.stoneCargo}/${w.stoneCapacity()} камня`;
-      list.append(p);
-      const choices=document.createElement("nav");choices.className="worker-roles";choices.setAttribute("aria-label",`Профессия: ${npc.name}`);
+    if(!w.atDepot()||!w.available()){
+      const p=document.createElement('p');p.dataset.workerRequirements='';
+      p.textContent=!w.available()?'Для найма постройте палатку.':'Найм и назначения доступны у площадки помощников.';list.append(p);
+      if(!w.atDepot())list.append(button('route','К помощникам',()=>{pendingRoute=true;dialog.close();}));
+    }
+    const toolbar=document.createElement('div');toolbar.className='worker-toolbar';
+    const hire=button('hire',w.hirePrice==null?'Все места заняты':`Нанять · ${w.hirePrice} монет`,()=>{w.useSharedStore();w.hire();},!!w.hireReason());
+    hire.title=w.hireReason();toolbar.append(hire);
+    const training=button('upgrade',w.upgradePrice==null?'Команда обучена':`Обучить · ${w.upgradePrice} монет`,()=>w.upgrade(),
+      !w.atDepot()||!w.available()||!w.crew.length||!w.daytime()||w.upgradePrice==null||s.coins<w.upgradePrice);
+    toolbar.append(training);list.append(toolbar);
+    const stats=document.createElement('p');stats.className='worker-training';stats.textContent=`Обучение ${w.data.level}/2 · ходьба ${w.speed()} · рубка ${w.chopSeconds().toFixed(1)} с · груз ${w.capacity()} брёвен`;
+    list.append(stats);
+    for(const npc of w.crew){
+      const card=document.createElement('article');card.className='worker-cell worker-person';card.dataset.workerId=npc.id;
+      const head=document.createElement('div');head.className='worker-person-head';head.append(campIcon(scene,`person.${npc.appearance}-walk-down-0`,64));
+      const info=document.createElement('div'),name=document.createElement('h3'),status=document.createElement('p');name.textContent=npc.name;
+      status.textContent=npc.pendingRole?`После разгрузки: ${WORKER_ROLES[npc.pendingRole].name}`:`${WORKER_PHASES[npc.phase]} · ${npc.reason}`;info.append(name,status);head.append(info);card.append(head);
+      const roles=document.createElement('div');roles.className='worker-roles';roles.setAttribute('role','group');roles.setAttribute('aria-label',`Занятие: ${npc.name}`);
       for(const [role,offer] of Object.entries(WORKER_ROLES)){
-        const b=document.createElement("button"),id=`assign:${npc.id}:${role}`;b.type="button";b.dataset.workerAction=id;
-        const atAssignment=w.atDepot()||scene.core.sawmill?.nearSite("sawmill-loading")||scene.core.sawmill?.nearSite("sawmill-production");
-        b.textContent=offer.name;b.title=offer.description;b.disabled=!atAssignment||workerRole(npc)===role&&!npc.pendingRole||role==="operator"&&(s.sawmill.stage<3||w.crew.some(n=>n.id!==npc.id&&(n.role==="operator"||n.pendingRole==="operator")));
-        b.onclick=()=>{w.assign(npc.id,role);render(id);scene.renderModel();};choices.append(b);
+        const active=(npc.pendingRole||workerRole(npc))===role;
+        const b=button(`assign:${npc.id}:${role}`,role==='lumberjack'?'Рубка':role==='miner'?'Камень':role==='operator'?'Лесопилка':offer.name,
+          ()=>w.assign(npc.id,role),!w.atDepot()||role==='operator'&&(s.sawmill.stage<3||w.crew.some(n=>n.id!==npc.id&&(n.role==='operator'||n.pendingRole==='operator'))));
+        b.setAttribute('aria-pressed',String(active));b.title=offer.description;roles.append(b);
       }
-      list.append(choices);
+      card.append(roles);list.append(card);
     }
-    const buttons=[...list.querySelectorAll("[data-worker-action]:not([disabled])")],target=buttons.find(b=>b.dataset.workerAction===selected)||buttons[0];
-    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=visibleMenuActions(dialog).indexOf(target);target.dataset.selected="true";target.focus({preventScroll:true});}
+    if(!w.crew.length){const p=document.createElement('p');p.textContent='Наймите помощника и выберите ему занятие.';list.append(p);}
+    const note=document.createElement('p');note.className='camp-muted';note.textContent='Добытые материалы поступают в общий склад. Ещё два места открывает улучшение дома.';list.append(note);
+    const buttons=[...list.querySelectorAll('[data-worker-action]:not([disabled])')],target=buttons.find(b=>b.dataset.workerAction===selected)||buttons[0];
+    if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=visibleMenuActions(dialog).indexOf(target);target.focus({preventScroll:true});}
   }
   function resume() {
     if (pendingRoute && !scene.core.paused) {
@@ -128,6 +61,7 @@ export function createWorkerUi(scene) {
     if (scene.core.state.gameOver) return;
     scene.pause("workers", true);
     if (!dialog.open) dialog.showModal();
+    scene.core.workers.useSharedStore();
     render();
   }
   const close = () => {

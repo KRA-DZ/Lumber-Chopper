@@ -4,7 +4,7 @@ import {createLocalCoop} from './local-coop.js';
 import {createInitialState, DAY_SECONDS} from './config.js';
 import {REGIONS, REGION_SIZE} from './regions.js';
 import {applyUpgrades} from '../economy.js';
-import {RECIPES} from './camp-industry-config.js';
+import {RECIPES,CAMP_UPGRADES} from './camp-industry-config.js';
 import {BUYER_ORDERS} from './buyer-orders.js';
 
 export const SAVE_KEY = 'lumber-session-v1';
@@ -53,6 +53,9 @@ function validState(s) {
   check(s.campBuildings === null || object(s.campBuildings));
   check(s.buildProject === null || typeof s.buildProject === 'string');
   check(s.cargo.every(v => typeof v === 'number' && v >= 0) && s.cargo.length === s.wood && s.cargoValue === s.cargo.reduce((n,v) => n+v, 0));
+  check(Object.keys(s.materialCargo).every(id=>['blocks','coal','kits'].includes(id))&&Object.values(s.materialCargo).every(n=>Number.isInteger(n)&&n>=0));
+  check(Object.entries(s.campIndustry.upgradeSelected).every(([id,selected])=>CAMP_UPGRADES[id]&&selected===true&&s.campIndustry.upgrades[id]<2&&object(s.campIndustry.upgradePaid[id])));
+  check(Object.entries(s.campIndustry.upgradePaid).every(([id,paid])=>s.campIndustry.upgradeSelected[id]&&object(paid)&&Object.entries(paid).every(([k,n])=>Number.isInteger(n)&&n>=0&&n<=(CAMP_UPGRADES[id].costs[s.campIndustry.upgrades[id]]?.[k]??-1))));
   check(s.workforce.crew.length <= 4 && s.workforce.crew.every(w => point(w) && Array.isArray(w.cargo) && Array.isArray(w.path)));
   check(s.sawmill.job === null || object(s.sawmill.job)); check(object(s.sawmill.cart));
   check(s.buyerOrders.active === null || object(s.buyerOrders.active));
