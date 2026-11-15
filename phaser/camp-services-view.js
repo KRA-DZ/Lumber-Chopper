@@ -7,8 +7,8 @@ import {drawInteractionPad} from './interaction-pad.js';
 export class CampServicesView {
   constructor(scene) {
     this.scene = scene; this.rocks = new Map();
-    this.store = scene.addImage("sawmill.woodRack", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y).setScale(1.5).setInteractive().setData("campStore", true);
-    this.storeProps=[scene.addImage('camp.crate',CAMP_SERVICE.store.x+45,CAMP_SERVICE.store.y+8).setScale(1.2),scene.addImage('details.rock.0',CAMP_SERVICE.store.x-38,CAMP_SERVICE.store.y+10).setScale(1.6)];
+    this.store = scene.addImage("interior.warehouse", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y).setScale(1.4).setInteractive().setData("campStore", true);
+    this.storeProps=[];
     this.label = scene.text("", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y + 38, 11, "#edddb2", LAYERS.hints);
     scene.hut.setInteractive({ pixelPerfect: true }).setData("campHouse", true);
     scene.tent.setInteractive({ pixelPerfect: true }).setData("campTent", true);
@@ -57,39 +57,31 @@ export class CampServicesView {
   destroy() { for(const image of this.storeProps)image.destroy();this.storagePad.destroy();this.storageZone.destroy();this.storageLabel.destroy();this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
 }
 
-// Shared house/shop rooms use the approved floor and furniture PNGs.
+// Generated room shells and furniture use the shared pixel atlas.
 export class HouseView {
   constructor(scene){
     this.scene=scene;this.entries=[];
-    const key='camp-room-floor',pack=scene.registry.get('sawmillPack'),name=pack.floors.room?'room':Object.keys(pack.floors)[0],f=pack.manifest.floors[name];
-    const tile=document.createElement('canvas');tile.width=f.width;tile.height=f.height;
-    tile.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pack.floors[name]),f.width,f.height),0,0);
-    const texture=scene.textures.createCanvas(key,ROOM.width,ROOM.height),ctx=texture.getContext();
-    ctx.imageSmoothingEnabled=false;ctx.fillStyle='#17241f';ctx.fillRect(0,0,ROOM.width,ROOM.height);
-    ctx.fillStyle=ctx.createPattern(tile,'repeat');ctx.fillRect(24,84,ROOM.width-48,ROOM.height-108);
-    ctx.fillStyle='#6c5138';ctx.fillRect(24,48,ROOM.width-48,36);texture.refresh();texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     const actors=scene.core.actors||[scene.core];
     actors.forEach((a,i)=>{
       const bg=scene.add.graphics(),room=scene.add.container(0,0),root=scene.add.container(0,0,[bg,room]).setScrollFactor(0).setDepth(LAYERS.eyes+1).setVisible(false);
-      room.add(scene.add.image(0,0,key).setOrigin(0));
+      const shell=scene.addImage('interior.house',0,0).setOrigin(0);room.add(shell);
       const house=[],shop=[],add=(frame,x,y,group,scale=2)=>{const image=scene.addImage(frame,x,y).setScale(scale);room.add(image);group?.push(image);return image;};
       add('camp.mat',ROOM.exit.x,ROOM.exit.y,null,2);
-      add('fortress.chest.closed',ROOM.chest.x,ROOM.chest.y,house);
-      add('world.bench',ROOM.bed.x,ROOM.bed.y+12,house,2.2);add('camp.mat',ROOM.bed.x,ROOM.bed.y,house,2.2);
-      add('world.clothes.0',ROOM.bed.x-35,ROOM.bed.y-5,house,1.4);
+      add('interior.chest',ROOM.chest.x,ROOM.chest.y,house);
+      add('interior.bed',ROOM.bed.x,ROOM.bed.y+36,house);
       add('person.worker3-walk-down-0',ROOM.manager.x,ROOM.manager.y,house);
-      add('sawmill.bench',ROOM.manager.x,ROOM.manager.y+42,house,1.2);
-      add('camp.crate',95,330,house,1.4);
+      add('interior.bench',ROOM.manager.x,ROOM.manager.y+42,house);
+      add('interior.cupboard',95,330,house);
       add('person.buyer1-walk-down-0',ROOM.seller.x,ROOM.seller.y,shop);
-      add('sawmill.bench',ROOM.seller.x,ROOM.seller.y+45,shop,1.7);
-      add('sawmill.woodRack',105,170,shop,1.3);add('world.supplies',525,180,shop,2.4);
+      add('interior.counter',ROOM.seller.x,ROOM.seller.y+45,shop);
+      add('interior.cupboard',105,170,shop);add('world.supplies',525,180,shop,2.4);
       add('camp.crate',515,300,shop,1.8);add('world.tools',105,300,shop,2);
       const avatars=actors.map((_,j)=>add(`${j?'coop2.':''}characters.player.down.0`,320,320));
       const healthBars=scene.add.graphics(),health=actors.map(()=>scene.add.text(0,0,'',{fontFamily:'Arial',fontSize:'12px',color:'#f5e5bb'}).setOrigin(.5,1));room.add([healthBars,...health]);
       const title=scene.add.text(ROOM.width/2,20,'',{fontFamily:'Arial',fontSize:'20px',color:'#f0d39c'}).setOrigin(.5,0),
         hint=scene.add.text(ROOM.width/2,ROOM.height-17,'',{fontFamily:'Arial',fontSize:'13px',color:'#f0d39c',backgroundColor:'#162b23',padding:{x:8,y:4}}).setOrigin(.5,1);room.add([title,hint]);
       if(scene.coopCamera)(i?scene.camera:scene.coopCamera.second).ignore(root);
-      this.entries.push({root,bg,room,house,shop,avatars,healthBars,health,title,hint});
+      this.entries.push({root,bg,room,shell,house,shop,avatars,healthBars,health,title,hint});
     });
   }
   layout(camera){
@@ -104,6 +96,7 @@ export class HouseView {
       e.root.setVisible(inside);if(!inside)return;
       const kind=a.player.room.id||'house',layout=this.layout(camera);e.bg.clear().fillStyle(0x101c18).fillRect(0,0,camera.width,camera.height);
       e.room.setScale(layout.scale).setPosition(layout.x,layout.y);e.house.forEach(o=>o.setVisible(kind==='house'));e.shop.forEach(o=>o.setVisible(kind==='shop'));
+      s.assets.setFrame(e.shell,`interior.${kind}`).setOrigin(0);
       e.title.setText(kind==='shop'?'Лавка лагеря':'Дом лагеря');e.healthBars.clear();
       actors.forEach((actor,j)=>{
         const p=actor.player,r=p.room,visible=!!r&&(r.id||'house')===kind;e.avatars[j].setVisible(visible);e.health[j].setVisible(visible);if(!visible)return;
@@ -138,5 +131,5 @@ export class HouseView {
     if(Math.hypot(target.x-site.x,target.y-site.y)<65){p.target={x:site.x,y:site.y+75};p.interactTarget=site===ROOM.seller?'seller':site===ROOM.chest?'chest':'manager';}
     else {delete p.interactTarget;p.target={x:Math.max(30,Math.min(ROOM.width-30,target.x)),y:Math.max(100,Math.min(ROOM.height-28,target.y))};}
   }
-  destroy(){for(const e of this.entries)e.root.destroy(true);this.scene.textures.remove('camp-room-floor');}
+  destroy(){for(const e of this.entries)e.root.destroy(true);}
 }

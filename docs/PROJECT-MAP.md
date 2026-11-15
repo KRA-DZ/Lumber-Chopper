@@ -11,6 +11,7 @@
 - `phaser/world-scene.js`: WorldScene, связывание модели с вводом и представлениями; `phaser/hud-scene.js` — HUD.
 - `game/simulation.js`: `createSimulation()`, игровые команды и координация независимых систем. Начальное состояние/баланс — `game/config.js`.
 - Локальная игра вдвоём: `game/local-coop.js` координирует две личные симуляции с общим мировым тактом; `game/coop-state.js` задаёт общие поля, `game/local-party.js` — цели врагов и личный урон. Камеры и панели — `phaser/coop-camera.js`, `phaser/coop-views.js`. [Управление и проверки](LOCAL-COOP.md).
+- Ночлег работников: `game/workers.js` (`sleepEntrance`, `sleeping`), отображение — `phaser/worker-view.js`; комнаты/мебель/навесы — `phaser/interior-assets.js`, `scripts/prepare_interiors.py`. [CAMP-HUB.md](CAMP-HUB.md).
 - Центры лагеря и совместные переходы в лавку/дом: [CAMP-HUB.md](CAMP-HUB.md). `game/workshop.js` — заказы мастера; `game/camp-layout.js` — расположение; `phaser/camp-hub-view.js` — мастерская/NPC.
 - Топливо, склад и комнаты — `game/camp-services.js`; камень — `game/mining.js`. Ближайшие взаимодействия, клавиатура меню и личные лавки — `phaser/keyboard-interactions.js`; комната и добываемые валуны — `phaser/camp-services-view.js`. [Баланс и проверки обновления](CAMP-PROGRESSION.md).
 - Свободный выбор построек, оплата после повторного входа, независимые эффекты — `game/camp-projects.js`; меню проектов — `phaser/build-ui.js`, общая верхняя шкала топлива — `phaser/day-hud.js`. `campLevel` означает число построек, а не их последовательность.

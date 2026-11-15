@@ -22,6 +22,14 @@
 - Позиции наружных центров: `game/camp-layout.js` (`CAMP`, `CAMP_HUB`), производство — `game/camp-industry-config.js`.
 - Переходы, движение и мебельные коллизии: `game/camp-services.js`, координаты `ROOM`.
 - Заказы: `game/workshop.js`, доставка — `game/camp-projects.js` / `game/camp-industry.js`.
-- Вид: `phaser/camp-hub-view.js`, `phaser/camp-service-view.js`, `phaser/camp-services-view.js`; существующие одобренные PNG, новые текстуры не генерируются.
+- Вид: `phaser/camp-hub-view.js`, `phaser/camp-service-view.js`, `phaser/camp-services-view.js`; комнаты, мебель, навесы мастерской и склада — новые PNG из `src/assets/interiors/`, подготовка `scripts/prepare_interiors.py`.
 - Меню/ввод: `phaser/camp-desk.js`, `phaser/worker-ui.js`, `phaser/keyboard-interactions.js`. DOM-панели останавливают распространение указателя, чтобы покупки не нажимали HUD под ними.
 - Регрессии: `tests/camp-hub.test.mjs`, `tests/camp_hub_smoke.py` (desktop WebGL, mobile Canvas).
+
+## Ночлег и набор помещений
+
+С вечернего отзыва работники сначала сдают груз, доходят до входа палатки (`WORKERS.sleepEntrance`) и скрываются внутри; над палаткой появляется Z z z с количеством спящих. Утром выходят к работе. При полном складе груз сохраняется у спящего, включая сохранение/загрузку. Закрытый маршрут не телепортирует работника в палатку. Ночные ремонтники просыпаются для доступного ремонта и возвращаются спать; оператор остаётся на явно разрешённой ночной смене. Игрок не входит в палатку.
+
+`art/source/camp-interiors-sheet.png` — сгенерированный лист с настоящим alpha. `scripts/prepare_interiors.py` выделяет 9 частей по зафиксированным границам, использует nearest и бинарный alpha без удаления белых цветов. Стены комнат укорочены по высоте для просторного проходимого пола. Метаданные и SHA исходника — `src/assets/interiors/manifest.json`; все изображения попадают в существующий атлас через `phaser/interior-assets.js` один раз при загрузке.
+
+Проверки ночлега: `tests/worker-sleep.test.mjs`, `tests/worker_sleep_smoke.py`. Прозрачность/размеры набора: `tests/interior_assets_test.py`.
