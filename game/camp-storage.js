@@ -5,7 +5,7 @@ import {CAMP_SERVICE,ROOM} from './camp-services.js';
 // Every transfer moves existing quantities; log prices remain attached to individual logs.
 export function createCampStorage({state,player,forestry,nav,emit=()=>{}}){
   const near=()=>!state.gameOver&&state.health>0&&!player.menuOpen&&(player.room?
-    Math.hypot(player.room.x-ROOM.chest.x,player.room.y-ROOM.chest.y)<90:
+    (player.room.id||'house')==='house'&&Math.hypot(player.room.x-ROOM.chest.x,player.room.y-ROOM.chest.y)<90:
     Math.hypot(player.x-CAMP_SERVICE.store.x,player.y-CAMP_SERVICE.store.y)<110&&nav.hasLineOfSight(player,CAMP_SERVICE.store));
   const stored=id=>id==='logs'?state.logStore.length:state.campIndustry.materials[id]||0;
   const free=id=>id==='stone'?Math.max(0,40+state.carryLevel*10-state.stone):Math.max(0,state.maxWood-occupiedHands(state));

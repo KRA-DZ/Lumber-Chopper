@@ -11,7 +11,8 @@
 - `phaser/world-scene.js`: WorldScene, связывание модели с вводом и представлениями; `phaser/hud-scene.js` — HUD.
 - `game/simulation.js`: `createSimulation()`, игровые команды и координация независимых систем. Начальное состояние/баланс — `game/config.js`.
 - Локальная игра вдвоём: `game/local-coop.js` координирует две личные симуляции с общим мировым тактом; `game/coop-state.js` задаёт общие поля, `game/local-party.js` — цели врагов и личный урон. Камеры и панели — `phaser/coop-camera.js`, `phaser/coop-views.js`. [Управление и проверки](LOCAL-COOP.md).
-- Топливо, склад и комната дома — `game/camp-services.js`; камень — `game/mining.js`. Ближайшие взаимодействия, клавиатура меню и личные лавки — `phaser/keyboard-interactions.js`; комната и добываемые валуны — `phaser/camp-services-view.js`. [Баланс и проверки обновления](CAMP-PROGRESSION.md).
+- Центры лагеря и совместные переходы в лавку/дом: [CAMP-HUB.md](CAMP-HUB.md). `game/workshop.js` — заказы мастера; `game/camp-layout.js` — расположение; `phaser/camp-hub-view.js` — мастерская/NPC.
+- Топливо, склад и комнаты — `game/camp-services.js`; камень — `game/mining.js`. Ближайшие взаимодействия, клавиатура меню и личные лавки — `phaser/keyboard-interactions.js`; комната и добываемые валуны — `phaser/camp-services-view.js`. [Баланс и проверки обновления](CAMP-PROGRESSION.md).
 - Свободный выбор построек, оплата после повторного входа, независимые эффекты — `game/camp-projects.js`; меню проектов — `phaser/build-ui.js`, общая верхняя шкала топлива — `phaser/day-hud.js`. `campLevel` означает число построек, а не их последовательность.
 - Старая Canvas-игра и режим сравнения графики удалены. Корневые модули экономики, рубки, геометрии и генерации растров используются Phaser; перед очисткой проверять граф импортов.
 
@@ -101,7 +102,7 @@
 
 ## Лагерь и интерфейс
 
-`construction.js: fencePlan()` и `game/camp-layout.js` задают квадратный периметр; `phaser/art/ground-art.js` — форму площадки. `game/buyers.js` разрешает точки очереди через навигацию и повторяет застрявшие маршруты. `game/regions.js: unlockEligible()` открывает рощу за костёр/забор; вызов только в общем мировом такте. `phaser/build-ui.js` — общий проект и личные панели владельцев; `phaser/inventory-grid.js` — представление реальных стеков, без изменения экономики. Компактный док/шрифт — `phaser/viewport.css`; постоянная нижняя инструкция скрыта в `phaser/hud-scene.js`. Контракты и точечные проверки: [CAMP-UI.md](CAMP-UI.md).
+`construction.js: fencePlan()` и `game/camp-layout.js` задают квадратный периметр; `phaser/art/ground-art.js` — форму площадки. `game/buyers.js` разрешает точки очереди через навигацию и повторяет застрявшие маршруты. `game/regions.js: unlockEligible()` открывает рощу за костёр/забор; вызов только в общем мировом такте. `phaser/camp-desk.js` — заказ у мастера, общий проект и доставка из рук; `phaser/inventory-grid.js` — представление реальных стеков, без изменения экономики. Компактный док/шрифт — `phaser/viewport.css`; постоянная нижняя инструкция скрыта в `phaser/hud-scene.js`. Контракты и точечные проверки: [CAMP-UI.md](CAMP-UI.md).
 
 ## Автобой и меню владельца
 

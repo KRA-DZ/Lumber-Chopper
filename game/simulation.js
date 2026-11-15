@@ -13,6 +13,8 @@ import { createCampIndustry } from "./camp-industry.js";
 import {createCampStorage} from './camp-storage.js';
 import {occupiedHands} from './material-cargo.js';
 import {repairResource} from './building-repair.js';
+import {CAMP_HUB} from './camp-layout.js';
+import {createWorkshop} from './workshop.js';
 import { createCampPreparation } from "./camp-preparation.js";
 import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
@@ -68,7 +70,7 @@ export function createSimulation({
   const stages = STAGES,
     keys = new Set(),
     sale = { x: 1420, y: 1690, radius: 53 },
-    build = { x: 1780, y: 1690, radius: 53 };
+    build = {...CAMP_HUB.counter};
   const player = {
     x: 1600,
     y: 1720,
@@ -251,12 +253,13 @@ export function createSimulation({
   }
   const berries=regional?createBerries({state:gameState,player,world,regions,nav,canAct,navigate:setDestination,emit}):null;
   const custom=createCampCustom({state:gameState,player,nav,canAct});
-  const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, emit });
+  const camp = createCampServices({ state: gameState, player, forestry, canAct, nav, party, emit });
   const builder = createCampBuilder({ state: gameState, player, pad: build, forestry, canAct,
     players: () => party?.actors.map(a => a.player) || [player], emit });
   const mining = createMining({ state: gameState, player, world, nav, canAct, emit });
   const industry = createCampIndustry({state:gameState,player,forestry,defenses,emit});
   const storage = createCampStorage({state:gameState,player,forestry,nav,emit});
+  const workshop=createWorkshop({state:gameState,player,builder,industry,defenses,forestry,canAct,emit});
   const preparation = createCampPreparation({state:gameState,player,defenses,nav,getSurvival:()=>survival,canUse:industry.canUse,emit});
   const orders = createBuyerOrders({state:gameState,player,site:sale,forestry,canAct,
     onIncome:value=>{gameState.campMilestones.sold=true;if(party)party.sale(value);else gameState.coins+=value;},emit});
@@ -630,11 +633,16 @@ export function createSimulation({
     : null;
   function transferOneLog(target = null) {
     if (!canAct() || transferTimer > 0) return false;
+    if((gameState.workshopUpgrade||gameState.workshopDefense)&&(target==='build'||!target&&distance(player,build)<build.radius))return false;
     builder.update();
     if (!canAct()) return false; // Opening the project picker pauses before any debit.
     const oldMaterialRadius=forestRadius(),materialTarget=construction.target(gameState),
       finished=(!target||target==="build")&&!defenseOrder&&!defenseRepair.target?builder.finishMaterials():null;
     if(finished){completeBuilding(finished,materialTarget,oldMaterialRadius);updateUI();builder.update();return true;}
+    if(gameState.workshopBuild&&builder.canContribute()){
+      const contribution=builder.contributeMaterial();
+      if(contribution){transferTimer=.18;if(contribution.complete)completeBuilding(contribution.project,materialTarget,oldMaterialRadius);updateUI();return true;}
+    }
     if(!target||target==="sell"){
       if(orders.current&&distance(player,sale)<sale.radius){
         const delivered=orders.deliver();if(delivered){transferTimer=.25;updateUI();}return delivered;
@@ -673,7 +681,7 @@ export function createSimulation({
     if (!gameState.cargo.length) return false;
     // An explicit repair order never spends cargo on a different nearby platform.
     if (defenseOrder || (target && defenses?.get(target))) return false;
-    const repairing = hazards && gameState.campHealth < gameState.maxCampHealth && (builder.canContribute() || !builder.choices.length);
+    const repairing = !gameState.workshopBuild && hazards && gameState.campHealth < gameState.maxCampHealth && (builder.canContribute() || !builder.choices.length);
     const building =
       distance(player, build) < build.radius &&
       (builder.canContribute() || repairing) &&
@@ -785,6 +793,7 @@ export function createSimulation({
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
     industry.deliverUpgrade(dt);
     storage.update(dt);
+    workshop.update(dt);
     if (!actorOnly) {
       for(const region of regions?.unlockEligible()||[])openRegion(region);
       cycle.update(dt);
@@ -945,6 +954,7 @@ export function createSimulation({
     if (canAct() && forestry.collect(dt, player)) updateUI();
     sawmill?.freight.sync();
     camp.updateFuelPad(dt);
+    camp.updateEntrance(dt);
     berries?.update(dt);
     contextHints?.update(dt);
     if (!actorOnly) survival?.update(dt);
@@ -1104,7 +1114,7 @@ export function createSimulation({
     stages,
     update,
     buyerSystem,
-    forestTasks, berries, custom, camp, mining, builder, industry, storage, preparation, orders,
+    forestTasks, berries, custom, camp, mining, builder, industry, storage, workshop, preparation, orders,
     get contextHints(){return contextHints;},
     defeat,
     refreshWorld() { for (const t of trees) treeIds.set(t.id, t); rebuildObstacles(); },

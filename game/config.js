@@ -27,6 +27,8 @@ export function createInitialState({ appearance = "traveler", colors=null } = {}
     campBuildings: null, // Независимые флаги базовых и хозяйственных построек; до первого выбора лагерь пуст.
     buildProject: null, // Выбранный общий проект; выбор ничего не списывает.
     buildBlockedPlayers: [], // Стоявшие на платформе при выборе должны сойти и войти повторно.
+    workshopBuild:false,buildMaterials:{}, // Заказ мастера: материалы из рук, частичные взносы сохраняются.
+    workshopUpgrade:null,workshopDefense:null, // Один активный заказ; старые частичные улучшения не теряются.
     campIndustry: initialIndustryState(), // Общие материалы (до 200/300/400), очередь до 3 работ, усиления 0–2 и топливо фонарей.
     campMilestones: {lit:false,sold:false,mined:false}, // Общие необязательные цели: запоминают факт действия даже после расхода/угасания; наград нет.
     worldWorks: initialWorldWorks(), // Общие взносы/готовые переходы и два положения плотины. Только в текущей игре; revision меняется при смене геометрии.

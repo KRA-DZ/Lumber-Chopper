@@ -20,6 +20,7 @@ export class DefenseView {
       }
       this.objects = [];
       for (const d of c.defenses?.all() || []) {
+        if(['trap','barricade'].includes(d.kind)&&!d.hp)continue; // Unbuilt defenses only appear in the master's catalogue.
         const generated = s.assets.camp && !["fence","gate","tower"].includes(d.kind);
         const g = generated
           ? s.addImage(

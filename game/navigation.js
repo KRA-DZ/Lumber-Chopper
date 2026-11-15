@@ -1,4 +1,4 @@
-import { CAMP } from "./camp-layout.js";
+import { CAMP,CAMP_HUB } from "./camp-layout.js";
 import { hasCampBuilding, constructionStage } from "./camp-projects.js";
 import { INDUSTRY_PROJECTS } from "./camp-industry-config.js";
 import {
@@ -76,6 +76,8 @@ export function createNavigation(
       circle(ancientTree.x, ancientTree.y - 12, 50);
     // Пни, камни, сундуки, траву и стопки дров можно пересекать свободно.
     capsule(CAMP.stall.x - 80, CAMP.stall.y - 30, 160, 32);
+    capsule(CAMP_HUB.store.x-60,CAMP_HUB.store.y-40,120,18);
+    capsule(CAMP_HUB.counter.x-60,CAMP_HUB.counter.y-36,120,18);
     if (!model.regions || model.regions.isOpen(merchant))
       capsule(merchant.x - 82, merchant.y - 24, 164, 28);
     if (hasCampBuilding(gameState,"fire") || constructionStage(gameState) === 0 && gameState.buildWood > 0)

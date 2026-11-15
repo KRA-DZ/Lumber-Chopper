@@ -162,7 +162,7 @@ export class HudScene extends Phaser.Scene {
       .fillRect(left - 4, top - 4, size + 8, size + 8);
     const order=c.orders.current,orderProgress=order?.resource==="logs"?c.orders.data.active.logs.length:order?Math.min(order.amount,c.state.campIndustry.materials[order.resource]):0,
       location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
-        `${c.player.room ? "Дом лагеря" : regionAt(c.player.x,c.player.y)?.name||"Лес"}`;
+        `${c.player.room ? c.player.room.id==='shop'?'Лавка лагеря':'Дом лагеря' : regionAt(c.player.x,c.player.y)?.name||"Лес"}`;
     this.clock.setFontSize(this.scale.width<600?17:14).setLineSpacing(2).setText(
       `День ${c.dayNumber+1} · ${c.state.nightsSurvived} ночей · ${hour}:${minute}\n${hasCampBuilding(c.state,"fire")?`Огонь ${Math.ceil(c.state.campFuel)} с`:"Нет костра"} · База ${c.state.campHealth}/${c.state.maxCampHealth}\n${location.length>31?location.slice(0,30)+"…":location}`,
     );

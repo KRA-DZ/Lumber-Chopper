@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSimulation} from '../game/simulation.js';
 import {createLocalCoop} from '../game/local-coop.js';
-import {CAMP_STATIONS,CAMP,inCamp} from '../game/camp-layout.js';
+import {CAMP_HUB,CAMP,inCamp} from '../game/camp-layout.js';
 import {CAMP_SERVICE} from '../game/camp-services.js';
 import {WORKERS} from '../game/workers.js';
 import {captureSession,restoreSession,decodeSave} from '../game/session-save.js';
@@ -14,7 +14,7 @@ const place=(c,p)=>Object.assign(c.player,p,{path:[],autoTimer:1000});
 test('square camp corners and all relocated station platforms are reachable with full buildings and fence',()=>{
   const c=createSimulation({regional:true});prepare(c);
   assert.ok(inCamp({x:1600+CAMP.fenceRX-25,y:1600+CAMP.fenceRY-25}));
-  for(const site of [...CAMP_STATIONS,CAMP_SERVICE.store,WORKERS.depot]){
+  for(const site of [CAMP_HUB.counter,CAMP_SERVICE.store,WORKERS.depot,CAMP_SERVICE.door,CAMP_SERVICE.shopDoor]){
     assert.ok(c.nav.isWalkable(site.x,site.y),`walkable ${site.id||'storage'}`);
     assert.ok(c.nav.findPath(c.player,site).length,`reachable ${site.id||'storage'}`);
   }
@@ -34,7 +34,7 @@ test('warehouse transfers exact selected quantities, preserves priced logs and r
 });
 test('two players carry separate goods and complete one persisted physical house upgrade without charging the bank twice',()=>{
   const game=createLocalCoop(),[a,b]=game.actors;prepare(a);b.refreshWorld();b.state.maxWood=20;
-  const site=CAMP_STATIONS.find(p=>p.id==='house');
+  const site=CAMP_HUB.counter;
   a.state.campIndustry.materials.boards=8;a.state.campIndustry.materials.blocks=4;
   place(a,CAMP_SERVICE.store);place(b,CAMP_SERVICE.store);
   assert.equal(a.storage.transfer('boards',5),5);assert.equal(b.storage.transfer('boards',3),3);assert.equal(b.storage.transfer('blocks',4),4);

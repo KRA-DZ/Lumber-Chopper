@@ -1,6 +1,6 @@
 import { hasCampBuilding } from "./camp-projects.js";
 import { RECIPES, CAMP_UPGRADES, materialLimit, campStorageLimit } from "./camp-industry-config.js";
-import {CAMP_STATIONS,inCamp} from './camp-layout.js';
+import {CAMP_HUB,inCamp} from './camp-layout.js';
 import {cargoAmount,changeMaterialCargo} from './material-cargo.js';
 
 export function createCampIndustry({state,player,forestry,defenses,emit=()=>{}}) {
@@ -63,21 +63,23 @@ export function createCampIndustry({state,player,forestry,defenses,emit=()=>{}})
   function finishUpgrade(id){
     if(id==="fence")defenses.reinforce();else data.upgrades[id]++;
     delete data.upgradePaid[id];delete data.upgradeSelected[id];
+    if(state.workshopUpgrade===id)state.workshopUpgrade=null;
     emit("camp-upgraded",{id,level:data.upgrades[id]});
   }
   function selectUpgrade(id){
-    const site=CAMP_STATIONS.find(p=>p.upgrade===id&&hasCampBuilding(state,p.building)&&Math.hypot(player.x-p.x,player.y-p.y)<=110);
-    if(!site||upgradeReason(id,true)||player.room||Math.hypot(player.x-site.x,player.y-site.y)>110)return false;
+    if(upgradeReason(id,true)||player.room||Math.hypot(player.x-CAMP_HUB.counter.x,player.y-CAMP_HUB.counter.y)>100||
+      state.buildProject||state.workshopDefense||state.workshopUpgrade&&state.workshopUpgrade!==id)return false;
+    state.workshopUpgrade=id;
     if(data.upgradeSelected[id])return true;
     data.upgradeSelected[id]=true;data.upgradePaid[id]={};
     emit('camp-upgrade-selected',{id});return true;
   }
   function deliverUpgrade(dt){
     if(!Number.isFinite(dt)||dt<=0)return;
-    const site=CAMP_STATIONS.find(p=>p.upgrade&&hasCampBuilding(state,p.building)&&data.upgradeSelected[p.upgrade]&&Math.hypot(player.x-p.x,player.y-p.y)<30);
-    if(!site||!canUse()||player.room||upgradeReason(site.upgrade,true)){padTimer=0;return;}
+    const selected=state.workshopUpgrade;
+    if(!selected||!data.upgradeSelected[selected]||Math.hypot(player.x-CAMP_HUB.counter.x,player.y-CAMP_HUB.counter.y)>CAMP_HUB.counter.radius||!canUse()||player.room||upgradeReason(selected,true)){padTimer=0;return;}
     padTimer+=dt;if(padTimer<.35)return;padTimer=0;
-    const id=site.upgrade,cost=CAMP_UPGRADES[id].costs[data.upgrades[id]],paid=data.upgradePaid[id];
+    const id=selected,cost=CAMP_UPGRADES[id].costs[data.upgrades[id]],paid=data.upgradePaid[id];
     const material=Object.keys(cost).find(k=>(paid[k]||0)<cost[k]&&cargoAmount(state,k)>0);
     if(material){changeMaterialCargo(state,material,-1);paid[material]=(paid[material]||0)+1;emit('camp-material-delivered',{id,material});}
     if(Object.entries(cost).every(([k,n])=>(paid[k]||0)>=n))finishUpgrade(id);

@@ -5,6 +5,7 @@ import { createLocalCoop } from "../game/local-coop.js";
 import { MILL, MILL_STAGES } from "../game/sawmill-production-config.js";
 import { createMinions } from "../game/minions.js";
 import { createBiomeEnemies } from "../game/biome-enemies.js";
+import { WORKERS } from "../game/workers.js";
 import { createWatcher } from "../game/watcher.js";
 
 const make=()=>createSimulation({regional:true,survival:false});
@@ -14,7 +15,7 @@ test("map summary is safe before the sawmill region is generated",()=>{
 const place=(c,p)=>Object.assign(c.player,p,{path:[],autoTimer:10000});
 function open(c){for(const id of ["1:0","1:1"]){const r=c.regions.all.find(r=>r.id===id);c.regions.unlocked.add(id);c.state.unlockedRegions.push(id);c.world.generate(r);}c.refreshWorld();}
 const site=(c,id)=>c.sawmill.sites.find(s=>s.id===id);
-function base(c){c.state.campBuildings={tent:true,fire:true};c.state.campLevel=2;c.state.coins=10000;c.refreshWorld();place(c,{x:1600,y:1720});}
+function base(c){c.state.campBuildings={tent:true,fire:true};c.state.campLevel=2;c.state.coins=10000;c.refreshWorld();place(c,WORKERS.depot);}
 function supply(c,cost){c.state.maxWood=82;for(let i=0;i<cost.logs;i++)c.forestry.addCargo(11);for(const [key,n] of Object.entries(cost))if(key!=="logs")c.state.campIndustry.materials[key]=n;}
 function operator(c){base(c);c.workers.hire("lumberjack");const w=c.workers.crew[0];c.state.sawmill.stage=3;c.state.sawmill.enabled=true;Object.assign(w,MILL.operator,{role:"operator",job:"mill",path:[],clock:10,dangerUntil:0});return w;}
 function until(c,done,seconds=100){for(let i=0;i<seconds*20&&!done();i++)c.update(.05);assert.ok(done(),JSON.stringify({time:c.state.worldTime,crew:c.workers.crew.map(w=>({role:w.role,phase:w.phase,reason:w.reason,x:w.x,y:w.y})),mill:c.state.sawmill}));}
@@ -42,7 +43,7 @@ test("an existing helper returns old cargo then physically walks to the machine;
   const worker=c.workers.crew[0];worker.cargo.push(9,15);c.state.sawmill.stage=3;c.state.sawmill.enabled=true;c.state.sawmill.input=Array(8).fill(11);
   assert.equal(c.workers.hire("operator"),false);assert.ok(c.workers.assign(worker.id,"operator"));assert.equal(c.workers.assign(1,"operator"),false);
   c.update(1);assert.equal(c.state.sawmill.job,null);until(c,()=>!!c.state.sawmill.job,140);
-  assert.ok(Math.hypot(worker.x-MILL.operator.x,worker.y-MILL.operator.y)<65);assert.equal(worker.cargo.length,0);assert.equal(c.workers.data.delivered,2);assert.deepEqual(c.workers.data.stock,[15,9]);
+  assert.ok(Math.hypot(worker.x-MILL.operator.x,worker.y-MILL.operator.y)<65);assert.equal(worker.cargo.length,0);assert.equal(c.workers.data.delivered,2);assert.deepEqual(c.state.logStore,[15,9]);assert.deepEqual(c.workers.data.stock,[]);
   assert.equal(c.workers.crew.length,2);assert.equal(c.state.sawmill.input.length,0);
 });
 test("co-op processing reserves eight actual logs, ticks once, pauses, and never overfills output",()=>{

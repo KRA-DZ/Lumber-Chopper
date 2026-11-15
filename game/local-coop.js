@@ -29,6 +29,10 @@ export function createLocalCoop(options = {}) {
   }
   function helpTarget(i) {
     const other = actors[1 - i], a = actors[i];
+    if(a.player.room||other.player.room){
+      const x=a.player.room,y=other.player.room;
+      return a.state.health>0&&other.state.health<=0&&x&&y&&(x.id||'house')===(y.id||'house')&&Math.hypot(x.x-y.x,x.y-y.y)<100?other:null;
+    }
     return a.state.health > 0 && other.state.health <= 0 &&
       Math.hypot(a.player.x - other.player.x, a.player.y - other.player.y) < 100 &&
       a.nav.clearSegment(a.player, other.player) ? other : null;

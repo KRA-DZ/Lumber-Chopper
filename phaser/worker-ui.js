@@ -2,6 +2,9 @@ import {campIcon} from './camp-icons.js';
 import {visibleMenuActions} from './menu-navigation.js';
 import { WORKER_PHASES } from "../game/workers.js";
 import { WORKER_ROLES, workerRole } from "../game/worker-jobs.js";
+import {CAMP} from '../game/camp-layout.js';
+import {CAMP_SERVICE,ROOM} from '../game/camp-services.js';
+import {hasCampBuilding} from '../game/camp-projects.js';
 
 export function createWorkerUi(scene) {
   const dialog = document.querySelector("#workerDialog"),
@@ -59,6 +62,16 @@ export function createWorkerUi(scene) {
   }
   function open() {
     if (scene.core.state.gameOver) return;
+    const c=scene.core;
+    if(hasCampBuilding(c.state,'house')&&!c.camp.atManager()){
+      if(c.player.room?.id==='shop'){c.showNotice('Бригадир ждёт в доме лагеря.');return false;}
+      if(c.player.room){c.player.room.target={x:ROOM.manager.x,y:ROOM.manager.y+75};c.player.room.interactTarget='manager';}
+      else c.camp.enter()||c.setDestination(CAMP_SERVICE.door.x,CAMP_SERVICE.door.y);
+      return false;
+    }
+    if(!hasCampBuilding(c.state,'house')&&(!hasCampBuilding(c.state,'tent')||Math.hypot(c.player.x-CAMP.tent.x,c.player.y-CAMP.tent.y-65)>100)){
+      c.setDestination(CAMP.tent.x,CAMP.tent.y+65);c.showNotice('Для найма подойдите к бригадиру у палатки.');return false;
+    }
     scene.pause("workers", true);
     if (!dialog.open) dialog.showModal();
     scene.core.workers.useSharedStore();

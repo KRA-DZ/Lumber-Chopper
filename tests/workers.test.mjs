@@ -16,7 +16,7 @@ function ready(g) {
   g.nav.rebuildObstacles();
   g.update(.05);
   assert.ok(g.regions.unlocked.has("1:0"));
-  Object.assign(g.player, { x: 1600, y: 1720, path: [] });
+  Object.assign(g.player, {...WORKERS.depot, path: [] });
   g.state.coins = 150;
 }
 function until(g, predicate, seconds = 90) {
@@ -39,7 +39,7 @@ test("hiring validates camp, daylight, location, funds and house-expanded cap; c
   g.state.coins = 150;
   g.player.x = 2000;
   assert.equal(w.hire(), false);
-  g.player.x = 1600;
+  g.player.x = WORKERS.depot.x;
   g.state.worldTime = NIGHT_START - 60;
   assert.equal(w.hire(), false);
   g.state.worldTime = 120;
@@ -101,7 +101,7 @@ test("stock reserve, withdrawals, exact value and stack capacity are atomic and 
   g.state.maxWood = 2;
   g.player.x = 2000;
   assert.equal(w.withdraw(), false);
-  g.player.x = 1600;
+  g.player.x = WORKERS.depot.x;
   g.paused = true;
   assert.ok(w.withdraw());
   assert.ok(w.withdraw());
@@ -199,7 +199,7 @@ function fixture() {
   state.campLevel = 2;
   state.coins = 10000;
   Object.assign(state.workforce,{logTarget:'sell',autoSell:true});
-  const player = { x: 1710, y: 1780 },
+  const player = { x: WORKERS.depot.x, y: WORKERS.depot.y },
     buyer = { load: 0, capacity: 5 },
     searches = [],
     threats = { raiders: [], monster: null };
@@ -323,14 +323,14 @@ test("a fallback ground point at camp never turns into remote oak production", (
   state.coins = 150;
   const nav = {
     version: 1,
-    nearestGround: () => ({ x: 1710, y: 1780 }),
+    nearestGround: () => ({ x: WORKERS.depot.x, y: WORKERS.depot.y }),
     hasLineOfSight: () => true,
     findPath: () => [],
     followPath: () => 0,
   };
   const system = createWorkers({
     state,
-    player: { x: 1710, y: 1780 },
+    player: { x: WORKERS.depot.x, y: WORKERS.depot.y },
     world: { ancientTree: { x: 3520, y: 1600 } },
     regions: { isOpen: () => true },
     nav,
@@ -375,7 +375,7 @@ test("an unreachable oak footing is replaced without resetting the delivery task
     return goals.length === 1 ? [] : original(w, goal);
   };
   f.system.hire();
-  f.step(40);
+  f.step(55);
   assert.notDeepEqual(goals[0], goals[1]);
   assert.ok(f.system.data.delivered >= 4);
 });
