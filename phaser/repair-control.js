@@ -41,7 +41,7 @@ export class RepairControl {
     const effect =
       section.kind === "barricade" && !section.hp
         ? `Восстановление ${section.wood}/${section.cost} брёвен`
-        : "1 бревно → до 20 HP";
+        : "1 бревно → до 40 HP";
     this.button
       .setPosition(
         s.scale.width / 2,

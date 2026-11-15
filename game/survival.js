@@ -8,6 +8,7 @@ import { CENTER, RAID_INTERVAL } from "./config.js";
 import { raidPlan, raidRoster } from "./raid-plans.js";
 import { createRaidProjectiles } from "./raid-projectiles.js";
 import {pushPlayer} from './hit-impact.js';
+import {REPAIR_HP} from './building-repair.js';
 export const SURVIVAL = Object.freeze({
   monsterSpeed: 190, // Near the starting hero's 200: little room to waste time while chased.
   monsterDamage: 40,
@@ -16,7 +17,7 @@ export const SURVIVAL = Object.freeze({
   warningSeconds: 12,
   waveEvery: RAID_INTERVAL,
   maxRaiders: 8,
-  repairPerLog: 20,
+  repairPerLog: REPAIR_HP,
 });
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 // Engine-independent night director; each bounded enemy group shares a path-search budget.

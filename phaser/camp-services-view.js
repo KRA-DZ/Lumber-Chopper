@@ -14,9 +14,18 @@ export class CampServicesView {
     this.fuelPad=scene.add.graphics().setDepth(pad.y-1);
     this.fuelZone=scene.add.zone(pad.x,pad.y,64,48).setInteractive().setData("fuelPad",true);
     this.fuelLabel=scene.text("",pad.x,pad.y+38,11,"#f3d79f",LAYERS.hints);
+    const storage=CAMP_SERVICE.storagePad;
+    this.storagePad=scene.add.graphics().setDepth(storage.y-1);
+    this.storageZone=scene.add.zone(storage.x,storage.y,72,48).setInteractive().setData('storagePad',true);
+    this.storageLabel=scene.text('Склад · сдача ресурсов',storage.x,storage.y+34,12,'#ffe3a0',LAYERS.hints);
   }
   render() {
     const s = this.scene, c = s.core, wanted = new Set();
+    const storage=CAMP_SERVICE.storagePad,unloading=(c.actors||[c]).some(a=>a.storage.atPad());
+    this.storagePad.clear().fillStyle(unloading?0x8f7947:0x385e51,.9).fillRoundedRect(storage.x-36,storage.y-24,72,48,8)
+      .lineStyle(3,0xf0ce85).strokeRoundedRect(storage.x-36,storage.y-24,72,48,8);
+    this.storageLabel.setText(unloading?'Сдача ресурсов на склад':'Склад · сдача ресурсов');
+    s.worldHints.offer(this.storageLabel,storage,{range:280,priority:90});
     for (const rock of c.world.boulders || []) {
       if (!s.nearView(rock, s.camera.worldView, 180)) continue;
       wanted.add(rock.id);
@@ -43,7 +52,7 @@ export class CampServicesView {
     this.fuelLabel.setText(c.state.campFuel>c.camp.maxFuel()-CAMP_SERVICE.fuelPerLog?"Запас почти полон":active&&!((c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.wood>0))?"Нужны брёвна в руках":"Поддерживать огонь\n1 бревно → +60 с");
     s.worldHints.offer(this.fuelLabel,pad,{eligible:built,range:180,priority:70});
   }
-  destroy() { this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
+  destroy() { this.storagePad.destroy();this.storageZone.destroy();this.storageLabel.destroy();this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
 }
 
 // A separate walkable interior per viewport; the outdoor simulation keeps running.

@@ -9,6 +9,15 @@ export function createCampStorage({state,player,forestry,nav,emit=()=>{}}){
     Math.hypot(player.x-CAMP_SERVICE.store.x,player.y-CAMP_SERVICE.store.y)<110&&nav.hasLineOfSight(player,CAMP_SERVICE.store));
   const stored=id=>id==='logs'?state.logStore.length:state.campIndustry.materials[id]||0;
   const free=id=>id==='stone'?Math.max(0,40+state.carryLevel*10-state.stone):Math.max(0,state.maxWood-occupiedHands(state));
+  let unloadTimer=0;
+  const atPad=()=>!player.room&&Math.hypot(player.x-CAMP_SERVICE.storagePad.x,player.y-CAMP_SERVICE.storagePad.y)<CAMP_SERVICE.storagePad.radius;
+  function update(dt){
+    if(!Number.isFinite(dt)||dt<=0)return;
+    if(!near()||!atPad()){unloadTimer=0;return;}
+    unloadTimer+=dt;if(unloadTimer<.25)return;unloadTimer=0;
+    // Each material gets a turn: a full log warehouse cannot block stone or boards.
+    for(const id of CARGO_MATERIALS)if(cargoAmount(state,id)>0)transfer(id,1,'deposit');
+  }
   function transfer(id,count,direction='withdraw'){
     if(!near()||!CARGO_MATERIALS.includes(id)||!Number.isInteger(count)||count<1||!['withdraw','deposit'].includes(direction))return 0;
     const take=direction==='withdraw',available=take?stored(id):cargoAmount(state,id),
@@ -23,5 +32,5 @@ export function createCampStorage({state,player,forestry,nav,emit=()=>{}}){
     if(amount)emit('storage-changed',{kind:id,count:amount,action:direction});
     return amount;
   }
-  return {near,stored,free,transfer};
+  return {near,stored,free,transfer,atPad,update};
 }

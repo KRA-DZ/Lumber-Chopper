@@ -37,7 +37,7 @@ test("a broken fence opens a physical gap; exact repair spends one log and safel
   cargo(g, 1);
   Object.assign(g.player, { x: d.x, y: d.y, path: [] });
   assert.ok(g.transferOneLog(d.id));
-  assert.equal(g.defenses.get(d.id).hp, 20);
+  assert.equal(g.defenses.get(d.id).hp, 40);
   assert.equal(g.state.wood, 0);
   assert.equal(g.state.cargoValue, 0);
   assert.equal(g.nav.isWalkable(d.x, d.y), false);
@@ -98,7 +98,7 @@ test("three-log barricades preserve the central entrance and can be repaired wit
   near(g, d);
   assert.ok(g.orderDefense(d.id));
   g.update(0.31);
-  assert.equal(g.defenses.get(d.id).hp, 56);
+  assert.equal(g.defenses.get(d.id).hp, 60);
   assert.equal(g.state.wood, 1);
 });
 

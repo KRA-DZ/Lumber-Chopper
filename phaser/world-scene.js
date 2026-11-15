@@ -521,6 +521,7 @@ export class WorldScene extends Phaser.Scene {
       if (this.core.player.room) { this.houseView.pointer(pointer,this.core.activeActor||0); return; }
       const berry=over.find(o=>o.getData("berry"));if(berry){this.core.berries.order(berry.getData("berry"));return;}
       if(over.some(o=>o.getData("fuelPad"))){const p=CAMP_SERVICE.fuelPad;this.core.setDestination(p.x,p.y);return;}
+      if(over.some(o=>o.getData('storagePad'))){const p=CAMP_SERVICE.storagePad;this.core.setDestination(p.x,p.y);return;}
       const campService=over.find(o=>o.getData("campService"));
       if(campService){this.serviceView.open(campService.getData("campService"));return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
@@ -856,7 +857,7 @@ export class WorldScene extends Phaser.Scene {
     );
     this.buildLabel.setText(
       s.campHealth < s.maxCampHealth
-        ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 20 HP/бревно`
+        ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 40 HP/бревно`
         : c.builder.project
           ? `${c.builder.project.name} ${s.buildWood}/${c.builder.project.cost}${c.builder.project.materials ? "\n"+materialCostText(c.builder.project.materials)+" из общего запаса" : ""}${c.builder.needsExit ? " · сойдите и вернитесь" : ""}`
           : c.builder.choices.length ? "Выбрать постройку · встаньте на платформу" : "Лагерь построен",

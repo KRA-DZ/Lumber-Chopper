@@ -54,15 +54,15 @@ test("miner unloading holds cargo at the material limit; profession change retur
   assert.match(npc.reason,/заполнен/);g.state.campIndustry.materials.stone=192;
   until(g,()=>npc.role==="repairer",20);assert.equal(g.state.campIndustry.materials.stone,200);assert.equal(npc.stoneCargo,0);assert.equal(w.data.stoneDelivered,8);
 });
-test("repairer restores real breaches, spends one log per twenty HP and stops exactly at the fuel reserve",()=>{
+test("repairer restores real breaches for one log per forty HP without a hidden fuel reserve",()=>{
   const g=make(true);base(g);const w=g.workers;w.hire("repairer");g.state.logStore=Array(10).fill(13);
   const sections=g.defenses.all().filter(d=>d.kind==="fence").slice(0,2);for(const s of sections)g.defenses.damage(s.id,60);
   until(g,()=>w.data.repaired===4,60);g.update(5);
   assert.equal(g.state.logStore.length,6);assert.ok(g.state.logStore.every(v=>v===13));assert.equal(w.data.repaired,4);
-  assert.equal(sections.reduce((n,s)=>n+g.defenses.get(s.id).hp,0),80);
+  assert.equal(sections.reduce((n,s)=>n+g.defenses.get(s.id).hp,0),120);
   assert.ok(sections.some(s=>g.defenses.get(s.id).hp>0&&!g.nav.isWalkable(s.x,s.y)));
   assert.equal(w.setRepairReserve(-1),false);assert.equal(w.setRepairReserve(41),false);assert.equal(w.setRepairReserve(1.5),false);
-  w.setRepairReserve(0);until(g,()=>w.data.repaired===6,30);assert.equal(g.state.logStore.length,4);
+  w.setRepairReserve(0);g.update(3);assert.equal(w.data.repaired,4);assert.equal(g.state.logStore.length,6);
 });
 test("night repair requires fire and stops for threats; recall and paused updates preserve all cargo and resources",()=>{
   const g=make(true);base(g);g.workers.hire("repairer");const npc=g.workers.crew[0],section=g.defenses.all().find(d=>d.kind==="fence");

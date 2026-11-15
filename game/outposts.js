@@ -1,3 +1,4 @@
+import {SAWMILL_REFUGE} from './sawmill.js';
 export const OUTPOST = Object.freeze({
   ignitionLogs: 2,
   secondsPerLog: 60,
@@ -45,12 +46,16 @@ export function createOutposts({ state, world, regions, nav, forestry, emit = ()
       }
     },
     safeZone(p) {
+      const refuge=SAWMILL_REFUGE;
+      if(regions.isOpen(refuge)&&Math.hypot(refuge.x-p.x,refuge.y-p.y)<refuge.safeRadius&&nav.hasLineOfSight(refuge,p))
+        return {x:refuge.x,y:refuge.y,r:refuge.safeRadius,id:refuge.id};
       const site = sites.find(s => lit(s.id) && Math.hypot(s.x - p.x, s.y - p.y) < OUTPOST.safeRadius &&
         nav.hasLineOfSight(s, p));
       return site ? { x: site.x, y: site.y, r: OUTPOST.safeRadius, id: site.id } : null;
     },
     lights() {
-      return sites.filter(s => lit(s.id)).map(s => ({ x: s.x, y: s.y, r: OUTPOST.lightRadius, kind: "outpost" }));
+      return [...sites.filter(s => lit(s.id)).map(s => ({ x: s.x, y: s.y, r: OUTPOST.lightRadius, kind: "outpost" })),
+        ...(regions.isOpen(SAWMILL_REFUGE)?[{x:SAWMILL_REFUGE.x,y:SAWMILL_REFUGE.y,r:SAWMILL_REFUGE.lightRadius,kind:'sawmill-refuge'}]:[])];
     },
     invalidate() { revision++; },
     get revision() { return shared?.revision ?? revision; },

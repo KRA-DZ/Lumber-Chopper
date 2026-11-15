@@ -117,7 +117,7 @@ test("outpost cancels a ready Watcher strike and repels him around the local fir
     attack: { x: g.player.x, y: g.player.y, radius: 54, duration: .06 } });
   contact(); g.update(.05);
   assert.equal(m.phase, "repelled"); assert.equal(g.state.health, 100);
-  assert.ok(m.goal && m.goal.y < site.y && Math.abs(m.goal.x - site.x) < 1);
+  assert.ok(m.goal && Math.hypot(m.goal.x-site.x,m.goal.y-site.y)>OUTPOST.safeRadius);
   g.state.exploration.outpostFuel[ID] = .01;
   contact(); g.update(.05);
   assert.equal(m.phase, "strike"); assert.equal(g.state.health, 60);

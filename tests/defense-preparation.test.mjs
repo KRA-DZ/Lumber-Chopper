@@ -27,7 +27,7 @@ test("a completed hold consumes one exact cargo log, closes the real gap and exp
   assert.equal(g.defenses.get(section.id).hp, 0);
   assert.ok(g.defenseRepair.progress > 0.9);
   g.update(0.02);
-  assert.equal(g.defenses.get(section.id).hp, 20);
+  assert.equal(g.defenses.get(section.id).hp, 40);
   assert.equal(g.state.wood, 3);
   assert.equal(g.state.cargoValue, 21);
   assert.ok(g.nav.version > version);
@@ -49,10 +49,10 @@ test("release discards only unfinished work; full repair stops and never bills a
   assert.equal(g.state.wood, 4);
   g.update(1.51);
   assert.equal(g.defenses.get(section.id).hp, 60);
-  assert.equal(g.state.wood, 1);
+  assert.equal(g.state.wood, 2);
   assert.equal(g.defenseRepair, null);
   g.update(1);
-  assert.equal(g.state.wood, 1);
+  assert.equal(g.state.wood, 2);
 });
 
 test("repair cannot charge while paused, remote, moving, empty or defeated, including after a pause", () => {
@@ -84,7 +84,7 @@ test("repair cannot charge while paused, remote, moving, empty or defeated, incl
   g.update(0.61);
   assert.equal(g.state.wood, 0);
   g.update(4);
-  assert.equal(g.defenses.get(section.id).hp, 20);
+  assert.equal(g.defenses.get(section.id).hp, 40);
   g.state.gameOver = true;
   assert.equal(g.setDefenseRepairHeld(true, section.id), false);
 });
@@ -190,8 +190,8 @@ test("the dawn report covers damage after the paid wave, local kills, repaired b
   assert.equal(report.defenseDamage, 60);
   assert.equal(report.brokenSections, 1);
   assert.equal(report.damaged.length, 1);
-  assert.equal(report.damaged[0].hp, 20);
-  assert.equal(report.repairLogs, 2);
+  assert.equal(report.damaged[0].hp, 40);
+  assert.equal(report.repairLogs, 1);
   assert.equal(report.reward, 60);
   assert.equal(g.state.coins, 60);
   assert.equal(g.state.raidsWon, 1);
