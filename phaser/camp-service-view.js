@@ -1,3 +1,4 @@
+import {WORKERS} from '../game/workers.js';
 import {hasCampBuilding} from '../game/camp-projects.js';
 import {CAMP,CAMP_HUB} from '../game/camp-layout.js';
 import {CAMP_SERVICE} from '../game/camp-services.js';
@@ -10,7 +11,7 @@ export class CampServiceView{
     const zone=scene.add.zone(p.x,p.y,76,60).setInteractive().setDepth(p.y+5).setData('campService',p.id);
     return {...p,label,zone};
   });}
-  visible(e){const s=this.scene.core.state;return e.id==='workers'?hasCampBuilding(s,'tent')&&!hasCampBuilding(s,'house'):!e.building||hasCampBuilding(s,e.building);}
+  visible(e){const s=this.scene.core.state;return e.id==='workers'?hasCampBuilding(s,'tent')&&!hasCampBuilding(s,'house')&&s.worldTime<WORKERS.recallTime:!e.building||hasCampBuilding(s,e.building);}
   targets(){return this.entries.filter(e=>this.visible(e)).map(e=>({p:e,range:85,act:()=>this.open(e.id)}));}
   open(id){const s=this.scene;
     if(id==='equipment')return s.core.camp.enter('shop')||s.core.setDestination(CAMP_SERVICE.shopDoor.x,CAMP_SERVICE.shopDoor.y);

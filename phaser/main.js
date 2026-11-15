@@ -1,3 +1,4 @@
+import {preloadInteriors,retainInteriors} from './interior-assets.js';
 import {preloadPlants,retainPlants} from "./plants-assets.js";
 import { preloadPeople, retainPeople } from "./people-assets.js";
 import { preloadTrees, retainTrees } from "./tree-assets.js";
@@ -24,6 +25,7 @@ class BootScene extends Phaser.Scene {
     preloadPeople(this);
     preloadTrees(this);
     preloadCamp(this);
+    preloadInteriors(this);
     preloadItems(this);
     preloadLootItems(this);
     preloadDecor(this);
@@ -39,6 +41,7 @@ class BootScene extends Phaser.Scene {
     retainPeople(this);
     retainTrees(this);
     retainCamp(this);
+    retainInteriors(this);
     retainItems(this);
     retainLootItems(this);
     retainDecor(this);

@@ -93,7 +93,7 @@ export function createCampServices({ state, player, forestry, canAct, nav, party
     }else p.restTimer=0;
     if (!len) return;
     const boxes=roomKind(player)==='shop'?[[220,172,200,30],[65,148,80,32],[490,160,65,30]]:
-      [[65,150,70,25],[420,195,155,25],[140,ROOM.bed.y-18,90,30]];
+      [[65,150,70,25],[420,195,155,25],[ROOM.bed.x-48,ROOM.bed.y-96,96,128],[47,310,96,25]];
     const free=(x,y)=>!boxes.some(([bx,by,w,h])=>x>bx-10&&x<bx+w+10&&y>by-8&&y<by+h+8);
     const nx=Math.max(30,Math.min(ROOM.width-30,p.x+dx/len*speed)),ny=Math.max(100,Math.min(ROOM.height-28,p.y+dy/len*speed));
     if(free(nx,p.y))p.x=nx;if(free(p.x,ny))p.y=ny;

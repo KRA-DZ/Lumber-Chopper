@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "source": "camp-interiors-sheet.png",
+  "sha256": "e02b6fb9e2279ff5b385079b986fccd31d55a3b6522965d25e7646cd819435fb",
+  "frames": {
+    "house": {
+      "width": 320,
+      "height": 224,
+      "anchor": [
+        160,
+        220
+      ]
+    },
+    "shop": {
+      "width": 320,
+      "height": 224,
+      "anchor": [
+        160,
+        220
+      ]
+    },
+    "bed": {
+      "width": 48,
+      "height": 70,
+      "anchor": [
+        24,
+        66
+      ]
+    },
+    "counter": {
+      "width": 100,
+      "height": 50,
+      "anchor": [
+        50,
+        46
+      ]
+    },
+    "chest": {
+      "width": 48,
+      "height": 36,
+      "anchor": [
+        24,
+        32
+      ]
+    },
+    "bench": {
+      "width": 90,
+      "height": 50,
+      "anchor": [
+        45,
+        46
+      ]
+    },
+    "workshop": {
+      "width": 150,
+      "height": 108,
+      "anchor": [
+        75,
+        104
+      ]
+    },
+    "warehouse": {
+      "width": 124,
+      "height": 86,
+      "anchor": [
+        62,
+        82
+      ]
+    },
+    "cupboard": {
+      "width": 52,
+      "height": 60,
+      "anchor": [
+        26,
+        56
+      ]
+    }
+  },
+  "processing": {
+    "nativeAlpha": true,
+    "filter": "nearest",
+    "alphaThreshold": 128
+  }
+}
