@@ -13,6 +13,7 @@ export const WORKERS = Object.freeze({
   stockLimit: 30,
   logValue: 8,
   depot: Object.freeze({x:CAMP_HUB.store.x+45,y:CAMP_HUB.store.y+28}),
+  sleepEntrance: Object.freeze({x:CAMP.tent.x,y:CAMP.tent.y+40}), // NPCs disappear only after physically reaching the tent.
   recallTime: NIGHT_START - 60,
   saleInterval: 0.8,
   pathInterval: 0.3,
@@ -21,7 +22,7 @@ export const WORKER_PHASES = Object.freeze({
   outbound: "К дубу",
   cutting: "Рубит",
   delivery: "На склад",
-  resting: "У костра",
+  resting: "Отдыхает",
   waiting: "Ожидает",
   blocked: "Нет прохода",
   mining: "Добывает камень",
@@ -195,6 +196,7 @@ export function createWorkers({
         world.ancientTree.x - 78 + w.id * 64,
         world.ancientTree.y + 88,
       );
+    if (kind === "sleep") return nav.nearestGround(WORKERS.sleepEntrance.x+(w.id-1.5)*4,WORKERS.sleepEntrance.y);
     if (kind === "depot")
       return nav.nearestGround(WORKERS.depot.x + w.id * 16, WORKERS.depot.y);
     return nav.nearestGround(1570 + w.id * 38, 1760);
@@ -299,15 +301,19 @@ export function createWorkers({
         w.retreating = true; // Finish the safe return before considering another trip.
       }
       const emergency=!data.recalled&&!w.pendingRole&&!w.retreating&&w.dangerUntil<=w.clock?jobs.emergency(w,danger):null;
-      const nightRepair=(workerRole(w)==="repairer"||!!emergency)&&hasCampBuilding(state,"fire")&&state.campFuel>0;
+      const plannedRepair=workerRole(w)==="repairer"?jobs.select(w,danger):emergency;
+      const nightRepair=plannedRepair?.kind.startsWith("repair:")&&hasCampBuilding(state,"fire")&&state.campFuel>0;
       const millShift=workerRole(w)==="operator"&&mill?.shift();
       const retiring =
         workerRole(w)==='rest' || (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.retreating || w.dangerUntil > w.clock || !!w.pendingRole;
-      const specialist=!retiring?(emergency||(workerRole(w)!=="lumberjack"?jobs.select(w,danger):null)):null;
+      const specialist=!retiring?(emergency||(workerRole(w)!=="lumberjack"?plannedRepair||jobs.select(w,danger):null)):null;
+      const nightRest=retiring&&!daytime()&&available();
+      // A full warehouse must not strand the night shift outside; preserve unsent cargo in the tent.
+      const unloadable=w.cargo.length&&logStock().length<stockLimit()||w.stoneCargo&&state.campIndustry.materials.stone<materialLimit(state);
       const kind = retiring
-        ? w.cargo.length||w.stoneCargo
+        ? (w.cargo.length||w.stoneCargo)&&(!nightRest||unloadable)
           ? "depot"
-          : "rest"
+          : nightRest?"sleep":"rest"
         : specialist?specialist.kind:!regions.isOpen(world.ancientTree)?"rest":w.cargo.length >= capacity() ||
             (w.job === "depot" && w.cargo.length > 0) ||
             logStock().length >= stockLimit()
@@ -317,6 +323,7 @@ export function createWorkers({
         specialist?.reason||(!regions.isOpen(world.ancientTree)?"Откройте Дубовую рощу":logStock().length>=stockLimit()?"Склад брёвен заполнен":"Добывает брёвна");
       if (workerRole(w)==='rest') w.reason = 'Отдыхает в лагере';
       if (w.retreating) w.reason = "Рядом враги: возвращается в лагерь";
+      w.sleeping=false;
       w.job = kind;
       const goal = route(w, kind);
       const arrived = distance(w, goal) < 10;
@@ -367,8 +374,10 @@ export function createWorkers({
       } else {
         w.phase = retiring ? "resting" : "waiting";
         w.direction = "down";
-        if (kind === "rest" && w.dangerUntil <= w.clock) w.retreating = false;
-        if(kind==="rest"&&w.pendingRole&&!w.cargo.length&&!w.stoneCargo){
+        w.sleeping=kind==="sleep"&&distance(w,WORKERS.sleepEntrance)<24;
+        if(w.sleeping)w.reason="Спит в палатке до утра";
+        if ((kind === "rest"||kind === "sleep") && w.dangerUntil <= w.clock) w.retreating = false;
+        if((kind==="rest"||kind==="sleep")&&w.pendingRole&&!w.cargo.length&&!w.stoneCargo){
           w.role=w.pendingRole;w.pendingRole=null;w.workTarget=null;w.workTimer=0;w.cutTimer=0;w.workScan=0;w.skipped=[];w.routeKey="";
         }
       }
