@@ -44,7 +44,7 @@ export function createCampBuilder({ state, player, pad, forestry, canAct, player
   }
   function choose(projectId,immediate=false) {
     const project = CAMP_PROJECTS.find(p => p.id === projectId);
-    if (!project || projectLockReason(state,project) || state.gameOver || state.health <= 0 || player.room || !near(player) || state.buildProject || hasCampBuilding(state,projectId)) return false;
+    if (!project || projectLockReason(state,project) || state.gameOver || state.health <= 0 || player.room || !(immediate?Math.hypot(player.x-pad.x,player.y-pad.y)<100:near(player)) || state.buildProject || hasCampBuilding(state,projectId)) return false;
     if (state.campBuildings == null) state.campBuildings = Object.fromEntries(CAMP_PROJECTS.filter(p => hasCampBuilding(state,p.id)).map(p => [p.id,true]));
     state.buildProject = projectId; state.buildWood = 0;
     state.workshopBuild=immediate;state.buildMaterials={};

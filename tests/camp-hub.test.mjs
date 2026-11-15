@@ -66,3 +66,12 @@ test('an unfinished workshop order never blocks automatic sales for either co-op
   assert.ok(b.transferOneLog());assert.equal(a.state.coins,ac+40);assert.equal(b.state.coins,bc+40);
   assert.equal(a.state.workshopUpgrade,'house');assert.equal(b.state.wood,0);
 });
+
+test('the master accepts a building order from talking distance but only takes cargo at the counter',()=>{
+  const c=createSimulation({regional:true});c.state.maxWood=10;
+  place(c,{x:CAMP_HUB.counter.x,y:CAMP_HUB.counter.y+75});
+  assert.ok(c.workshop.near());assert.ok(c.workshop.chooseBuild('fire'));
+  for(let i=0;i<10;i++)c.forestry.addCargo(8);c.update(1);
+  assert.equal(c.state.wood,10);assert.equal(c.state.buildWood,0);
+  place(c,CAMP_HUB.counter);c.update(3);assert.equal(c.state.campBuildings.fire,true);
+});
