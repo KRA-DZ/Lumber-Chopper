@@ -1,6 +1,7 @@
 import { CAMP_SERVICE, ROOM } from "../game/camp-services.js";
 import { LAYERS } from "./layers.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
+import {drawInteractionPad} from './interaction-pad.js';
 
 export class CampServicesView {
   constructor(scene) {
@@ -22,8 +23,7 @@ export class CampServicesView {
   render() {
     const s = this.scene, c = s.core, wanted = new Set();
     const storage=CAMP_SERVICE.storagePad,unloading=(c.actors||[c]).some(a=>a.storage.atPad());
-    this.storagePad.clear().fillStyle(unloading?0x8f7947:0x385e51,.9).fillRoundedRect(storage.x-36,storage.y-24,72,48,8)
-      .lineStyle(3,0xf0ce85).strokeRoundedRect(storage.x-36,storage.y-24,72,48,8);
+    drawInteractionPad(s,this.storagePad.clear(),storage,72,48,unloading);
     this.storageLabel.setText(unloading?'Сдача ресурсов на склад':'Склад · сдача ресурсов');
     s.worldHints.offer(this.storageLabel,storage,{range:280,priority:90});
     for (const rock of c.world.boulders || []) {
@@ -47,7 +47,7 @@ export class CampServicesView {
     const pad=CAMP_SERVICE.fuelPad,built=hasCampBuilding(c.state,"fire"),active=(c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.health>0&&!a.player.room);
     s.worldHints.offer(this.fireLabel,{x:1600,y:1648},{eligible:!active,range:210,priority:75});
     this.fuelZone.setVisible(built);this.fuelZone.input.enabled=built;
-    this.fuelPad.clear();if(built){this.fuelPad.fillStyle(active?0x93733b:0x385546,.8).fillEllipse(pad.x,pad.y,64,40).lineStyle(2,0xe1bf70,.9).strokeEllipse(pad.x,pad.y,64,40);
+    this.fuelPad.clear();if(built){drawInteractionPad(s,this.fuelPad,pad,64,40,active);
       this.fuelPad.lineStyle(3,0xe1bf70).lineBetween(pad.x-9,pad.y,pad.x+9,pad.y).lineBetween(pad.x,pad.y-8,pad.x,pad.y+8);}
     this.fuelLabel.setText(c.state.campFuel>c.camp.maxFuel()-CAMP_SERVICE.fuelPerLog?"Запас почти полон":active&&!((c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.wood>0))?"Нужны брёвна в руках":"Поддерживать огонь\n1 бревно → +60 с");
     s.worldHints.offer(this.fuelLabel,pad,{eligible:built,range:180,priority:70});

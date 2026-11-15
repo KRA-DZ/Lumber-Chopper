@@ -1,17 +1,10 @@
-export const HINT_LIMITS = Object.freeze({ full: 4, light: 2 });
+export const HINT_LIMITS = Object.freeze({ full: 1, light: 1 });
 
-export function selectHints(candidates, view, limit) {
-  const selected = [];
-  for (const entry of candidates.sort((a, b) => b.priority - a.priority || a.distance - b.distance)) {
-    if (selected.length === limit) break;
-    const b = entry.bounds;
-    if (b.right < view.x || b.left > view.x + view.width ||
-        b.bottom < view.y || b.top > view.y + view.height) continue;
-    if (selected.some(({ bounds: a }) => b.left < a.right + 6 && b.right > a.left - 6 &&
-      b.top < a.bottom + 6 && b.bottom > a.top - 6)) continue;
-    selected.push(entry);
-  }
-  return selected;
+export function playerHint(candidates,player,view,index=0){
+  if(player.room)return null;
+  return candidates.map(entry=>({...entry,distance:Math.hypot(player.x-entry.point.x,player.y-entry.point.y)}))
+    .filter(e=>(e.actor==null||e.actor===index)&&e.distance<=e.range&&e.point.x>=view.x-40&&e.point.x<=view.x+view.width+40&&e.point.y>=view.y-40&&e.point.y<=view.y+view.height+40)
+    .sort((a,b)=>Number(b.priority>=100)-Number(a.priority>=100)||a.distance-b.distance||b.priority-a.priority)[0]||null;
 }
 
 // Only world captions share this budget. HUD, HP bars and attack warnings stay independent.
@@ -20,25 +13,28 @@ export class WorldHints {
     this.scene = scene;
     this.candidates = [];
     this.visibleCount = 0;
+    this.active = [];
   }
   begin() {
     this.candidates.length = 0;
   }
-  offer(label, point, { eligible = true, range = 180, priority = 10, companions = [] } = {}) {
+  offer(label, point, { eligible = true, range = 180, priority = 10, companions = [], actor = null } = {}) {
     label.setVisible(false);
     for (const object of companions) object.setVisible(false);
-    const players = this.scene.core.actors?.map(a => a.player) || [this.scene.core.player],
+    const players = (this.scene.core.actors||[this.scene.core]).filter(a=>!a.player.room&&a.state?.health!==0).map(a=>a.player),
       distance = Math.min(...players.map(p => Math.hypot(p.x - point.x, p.y - point.y)));
-    if (!eligible || distance > range) return;
-    this.candidates.push({ label, companions, distance, priority, bounds: label.getBounds() });
+    if (!eligible || distance > range || !label.text) return;
+    this.candidates.push({ label, point, range, companions, distance, priority, actor });
   }
   flush() {
-    const selected = [...new Set((this.scene.coopCamera?.views() || [this.scene.camera.worldView]).flatMap(view =>
-      selectHints(this.candidates, view, this.scene.effectsLight ? HINT_LIMITS.light : HINT_LIMITS.full)))];
-    for (const { label, companions } of selected) {
-      label.setVisible(true);
-      for (const object of companions) object.setVisible(true);
-    }
-    this.visibleCount = selected.length;
+    const actors=this.scene.core.actors||[this.scene.core];
+    this.active=actors.flatMap((actor,index)=>{
+      if(actor.state?.health===0||actor.player.menuOpen)return [];
+      const camera=this.scene.coopCamera?.split?(index?this.scene.coopCamera.second:this.scene.camera):this.scene.camera;
+      const entry=playerHint(this.candidates,actor.player,camera.worldView,index);
+      return entry?[{entry,player:actor.player,index,camera}]:[];
+    });
+    // Source captions/old speech bubbles stay hidden; the HUD owns at most one panel per actor.
+    this.visibleCount=this.active.length;
   }
 }

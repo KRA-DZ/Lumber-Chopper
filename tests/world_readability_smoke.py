@@ -69,9 +69,9 @@ try:
               for(let i=0;i<12;i++)g.step(.05)}""")
             assert q.evaluate("w.crownOcclusion.entries.has(w.ancient)&&w.ancient.alpha===1")
             q.evaluate("m.state.worldTime=299.99;g.step(.02);g.step(3.1);const p=m.player;for(const [i,e] of m.survival.residents.entries())Object.assign(e,{x:p.x-70+i*40,y:p.y+20,warning:0});Object.assign(m.survival.monster,{x:p.x+600,y:p.y+600});m.selectEnemy(m.survival.residents[0].id);g.step(0)")
-            assert q.evaluate("w.worldHints.visibleCount<=4&&w.enemyView.objects.get(m.selectedEnemyId).label.visible")
+            assert q.evaluate("w.worldHints.visibleCount<=1&&w.worldHints.active.some(h=>h.entry.label===w.enemyView.objects.get(m.selectedEnemyId).label)")
             q.evaluate("w.effectsLight=true;g.step(0)")
-            assert q.evaluate("w.worldHints.visibleCount<=2&&w.enemyView.objects.get(m.selectedEnemyId).label.visible")
+            assert q.evaluate("w.worldHints.visibleCount<=1&&w.worldHints.active.some(h=>h.entry.label===w.enemyView.objects.get(m.selectedEnemyId).label)")
             q.evaluate("m.setDestination(1600,1780);Object.assign(m.player,{x:1600,y:1780,path:[]});w.camera.centerOn(1600,1700);for(let i=0;i<12;i++)g.step(.05)")
             assert q.evaluate("!w.crownOcclusion.entries.has(w.ancient)&&w.crownOcclusion.entries.size<=8")
             assert not errors, errors

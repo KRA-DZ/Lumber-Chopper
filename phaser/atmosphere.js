@@ -99,9 +99,8 @@ export class Atmosphere {
         .setInteractive()
         .setData("clue", c),
     }));
-    this.prompt = scene
-      .text("", 0, 0, 12, "#f1d994", LAYERS.hints)
-      .setVisible(false);
+    this.prompts=(this.core.actors||[this.core]).map(()=>scene.text('',0,0,12,'#f1d994',LAYERS.hints).setVisible(false));
+    this.prompt=this.prompts[0];
     // This is only a low-resolution light mask, not a Canvas rendering of the game.
     // Texture upload is capped at 10 Hz (6 Hz in light mode), with cached soft stamps.
     if (scene.textures.exists("night-mask"))
@@ -166,13 +165,13 @@ export class Atmosphere {
   accessible(p) {
     return this.core.accessible(p);
   }
-  nearestClue() {
-    const player = this.core.player,
+  nearestClue(actor=this.core) {
+    const player = actor.player,
       candidates = this.clueData.filter(
         (c) =>
           this.accessible(c) &&
           Math.hypot(c.x - player.x, c.y - player.y) < 130 &&
-          this.core.nav.hasLineOfSight(player, c),
+          actor.nav.hasLineOfSight(player, c),
       );
     for (const list of this.scene.regionView?.objects.values() || [])
       for (const image of list) {
@@ -180,7 +179,7 @@ export class Atmosphere {
         if (clue && Math.hypot(clue.x - player.x, clue.y - player.y) < 130)
           candidates.push(clue);
       }
-    const site = this.core.exploration?.nearest();
+    const site = actor.exploration?.nearest();
     if (site) candidates.push(site);
     return candidates.sort(
       (a, b) =>
@@ -405,12 +404,11 @@ export class Atmosphere {
         this.assets.setFrame(image, `world.clothes.${Math.floor(t * 1.4) % 2}`);
     for (const { c: clue, image } of this.clues)
       image.setVisible(this.accessible(clue) && near(clue.x, clue.y));
-    const clue = this.nearestClue();
-    this.prompt.setVisible(!!clue && !this.core.exploration?.fishing);
-    if (clue)
-      this.prompt
-        .setPosition(clue.x, clue.y + 28)
-        .setText(`${clue.name} · E / нажать`);
+    (this.core.actors||[this.core]).forEach((actor,index)=>{
+      const clue=this.nearestClue(actor),prompt=this.prompts[index];prompt.setVisible(false);
+      if(clue){prompt.setPosition(clue.x,clue.y+28).setText(`${clue.name} · E/Enter`);
+        scene.worldHints.offer(prompt,clue,{eligible:!actor.exploration?.fishing,range:130,priority:70,actor:index});}
+    });
     for (let i = 0; i < this.smoke.length; i++) {
       const f = (t * 0.23 + i / 5) % 1;
       this.smoke[i]

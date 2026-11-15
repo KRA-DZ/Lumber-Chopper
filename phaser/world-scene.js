@@ -376,8 +376,7 @@ export class WorldScene extends Phaser.Scene {
         pad.y,
         -1000,
       );
-      if (!this.assets.camp)
-        this.text(label, pad.x, pad.y, 13, "#415235", -999);
+
     }
     this.saleLabel = this.text(
       "",
@@ -392,14 +391,6 @@ export class WorldScene extends Phaser.Scene {
       this.core.build.y + 54,
       12,
       "#304c35",
-    );
-    this.text(
-      "ЛЕСНАЯ ЛАВКА",
-      CAMP.stall.x,
-      CAMP.stall.y - 22,
-      11,
-      "#4c3928",
-      CAMP.stall.y + 0.1,
     );
     this.merchantLabel = this.text(
       "ТОРГОВЕЦ",

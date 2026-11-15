@@ -1,5 +1,6 @@
 import { CAMP } from "../pixel-art.js";
 import { CAMP_PROJECTS, hasCampBuilding } from "../game/camp-projects.js";
+import {drawInteractionPad,onPad} from './interaction-pad.js';
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export class CampView {
   constructor(scene) {
@@ -18,24 +19,6 @@ export class CampView {
       ["flowers", CAMP.hut.x + 100, CAMP.hut.y + 15, 4],
     ])
       this.props.push({ key, min, image: scene.addImage(`camp.${key}`, x, y) });
-    for (const [kind, pad, title] of [
-      ["sale", scene.core.sale, "Продажа"],
-      ["build", scene.core.build, "Стройка"],
-    ]) {
-      scene.addImage(
-        `camp.${kind}Sign`,
-        pad.x + (kind === "sale" ? -76 : 76),
-        pad.y - 16,
-      );
-      scene.text(
-        title,
-        pad.x + (kind === "sale" ? -68 : 84),
-        pad.y - 63,
-        11,
-        "#fff0c5",
-        pad.y + 0.1,
-      );
-    }
   }
   render() {
     const c = this.scene.core,
@@ -53,18 +36,8 @@ export class CampView {
           hasCampBuilding(s,"house") ? CAMP.hut.y + 23 : CAMP.tent.y + 23,
         );
     }
-    for (const [pad, color] of [
-      [c.sale, 0xf3cf77],
-      [c.build, 0xb4ddcc],
-    ]) {
-      const near = dist(p, pad) < 210,
-        standing = dist(p, pad) < pad.radius;
-      if (near)
-        g.lineStyle(
-          standing ? 4 : 2,
-          color,
-          standing ? 0.95 : 0.45,
-        ).strokeRoundedRect(pad.x - 63, pad.y - 37, 126, 74, 8);
+    for(const pad of [c.sale,c.build]){
+      drawInteractionPad(this.scene,g,pad,126,74,onPad(pad,c.actors||[c],126,74));
     }
     const stage = c.builder.project;
     if (stage && dist(p, c.build) < 240) {
