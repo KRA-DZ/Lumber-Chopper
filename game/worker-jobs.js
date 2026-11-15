@@ -2,12 +2,14 @@ import { hasCampBuilding } from "./camp-projects.js";
 import { industryLevel, materialLimit } from "./camp-industry-config.js";
 import { strikeBoulder } from "./mining.js";
 import { MILL } from "./sawmill-production-config.js";
+import {campRepairTarget,repairResource,repairFromStock} from './building-repair.js';
+import {inCamp} from './camp-layout.js';
 
 export const WORKER_ROLES=Object.freeze({
   rest:{name:'Отдых',assignmentOnly:true,description:'Возвращается с грузом в лагерь и отдыхает до нового назначения.'},
   lumberjack:{name:"Дровосек",description:"Рубит бесконечный древний дуб. Брёвна идут покупателям или в общий склад по выбранному назначению."},
   miner:{name:"Каменщик",description:"Добывает настоящие валуны открытых регионов и несёт камень в общий запас. Отступает от врагов."},
-  repairer:{name:"Ремонтник",description:"Чинит ограду, калитки и башни за брёвна общего склада, оставляя резерв. Не сражается и не разжигает костёр."},
+  repairer:{name:"Ремонтник",description:"Чинит лагерь и укрепления. Деревянное — за дерево, каменное — за камень со склада. Один ресурс восстанавливает 40 HP."},
   operator:{name:"Оператор",assignmentOnly:true,description:"Одно из прежних мест команды. После возврата груза идёт на восстановленную лесопилку и обслуживает станок; ночью — только с разрешением."},
 });
 export const WORKER_JOBS=Object.freeze({stoneCapacity:8,stonePerLevel:4,mineSeconds:1.2,repairSeconds:2,repairReserveMax:40,scanSeconds:2});
@@ -20,10 +22,12 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit,mil
   const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
   const stoneCapacity=()=>WORKER_JOBS.stoneCapacity+data.level*WORKER_JOBS.stonePerLevel;
   const rockFor=w=>world.boulders?.find(r=>r.id===w.workTarget);
-  const sectionFor=w=>defenses?.get(w.workTarget);
+  const sectionFor=w=>w.workTarget==='camp-core'?campRepairTarget(state):defenses?.get(w.workTarget);
   const safe=(p,danger)=>!danger.some(e=>distance(p,e)<320);
   const usable=(w,p)=>!(w.skipped||[]).some(s=>s.id===p.id&&s.until>w.clock);
-  const repairable=d=>d&&d.hp<d.maxHP&&(d.kind==="tower"||["fence","gate"].includes(d.kind)&&hasCampBuilding(state,"fence"));
+  const repairable=d=>d&&d.hp<d.maxHP&&(d.kind==='camp'||d.kind==='barricade'&&d.hp>0||d.kind==="tower"||["fence","gate"].includes(d.kind)&&hasCampBuilding(state,"fence"));
+  const targets=()=>[...(defenses?.all()||[]),campRepairTarget(state)].filter(repairable);
+  const affordable=d=>repairResource(d)==='stone'?bank.stone>0:state.logStore.length>0;
   function select(w,danger){
     if(workerRole(w)==="operator")return {kind:"mill",reason:mill?.status()||"Обслуживает лесопилку"};
     if(workerRole(w)==="miner"){
@@ -42,18 +46,24 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit,mil
       if(!target)return {kind:w.stoneCargo?"depot":"rest",reason:w.idleReason||"Нет доступного камня"};
       return {kind:`rock:${target.id}`,reason:"Добывает камень"};
     }
-    if(state.logStore.length<=data.repairReserve)return {kind:"rest",reason:`Резерв дров: ${data.repairReserve} · лишних брёвен нет`};
+    return selectRepair(w,danger);
+  }
+  function selectRepair(w,danger){
     let target=sectionFor(w);
-    if(!repairable(target)||!safe(target,danger)||!usable(w,target)){
+    if(!repairable(target)||!affordable(target)||!safe(target,danger)||!usable(w,target)){
       w.workTarget=null;
       if(w.workScan<=0){
-        const damaged=(defenses?.all()||[]).filter(repairable);
-        target=damaged.filter(d=>safe(d,danger)&&usable(w,d)).sort((a,b)=>Number(b.hp===0)-Number(a.hp===0)||distance(w,a)-distance(w,b))[0];
+        const damaged=targets();
+        target=damaged.filter(d=>affordable(d)&&safe(d,danger)&&usable(w,d)).sort((a,b)=>Number(b.hp===0)-Number(a.hp===0)||distance(w,a)-distance(w,b))[0];
         w.workTarget=target?.id||null;w.workScan=WORKER_JOBS.scanSeconds;
-        w.idleReason=damaged.length?"Рядом враги или нет прохода":"Всё отремонтировано";
+        w.idleReason=damaged.some(affordable)?"Рядом враги или нет прохода":damaged.length?'Нужно дерево или камень на складе':"Всё отремонтировано";
       }else target=null;
     }
     return target?{kind:`repair:${target.id}`,reason:"Чинит укрепление"}:{kind:"rest",reason:w.idleReason||"Всё отремонтировано"};
+  }
+  function emergency(w,danger){
+    if(['rest','operator','repairer'].includes(workerRole(w))||w.cargo.length||w.stoneCargo||!inCamp(w)||!targets().some(d=>affordable(d)&&safe(d,danger)))return null;
+    const result=selectRepair(w,danger);return result.kind.startsWith('repair:')?result:null;
   }
   function goal(w,kind){
     if(kind==="mill")return nav.nearestGround(MILL.operator.x,MILL.operator.y);
@@ -90,8 +100,7 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit,mil
       w.phase="repairing";w.workTimer=(w.workTimer||0)+dt;
       if(w.workTimer<WORKER_JOBS.repairSeconds-data.level*.2)return;
       w.workTimer=0;
-      if(state.logStore.length<=data.repairReserve)return;
-      if(defenses.deposit(section.id)){state.logStore.pop();data.repaired++;emit("worker-repaired",{worker:w,section});}
+      if(repairFromStock(state,defenses,section)){data.repaired++;emit("worker-repaired",{worker:w,section});}
     }
   }
   function unload(w){
@@ -99,5 +108,5 @@ export function createWorkerJobs({state,world,regions,nav,defenses,data,emit,mil
     if(!w.stoneCargo)return false;
     w.stoneCargo--;bank.stone++;data.stoneDelivered++;w.unloadTimer=.35;emit("worker-stone-delivered",{worker:w});return true;
   }
-  return {select,goal,work,blocked,unload,stoneCapacity};
+  return {select,emergency,goal,work,blocked,unload,stoneCapacity};
 }

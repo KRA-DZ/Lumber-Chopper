@@ -3,6 +3,7 @@ import { REGIONS } from "./regions.js";
 // Shared gameplay geometry; the selected workshop PNGs follow these bases.
 const region = REGIONS.find((r) => r.id === "1:1");
 const point = (x, y) => ({ x: region.cx + x, y: region.cy + y });
+export const SAWMILL_REFUGE=Object.freeze({id:'sawmill-refuge',regionId:region.id,...point(0,400),safeRadius:240,lightRadius:330});
 const wall = (id, x0, y0, x1, y1) => ({
   id,
   a: point(x0, y0),

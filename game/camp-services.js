@@ -7,6 +7,7 @@ export const CAMP_SERVICE = Object.freeze({
   store: { x: 1400, y: 1840 }, door: { x: CAMP.hut.x, y: CAMP.hut.y + 28 },
   fuelPerLog: 60, maxFuel: 600, storeLimit: 400,
   fuelPad: {x:1696,y:1616,radius:32}, fuelPadSeconds:0.8, // Стоя на площадке: одно бревно за 0,8 с, только если помещаются все 60 с топлива.
+  storagePad: {x:1400,y:1910,radius:30}, // Stand here to unload all material types into the shared warehouse.
 });
 export const ROOM = Object.freeze({ width: 480, height: 352, exit: { x: 240, y: 316 }, chest: { x: 100, y: 130 } });
 

@@ -295,11 +295,12 @@ export function createWorkers({
         w.dangerUntil = w.clock + 8;
         w.retreating = true; // Finish the safe return before considering another trip.
       }
-      const nightRepair=workerRole(w)==="repairer"&&hasCampBuilding(state,"fire")&&state.campFuel>0;
+      const emergency=!data.recalled&&!w.pendingRole&&!w.retreating&&w.dangerUntil<=w.clock?jobs.emergency(w,danger):null;
+      const nightRepair=(workerRole(w)==="repairer"||!!emergency)&&hasCampBuilding(state,"fire")&&state.campFuel>0;
       const millShift=workerRole(w)==="operator"&&mill?.shift();
       const retiring =
         workerRole(w)==='rest' || (!daytime()&&!nightRepair&&!millShift) || data.recalled || !available() || w.retreating || w.dangerUntil > w.clock || !!w.pendingRole;
-      const specialist=!retiring&&workerRole(w)!=="lumberjack"?jobs.select(w,danger):null;
+      const specialist=!retiring?(emergency||(workerRole(w)!=="lumberjack"?jobs.select(w,danger):null)):null;
       const kind = retiring
         ? w.cargo.length||w.stoneCargo
           ? "depot"

@@ -45,7 +45,7 @@ export function createDefenseRepair({ canAct, get, near, hasCargo, deposit }) {
         cancel();
         return;
       }
-      if (!held || !hasCargo()) {
+      if (!held || !hasCargo(target)) {
         progress = 0;
         return;
       }

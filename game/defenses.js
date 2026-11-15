@@ -2,10 +2,11 @@ import { fencePlan, partialFence } from "../construction.js";
 import { CENTER } from "./config.js";
 import { hasCampBuilding } from "./camp-projects.js";
 import { INDUSTRY_PROJECTS, industryLevel } from "./camp-industry-config.js";
+import {REPAIR_HP} from './building-repair.js';
 
 export const DEFENSE = Object.freeze({
   fenceHP: 60,
-  repairPerLog: 20,
+  repairPerLog: REPAIR_HP,
   trapDamage: 3,
   trapSlowSeconds: 3,
 });

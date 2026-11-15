@@ -12,6 +12,7 @@ import { createCampBuilder } from "./camp-projects.js";
 import { createCampIndustry } from "./camp-industry.js";
 import {createCampStorage} from './camp-storage.js';
 import {occupiedHands} from './material-cargo.js';
+import {repairResource} from './building-repair.js';
 import { createCampPreparation } from "./camp-preparation.js";
 import { createBuyerOrders } from "./buyer-orders.js";
 import { createClearing } from "./clearing.js";
@@ -263,7 +264,7 @@ export function createSimulation({
     canAct,
     get: (id) => defenses?.get(id),
     near: (section) => distance(player, section) < DEFENSE_REPAIR.range,
-    hasCargo: () => gameState.cargo.length > 0,
+    hasCargo: id => repairResource(defenses?.get(id)||{})==='stone'?gameState.stone>0:gameState.cargo.length>0,
     deposit: (id) => transferOneLog(id),
   });
   const combatLoot = createCombatLoot({
@@ -640,47 +641,38 @@ export function createSimulation({
       }
     }
     const frontier = regions?.frontiers().find(g => distance(player, g) < 50 && (!target || target === g.region.id));
-    if (frontier && !defenseOrder && !defenseRepair.target && (gameState.regionWood[frontier.region.id] || 0) >= frontier.region.cost && gameState.stone > 0) {
-      const result = regions.deposit(frontier.region.id, "stone");
-      if (!result) return false;
-      gameState.stone--; transferTimer = .25;
-      if (result.opened) openRegion(result.region);
-      updateUI(); return true;
+    if (frontier && !defenseOrder && !defenseRepair.target) {
+      let supplied=false,logSupplied=false;
+      for(const material of ['wood','stone']){
+        if(material==='wood'?!gameState.wood:!gameState.stone)continue;
+        const result=regions.deposit(frontier.region.id,material);if(!result)continue;
+        if(material==='wood'){
+          const slot=stackOffset(gameState.wood-1,gameState.wood);
+          forestry.takeCargo();logSupplied=true;
+          visualEffects.transfer('region',{x:player.x+slot.x,y:player.y+slot.y},{x:frontier.x,y:frontier.y-25});
+        }else gameState.stone--;
+        supplied=true;
+        if(result.opened){openRegion(result.region);break;}
+      }
+      if(supplied){transferTimer=logSupplied ? 0.18 : 0.25;updateUI();}return supplied;
     }
-    if (!gameState.cargo.length) return false;
     if (defenseRepair.target && target !== defenseRepair.target) return false;
-    const slotPosition = stackOffset(gameState.wood - 1, gameState.wood);
-    const start = {
-      x: player.x + slotPosition.x,
-      y: player.y + slotPosition.y,
-    };
+    const slotPosition = stackOffset(Math.max(0,gameState.wood-1),Math.max(1,gameState.wood));
+    const start = {x:player.x+slotPosition.x,y:player.y+slotPosition.y};
     const section = defenses?.get(target || defenseOrder);
     if (section && distance(player, section) < 78) {
+      const stone=repairResource(section)==='stone';
+      if(stone?gameState.stone<=0:!gameState.cargo.length)return false;
       if (!defenses.deposit(section.id)) return false;
-      forestry.takeCargo();
+      if(stone)gameState.stone--;else forestry.takeCargo();
       transferTimer = 0.3;
-      visualEffects.transfer("repair", start, {
-        x: section.x,
-        y: section.y - 16,
-      });
+      visualEffects.transfer("repair", start, {x:section.x,y:section.y-16});
       if (defenses.get(section.id).hp === section.maxHP) defenseOrder = null;
-      updateUI();
-      return true;
+      updateUI();return true;
     }
+    if (!gameState.cargo.length) return false;
     // An explicit repair order never spends cargo on a different nearby platform.
     if (defenseOrder || (target && defenses?.get(target))) return false;
-    const gate = regions?.frontiers().find((g) => distance(player, g) < 50);
-    if (gate && (!target || target === gate.region.id)) {
-      const result = regions.deposit(gate.region.id);
-      if (result) {
-        forestry.takeCargo();
-        transferTimer = 0.18;
-        visualEffects.transfer("region", start, { x: gate.x, y: gate.y - 25 });
-        if (result.opened) openRegion(result.region);
-        updateUI();
-        return true;
-      }
-    }
     const repairing = hazards && gameState.campHealth < gameState.maxCampHealth && (builder.canContribute() || !builder.choices.length);
     const building =
       distance(player, build) < build.radius &&
@@ -792,6 +784,7 @@ export function createSimulation({
     else elapsed += dt;
     player.celebration = Math.max(0, (player.celebration || 0) - dt);
     industry.deliverUpgrade(dt);
+    storage.update(dt);
     if (!actorOnly) {
       for(const region of regions?.unlockEligible()||[])openRegion(region);
       cycle.update(dt);

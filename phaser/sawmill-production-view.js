@@ -1,9 +1,12 @@
+import {SAWMILL_REFUGE} from '../game/sawmill.js';
 import { MILL, MILL_SITES, MILL_STAGES } from "../game/sawmill-production-config.js";
 import { LAYERS } from "./layers.js";
 
 // Existing PNGs only: fixed stage props and six symbolic vehicle bundles, no per-frame textures.
 export class SawmillProductionView{
   constructor(scene){this.scene=scene;this.parts=[];
+    this.refuge=scene.addImage('survival.startLantern',SAWMILL_REFUGE.x,SAWMILL_REFUGE.y).setScale(3);
+    this.refugeLabel=scene.text('Привал лесопилки · постоянный свет',SAWMILL_REFUGE.x,SAWMILL_REFUGE.y+36,12,'#ffe2a4',LAYERS.hints);
     for(const site of MILL_SITES){const image=scene.addImage("camp.gateSign",site.x,site.y,site.y-10).setScale(1).setInteractive().setData("site",site.id),
       label=scene.text("",site.x,site.y+30,11,"#ead4a2",LAYERS.hints);this.parts.push({site,image,label});}
     this.ready=[scene.addImage("camp.crate",MILL.operator.x+60,MILL.operator.y+90),scene.addImage("sawmill.drive.open",MILL.operator.x+36,MILL.operator.y-16),scene.addImage("sawmill.bench",MILL.operator.x+72,MILL.operator.y+32)];
@@ -12,6 +15,9 @@ export class SawmillProductionView{
     this.bundles=Array.from({length:6},()=>scene.addImage("log",0,0));this.bar=scene.add.graphics().setDepth(LAYERS.hints);
   }
   render(){const s=this.scene,c=s.core,d=c.state.sawmill;
+    const refugeVisible=this.scene.core.regions.isOpen(SAWMILL_REFUGE)&&this.scene.nearView(SAWMILL_REFUGE,this.scene.camera.worldView,360);
+    this.refuge.setVisible(refugeVisible);
+    this.scene.worldHints.offer(this.refugeLabel,SAWMILL_REFUGE,{eligible:refugeVisible,range:340,priority:80});
     for(const p of this.parts){const visible=c.regions.isOpen(p.site)&&s.nearView(p.site,s.camera.worldView,240);
       p.image.setVisible(visible);p.label.setText(p.site.id==="camp-freight"?`Грузовая площадка\nДоски в руках: ${c.state.boardCargo}`:
         p.site.id==="sawmill-restoration"?`Восстановление ${d.stage}/3\n${MILL_STAGES[d.stage]?.name||"Готово"}`:
@@ -28,5 +34,5 @@ export class SawmillProductionView{
     this.bundles.forEach((image,i)=>{const board=i>=Math.ceil(cart.logs.length/4);s.assets.setFrame(image,board?"sawmill.woodRack":"log");
       image.setVisible(visible&&i<Math.ceil((cart.logs.length+cart.boards)/4)).setDisplaySize(32,13).setPosition(cart.x-18+(i%2)*28,y-18-Math.floor(i/2)*12).setDepth(cart.y-.1+i*.001);});
   }
-  destroy(){for(const p of this.parts){p.image.destroy();p.label.destroy();}for(const image of [...this.ready,...this.bundles,this.cart])image.destroy();this.cartLabel.destroy();this.bar.destroy();}
+  destroy(){this.refuge.destroy();this.refugeLabel.destroy();for(const p of this.parts){p.image.destroy();p.label.destroy();}for(const image of [...this.ready,...this.bundles,this.cart])image.destroy();this.cartLabel.destroy();this.bar.destroy();}
 }
