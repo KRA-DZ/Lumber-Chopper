@@ -1,4 +1,5 @@
 import { hasCampBuilding } from "../game/camp-projects.js";
+import {CAMP} from "../game/camp-layout.js";
 import { WORKERS } from "../game/workers.js";
 import { stackOffset } from "../game/stack-layout.js";
 import { WORKER_ROLES, workerRole } from "../game/worker-jobs.js";
@@ -19,6 +20,7 @@ export class WorkerView {
       scene.addImage("log", 0, 0).setScale(0.65),
     );
     this.labelKey = "";
+    this.sleepLabel=scene.text("",CAMP.tent.x,CAMP.tent.y-105,14,"#f2d797").setBackgroundColor("#172c23").setPadding(6,3).setDepth(CAMP.tent.y+1);
   }
   render() {
     const scene = this.scene,
@@ -46,6 +48,8 @@ export class WorkerView {
         )
         .setDepth(WORKERS.depot.y + 0.1 + i * 0.001),
     );
+    const sleepers=system.crew.filter(w=>w.sleeping).length;
+    this.sleepLabel.setText(`Z z z · ${sleepers}`).setVisible(sleepers>0&&scene.nearView(CAMP.tent,scene.camera.worldView,180)).setAlpha(.75+Math.sin(scene.core.elapsed*2)*.2);
     for (const w of system.crew) {
       let a = this.objects.get(w.id);
       if (!a) {
@@ -61,7 +65,7 @@ export class WorkerView {
         };
         this.objects.set(w.id, a);
       }
-      const nearby = scene.nearView(w, scene.camera.worldView, 180);
+      const nearby = !w.sleeping&&scene.nearView(w, scene.camera.worldView, 180);
       a.sprite.setVisible(nearby);
       a.axe.setVisible(nearby && w.phase === "cutting" && !scene.assets.people);
       a.label.setVisible(nearby);
