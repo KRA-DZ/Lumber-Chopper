@@ -21,6 +21,7 @@
 | --- | --- | --- |
 | Ходьба, столкновения, команды | `game/navigation.js`, `game/simulation.js` | `phaser/world-scene.js`, `phaser/hero-view.js` |
 | Герой за кронами, приоритеты подписей | Геометрия/лимиты: `phaser/tree-occlusion.js`, `phaser/world-hints.js` | `phaser/atlas.js`, `phaser/world-scene.js`; [WORLD-READABILITY.md](WORLD-READABILITY.md) |
+| Одна подсказка на игрока и контрастные платформы | `phaser/world-hints.js` — личный выбор; `phaser/interaction-hints.js` — HUD-панели/размещение; `phaser/interaction-pad.js` — цвета/плавная подсветка | `phaser/hud-scene.js`, представления лагеря; [CAMP-READABILITY.md](CAMP-READABILITY.md) |
 | Рубка, брёвна, стопка, покупки | `forestry.js`, `economy.js`, `game/stack-layout.js`, `game/buyers.js` | `phaser/stack-view.js`, `phaser/chopping-feedback.js`, `phaser/buyer-view.js`, `shop.js` |
 | Сутки, Смотритель, региональные враги | `game/cycle.js`, `game/survival.js`, `game/watcher.js`, `game/biome-enemies.js`, `game/minions.js`, `game/raiders.js` | `phaser/enemy-view.js`, `phaser/watcher-hud.js`, `phaser/night-lighting.js`, `phaser/atmosphere.js` |
 | Лагерь, ограда, ремонт | `construction.js`, `game/defenses.js`, `game/defense-repair.js` | `phaser/construction-view.js`, `phaser/camp-view.js`, `phaser/defense-view.js`, `phaser/defense-ui.js`, `phaser/repair-control.js` |

@@ -9,6 +9,7 @@ import { hasCampBuilding } from "../game/camp-projects.js";
 import { MATERIAL_NAMES } from "../game/camp-industry-config.js";
 import { countdown } from "../game/first-days.js";
 import { dockInset } from "./viewport.js";
+import {InteractionHints} from './interaction-hints.js';
 export class HudScene extends Phaser.Scene {
   constructor() {
     super("Hud");
@@ -17,6 +18,7 @@ export class HudScene extends Phaser.Scene {
     this.world = data.world;
   }
   create() {
+    this.interactionHints=new InteractionHints(this);
     this.panel = this.add.graphics();
     this.clock = this.add.text(22, 18, "", {
       fontFamily: "Arial, sans-serif",
@@ -129,6 +131,7 @@ export class HudScene extends Phaser.Scene {
     this.refresh();
   }
   update(time) {
+    this.interactionHints.render();
     if (time - this.lastRefresh > 100) {
       this.lastRefresh = time;
       this.refresh();

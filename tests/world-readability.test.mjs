@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { crownCut, coversHero } from "../phaser/tree-occlusion.js";
-import { selectHints, WorldHints } from "../phaser/world-hints.js";
+import { playerHint, WorldHints } from "../phaser/world-hints.js";
 
 test("crown boundary preserves the narrow trunk; hero overlap excludes carried logs and trees behind him", () => {
   const w = 20, h = 40, pixels = new Uint8Array(w * h * 4);
@@ -20,35 +20,26 @@ test("crown boundary preserves the narrow trunk; hero overlap excludes carried l
   assert.equal(coversHero(image, 26, { x: 100, y: 290 }), false);
 });
 
-test("world captions prioritize danger/selection, reject collisions and offscreen captions, then prefer nearby", () => {
-  const entry = (id, x, priority, distance = 20) => ({ id, priority, distance,
-    bounds: { left: x, right: x + 40, top: 10, bottom: 30 } });
-  const candidates = [entry("scenery", 20, 10), entry("selected", 20, 100),
-    entry("watcher", 70, 110), entry("far", 120, 40, 100),
-    entry("near", 170, 40, 10), entry("offscreen", 400, 120)];
-  assert.deepEqual(selectHints(candidates, { x: 0, y: 0, width: 300, height: 200 }, 3)
-    .map(e => e.id), ["watcher", "selected", "near"]);
+test('nearest eligible caption wins per player; immediate danger overrides scenery',()=>{
+  const view={x:0,y:0,width:300,height:200},p={x:30,y:30};
+  const entry=(id,x,priority=10,range=100)=>({id,point:{x,y:30},priority,range});
+  const choices=[entry('near',35),entry('far',90,90),entry('outside',500,120,Infinity)];
+  assert.equal(playerHint(choices,p,view).id,'near');
+  choices.push(entry('danger',100,110));assert.equal(playerHint(choices,p,view).id,'danger');
+  assert.equal(playerHint(choices,{...p,room:{}},view),null);
 });
 
-test("captions and their bubble companions recover next frame; light quality limits visible captions to two", () => {
-  const object = (x = 10) => ({ visible: true, x,
-    setVisible(v) { this.visible = v; return this; },
-    getBounds() { return { left: x, right: x + 20, top: 0, bottom: 20 }; } });
-  const scene = { core: { player: { x: 0, y: 0 } }, effectsLight: true,
-    camera: { worldView: { x: 0, y: 0, width: 500, height: 200 } } },
-    hints = new WorldHints(scene), label = object(), bubble = object();
-  hints.begin();
-  hints.offer(label, { x: 1000, y: 0 }, { companions: [bubble] });
-  hints.flush();
-  assert.equal(label.visible, false);
-  assert.equal(bubble.visible, false);
-  hints.begin();
-  hints.offer(label, { x: 10, y: 0 }, { priority: 100, companions: [bubble] });
-  const other = object(80), third = object(140);
-  hints.offer(other, { x: 20, y: 0 });
-  hints.offer(third, { x: 30, y: 0 });
-  hints.flush();
-  assert.equal(label.visible && bubble.visible && other.visible, true);
-  assert.equal(third.visible, false);
-  assert.equal(hints.visibleCount, 2);
+test('each co-op actor gets one local caption; source text and old speech bubbles stay hidden',()=>{
+  const object=text=>({text,visible:true,setVisible(v){this.visible=v;return this;},getBounds(){return {left:0,right:20,top:0,bottom:20};}});
+  const actors=[{state:{health:100},player:{x:10,y:0}},{state:{health:100},player:{x:250,y:0}}];
+  const scene={core:{actors},camera:{worldView:{x:0,y:0,width:300,height:200}}};
+  const hints=new WorldHints(scene),first=object('Костёр'),second=object('Склад'),bubble=object('');
+  hints.begin();hints.offer(first,{x:15,y:0},{range:80,companions:[bubble]});hints.offer(second,{x:245,y:0},{range:80});hints.flush();
+  assert.deepEqual(hints.active.map(e=>e.entry.label.text),['Костёр','Склад']);assert.equal(hints.visibleCount,2);
+  assert.equal(first.visible||second.visible||bubble.visible,false);
+  hints.offer(object('Личная подсказка P2'),{x:15,y:0},{range:80,priority:999,actor:1});hints.flush();
+  assert.deepEqual(hints.active.map(e=>e.entry.label.text),['Костёр','Склад']);
+  actors[0].player.x=900;hints.begin();hints.offer(first,{x:15,y:0},{range:80});hints.offer(second,{x:245,y:0},{range:80});hints.flush();
+  assert.equal(hints.visibleCount,1);assert.equal(hints.active[0].index,1);
+  actors[1].player.room={};hints.begin();hints.offer(second,{x:245,y:0},{range:80});hints.flush();assert.equal(hints.visibleCount,0);
 });
