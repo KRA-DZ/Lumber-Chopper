@@ -1,3 +1,4 @@
+import {WORKERS} from '../game/workers.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSimulation } from "../game/simulation.js";
@@ -7,7 +8,7 @@ import { createWorkers } from "../game/workers.js";
 import { strikeBoulder } from "../game/mining.js";
 const make=(survival=false)=>createSimulation({regional:true,survival});
 const place=(c,p)=>Object.assign(c.player,p,{path:[],autoTimer:10000});
-function base(g,house=0){g.state.campBuildings={tent:true,fire:true,fence:true,...(house?{house:true}:{})};g.state.campLevel=Object.keys(g.state.campBuildings).length;g.state.campIndustry.upgrades.house=house;g.state.coins=10000;g.refreshWorld();place(g,{x:1600,y:1720});}
+function base(g,house=0){g.state.campBuildings={tent:true,fire:true,fence:true,...(house?{house:true}:{})};g.state.campLevel=Object.keys(g.state.campBuildings).length;g.state.campIndustry.upgrades.house=house;g.state.coins=10000;g.refreshWorld();place(g,WORKERS.depot);}
 function open(g){const r=g.regions.all.find(r=>r.id==="1:0");g.regions.unlocked.add(r.id);g.state.unlockedRegions.push(r.id);g.world.generate(r);g.refreshWorld();return r;}
 function until(g,predicate,seconds=90){for(let i=0;i<seconds*20&&!predicate();i++)g.update(.05);assert.ok(predicate(),JSON.stringify(g.workers.crew.map(w=>({role:w.role,phase:w.phase,reason:w.reason,job:w.job,cargo:w.cargo,stone:w.stoneCargo,x:w.x,y:w.y}))));}
 
@@ -49,7 +50,7 @@ test("player and worker strikes share the same final-hit claim, so a depleted ro
 });
 test("miner unloading holds cargo at the material limit; profession change returns that cargo first",()=>{
   const g=make();base(g);const w=g.workers;w.hire("miner");const npc=w.crew[0];npc.stoneCargo=8;
-  Object.assign(npc,{x:1710,y:1780,job:"depot",path:[]});g.state.campIndustry.materials.stone=200;
+  Object.assign(npc,{x:WORKERS.depot.x,y:WORKERS.depot.y,job:"depot",path:[]});g.state.campIndustry.materials.stone=200;
   assert.ok(w.assign(npc.id,"repairer"));g.update(2);assert.equal(npc.role,"miner");assert.equal(npc.stoneCargo,8);
   assert.match(npc.reason,/заполнен/);g.state.campIndustry.materials.stone=192;
   until(g,()=>npc.role==="repairer",20);assert.equal(g.state.campIndustry.materials.stone,200);assert.equal(npc.stoneCargo,0);assert.equal(w.data.stoneDelivered,8);
@@ -77,7 +78,7 @@ test("night repair requires fire and stops for threats; recall and paused update
   g.workers.setRecalled(true);g.update(1);assert.notEqual(npc.phase,"repairing");
 });
 test("co-op shares the crew but charges the opener's purse; repairs tick once even after focus changes",()=>{
-  const g=createLocalCoop(),[a,b]=g.actors;base(a);b.refreshWorld();place(b,{x:1600,y:1720});b.state.coins=1000;
+  const g=createLocalCoop(),[a,b]=g.actors;base(a);b.refreshWorld();place(b,WORKERS.depot);b.state.coins=1000;
   assert.ok(b.workers.hire("repairer"));assert.equal(b.state.coins,850);assert.equal(a.state.coins,10000);assert.equal(a.workers.crew,b.workers.crew);
   const section=a.defenses.all().find(d=>d.kind==="fence");a.defenses.damage(section.id,60);a.state.logStore=Array(10).fill(8);
   Object.assign(a.workers.crew[0],a.nav.nearestGround(section.x,section.y+45),{path:[]});g.focus(1);
@@ -88,7 +89,7 @@ test("four mixed professions keep one fair path budget and never produce at bloc
   const state=createInitialState();state.campBuildings={tent:true,house:true,fence:true};state.campIndustry.upgrades.house=2;state.coins=10000;state.logStore=Array(10).fill(8);
   const searches=[],rock={id:"stone",x:2200,y:1600,radius:26,maxHP:12,yield:8},section={id:"fence-test",kind:"fence",x:1800,y:1600,hp:0,maxHP:60};let clock=0;
   const nav={version:1,nearestGround:(x,y)=>({x,y}),hasLineOfSight:()=>true,findPath:(w)=>{searches.push({id:w.id,clock});return [];},followPath:()=>0};
-  const w=createWorkers({state,player:{x:1710,y:1780},world:{ancientTree:{x:3520,y:1600},boulders:[rock]},regions:{isOpen:()=>true},nav,
+  const w=createWorkers({state,player:{x:WORKERS.depot.x,y:WORKERS.depot.y},world:{ancientTree:{x:3520,y:1600},boulders:[rock]},regions:{isOpen:()=>true},nav,
     defenses:{all:()=>[section],get:()=>section,deposit:()=>{throw Error("remote repair");}},forestry:{addCargo:()=>false},activeBuyer:()=>null,sale:{x:1420,y:1690,radius:53},getSurvival:()=>null});
   for(const role of ["lumberjack","miner","repairer","miner"])assert.ok(w.hire(role));
   for(let i=0;i<240;i++){clock+=.05;w.update(.05);}

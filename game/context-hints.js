@@ -40,7 +40,7 @@ export function createContextHints(c){
   function preparation(){
     const s=c.state;
     if(!hasCampBuilding(s,'fire'))return hint('prep-fire','До ночи нужен костёр',
-      s.buildProject&&s.buildProject!=='fire'?'Сейчас выбран другой проект. Его можно завершить; костёр выбирается на платформе стройки отдельно.':'Выберите костёр на платформе стройки. Только зажжённый костёр защищает лагерь от Смотрителя.', 'К стройке');
+      s.buildProject&&s.buildProject!=='fire'?'Сейчас выбран другой проект. Его можно завершить; костёр заказывается у мастера отдельно.':'Закажите костёр у мастера в мастерской. Только зажжённый костёр защищает лагерь от Смотрителя.', 'К мастеру');
     // Advice only: enough real-time fuel until dawn, plus a small walking reserve.
     const needed=(DAY_SECONDS-s.worldTime)/(s.cycleSpeed||1)+15;
     if(s.campFuel<needed){

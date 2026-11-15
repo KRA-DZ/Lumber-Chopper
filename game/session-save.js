@@ -5,6 +5,7 @@ import {createInitialState, DAY_SECONDS} from './config.js';
 import {REGIONS, REGION_SIZE} from './regions.js';
 import {applyUpgrades} from '../economy.js';
 import {RECIPES,CAMP_UPGRADES} from './camp-industry-config.js';
+import {CAMP_PROJECTS} from './camp-projects.js';
 import {BUYER_ORDERS} from './buyer-orders.js';
 
 export const SAVE_KEY = 'lumber-session-v1';
@@ -52,6 +53,11 @@ function validState(s) {
   for (const key of ['regionWood','regionStone','boulderHP','defenseHP','defenseWood','gateOpen']) check(object(s[key]));
   check(s.campBuildings === null || object(s.campBuildings));
   check(s.buildProject === null || typeof s.buildProject === 'string');
+  const build=CAMP_PROJECTS.find(p=>p.id===s.buildProject);
+  check(Object.entries(s.buildMaterials).every(([id,n])=>build&&Number.isInteger(n)&&n>=0&&n<=(build.materials?.[id]??-1)));
+  check(!s.workshopBuild||!!build);
+  check(s.workshopUpgrade===null||CAMP_UPGRADES[s.workshopUpgrade]&&s.campIndustry.upgradeSelected[s.workshopUpgrade]);
+  check(s.workshopDefense===null||['trap-left','trap-right','barricade-left','barricade-right'].includes(s.workshopDefense));
   check(s.cargo.every(v => typeof v === 'number' && v >= 0) && s.cargo.length === s.wood && s.cargoValue === s.cargo.reduce((n,v) => n+v, 0));
   check(Object.keys(s.materialCargo).every(id=>['blocks','coal','kits'].includes(id))&&Object.values(s.materialCargo).every(n=>Number.isInteger(n)&&n>=0));
   check(Object.entries(s.campIndustry.upgradeSelected).every(([id,selected])=>CAMP_UPGRADES[id]&&selected===true&&s.campIndustry.upgrades[id]<2&&object(s.campIndustry.upgradePaid[id])));
@@ -74,7 +80,7 @@ function validate(data) {
   check(object(data) && data.version === VERSION && data.regionSize === REGION_SIZE && Number.isFinite(data.savedAt));
   check(typeof data.runId === 'string' && typeof data.name === 'string' && [1,2].includes(data.actors?.length));
   for (const a of data.actors) {
-    validState(a.state); check(point(a.player)); check(a.player.room == null || point(a.player.room));
+    validState(a.state); check(point(a.player)); check(a.player.room == null || point(a.player.room)&&[undefined,'house','shop'].includes(a.player.room.id));
     check(object(a.runtime) && Number.isFinite(a.runtime.elapsed) && a.runtime.elapsed >= 0 && object(a.runtime.tutorial));
   }
   check(data.actors.some(a=>a.state.health>0));
@@ -138,6 +144,11 @@ export function restoreSession(input, options = {}) {
     if (!a.player.room && !a.nav.isWalkable(a.player.x,a.player.y)) Object.assign(a.player,a.nav.nearestGround(a.player.x,a.player.y));
     for (const worker of a.workers?.crew || []) { worker.path=[]; worker.routeKey=''; }
   }
+  const occupied=actors.find(a=>a.player.room);
+  if(occupied){const id=occupied.player.room.id||'house';actors.forEach((a,i)=>{
+    if(!a.player.room||(a.player.room.id||'house')!==id)a.player.room={id,x:292+i*56,y:322};
+    a.player.room.id=id;delete a.player.room.interactTarget;delete a.player.room.target;
+  });}
   first.buyerSystem.restore(data.world.buyers); first.combatLoot.restore(data.world.loot); first.survival.restore(data.world.survival);
   return core;
 }

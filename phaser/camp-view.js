@@ -36,19 +36,8 @@ export class CampView {
           hasCampBuilding(s,"house") ? CAMP.hut.y + 23 : CAMP.tent.y + 23,
         );
     }
-    for(const pad of [c.sale,c.build]){
+    for(const pad of [c.sale]){
       drawInteractionPad(this.scene,g,pad,126,74,onPad(pad,c.actors||[c],126,74));
-    }
-    const stage = c.builder.project;
-    if (stage && dist(p, c.build) < 240) {
-      const x = c.build.x - 44,
-        y = c.build.y + 36;
-      g.fillStyle(0x304b3c, 0.95)
-        .fillRect(x - 2, y - 2, 92, 10)
-        .fillStyle(0x598575)
-        .fillRect(x, y, 88, 6)
-        .fillStyle(0xc4ddad)
-        .fillRect(x, y, (88 * s.buildWood) / stage.cost, 6);
     }
   }
 }

@@ -3,7 +3,8 @@ import {ResourceReceipts} from './resource-receipts.js';
 import {ForestTasksView} from "./forest-tasks-view.js";
 import { CampCustomView } from "./camp-custom-view.js";
 import {PlantsView} from "./plants-view.js";
-import { CAMP_SERVICE } from "../game/camp-services.js";
+import { CAMP_SERVICE,ROOM } from "../game/camp-services.js";
+import {CampHubView} from './camp-hub-view.js';
 import { renderGeneratedPerson } from "./people-assets.js";
 import { WorkerView } from "./worker-view.js";
 import { createWorkerUi } from "./worker-ui.js";
@@ -174,6 +175,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.keyboardUi = new KeyboardInteractions(this);
     this.campServicesView = new CampServicesView(this);
+    this.campHubView=new CampHubView(this);
     this.houseView = new HouseView(this);
     this.industryView = new CampIndustryView(this);
     this.worldWorksView = new WorldWorksView(this);
@@ -368,7 +370,6 @@ export class WorldScene extends Phaser.Scene {
       });
     for (const [pad, label, color] of [
       [this.core.sale, "ПРОДАТЬ", 0xcbaa58],
-      [this.core.build, "СТРОИТЬ", 0x82b3a4],
     ]) {
       this.addImage(
         label === "ПРОДАТЬ" ? "camp.salePad" : "camp.buildPad",
@@ -430,7 +431,10 @@ export class WorldScene extends Phaser.Scene {
     this.keyboard = {};
     for (const [name, code] of Object.entries(this.keyMap))
       this.keyboard[name] = this.input.keyboard.addKey(code, false, false);
+    const handledKeys=new WeakSet();
     this.input.keyboard.on("keydown", (event) => {
+      // Phaser can revisit a queued DOM event before the next frame (e.g. on keyup).
+      if(handledKeys.has(event))return;handledKeys.add(event);
       if(event.code==='Space'&&!this.core.paused&&this.core.exploration.fishing){event.preventDefault();this.core.exploration.reel();return;}
       if (this.core.coop && !this.core.paused) {
         if (event.repeat && ["KeyE", "Enter"].includes(event.code)) { event.preventDefault(); return; }
@@ -516,7 +520,7 @@ export class WorldScene extends Phaser.Scene {
       const campService=over.find(o=>o.getData("campService"));
       if(campService){this.serviceView.open(campService.getData("campService"));return;}
       const industrySite=over.find(o=>o.getData("industrySite"));
-      if(industrySite){const id=industrySite.getData("industrySite");this.campDesk.open(id.startsWith('tower')?'upgrades':id.startsWith('lamp')?'defense':'production',id.startsWith('tower')?(id==='tower-east'?'towers-east':'towers'):id);return;}
+      if(industrySite){this.campDesk.open('workshop');return;}
       const service = over.find(o => o.getData("campStore") || o.getData("campHouse") || o.getData("campTent"));
       if (service) {
         if (service.getData("campStore")) this.campDesk.open('storage');
@@ -632,6 +636,13 @@ export class WorldScene extends Phaser.Scene {
         this.renderModel();
       },
     });
+    const rawShopOpen=this.shop.open.bind(this.shop);
+    this.shop.open=()=>{
+      const c=this.core,p=c.player;
+      if(c.camp.atSeller())return rawShopOpen();
+      if(p.room){if(p.room.id==='shop'){p.room.target={x:ROOM.seller.x,y:ROOM.seller.y+75};p.room.interactTarget='seller';}else c.showNotice('Продавец ждёт в лавке лагеря.');return false;}
+      return c.camp.enter('shop')||c.setDestination(CAMP_SERVICE.shopDoor.x,CAMP_SERVICE.shopDoor.y);
+    };
     this.closeShop = () => this.pause("shop", false);
     document
       .querySelector("#shopDialog")
@@ -867,12 +878,13 @@ export class WorldScene extends Phaser.Scene {
     this.crownOcclusion.apply(this.ancient);
     this.crownOcclusion.end();
     this.worldHints.offer(this.saleLabel, c.sale, { range: 240, priority: 70 });
-    this.worldHints.offer(this.buildLabel, c.build, { range: 240, priority: 70 });
+    this.worldHints.offer(this.buildLabel, c.build, { eligible:false });
     if (this.merchantLabel)
       this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
     if (!this.coopViews) this.feedback.render();
     this.outpostView.render();
     this.campServicesView.render();
+    this.campHubView.render();
     this.houseView.render();
     this.industryView.render();
     this.worldWorksView.render();
@@ -1177,7 +1189,10 @@ export class WorldScene extends Phaser.Scene {
     if (type === "production-ready") { this.core.showNotice(`Готово: ${materialCostText(e.output)}. В общем запасе лагеря.`,4); return; }
     if (type === "order-completed") { this.core.showNotice(`Заказ выполнен: +${e.order.reward} монет!`,6); return; }
     if (type === "order-expired") { this.core.showNotice("Срок заказа истёк. Переданные брёвна можно забрать у продажи.",6); return; }
-    if (type === "build-choice") { this.buildUi?.open(); return; }
+    if (type === "build-choice") { this.campDesk?.open('workshop'); return; }
+    if(type==='camp-room-entered'||type==='camp-room-left'){
+      for(const camera of this.cameras.cameras)camera.flash(180,0,0,0,true);return;
+    }
     if (type === "mining-hit") { this.heroView?.hit(); this.float(`-${e.damage}`,e.rock.x,e.rock.y-50); return; }
     if (type === "stone-collected") { this.float(`+${e.count} камня`,e.rock.x,e.rock.y-65,"#d4ddd5"); return; }
     if (type === "camp-extinguished" || type === "camp-low-fuel") {
@@ -1534,6 +1549,7 @@ export class WorldScene extends Phaser.Scene {
     this.buildUi?.destroy();
     this.houseView?.destroy();
     this.campServicesView?.destroy();
+    this.campHubView?.destroy();
     this.keyboardUi?.destroy();
     this.coopViews?.destroy();
     this.coopCamera?.destroy();

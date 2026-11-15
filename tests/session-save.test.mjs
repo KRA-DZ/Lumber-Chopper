@@ -1,3 +1,4 @@
+import {WORKERS} from '../game/workers.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createSimulation} from '../game/simulation.js';
@@ -47,7 +48,7 @@ test('reload during fifth-night raid keeps wave, watcher, enemy HP, defeated ros
 });
 test('production, workers, house position, purchased items and pending customer order survive',()=>{
   const c=create();open(c,'1:0');c.state.coins=1000;c.state.campBuildings={tent:true,house:true,workbench:true};c.state.campLevel=3;
-  Object.assign(c.player,c.nav.nearestGround(1580,1760));assert.ok(c.workers.hire());
+  Object.assign(c.player,c.nav.nearestGround(WORKERS.depot.x,WORKERS.depot.y));assert.ok(c.workers.hire());
   const worker=c.workers.crew[0];worker.cargo=[8,8];worker.cutTimer=.8;c.state.workforce.stock=[8];
   c.state.campIndustry.queue=[{id:1,recipe:'boards',total:8,remaining:4}];c.state.sawmill.stage=3;c.state.sawmill.job={remaining:6,logs:[8,8,8,8,8,8,8,8]};
   c.state.sawmill.input=[8,8];c.state.buyerOrders.active={id:'logs',day:0,logs:[10]};c.state.exploration.rod=true;

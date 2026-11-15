@@ -12,6 +12,9 @@ import { INDUSTRY_PROJECTS } from "../game/camp-industry-config.js";
 export class KeyboardInteractions {
   constructor(scene) {
     this.scene = scene; this.shops = new Map(); this.modal = null; this.selection = 0;
+    this.stopPointer=e=>e.stopPropagation();
+    this.dialogs=[...document.querySelectorAll('dialog')];
+    for(const dialog of this.dialogs)for(const type of ['pointerdown','mousedown','touchstart'])dialog.addEventListener(type,this.stopPointer);
     this.onKey = e => this.handle(e);
     document.addEventListener("keydown", this.onKey, true);
   }
@@ -22,6 +25,8 @@ export class KeyboardInteractions {
     a.clearKeys(); a.player.menuOpen = true;
     if (this.shops.has(i)) return;
     const panel = document.createElement("aside"); panel.className = "personal-shop"; panel.dataset.playerShop = i;
+    // DOM purchases must not also click the canvas HUD/world underneath the panel.
+    for(const type of ['pointerdown','mousedown','touchstart'])panel.addEventListener(type,this.stopPointer);
     panel.setAttribute("aria-label", `Лавка игрока ${i + 1}`);
     const title = document.createElement("h3"), info = document.createElement("p"), rows = [];
     title.textContent = `${site ? site.name : "Лавка"} · игрок ${i + 1}`; panel.append(title, info);
@@ -99,31 +104,30 @@ export class KeyboardInteractions {
     }
     this.refresh();
   }
-  destroy() { document.removeEventListener("keydown", this.onKey, true); for (const i of [...this.shops.keys()]) this.closeShop(i); }
+  destroy() { document.removeEventListener("keydown", this.onKey, true); for (const i of [...this.shops.keys()]) this.closeShop(i);
+    for(const dialog of this.dialogs)for(const type of ['pointerdown','mousedown','touchstart'])dialog.removeEventListener(type,this.stopPointer); }
 }
 
 export function interactNearby(scene) {
   const c = scene.core, p = c.player, near = target => Math.hypot(p.x - target.x, p.y - target.y);
   if (p.room) {
-    if (Math.hypot(p.room.x - ROOM.chest.x, p.room.y - ROOM.chest.y) < 90) scene.campDesk.open('storage');
-    else c.camp.exit();
+    scene.houseView.interact(c);
     return;
   }
   const choices = [
     ...(scene.serviceView?.targets()||[]),
     ...c.world.berryBushes.filter(b=>c.berries.ready(b)&&c.regions.isOpen(b)).map(b=>({p:b,range:100,act:()=>c.berries.harvest(b.id)})),
     {p:RECORD_BOARD,range:120,act:()=>scene.customView?.open()},
-    { p: { x: CAMP.stall.x, y: CAMP.stall.y + 45 }, range: 155, act: () => scene.shop.open() },
+    { p: CAMP_SERVICE.shopDoor, range:85, act: () => c.camp.enter('shop') },
     { p: CAMP_SERVICE.store, range: 110, act: () => scene.campDesk.open('storage') },
-    { p: {x:1710,y:1780}, range:100, act:()=>scene.workerUi.open() },
-    ...(hasCampBuilding(c.state,"tent") ? [{ p: CAMP.tent, range:100, act:()=>c.showNotice("Палатка позволяет нанимать помощников. Для отдельной комнаты выберите хижину на платформе стройки.") }] : []),
+    ...(hasCampBuilding(c.state,"tent") ? [{ p: CAMP.tent, range:100, act:()=>c.showNotice("Палатка позволяет нанимать помощников. Хижину можно заказать у мастера.") }] : []),
     { p: c.sale, range:90, act:()=>scene.campDesk.open("orders") },
-    ...INDUSTRY_PROJECTS.filter(p=>hasCampBuilding(c.state,p.id)).map(p=>({p:p.site,range:110,act:()=>{
+    ...INDUSTRY_PROJECTS.filter(p=>p.kind==='lamp'&&hasCampBuilding(c.state,p.id)).map(p=>({p:p.site,range:110,act:()=>{
       if(p.kind==="lamp"&&c.preparation.refuelLamp(p.id))c.showNotice("Фонарь заправлен углём.");
       else if(p.kind==='tower')scene.campDesk.open('upgrades',p.id==='tower-east'?'towers-east':'towers');
       else scene.campDesk.open(p.kind==="lamp"?"defense":"production",p.id);
     }})),
-    { p: c.build, range:c.build.radius, act:()=>c.builder.requestChoice(true) },
+    { p: c.build, range:100, act:()=>scene.campDesk.open('workshop') },
     ...(hasCampBuilding(c.state,"house") ? [{ p: CAMP_SERVICE.door, range: 110, act: () => c.camp.enter() }] : []),
     ...c.exploration.sites.filter(site => !site.hideFromNearby&&c.exploration.near(site)).map(site => ({ p: site, range: 150, act: () => {
       if (site.kind === "kitchen" && c.state.wood && c.camp.stoke()) c.showNotice(`Огонь: ${Math.ceil(c.state.campFuel)} с. Можно добавлять топливо в любое время суток.`);

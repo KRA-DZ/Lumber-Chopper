@@ -1,6 +1,6 @@
-import {CAMP_SERVICE} from '../game/camp-services.js';
+import {CAMP_HUB} from '../game/camp-layout.js';
+import {CAMP_PROJECTS,projectLockReason} from '../game/camp-projects.js';
 import {campIcon,materialChips,MATERIAL_FRAMES} from './camp-icons.js';
-import {CAMP_STATIONS} from '../game/camp-layout.js';
 import {CARGO_MATERIALS,cargoAmount} from '../game/material-cargo.js';
 import {visibleMenuActions} from './menu-navigation.js';
 import { RECIPES, CAMP_UPGRADES, INDUSTRY_PROJECTS, MATERIAL_NAMES, materialCostText } from "../game/camp-industry-config.js";
@@ -12,7 +12,7 @@ import { appendRaidReadiness } from "./camp-progress-ui.js";
 export function createCampDesk(scene){
   const dialog=document.querySelector("#campDesk"),content=dialog.querySelector("[data-camp-content]"),message=dialog.querySelector("[data-camp-message]"),
     button=document.querySelector("#industryButton"),closeButton=dialog.querySelector("[data-camp-close]");
-  let owner=null,section="overview",station=null;
+  let owner=null,section="workshop";
   const quantities={};
   function row(key,title,detail,action,reason="",options={}){
     const card=document.createElement('article'),heading=document.createElement('h3'),p=document.createElement('p'),b=document.createElement('button');
@@ -29,22 +29,30 @@ export function createCampDesk(scene){
   function render(selected=""){
     const c=owner,s=c.state,industry=c.industry,bank=s.campIndustry.materials;
     content.replaceChildren();
-    dialog.dataset.single=String(section==='upgrades'&&!!station);
-    dialog.querySelector('h2').textContent=section==='storage'?'Склад лагеря':station?.name||'Лагерь';
+    dialog.dataset.single='false';
+    dialog.querySelector('h2').textContent=section==='storage'?'Склад лагеря':section==='orders'?'Заказы покупателей':'Мастерская';
     const stock=document.createElement('div');stock.dataset.campStock='';stock.className='camp-stock-strip';
     const stockTitle=document.createElement('small');stockTitle.textContent='На складе';stock.append(stockTitle);
-    const stockAmounts=station?.upgrade?Object.fromEntries(Object.keys(CAMP_UPGRADES[station.upgrade].costs[s.campIndustry.upgrades[station.upgrade]]||{}).map(id=>[id,bank[id]])):{logs:s.logStore.length,...bank};
+    const stockAmounts={logs:s.logStore.length,...bank};
     stock.append(materialChips(scene,stockAmounts));content.append(stock);
-    if(section==='overview'){
-      for(const site of CAMP_STATIONS){
-        if(!hasCampBuilding(s,site.building))continue;
-        row(`station:${site.id}`,site.name,site.upgrade?'Улучшения этой постройки.':'Изготовление материалов.',()=>{
-          if(Math.hypot(c.player.x-site.x,c.player.y-site.y)>110){dialog.close();c.setDestination(site.x,site.y);return true;}
-          station=site;section=site.upgrade?'upgrades':'production';return true;
-        },'',{icon:site.icon,cta:'Подойти',message:'Площадка отмечена у постройки.'});
+    if(['workshop','production','upgrades'].includes(section)){
+      const tabs=document.createElement('nav');tabs.className='camp-tabs';
+      for(const [id,name] of [['workshop','Постройки'],['upgrades','Улучшения'],['production','Материалы']]){
+        const b=document.createElement('button');b.type='button';b.textContent=name;b.dataset.campAction=`tab:${id}`;b.setAttribute('aria-pressed',String(section===id));b.onclick=()=>{section=id;render();};tabs.append(b);
+      }content.append(tabs);
+    }
+    if(section==='workshop'){
+      const busy=c.workshop.busy(),icons={fire:'unlitFire',tent:'tent',fence:'fence',house:'house',workbench:'sawmill.bench',kiln:'unlitFire',tower:'house',lamp:'survival.startLantern'};
+      for(const p of CAMP_PROJECTS.filter(p=>!hasCampBuilding(s,p.id))){
+        const selected=s.buildProject===p.id,reason=projectLockReason(s,p)||(busy&&!selected?'Сначала завершите текущий заказ':'');
+        const cost={logs:p.cost,...p.materials},paid=selected?{logs:s.buildWood,...s.buildMaterials}:undefined;
+        row(`build:${p.id}`,p.name,p.description.split('.')[0]+'.',()=>c.workshop.chooseBuild(p.id),reason,
+          {icon:icons[p.id]||icons[p.kind]||'camp.crate',cost,paid,cta:selected?'Продолжить заказ':'Заказать',message:'Мастер принимает материалы у своего стола.'});
       }
-      row('station:storage','Склад','Выбрать ресурс и количество для переноски.',()=>{dialog.close();c.setDestination(CAMP_SERVICE.store.x,CAMP_SERVICE.store.y);return true;},'',{icon:'fortress.chest.closed',cta:'Подойти'});
-      row('station:defense','Обслуживание обороны','Ремонтные наборы, топливо и фонари.',()=>{section='defense';station=null;return true;},'',{icon:'world.supplies',cta:'Открыть'});
+      for(const d of (c.defenses?.all()||[]).filter(d=>['trap','barricade'].includes(d.kind)&&!d.hp)){
+        row(`defense:${d.id}`,d.name,d.kind==='trap'?'Ранит и замедляет врага.':'Преграждает путь врагам.',()=>c.workshop.chooseDefense(d.id),busy?'Сначала завершите текущий заказ':'',
+          {icon:d.kind==='trap'?'camp.defense.trap.ready':'camp.defense.barricade.ready',cost:{logs:d.cost},paid:{logs:d.wood},cta:s.workshopDefense===d.id?'Ожидает брёвна':'Заказать'});
+      }
     }else if(section==='storage'){
       for(const id of CARGO_MATERIALS){
         const stored=c.storage.stored(id),carried=cargoAmount(s,id),qty=quantities[id]||1;
@@ -62,15 +70,15 @@ export function createCampDesk(scene){
       const queue=document.createElement("p");queue.dataset.productionQueue="";
       queue.textContent=s.campIndustry.queue.length?"Очередь: "+s.campIndustry.queue.map(j=>`${RECIPES.find(r=>r.id===j.recipe).name}: ${j.remaining>0?Math.ceil(j.remaining)+" с":"ждёт места"}`).join(" → "):"Очередь пуста (до трёх работ).";
       content.append(queue);
-      for(const r of RECIPES.filter(r=>!station||r.station===station.id))row(`recipe:${r.id}`,`Сделать: ${r.name}`,`${({boards:'Для построек и улучшений.',blocks:'Для прочных построек и ограды.',coal:'Топливо для костра, фонарей и башен.',kits:'Восстанавливает повреждённые постройки.'})[r.id]} Готовность: ${r.seconds} с.`,()=>industry.enqueue(r.id),industry.recipeReason(r.id),{icon:MATERIAL_FRAMES[r.id],cost:r.input,cta:'Изготовить'});
+      for(const r of RECIPES)row(`recipe:${r.id}`,`Сделать: ${r.name}`,`${({boards:'Для построек и улучшений.',blocks:'Для прочных построек и ограды.',coal:'Топливо для костра, фонарей и башен.',kits:'Восстанавливает повреждённые постройки.'})[r.id]} Готовность: ${r.seconds} с.`,()=>industry.enqueue(r.id),industry.recipeReason(r.id),{icon:MATERIAL_FRAMES[r.id],cost:r.input,cta:'Изготовить'});
     }else if(section==="upgrades"){
-      for(const [id,o] of Object.entries(CAMP_UPGRADES).filter(([id])=>station?.upgrade===id)){
+      for(const [id,o] of Object.entries(CAMP_UPGRADES).filter(([id,o])=>hasCampBuilding(s,o.building)||id==='towers'&&hasCampBuilding(s,'tower-east'))){
         const level=s.campIndustry.upgrades[id],cost=o.costs[level];
         const paid=s.campIndustry.upgradePaid[id]||{},selected=s.campIndustry.upgradeSelected[id];
         const effects={fire:`Запас огня +300 с. Защитный свет шире.`,fence:`Прочность ограды: ${level===0?'60 → 100':'100 → 160'} HP.`,house:`Склад +200 мест. Помощники: ${2+level} → ${3+level}. Отдых лечит.`,towers:`Башни стреляют быстрее и наносят больше урона.`};
-        row(`upgrade:${id}`,`${station.name} · уровень ${level+1}`,level>=2?'Все улучшения этой постройки выполнены.':effects[id],()=>industry.selectUpgrade(id),industry.upgradeReason(id,true),
-          {icon:station.icon,cost,paid: selected?Object.fromEntries(Object.keys(cost||{}).map(k=>[k,paid[k]||0])):undefined,cta:level>=2?'Максимум':selected?'Ожидает материалы':'Начать улучшение',message:'Возьмите материалы со склада и встаньте на площадку этой постройки.'});
-        const hint=document.createElement('p');hint.className='camp-muted';hint.textContent='Материалы вносятся из рук на площадке у этой постройки.';content.append(hint);
+        row(`upgrade:${id}`,`${o.name} · ${level}/2`,level>=2?'Все улучшения этой постройки выполнены.':effects[id],()=>c.workshop.chooseUpgrade(id),industry.upgradeReason(id,true),
+          {icon:({fire:'unlitFire',fence:'fence',house:'house',towers:'house'})[id],cost,paid: selected?Object.fromEntries(Object.keys(cost||{}).map(k=>[k,paid[k]||0])):undefined,cta:level>=2?'Максимум':selected?'Ожидает материалы':'Начать улучшение',message:'Принесите материалы к столу мастера.'});
+        const hint=document.createElement('p');hint.className='camp-muted';hint.textContent='Материалы принимаются из рук у мастера.';content.append(hint);
       }
     }else if(section==="orders"){
       const current=c.orders.current,active=c.orders.data.active;
@@ -97,13 +105,13 @@ export function createCampDesk(scene){
     const all=[...dialog.querySelectorAll("[data-camp-action]")],target=all.find(b=>b.dataset.campAction===selected)||all.find(b=>!b.dataset.campAction.startsWith("tab:"));
     if(target){scene.keyboardUi.modal=dialog;scene.keyboardUi.selection=visibleMenuActions(dialog).indexOf(target);(target.closest(".camp-card")||target).dataset.selected="true";target.focus({preventScroll:true});}
   }
-  function open(tab="overview",siteId=null){
+  function open(tab="workshop",siteId=null){
     if(scene.core.paused||document.querySelector("dialog[open]"))return false;
     owner=scene.core.actors?.[scene.core.activeActor]||scene.core;
     if(!owner.industry.canUse()){scene.core.showNotice("Подойдите к лагерю, чтобы открыть мастерскую.");return false;}
-    station=CAMP_STATIONS.find(p=>p.id===siteId)||null;
+    if(tab==='overview')tab='workshop';
     if(tab==='storage'&&!owner.storage.near()){owner.showNotice('Подойдите к складу лагеря.');return false;}
-    if(station&&Math.hypot(owner.player.x-station.x,owner.player.y-station.y)>110){owner.setDestination(station.x,station.y);return false;}
+    if(['workshop','production','upgrades'].includes(tab)&&!owner.workshop.near()){owner.setDestination(CAMP_HUB.counter.x,CAMP_HUB.counter.y);owner.showNotice('Мастер ждёт у мастерской.');return false;}
     section=tab;message.textContent="";if(scene.core.coop)dialog.dataset.owner=String(owner.player.id);else delete dialog.dataset.owner;scene.pause("camp-desk",true);dialog.showModal();render();return true;
   }
   const show=()=>open(),dismiss=()=>dialog.close(),closed=()=>scene.pause("camp-desk",false);

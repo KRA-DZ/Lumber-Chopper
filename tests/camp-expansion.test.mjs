@@ -67,13 +67,13 @@ test("co-op sale credits both wallets while pricier personal purchases debit onl
   assert.equal(b.state.coins,5);assert.equal(a.state.coins,40);assert.equal(a.state.maxWood,2);assert.equal(b.state.maxWood,4);
 });
 
-test("finished house enters a distinct walkable room without pausing the other player",()=>{
+test("finished house transports both players into a walkable room without pausing time",()=>{
   const g=createLocalCoop(),[a,b]=g.actors;g.state.campLevel=4;g.state.campFuel=600;for(const c of g.actors)c.refreshWorld();
   place(a,CAMP_SERVICE.door);assert.ok(a.camp.enter());const outside={x:a.player.x,y:a.player.y},x=a.player.room.x;
-  a.keys.add("KeyA");b.keys.add("ArrowRight");const bx=b.player.x;g.update(.1);
-  assert.ok(a.player.room.x<x&&b.player.x>bx);assert.equal(a.player.x,outside.x);assert.equal(a.player.y,outside.y);assert.ok(!g.paused);
+  a.keys.add("KeyA");b.keys.add("ArrowRight");const bx=b.player.room.x;g.update(.1);
+  assert.ok(a.player.room.x<x&&b.player.room.x>bx);assert.equal(a.player.x,outside.x);assert.equal(a.player.y,outside.y);assert.ok(!g.paused);
   g.party.focus(a);g.party.hurt(100,"watcher");assert.equal(a.state.health,100);
-  Object.assign(a.player.room,ROOM.exit);assert.ok(a.camp.exit());assert.equal(a.player.room,null);assert.ok(a.nav.isWalkable(a.player.x,a.player.y));
+  Object.assign(a.player.room,ROOM.exit);assert.ok(a.camp.exit());assert.equal(a.player.room,null);assert.equal(b.player.room,null);assert.ok(a.nav.isWalkable(a.player.x,a.player.y));
 });
 
 test("four gates form a complete perimeter, admit friendlies, and stop enemies until opened or destroyed",()=>{

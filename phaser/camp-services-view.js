@@ -1,3 +1,4 @@
+import {dockInset} from './viewport.js';
 import { CAMP_SERVICE, ROOM } from "../game/camp-services.js";
 import { LAYERS } from "./layers.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
@@ -6,7 +7,8 @@ import {drawInteractionPad} from './interaction-pad.js';
 export class CampServicesView {
   constructor(scene) {
     this.scene = scene; this.rocks = new Map();
-    this.store = scene.addImage("fortress.chest.closed", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y).setInteractive().setData("campStore", true);
+    this.store = scene.addImage("sawmill.woodRack", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y).setScale(1.5).setInteractive().setData("campStore", true);
+    this.storeProps=[scene.addImage('camp.crate',CAMP_SERVICE.store.x+45,CAMP_SERVICE.store.y+8).setScale(1.2),scene.addImage('details.rock.0',CAMP_SERVICE.store.x-38,CAMP_SERVICE.store.y+10).setScale(1.6)];
     this.label = scene.text("", CAMP_SERVICE.store.x, CAMP_SERVICE.store.y + 38, 11, "#edddb2", LAYERS.hints);
     scene.hut.setInteractive({ pixelPerfect: true }).setData("campHouse", true);
     scene.tent.setInteractive({ pixelPerfect: true }).setData("campTent", true);
@@ -52,64 +54,89 @@ export class CampServicesView {
     this.fuelLabel.setText(c.state.campFuel>c.camp.maxFuel()-CAMP_SERVICE.fuelPerLog?"Запас почти полон":active&&!((c.actors||[c]).some(a=>a.camp.atFuelPad()&&a.state.wood>0))?"Нужны брёвна в руках":"Поддерживать огонь\n1 бревно → +60 с");
     s.worldHints.offer(this.fuelLabel,pad,{eligible:built,range:180,priority:70});
   }
-  destroy() { this.storagePad.destroy();this.storageZone.destroy();this.storageLabel.destroy();this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
+  destroy() { for(const image of this.storeProps)image.destroy();this.storagePad.destroy();this.storageZone.destroy();this.storageLabel.destroy();this.fuelPad.destroy();this.fuelZone.destroy();this.fuelLabel.destroy();for(const e of this.rocks.values()){e.image.destroy();e.label.destroy();} this.rocks.clear(); }
 }
 
-// A separate walkable interior per viewport; the outdoor simulation keeps running.
+// Shared house/shop rooms use the approved floor and furniture PNGs.
 export class HouseView {
-  constructor(scene) {
-    this.scene = scene; this.entries = [];
-    const key = "camp-room-floor", pack = scene.registry.get("sawmillPack"), name = pack.floors.room ? "room" : Object.keys(pack.floors)[0], f = pack.manifest.floors[name];
-    const tile = document.createElement("canvas"); tile.width=f.width;tile.height=f.height;
-    tile.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(pack.floors[name]),f.width,f.height),0,0);
-    const texture=scene.textures.createCanvas(key,ROOM.width,ROOM.height), ctx=texture.getContext();
-    ctx.fillStyle="#1b211d";ctx.fillRect(0,0,ROOM.width,ROOM.height);ctx.imageSmoothingEnabled=false;
-    ctx.fillStyle=ctx.createPattern(tile,"repeat");ctx.fillRect(24,82,432,246);
-    ctx.fillStyle="#634b35";ctx.fillRect(24,50,432,32);ctx.fillStyle="#a17b4b";ctx.fillRect(24,78,432,4);texture.refresh();
-    texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    const actors=scene.core.actors || [scene.core];
+  constructor(scene){
+    this.scene=scene;this.entries=[];
+    const key='camp-room-floor',pack=scene.registry.get('sawmillPack'),name=pack.floors.room?'room':Object.keys(pack.floors)[0],f=pack.manifest.floors[name];
+    const tile=document.createElement('canvas');tile.width=f.width;tile.height=f.height;
+    tile.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pack.floors[name]),f.width,f.height),0,0);
+    const texture=scene.textures.createCanvas(key,ROOM.width,ROOM.height),ctx=texture.getContext();
+    ctx.imageSmoothingEnabled=false;ctx.fillStyle='#17241f';ctx.fillRect(0,0,ROOM.width,ROOM.height);
+    ctx.fillStyle=ctx.createPattern(tile,'repeat');ctx.fillRect(24,84,ROOM.width-48,ROOM.height-108);
+    ctx.fillStyle='#6c5138';ctx.fillRect(24,48,ROOM.width-48,36);texture.refresh();texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    const actors=scene.core.actors||[scene.core];
     actors.forEach((a,i)=>{
-      const bg=scene.add.graphics(), room=scene.add.container(0,0), root=scene.add.container(0,0,[bg,room]).setScrollFactor(0).setDepth(LAYERS.eyes+1).setVisible(false);
-      const floor=scene.add.image(0,0,key).setOrigin(0);room.add(floor);
-      const add=(frame,x,y)=>{const image=scene.addImage(frame,x,y);room.add(image);return image;};
-      add("fortress.chest.closed",ROOM.chest.x,ROOM.chest.y);add("camp.crate",365,125);add("camp.mat",ROOM.exit.x,ROOM.exit.y);
-      add("world.supplies",365,225);
-      const avatars=actors.map((_,j)=>add(`${j?"coop2.":""}characters.player.down.0`,240,240));
-      const healthBars=scene.add.graphics(),health=actors.map(()=>scene.add.text(0,0,'',{fontFamily:'monospace',fontSize:'10px',color:'#f1dfb5'}).setOrigin(.5,1));room.add([healthBars,...health]);
-      const title=scene.add.text(ROOM.width/2,20,"Дом лагеря",{fontFamily:"monospace",fontSize:"14px",color:"#f0d39c"}).setOrigin(.5,0),
-        hint=scene.add.text(ROOM.width/2,ROOM.height-22,"",{fontFamily:"monospace",fontSize:"10px",color:"#f0d39c"}).setOrigin(.5,0);room.add([title,hint]);
-      if(scene.coopCamera) (i?scene.camera:scene.coopCamera.second).ignore(root);
-      this.entries.push({root,bg,room,avatars,hint,healthBars,health});
+      const bg=scene.add.graphics(),room=scene.add.container(0,0),root=scene.add.container(0,0,[bg,room]).setScrollFactor(0).setDepth(LAYERS.eyes+1).setVisible(false);
+      room.add(scene.add.image(0,0,key).setOrigin(0));
+      const house=[],shop=[],add=(frame,x,y,group,scale=2)=>{const image=scene.addImage(frame,x,y).setScale(scale);room.add(image);group?.push(image);return image;};
+      add('camp.mat',ROOM.exit.x,ROOM.exit.y,null,2);
+      add('fortress.chest.closed',ROOM.chest.x,ROOM.chest.y,house);
+      add('world.bench',ROOM.bed.x,ROOM.bed.y+12,house,2.2);add('camp.mat',ROOM.bed.x,ROOM.bed.y,house,2.2);
+      add('world.clothes.0',ROOM.bed.x-35,ROOM.bed.y-5,house,1.4);
+      add('person.worker3-walk-down-0',ROOM.manager.x,ROOM.manager.y,house);
+      add('sawmill.bench',ROOM.manager.x,ROOM.manager.y+42,house,1.2);
+      add('camp.crate',95,330,house,1.4);
+      add('person.buyer1-walk-down-0',ROOM.seller.x,ROOM.seller.y,shop);
+      add('sawmill.bench',ROOM.seller.x,ROOM.seller.y+45,shop,1.7);
+      add('sawmill.woodRack',105,170,shop,1.3);add('world.supplies',525,180,shop,2.4);
+      add('camp.crate',515,300,shop,1.8);add('world.tools',105,300,shop,2);
+      const avatars=actors.map((_,j)=>add(`${j?'coop2.':''}characters.player.down.0`,320,320));
+      const healthBars=scene.add.graphics(),health=actors.map(()=>scene.add.text(0,0,'',{fontFamily:'Arial',fontSize:'12px',color:'#f5e5bb'}).setOrigin(.5,1));room.add([healthBars,...health]);
+      const title=scene.add.text(ROOM.width/2,20,'',{fontFamily:'Arial',fontSize:'20px',color:'#f0d39c'}).setOrigin(.5,0),
+        hint=scene.add.text(ROOM.width/2,ROOM.height-17,'',{fontFamily:'Arial',fontSize:'13px',color:'#f0d39c',backgroundColor:'#162b23',padding:{x:8,y:4}}).setOrigin(.5,1);room.add([title,hint]);
+      if(scene.coopCamera)(i?scene.camera:scene.coopCamera.second).ignore(root);
+      this.entries.push({root,bg,room,house,shop,avatars,healthBars,health,title,hint});
     });
   }
-  render() {
+  layout(camera){
+    const available=Math.min(camera.height,this.scene.scale.height-dockInset(this.scene)-12-camera.y);
+    const scale=Math.min((camera.width-24)/ROOM.width,(available-175)/ROOM.height);
+    return {scale,x:(camera.width-ROOM.width*scale)/2,y:165};
+  }
+  render(){
     const s=this.scene,actors=s.core.actors||[s.core];
     this.entries.forEach((e,i)=>{
-      const a=actors[i], camera=i?s.coopCamera.second:s.camera, inside=!!a.player.room;
+      const a=actors[i],camera=i?s.coopCamera.second:s.camera,inside=!!a.player.room&&(i===0||!!s.coopCamera?.split);
       e.root.setVisible(inside);if(!inside)return;
-      e.bg.clear().fillStyle(0x121914).fillRect(0,0,camera.width,camera.height);
-      const scale=Math.min(camera.width/ROOM.width,camera.height/ROOM.height);
-      e.room.setScale(scale).setPosition((camera.width-ROOM.width*scale)/2,(camera.height-ROOM.height*scale)/2);
-      e.healthBars.clear();actors.forEach((actor,j)=>{
-        const p=actor.player, avatar=e.avatars[j];avatar.setVisible(!!p.room);e.health[j].setVisible(!!p.room);if(!p.room)return;
-        const dir=p.direction==="up"?"up":["left","right"].includes(p.direction)?"side":"down",
-          key=`${j?"coop2.":""}characters.player.${dir}.${p.room.moving?Math.floor(s.core.elapsed*10)%4:0}`;
-        s.assets.setFrame(avatar,key);avatar.setPosition(p.room.x,p.room.y).setFlipX(p.direction==="left");
-        const y=p.room.y-avatar.displayHeight*avatar.originY-12;
-        e.healthBars.fillStyle(0x1a2422).fillRect(p.room.x-23,y-1,46,6).fillStyle(0x7fb582).fillRect(p.room.x-22,y,44*actor.state.health/actor.state.maxHealth,4);
-        e.health[j].setText(`${actor.state.health}/${actor.state.maxHealth} HP`).setPosition(p.room.x,y-3);
+      const kind=a.player.room.id||'house',layout=this.layout(camera);e.bg.clear().fillStyle(0x101c18).fillRect(0,0,camera.width,camera.height);
+      e.room.setScale(layout.scale).setPosition(layout.x,layout.y);e.house.forEach(o=>o.setVisible(kind==='house'));e.shop.forEach(o=>o.setVisible(kind==='shop'));
+      e.title.setText(kind==='shop'?'Лавка лагеря':'Дом лагеря');e.healthBars.clear();
+      actors.forEach((actor,j)=>{
+        const p=actor.player,r=p.room,visible=!!r&&(r.id||'house')===kind;e.avatars[j].setVisible(visible);e.health[j].setVisible(visible);if(!visible)return;
+        const dir=p.direction==='up'?'up':['left','right'].includes(p.direction)?'side':'down';
+        s.assets.setFrame(e.avatars[j],`${j?'coop2.':''}characters.player.${dir}.${r.moving?Math.floor(s.core.elapsed*10)%4:0}`);
+        e.avatars[j].setPosition(r.x,r.y).setFlipX(p.direction==='left');
+        const y=r.y-e.avatars[j].displayHeight*e.avatars[j].originY-12;
+        e.healthBars.fillStyle(0x172c23).fillRect(r.x-24,y-1,48,6).fillStyle(0x8ac08c).fillRect(r.x-23,y,46*actor.state.health/actor.state.maxHealth,4);
+        e.health[j].setText(`${actor.state.health}/${actor.state.maxHealth} HP`).setPosition(r.x,y-3);
       });
-      e.hint.setText('E/Enter: сундук — выбрать ресурсы · дверь — выйти');
+      const r=a.player.room,exit=Math.hypot(r.x-ROOM.exit.x,r.y-ROOM.exit.y)<70;
+      e.hint.setText(a.camp.atSeller()?'E / Enter — поговорить с продавцом':a.camp.atManager()?'E / Enter — помощники':a.camp.atChest()?'E / Enter — склад':exit?'E / Enter — выйти':kind==='shop'?'Подойдите к продавцу':'Склад слева · бригадир справа');
+      if(a.player.room.interactTarget){
+        const pending=a.player.room.interactTarget,ready=pending==='seller'?a.camp.atSeller():pending==='manager'?a.camp.atManager():a.camp.atChest();
+        if(ready&&!a.player.menuOpen&&!s.core.paused){delete a.player.room.interactTarget;s.core.withActor?s.core.withActor(i,()=>this.interact(a)):this.interact(a);}
+      }
     });
   }
-  pointer(pointer,i) {
-    const s=this.scene,c=s.core.actors?.[i]||s.core,p=c.player.room,camera=i?s.coopCamera.second:s.camera;
-    if(!p)return;
-    const scale=Math.min(camera.width/ROOM.width,camera.height/ROOM.height),
-      target={x:(pointer.x-camera.x-(camera.width-ROOM.width*scale)/2)/scale,y:(pointer.y-camera.y-(camera.height-ROOM.height*scale)/2)/scale};
-    if(Math.hypot(target.x-ROOM.exit.x,target.y-ROOM.exit.y)<45 && c.camp.exit()) return;
-    if(Math.hypot(target.x-ROOM.chest.x,target.y-ROOM.chest.y)<55 && Math.hypot(p.x-ROOM.chest.x,p.y-ROOM.chest.y)<90){s.campDesk.open('storage');return;}
-    p.target={x:Math.max(30,Math.min(ROOM.width-30,target.x)),y:Math.max(100,Math.min(ROOM.height-28,target.y))};
+  interact(c=this.scene.core){
+    const s=this.scene;
+    if(c.camp.atSeller())return s.shop.open();
+    if(c.camp.atManager())return s.workerUi.open();
+    if(c.camp.atChest())return s.campDesk.open('storage');
+    return c.camp.exit();
   }
-  destroy(){for(const e of this.entries)e.root.destroy(true);this.scene.textures.remove("camp-room-floor");}
+  pointer(pointer,i){
+    const s=this.scene,c=s.core.actors?.[i]||s.core,p=c.player.room,camera=i&&s.coopCamera?.split?s.coopCamera.second:s.camera;
+    if(!p)return;const l=this.layout(camera),target={x:(pointer.x-camera.x-l.x)/l.scale,y:(pointer.y-camera.y-l.y)/l.scale};
+    const site=(p.id||'house')==='shop'?ROOM.seller:Math.hypot(target.x-ROOM.chest.x,target.y-ROOM.chest.y)<65?ROOM.chest:ROOM.manager;
+    if(Math.hypot(target.x-site.x,target.y-site.y)<65&&Math.hypot(p.x-site.x,p.y-site.y)<90){this.interact(c);return;}
+    if(Math.hypot(target.x-ROOM.exit.x,target.y-ROOM.exit.y)<40&&c.camp.exit())return;
+    if(Math.hypot(target.x-site.x,target.y-site.y)<65){p.target={x:site.x,y:site.y+75};p.interactTarget=site===ROOM.seller?'seller':site===ROOM.chest?'chest':'manager';}
+    else {delete p.interactTarget;p.target={x:Math.max(30,Math.min(ROOM.width-30,target.x)),y:Math.max(100,Math.min(ROOM.height-28,target.y))};}
+  }
+  destroy(){for(const e of this.entries)e.root.destroy(true);this.scene.textures.remove('camp-room-floor');}
 }

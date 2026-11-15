@@ -25,9 +25,9 @@ export class WorkerView {
       system = scene.core.workers,
       d = system.data,
       visible = hasCampBuilding(scene.core.state,"tent");
-    this.depot.setVisible(visible);
-    this.depot.input.enabled = visible;
-    this.label.setVisible(visible);
+    this.depot.setVisible(false);
+    this.depot.input.enabled = false;
+    this.label.setVisible(false);
     const stored=d.logTarget==='store'?scene.core.state.logStore.length:d.stock.length;
     const key = `${stored}:${system.crew.length}:${system.slots()}:${d.autoSell}:${d.logTarget}`;
     if (key !== this.labelKey) {
@@ -36,10 +36,10 @@ export class WorkerView {
         `Помощники ${system.crew.length}/${system.slots()} · E/Enter`,
       );
     }
-    scene.worldHints.offer(this.label, WORKERS.depot, { eligible: visible, priority: 50 });
+    scene.worldHints.offer(this.label, WORKERS.depot, { eligible: false, priority: 50 });
     this.stock.forEach((log, i) =>
       log
-        .setVisible(visible && i < stored)
+        .setVisible(false)
         .setPosition(
           WORKERS.depot.x + 12 + (i % 2) * 24,
           WORKERS.depot.y - 8 - Math.floor(i / 2) * 9,

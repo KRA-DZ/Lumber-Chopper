@@ -3,6 +3,8 @@ import { workerAppearance } from "./appearances.js";
 import { NIGHT_START } from "./cycle.js";
 import { createWorkerJobs, WORKER_ROLES, workerRole, workerSlots, WORKER_JOBS } from "./worker-jobs.js";
 import { campStorageLimit, materialLimit } from "./camp-industry-config.js";
+import {CAMP,CAMP_HUB} from './camp-layout.js';
+import {ROOM} from './camp-services.js';
 
 export const WORKERS = Object.freeze({
   max: 4,
@@ -10,7 +12,7 @@ export const WORKERS = Object.freeze({
   upgradePrices: [200, 500],
   stockLimit: 30,
   logValue: 8,
-  depot: Object.freeze({ x: 1710, y: 1780 }),
+  depot: Object.freeze({x:CAMP_HUB.store.x+45,y:CAMP_HUB.store.y+28}),
   recallTime: NIGHT_START - 60,
   saleInterval: 0.8,
   pathInterval: 0.3,
@@ -52,8 +54,9 @@ export function createWorkers({
     saleTimer = 0;
   const available = () => hasCampBuilding(state,"tent");
   const atDepot = () =>
-    !player.room && !player.menuOpen && distance(player, WORKERS.depot) < 140 &&
-    nav.hasLineOfSight(player, WORKERS.depot);
+    !player.menuOpen && (player.room?(player.room.id||'house')==='house'&&Math.hypot(player.room.x-ROOM.manager.x,player.room.y-ROOM.manager.y)<100:
+      (distance(player, WORKERS.depot) < 140 && nav.hasLineOfSight(player, WORKERS.depot)||
+      !hasCampBuilding(state,'house')&&hasCampBuilding(state,'tent')&&Math.hypot(player.x-CAMP.tent.x,player.y-CAMP.tent.y-65)<100));
   const speed = () => 140 + data.level * 15;
   const capacity = () => 4 + data.level * 2;
   const chopSeconds = () => 2.5 - data.level * 0.4;
@@ -62,7 +65,7 @@ export function createWorkers({
   const jobs=createWorkerJobs({state,world,regions,nav,defenses,data,emit,mill});
   const logStock=()=>data.logTarget==="store"?state.logStore:data.stock;
   const stockLimit=()=>data.logTarget==="store"?campStorageLimit(state):WORKERS.stockLimit;
-  const canManage=()=>!state.gameOver&&state.health>0&&!player.menuOpen&&!player.room;
+  const canManage=()=>!state.gameOver&&state.health>0&&!player.menuOpen&&(!player.room||(player.room.id||'house')==='house');
   function changed(type, event = {}) {
     emit(type, event);
   }

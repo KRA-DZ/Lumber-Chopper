@@ -10,12 +10,12 @@ function leaveAndReturn(session,c) {
   place(c,{x:c.build.x+140,y:c.build.y});session.update(.01);
   place(c,c.build);session.update(.01);
 }
-test("first entry requests a free choice even empty handed; cancel never spends wood",()=>{
+test("passing the counter opens no unsolicited menu and never spends wood",()=>{
   const events=[],c=createSimulation({regional:true,emit:t=>events.push(t)});
-  place(c,c.build);c.update(.01);assert.equal(events.filter(t=>t==="build-choice").length,1);
+  place(c,c.build);c.update(.01);assert.equal(events.filter(t=>t==="build-choice").length,0);
   c.forestry.addCargo(10);c.update(1);assert.equal(c.state.wood,1);assert.equal(c.state.buildWood,0);
   assert.equal(c.state.campLevel,0);assert.equal(c.camp.lit(),false);
-  leaveAndReturn(c,c);assert.equal(events.filter(t=>t==="build-choice").length,2);
+  leaveAndReturn(c,c);assert.equal(events.filter(t=>t==="build-choice").length,0);
 });
 test("every project can be first, only its own effects activate, and payment requires re-entry",()=>{
   for(const project of CAMP_PROJECTS.filter(p=>p.stage<4)){
@@ -30,7 +30,7 @@ test("every project can be first, only its own effects activate, and payment req
     assert.equal(c.survival.isSafe(c.player),false);
     if(project.id!=="fire")assert.ok(c.nav.isWalkable(1600,1600),"No invisible fire collider");
     assert.ok(!c.builder.choices.some(p=>p.id===project.id));assert.equal(c.builder.choose(project.id),false);
-    assert.equal(events.filter(t=>t==="build-choice").length,2);
+    assert.equal(events.filter(t=>t==="build-choice").length,0);
     if(project.id==="house"){place(c,CAMP_SERVICE.door);assert.ok(c.camp.enter());}
   }
 });

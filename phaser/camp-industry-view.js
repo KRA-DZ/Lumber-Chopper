@@ -34,7 +34,7 @@ export class CampIndustryView {
         text+=` · ${RECIPES.find(r=>r.id===job.recipe).name} ${Math.ceil(job.remaining)} с`;
         bars.fillStyle(0x263c30,.9).fillRect(p.site.x-40,p.site.y+22,80,6).fillStyle(0xe0c07d).fillRect(p.site.x-39,p.site.y+23,78*(1-job.remaining/job.total),4);
       }
-      e.label.setText(text);s.worldHints.offer(e.label,p.site,{eligible:visible,range:230,priority:65});
+      e.label.setVisible(false);
     }
     const order=c.orders.current,active=c.orders.data.active;
     this.orderLabel.setText(order?`Заказ: ${order.name}\n${order.resource==="logs"?active.logs.length+"/"+order.amount:materialCostText({[order.resource]:order.amount})} · до ночи ${countdown(c.orders.secondsLeft)}`:"Заказы обоза · E/Enter у продажи");
