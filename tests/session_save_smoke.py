@@ -22,6 +22,7 @@ try:
             url=f'http://127.0.0.1:{server.server_port}/'+('dist/' if mobile else '')
             q.goto(url);q.wait_for_selector('#heroDialog[open]')
             assert not q.locator('[data-session-continue]').is_visible()
+            q.locator('.hero-nav [data-hero-page="settings"]').click()
             if not mobile:q.locator('[name=players][value="2"]').check()
             q.locator('[name=tempo]').select_option('quick');choose_hero(q)
             q.evaluate('''window.g=lumberPhaser;window.w=g.scene;window.m=g.core;w.manual=true;

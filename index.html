@@ -355,53 +355,6 @@
       box-shadow: none;
       aspect-ratio: auto;
     }
-    .hero-choices {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      border: 0;
-      padding: 0;
-      margin: 16px 0;
-    }
-    .hero-choices legend {
-      padding: 0 0 10px;
-    }
-    .hero-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      border: 2px solid #61734b;
-      padding: 12px 6px;
-      cursor: pointer;
-      text-align: center;
-    }
-    .hero-card:has(input:checked) {
-      border-color: #f0d58c;
-      background: #354f35;
-    }
-    .hero-card:focus-within {
-      outline: 2px solid #f0d58c;
-      outline-offset: 3px;
-    }
-    .hero-card input {
-      width: 20px;
-      height: 20px;
-      accent-color: #d9b66d;
-    }
-    .hero-card img {
-      object-fit: contain;
-      image-rendering: pixelated;
-      max-width: 100%;
-    }
-    .hero-card span {
-      font-size: 12px;
-      color: #bacd9d;
-    }
-    [data-hero-start] {
-      width: 100%;
-      min-height: 48px;
-    }
     #loading {
       position: absolute;
       inset: 0;
@@ -641,24 +594,28 @@
     <button type="button" data-restart>Начать заново</button>
   </dialog>
   <dialog id="heroDialog" aria-labelledby="heroTitle">
-    <form>
-      <small>НОВАЯ ЛЕСНАЯ СМЕНА</small>
-      <h2 id="heroTitle">Кто отправится в лес?</h2>
-      <section aria-label="Сохранённая игра">
-        <p data-session-info role="status"></p>
-        <p data-session-goal></p>
-        <button type="button" data-session-continue hidden>Продолжить игру</button>
-      </section>
-      <label>Имя для местных рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
-      <label>Темп смены <select name="tempo"><option value="normal">Обычный — 10 минут за сутки</option><option value="quick">Быстрый — 3 минуты света и 1 минута ночи</option></select></label>
-      <p>Можно продолжить сохранённую игру или начать новую. Новая игра заменяет сохранённый забег; рекорды и открытые украшения остаются.</p>
-      <fieldset>
-        <legend>Режим игры</legend>
-        <label><input type="radio" name="players" value="1" checked /> Один игрок</label>
-        <label><input type="radio" name="players" value="2" /> Вдвоём на одном компьютере</label>
-        <p>Вдвоём: игрок 1 — WASD и E, игрок 2 — стрелки и Enter. При удалении экран разделяется. Для помощи товарищу удерживайте E / Enter рядом с ним 3 секунды.</p>
-      </fieldset>
-      <p>Выберите героя и цвета. Сила, скорость и вместимость одинаковы. Вдвоём каждый выбирает внешность и прокачивается отдельно.</p>
+    <form class="hero-menu">
+      <header class="hero-heading">
+        <h2 id="heroTitle">Лесная смена</h2>
+        <p data-hero-error role="alert"></p>
+      </header>
+      <nav class="hero-nav" aria-label="Подготовка к игре">
+        <button type="button" data-hero-page="save" hidden>Сохранение</button>
+        <button type="button" data-hero-page="heroes">Герой</button>
+        <button type="button" data-hero-page="colors">Цвета</button>
+        <button type="button" data-hero-page="settings">Настройки</button>
+      </nav>
+      <div class="hero-stage">
+        <section data-hero-screen="save" class="hero-save" aria-label="Сохранённая игра" hidden>
+          <h3>Продолжить смену</h3>
+          <p data-session-info role="status"></p>
+          <p data-session-goal></p>
+          <div class="hero-save-actions">
+            <button type="button" data-session-continue hidden>Продолжить</button>
+            <button type="button" data-hero-page="heroes">Новая игра</button>
+          </div>
+        </section>
+        <section data-hero-screen="heroes" aria-label="Выбор персонажа">
       <fieldset class="hero-choices">
         <legend>Персонаж игрока 1</legend>
         <label class="hero-card">
@@ -669,7 +626,7 @@
             width="72"
             height="104"
           />
-          <b>Путешественник</b><span>Вариант 2</span>
+          <b>Путешественник</b>
         </label>
         <label class="hero-card">
           <input type="radio" name="appearance" value="woodcutter" />
@@ -679,12 +636,31 @@
             width="72"
             height="104"
           />
-          <b>Лесорубка</b><span>Вариант 3</span>
+          <b>Лесорубка</b>
         </label>
       </fieldset>
-      <div data-hero-customizer class="hero-customizer"></div>
-      <p data-hero-error role="alert"></p>
-      <button type="submit" data-hero-start>Начать смену</button>
+        </section>
+        <section data-hero-screen="colors" aria-label="Цвета персонажа" hidden>
+          <div class="hero-player-nav" data-hero-player-nav hidden>
+            <button type="button" data-customize-player="0">Игрок 1</button>
+            <button type="button" data-customize-player="1">Игрок 2</button>
+          </div>
+          <div data-hero-customizer class="hero-customizer"></div>
+        </section>
+        <section data-hero-screen="settings" class="hero-settings" aria-label="Настройки смены" hidden>
+          <label>Имя для рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
+          <label>Темп смены <select name="tempo"><option value="normal">Обычный · 10 мин</option><option value="quick">Быстрый · 4 мин</option></select></label>
+          <fieldset>
+            <legend>Режим игры</legend>
+            <label><input type="radio" name="players" value="1" checked /> Соло</label>
+            <label><input type="radio" name="players" value="2" /> Вдвоём</label>
+            <p>Игрок 1 — WASD и E. Игрок 2 — стрелки и Enter.</p>
+          </fieldset>
+        </section>
+      </div>
+      <div class="hero-actions">
+        <button type="submit" data-hero-start>Начать смену</button>
+      </div>
     </form>
   </dialog>
   <script src="./vendor/phaser/phaser.min.js"></script>

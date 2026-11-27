@@ -4,45 +4,62 @@ import {heroPreviewFrame} from './hero-color-art.js';
 
 export function createHeroCustomizer(scene,form){
   const root=form.querySelector('[data-hero-customizer]'),pack=scene.registry.get('peoplePack');
+  const playerNav=form.querySelector("[data-hero-player-nav]");
+  let activePlayer=0;
   root.replaceChildren();let secondTouched=false,request=0,last=-Infinity;
   const panels=[0,1].map(i=>{
     const field=document.createElement('fieldset');field.dataset.heroPlayer=String(i);
-    const legend=document.createElement('legend');legend.textContent=i?'Игрок 2: герой и цвета':'Игрок 1: цвета';field.append(legend);
+    field.setAttribute("aria-label", `Цвета игрока ${i+1}`);
+    const settings=document.createElement("div");settings.className="hero-color-settings";
     let appearance=null;
     if(i){const label=document.createElement('label');label.textContent='Персонаж ';
       appearance=document.createElement('select');appearance.name='appearance2';
       for(const [id,data] of Object.entries(HERO_APPEARANCES))appearance.add(new Option(data.name,id));
-      appearance.value='woodcutter';label.append(appearance);field.append(label);
+      appearance.value='woodcutter';label.append(appearance);settings.append(label);
     }
     const canvas=document.createElement('canvas');canvas.width=192;canvas.height=208;canvas.className='hero-live-preview';canvas.dataset.heroPreview=String(i);canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`Предпросмотр героя игрока ${i+1}`);field.append(canvas);
     const controls=document.createElement('div');controls.className='hero-preview-controls';
     const turn=document.createElement('button');turn.type='button';turn.dataset.heroTurn=String(i);turn.textContent='Повернуть';
     const motion=document.createElement('select');motion.dataset.heroMotion=String(i);motion.setAttribute('aria-label','Действие в предпросмотре');
     for(const [id,name] of [['idle','Покой'],['walk','Ходьба'],['carry','Переноска'],['strike','Рубка']])motion.add(new Option(name,id));
-    motion.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'idle':'walk';controls.append(turn,motion);field.append(controls);
+    motion.value=matchMedia('(prefers-reduced-motion: reduce)').matches?'idle':'walk';controls.append(turn,motion);settings.append(controls);
     const presets=document.createElement('div');presets.className='hero-presets';
-    for(const [id,palette] of Object.entries(HERO_PALETTES)){const b=document.createElement('button');b.type='button';b.dataset.heroPreset=id;b.dataset.heroOwner=String(i);b.textContent=palette.name;presets.append(b);}field.append(presets);
+    for(const [id,palette] of Object.entries(HERO_PALETTES)){const b=document.createElement('button');b.type='button';b.dataset.heroPreset=id;b.dataset.heroOwner=String(i);b.textContent=palette.name;presets.append(b);}settings.append(presets);
     const selects={};
     for(const [k,name] of [['hair','Волосы'],['jacket','Куртка'],['pants','Брюки']]){
       const label=document.createElement('label');label.textContent=name+' ';const select=document.createElement('select');select.name=`${k}${i}`;select.dataset.heroMaterial=k;
       for(const [id,p] of Object.entries(HERO_PALETTES))select.add(new Option(p.name,id));
       label.append(select);field.append(label);selects[k]=select;
     }
+    field.append(settings);
     root.append(field);return {field,appearance,canvas,motion,selects,direction:0,cache:new Map(),signature:''};
   });
   function choices(){return panels.map((p,i)=>({appearance:normalizeAppearance(i?p.appearance.value:new FormData(form).get('appearance')),colors:normalizeHeroColors(Object.fromEntries(HERO_MATERIALS.map(k=>[k,p.selects[k].value])))}));}
   const update=event=>{
     if(event?.target.name==='appearance2')secondTouched=true;
     if(event?.target.name==='appearance'&&!secondTouched)panels[1].appearance.value=new FormData(form).get('appearance')==='woodcutter'?'traveler':'woodcutter';
-    panels[1].field.hidden=new FormData(form).get('players')!=='2';last=-Infinity;
+    const coop=new FormData(form).get("players")==="2";
+    if(!coop)activePlayer=0;
+    playerNav.hidden=!coop;
+    for(const button of playerNav.querySelectorAll("button"))
+      button.setAttribute("aria-pressed",String(+button.dataset.customizePlayer===activePlayer));
+    for(const [i,panel] of panels.entries())panel.field.hidden=i!==activePlayer;
+    last=-Infinity;
   };
   const click=event=>{
     const preset=event.target.closest('[data-hero-preset]'),turn=event.target.closest('[data-hero-turn]');
     if(preset){for(const select of Object.values(panels[+preset.dataset.heroOwner].selects))select.value=preset.dataset.heroPreset;last=-Infinity;}
     if(turn){panels[+turn.dataset.heroTurn].direction=(panels[+turn.dataset.heroTurn].direction+1)%4;last=-Infinity;}
   };
+  const switchPlayer=event=>{
+    const button=event.target.closest("[data-customize-player]");
+    if(!button)return;
+    activePlayer=Number(button.dataset.customizePlayer);
+    update();
+  };
+  playerNav.addEventListener("click",switchPlayer);
   function draw(time){
-    if(time-last>=125&&!document.hidden){last=time;const profiles=choices();
+    if(time-last>=125&&!document.hidden&&!root.closest('[data-hero-screen]').hidden){last=time;const profiles=choices();
       panels.forEach((p,i)=>{
         if(p.field.hidden)return;
         const profile=profiles[i],role=HERO_APPEARANCES[profile.appearance].role,dir=['down','side','up','side'][p.direction],action=p.motion.value;
@@ -58,5 +75,5 @@ export function createHeroCustomizer(scene,form){
     request=requestAnimationFrame(draw);
   }
   form.addEventListener('change',update);root.addEventListener('click',click);update();request=requestAnimationFrame(draw);
-  return {choices,dispose(){cancelAnimationFrame(request);form.removeEventListener('change',update);root.removeEventListener('click',click);for(const p of panels)p.cache.clear();}};
+  return {choices,dispose(){cancelAnimationFrame(request);form.removeEventListener('change',update);root.removeEventListener('click',click);playerNav.removeEventListener('click',switchPlayer);for(const p of panels)p.cache.clear();}};
 }
