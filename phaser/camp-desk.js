@@ -4,7 +4,7 @@ import {campIcon,materialChips,MATERIAL_FRAMES} from './camp-icons.js';
 import {CARGO_MATERIALS,cargoAmount} from '../game/material-cargo.js';
 import {visibleMenuActions} from './menu-navigation.js';
 import { RECIPES, CAMP_UPGRADES, INDUSTRY_PROJECTS, MATERIAL_NAMES, materialCostText } from "../game/camp-industry-config.js";
-import { BUYER_ORDERS } from "../game/buyer-orders.js";
+import { BUYER_ORDERS, ORDER_ITEM_NAMES } from "../game/buyer-orders.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
 import { countdown } from "../game/first-days.js";
 import { appendRaidReadiness } from "./camp-progress-ui.js";
@@ -81,13 +81,15 @@ export function createCampDesk(scene){
         const hint=document.createElement('p');hint.className='camp-muted';hint.textContent='Материалы принимаются из рук у мастера.';content.append(hint);
       }
     }else if(section==="orders"){
-      const current=c.orders.current,active=c.orders.data.active;
+      const current=c.orders.current;
+      const names={...MATERIAL_NAMES,...ORDER_ITEM_NAMES};
       if(current){
-        row("order:deliver",`Сдать заказ: ${current.name}`,`${current.amount} ${MATERIAL_NAMES[current.resource]}, награда ${current.reward} монет. ${current.resource==="logs"?`Передано: ${active.logs.length}/${current.amount}.`:"Материалы берутся из общего запаса целиком."} До ночи ${countdown(c.orders.secondsLeft)}. Брёвна на золотой платформе идут в заказ первыми.`,()=>c.orders.deliver(true));
-        row("order:cancel","Отменить заказ","Переданные брёвна можно забрать здесь обратно, без потери стоимости.",()=>c.orders.cancel());
+        const source=current.resource==="logs"?"Брёвна принимают на площадке продажи.":ORDER_ITEM_NAMES[current.resource]?"Добыча сдаётся из вашего рюкзака.":"Материалы берутся с общего склада.";
+        row("order:deliver",current.name,`${names[current.resource]}: ${c.orders.progress(current)}/${current.amount} · ${current.reward} монет. ${source} До ночи ${countdown(c.orders.secondsLeft)}.`,()=>c.orders.deliver(true),"",{cta:"Сдать заказ"});
+        row("order:cancel","Отменить заказ",current.resource==="logs"?"Переданные брёвна можно забрать у площадки продажи.":"Вы сможете выбрать другой заказ до заката.",()=>c.orders.cancel(),"",{cta:"Отменить"});
       }else for(const o of BUYER_ORDERS){
-        const reason=c.orders.data.refund.length?"Сначала заберите возврат":c.orders.data.completedDay===s.calendarDay?"Заказ сегодня уже выполнен":c.orders.secondsLeft<=0?"Вернитесь утром":!c.orders.near()?"Подойдите к площадке продажи":o.resource!=="logs"&&!hasCampBuilding(s,"workbench")?"Нужен верстак":"";
-        row(`order:accept:${o.id}`,o.name,`${o.amount} ${MATERIAL_NAMES[o.resource]} → ${o.reward} монет. Срок — до ночи. Один заказ в день, обычные продажи сохраняются.`,()=>c.orders.accept(o.id),reason);
+        const reason=c.orders.data.refund.length?"Сначала заберите возврат":c.orders.data.completedDay===s.calendarDay?"Заказ сегодня уже выполнен":c.orders.secondsLeft<=0?"Вернитесь утром":!c.orders.near()?"Подойдите к площадке продажи":o.workbench&&!hasCampBuilding(s,"workbench")?"Нужен верстак":"";
+        row(`order:accept:${o.id}`,o.name,`${o.amount} ${names[o.resource]} → ${o.reward} монет. Срок — до ночи. Один заказ в день, обычные продажи сохраняются.`,()=>c.orders.accept(o.id),reason);
       }
       if(c.orders.data.refund.length)row("order:refund",`Забрать возврат · ${c.orders.data.refund.length} брёвен`,"Выдаётся в руки до личной вместимости. Новый заказ доступен после возврата.",()=>c.orders.takeRefund());
     }else{

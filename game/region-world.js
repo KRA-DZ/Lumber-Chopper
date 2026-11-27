@@ -1,3 +1,4 @@
+import { CAMP as CAMP_LAYOUT } from "./camp-layout.js";
 import {FOREST_CAMP,LOOKOUT,forestTaskReserved} from "./forest-tasks-layout.js";
 import { CENTER } from "./config.js";
 import {STREAM_OUTLINE,STREAM_CROSSINGS,streamWater,streamCollision,streamReserved} from "./camp-stream.js";
@@ -284,7 +285,9 @@ export function createRegionWorld(regions, state = {worldWorks:initialWorldWorks
     const bushes=berryBushes.filter(p=>p.regionId===region.id),rocks=boulders.filter(p=>p.regionId===region.id);
     const targets=[...bushes.filter(p=>!p.decorative),...locations.filter(p=>p.regionId===region.id).map(p=>p.entrance),
       ...[FOREST_CAMP,LOOKOUT].filter(p=>p.regionId===region.id),...clues.filter(p=>regionAt(p.x,p.y)?.id===region.id)];
-    const branchSafe=(x,y)=>!waterCollision(x,y,28)&&!worksReserved(x,y,35)&&
+    const stall=CAMP_LAYOUT.stall;
+    const branchSafe=(x,y)=>(region.id!=="0:0"||Math.abs(x-stall.x)>94||Math.abs(y-stall.y+30)>44)&&
+      !waterCollision(x,y,28)&&!worksReserved(x,y,35)&&
       !locations.some(l=>insideLocation(l,x,y,40))&&rocks.every(p=>Math.hypot(p.x-x,p.y-y)>85);
     const branches=activityBranches(trailBins.get(region.id),targets,branchSafe);
     trailBins.get(region.id).push(...branches);trails.push(...branches);

@@ -166,3 +166,105 @@ footer .game-actions { grid-template-columns:repeat(5,minmax(0,1fr)); }
   .quantity-picker {gap:2px;flex-wrap:wrap;justify-content:center;}
   .quantity-picker button {padding:5px 7px;font-size:12px;min-width:27px;}
 }
+
+/* Shared surfaces for the dock, ledger, shop and field journal. */
+:root {
+  --ui-bg:#182623;
+  --ui-card:#23332d;
+  --ui-line:#516359;
+  --ui-gold:#edc47e;
+  --ui-text:#f7edda;
+}
+dialog, .personal-shop, .personal-builder {
+  box-sizing:border-box;
+  border:1px solid #a28a5f;
+  border-radius:8px;
+  box-shadow:inset 0 3px 0 #bc9358, 0 16px 48px #09120fe0;
+  overscroll-behavior:contain;
+  scrollbar-color:#8a795c var(--ui-bg);
+}
+dialog {
+  max-height:calc(100dvh - 24px);
+  line-height:1.45;
+}
+dialog::backdrop { background:#0a1512b8; }
+dialog h2, .personal-shop h2, .personal-builder h2 {
+  color:var(--ui-text);
+  font-weight:750;
+  font-size:clamp(20px,4vw,25px);
+}
+dialog h3 { color:var(--ui-gold); }
+dialog p { color:#ced9cc; overflow-wrap:anywhere; }
+dialog .dialog-top, #campDesk .dialog-top, #workerDialog .dialog-top {
+  align-items:center;
+  background:var(--ui-bg);
+  border-bottom:1px solid var(--ui-line);
+  margin-bottom:12px;
+}
+.dialog-top h2 { margin:0; min-width:0; }
+.dialog-top button, [data-menu-back], [data-hero-close] {
+  flex-shrink:0;
+  color:var(--ui-text);
+  background:#2d3d34;
+  border-color:#788174;
+}
+dialog button, .personal-shop button, .personal-builder button { min-height:44px; }
+dialog button[aria-disabled=true], .personal-shop button[aria-disabled=true] {
+  border-color:#627065;
+  color:#cad1c7;
+  background:#28362f;
+}
+dialog :is(.build-option,.activity-card,.camp-card,.worker-cell,.inventory-slot),
+.personal-builder .build-option {
+  color:var(--ui-text);
+  background:var(--ui-card);
+  border-color:var(--ui-line);
+  box-shadow:inset 0 1px 0 #e1dec410;
+}
+.activity-card { margin-block:8px; }
+.activity-card p { margin-block:0 8px; }
+.inventory-detail, [data-session-goal]:not(:empty) {
+  padding:10px 12px;
+  border-left:3px solid var(--ui-gold);
+  background:#212f29;
+}
+[data-session-goal]:empty { display:none; }
+.upgrade-cell, .personal-shop .upgrade-cell {
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  grid-template-rows:auto 1fr auto auto;
+  justify-items:start;
+  align-items:center;
+  gap:5px 10px;
+  min-height:132px;
+  height:100%;
+  color:var(--ui-text);
+  background:var(--ui-card);
+  border-color:var(--ui-line);
+  text-align:left;
+}
+.upgrade-cell > :is(img,span:not(.upgrade-effect)) { grid-row:1/3; }
+.upgrade-cell > .upgrade-effect {
+  font-size:12px;
+  line-height:1.35;
+  color:#cdd8c8;
+  align-self:start;
+}
+.upgrade-cell meter, .upgrade-cell small { grid-column:2; }
+.upgrade-cell small { color:var(--ui-gold); font-weight:700; }
+.shop-item[data-recommended=true] .upgrade-cell { border-color:var(--ui-gold); }
+.camp-tabs button[aria-pressed=true] { outline:2px solid var(--ui-gold); outline-offset:1px; }
+.game-live footer .game-actions button { min-height:44px; }
+@media(max-width:500px) {
+  dialog, #campDesk, #workerDialog { width:calc(100vw - 16px); padding:12px; }
+  .dialog-top { gap:8px; }
+  .dialog-top button { padding-inline:8px; font-size:12px; }
+  #campDesk .dialog-top, #workerDialog .dialog-top { top:-12px; }
+  .upgrade-grid,[data-items].upgrade-grid { grid-template-columns:1fr; gap:7px; }
+  .upgrade-cell, .personal-shop .upgrade-cell { min-height:96px; padding:8px; }
+  .inventory-grid { gap:4px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .resource-receipt { animation:none; }
+  .upgrade-cell:active { transform:none; }
+}

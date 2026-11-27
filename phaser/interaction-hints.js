@@ -1,7 +1,7 @@
 import {dockInset} from './viewport.js';
 
 // Tune bubble contrast here. This HUD scene renders above the world; depth -1 keeps it below HUD controls.
-export const HINT_STYLE=Object.freeze({fill:0x000000,alpha:.75,border:0xd4a359,borderAlpha:.9,padding:10,radius:8,depth:-1});
+export const HINT_STYLE=Object.freeze({fill:0x152422,alpha:.95,border:0xb29a70,borderAlpha:.9,padding:10,radius:8,depth:-1});
 const intersects=(a,b)=>a.x<b.x+b.width+6&&a.x+a.width>b.x-6&&a.y<b.y+b.height+6&&a.y+a.height>b.y-6;
 export function placeHintBox(anchor,width,height,view,blocked=[]){
   const clamp=(v,min,max)=>Math.max(min,Math.min(Math.max(min,max),v));
@@ -28,6 +28,7 @@ export class InteractionHints{
     // Keep captions away from the existing time HUD, minimap and the current quest action.
     blocked.push({x:14,y:12,width:h.scale.width<600?265:330,height:150});
     const mapSize=h.scale.width<600?100:144;blocked.push({x:h.scale.width-mapSize-16,y:16,width:mapSize,height:mapSize});
+    if(h.tutorial?.visible)blocked.push(h.tutorial.getBounds());
     if(h.guideButton?.visible)blocked.push(h.guideButton.getBounds());
     for(const p of this.panels){p.root.setVisible(false);p.bounds=null;}
     if(c.paused||c.state.gameOver)return;

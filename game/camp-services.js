@@ -72,7 +72,8 @@ export function createCampServices({ state, player, forestry, canAct, nav, party
   }
   function updateEntrance(dt){
     player.portalCooldown=Math.max(0,(player.portalCooldown||0)-dt);
-    if(!canAct()||player.room||player.portalCooldown>0)return;
+    // An outdoor route can pass in front of a door without entering it.
+    if(!canAct()||player.room||player.portalCooldown>0||player.path.length)return;
     if(Math.hypot(player.x-CAMP_SERVICE.shopDoor.x,player.y-CAMP_SERVICE.shopDoor.y)<20)enter('shop');
     else if(hasCampBuilding(state,'house')&&Math.hypot(player.x-CAMP_SERVICE.door.x,player.y-CAMP_SERVICE.door.y)<20)enter();
   }

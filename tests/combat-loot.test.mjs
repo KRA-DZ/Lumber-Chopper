@@ -180,11 +180,20 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
   const times = playFirstDay(g);
   assert.ok(times.axeSeconds < 180);
   assert.equal(g.state.axeLevel, 1);
-  while (!g.regions.unlocked.has("1:0")) {
+  while (g.state.campLevel < 3) {
     gather();
-    const gate = g.regions.frontiers().find((gate) => gate.region.id === "1:0");
-    g.setDestination(gate.x, gate.y);
-    tickUntil(() => !g.state.wood || g.regions.unlocked.has("1:0"));
+    travel("build");
+    if(g.state.campLevel < 3 && !g.builder.project){
+      assert.ok(g.builder.choose(g.state.campLevel===1?"tent":"fence"));
+      g.setDestination(g.build.x+100,g.build.y);tickUntil(()=>!g.player.path.length);travel("build");
+    }
+    tickUntil(() => !g.state.wood || g.state.campLevel >= 3 || !g.builder.project);
+  }
+  g.update(0.05);
+  assert.ok(g.regions.unlocked.has("1:0"));
+  if (g.state.worldTime > NIGHT_START - 90) {
+    travel("camp");
+    tickUntil(() => g.state.calendarDay === 1, 310);
   }
   g.update(6.5);
   const enemy = g.survival.minions.find((enemy) => enemy.role === "melee");
@@ -208,15 +217,6 @@ test("real harvesting funds the first axe, a neighbouring region, combat pickup 
   travel("sell");
   tickUntil(() => !g.state.wood, 310);
   assert.ok(g.purchaseUpgrade("carry"));
-  while (g.state.campLevel < 3) {
-    gather();
-    travel("build");
-    if(g.state.campLevel < 3 && !g.builder.project){
-      assert.ok(g.builder.choose(g.state.campLevel===1?"tent":"fence"));
-      g.setDestination(g.build.x+100,g.build.y);tickUntil(()=>!g.player.path.length);travel("build");
-    }
-    tickUntil(() => !g.state.wood || g.state.campLevel >= 3 || !g.builder.project);
-  }
   assert.ok(g.state.calendarDay < 4);
   travel("camp");
   assert.equal(g.state.gameOver, false);

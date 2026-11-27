@@ -154,6 +154,11 @@ export class WorldScene extends Phaser.Scene {
     this.combatLootView = new CombatLootView(this);
     this.defenseView = new DefenseView(this);
     this.explorationView = new ExplorationView(this);
+    const supplies = this.core.exploration.get("ford-supplies");
+    this.fordSupplies = this.addImage("camp.crate", supplies.x, supplies.y)
+      .setVisible(false).setInteractive({ pixelPerfect:true }).setData("site", supplies.id);
+    this.fordSuppliesLabel = this.text("Припасы у брода · E", supplies.x, supplies.y - 22, 13)
+      .setVisible(false);
     this.outpostView = new OutpostView(this);
     this.workerView = new WorkerView(this);
     this.camera = this.cameras.main;
@@ -857,13 +862,10 @@ export class WorldScene extends Phaser.Scene {
           ? "До утра закрыто"
           : "Ждём покупателя",
     );
-    this.buildLabel.setText(
-      s.campHealth < s.maxCampHealth
-        ? `Ремонт ${s.campHealth}/${s.maxCampHealth} · 40 HP/бревно`
-        : c.builder.project
-          ? `${c.builder.project.name} ${s.buildWood}/${c.builder.project.cost}${c.builder.project.materials ? "\n"+materialCostText(c.builder.project.materials)+" из общего запаса" : ""}${c.builder.needsExit ? " · сойдите и вернитесь" : ""}`
-          : c.builder.choices.length ? "Выбрать постройку · встаньте на платформу" : "Лагерь построен",
-    );
+    const project=c.builder.project;
+    this.buildLabel.setText(project?
+      `${project.name} · ${s.buildWood}/${project.cost} бр.`:
+      c.builder.choices.length?"Мастерская · выбрать постройку":"");
     this.camera?.preRender();
     this.refreshView();
     this.atmosphere.render();
@@ -878,7 +880,7 @@ export class WorldScene extends Phaser.Scene {
     this.crownOcclusion.apply(this.ancient);
     this.crownOcclusion.end();
     this.worldHints.offer(this.saleLabel, c.sale, { range: 240, priority: 70 });
-    this.worldHints.offer(this.buildLabel, c.build, { eligible:false });
+    this.worldHints.offer(this.buildLabel,c.build,{range:150,priority:72});
     if (this.merchantLabel)
       this.worldHints.offer(this.merchantLabel, this.merchantSite, { eligible: openMerchant, priority: 50 });
     if (!this.coopViews) this.feedback.render();
@@ -900,6 +902,10 @@ export class WorldScene extends Phaser.Scene {
     this.plantsView?.render();
     this.forestTasksView?.render();
     this.combatView.render();
+    const supplies = c.exploration.get("ford-supplies");
+    const suppliesVisible = c.exploration.available(supplies);
+    this.fordSupplies.setVisible(suppliesVisible);
+    if (suppliesVisible) this.worldHints.offer(this.fordSuppliesLabel,supplies,{range:175,priority:80});
     this.worldHints.flush();
     const hudKey = [
       s.wood,
@@ -1187,8 +1193,12 @@ export class WorldScene extends Phaser.Scene {
     if(type==="mill-batch-ready"){this.core.showNotice("Лесопилка: готовы 4 доски. Заберите партию на погрузочной площадке.",5);return;}
     if(type==="mill-noise"){if((this.core.actors||[this.core]).some(a=>Math.hypot(a.player.x-e.point.x,a.player.y-e.point.y)<650))this.audio?.hit();return;}
     if (type === "production-ready") { this.core.showNotice(`Готово: ${materialCostText(e.output)}. В общем запасе лагеря.`,4); return; }
+    if (type === "activity-completed" && e.action === "take-supplies") {
+      this.core.showNotice("Припасы найдены · +35 монет",5);
+      return;
+    }
     if (type === "order-completed") { this.core.showNotice(`Заказ выполнен: +${e.order.reward} монет!`,6); return; }
-    if (type === "order-expired") { this.core.showNotice("Срок заказа истёк. Переданные брёвна можно забрать у продажи.",6); return; }
+    if (type === "order-expired") { this.core.showNotice(e.refund?"Заказ просрочен. Заберите переданные брёвна у площадки продажи.":"Срок заказа истёк. Новый заказ можно взять утром.",6); return; }
     if (type === "build-choice") { this.campDesk?.open('workshop'); return; }
     if(type==='camp-room-entered'||type==='camp-room-left'){
       for(const camera of this.cameras.cameras)camera.flash(180,0,0,0,true);return;

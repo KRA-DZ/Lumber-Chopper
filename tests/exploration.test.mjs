@@ -6,6 +6,12 @@ import { EXPLORATION, ITEMS } from "../game/exploration.js";
 const create = (emit) =>
   createSimulation({ regional: true, survival: false, emit });
 function open(g, id) {
+  if(id==="1:0"){
+    g.state.campLevel=Math.max(g.state.campLevel,3);
+    g.update(0.05);
+    assert.ok(g.regions.unlocked.has(id));
+    return;
+  }
   const gate = g.regions.frontiers().find((r) => r.region.id === id);
   assert.ok(gate);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [], autoTimer: 1000 });

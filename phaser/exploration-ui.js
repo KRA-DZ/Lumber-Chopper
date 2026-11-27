@@ -69,7 +69,7 @@ export function createExplorationUi(scene) {
               message.textContent = "Действие сейчас недоступно.";
               return;
             }
-            if (offer.action === "fish") {
+            if (offer.action === "fish" || offer.action === "take-supplies") {
               dismiss();
               return;
             }
@@ -133,6 +133,7 @@ export function createExplorationUi(scene) {
       const routes=document.createElement("details"),heading=document.createElement("summary");
       heading.textContent="Места для исследования и маршруты";routes.className="inventory-routes";routes.append(heading);content.append(routes);
       for (const id of [
+        ...(m.available(m.get("ford-supplies"))?["ford-supplies"]:[]),
         "mysterious-merchant",
         "fishing",
         "ancient-roots",

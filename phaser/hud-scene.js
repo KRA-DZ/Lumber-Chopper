@@ -2,10 +2,10 @@ import { BIOMES } from "../game/biomes.js";
 import { WatcherHud } from "./watcher-hud.js";
 import { DayHud } from "./day-hud.js";
 import { RepairControl } from "./repair-control.js";
-import { DAY_SECONDS } from "../game/config.js";
 import { clockHour } from "../game/cycle.js";
 import { regionAt } from "../game/regions.js";
 import { hasCampBuilding } from "../game/camp-projects.js";
+import { ORDER_ITEM_NAMES } from "../game/buyer-orders.js";
 import { MATERIAL_NAMES } from "../game/camp-industry-config.js";
 import { countdown } from "../game/first-days.js";
 import { dockInset } from "./viewport.js";
@@ -30,7 +30,7 @@ export class HudScene extends Phaser.Scene {
         fontFamily: "Arial, sans-serif",
         fontSize: "15px",
         color: "#ffe2a0",
-        backgroundColor: "#263e2b",
+        backgroundColor: "#152422",
         padding: { x: 14, y: 12 },
         align: "center",
       })
@@ -41,7 +41,7 @@ export class HudScene extends Phaser.Scene {
         fontFamily: "Arial, sans-serif",
         fontSize: "12px",
         color: "#f4db9c",
-        backgroundColor: "#263e2b",
+        backgroundColor: "#152422",
         padding: { x: 10, y: 7 },
       })
       .setOrigin(0.5, 0)
@@ -50,8 +50,8 @@ export class HudScene extends Phaser.Scene {
       .text(0, 0, "", {
         fontFamily: "Arial, sans-serif",
         fontSize: "12px",
-        color: "#eddfad",
-        backgroundColor: "#263e2b",
+        color: "#f2e8d2",
+        backgroundColor: "#152422",
         padding: { x: 12, y: 9 },
         align: "center",
       })
@@ -59,7 +59,6 @@ export class HudScene extends Phaser.Scene {
     this.tutorial
       .setInteractive()
       .on("pointerdown", (p, x, y, event) => event.stopPropagation());
-    this.doneAt = null;
     this.guideWidth = null;
     this.storyGuide = false;
     this.dayHud = new DayHud(this);
@@ -68,9 +67,9 @@ export class HudScene extends Phaser.Scene {
       .text(0, 0, "", {
         fontFamily: "Arial, sans-serif",
         fontSize: "12px",
-        color: "#2c3c2d",
-        backgroundColor: "#d9b66d",
-        padding: { x: 12, y: 8 },
+        color: "#241c14",
+        backgroundColor: "#edc47e",
+        padding: { x: 14, y: 11 },
       })
       .setOrigin(0.5, 1)
       .setInteractive({ useHandCursor: true });
@@ -84,12 +83,24 @@ export class HudScene extends Phaser.Scene {
         else c.exploration.cancelFishing();
         return;
       }
-      if(this.contextGuide){if(c.contextHints.activate(this.contextGuide)==='bag')this.world.explorationUi.openBag();return;}
       if (this.storyGuide) {
         c.navigateStory();
         return;
       }
+      if (this.suppliesGuide) {
+        c.exploration.request("ford-supplies");
+        return;
+      }
+      if(this.contextGuide){
+        if(this.contextGuide.id==="prep-fire"&&c.workshop.near()&&!c.workshop.busy())this.world.campDesk.open("workshop");
+        else if(c.contextHints.activate(this.contextGuide)==="bag")this.world.explorationUi.openBag();
+        return;
+      }
       const action = c.guide.action;
+      if (action === "build" && c.workshop.near() && !c.workshop.busy()) {
+        this.world.campDesk.open("workshop");
+        return;
+      }
       if (action === "shop") this.world.shop.open();
       else if (action === "journal") this.world.survivalUi.open();
       else if (action === "map") this.world.regionMap.open();
@@ -149,8 +160,7 @@ export class HudScene extends Phaser.Scene {
     this.size = size;
     this.mapZone.setPosition(left, top).setSize(size, size);
     this.mapZone.input.hitArea.setSize(size, size);
-    const phase = c.state.worldTime / DAY_SECONDS,
-      hour = Math.floor(clockHour(c.state.worldTime))
+    const hour = Math.floor(clockHour(c.state.worldTime))
         .toString()
         .padStart(2, "0"),
       minute = Math.floor((clockHour(c.state.worldTime) * 60) % 60)
@@ -160,8 +170,8 @@ export class HudScene extends Phaser.Scene {
       .fillStyle(0x243c2d, 0.95)
       .fillRoundedRect(14, 12, this.scale.width < 600 ? 265 : 330, 150,10)
       .fillRect(left - 4, top - 4, size + 8, size + 8);
-    const order=c.orders.current,orderProgress=order?.resource==="logs"?c.orders.data.active.logs.length:order?Math.min(order.amount,c.state.campIndustry.materials[order.resource]):0,
-      location=order?`Заказ ${orderProgress}/${order.amount} ${MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
+    const order=c.orders.current,orderProgress=order?c.orders.progress(order):0,
+      location=order?`Заказ ${orderProgress}/${order.amount} ${ORDER_ITEM_NAMES[order.resource]||MATERIAL_NAMES[order.resource]} · ${countdown(c.orders.secondsLeft)}`:
         `${c.player.room ? c.player.room.id==='shop'?'Лавка лагеря':'Дом лагеря' : regionAt(c.player.x,c.player.y)?.name||"Лес"}`;
     this.clock.setFontSize(this.scale.width<600?17:14).setLineSpacing(2).setText(
       `День ${c.dayNumber+1} · ${c.state.nightsSurvived} ночей · ${hour}:${minute}\n${hasCampBuilding(c.state,"fire")?`Огонь ${Math.ceil(c.state.campFuel)} с`:"Нет костра"} · База ${c.state.campHealth}/${c.state.maxCampHealth}\n${location.length>31?location.slice(0,30)+"…":location}`,
@@ -212,9 +222,12 @@ export class HudScene extends Phaser.Scene {
     const fishing = c.exploration?.fishing;
     this.contextGuide=!fishing?c.contextHints?.current:null;
     const quietPreparation=!fishing&&c.contextHints?.preparing&&!this.contextGuide;
+    const supplies=c.exploration.get("ford-supplies");
+    this.suppliesGuide=!fishing&&!c.player.room&&
+      c.exploration.available(supplies)&&!!c.sunsetWarning&&!c.cycle.isNight;
     this.storyGuide =
       !fishing &&
-      !this.contextGuide && !quietPreparation &&
+      !this.contextGuide && !this.suppliesGuide && !quietPreparation &&
       c.guide.id === "free" &&
       !!c.story &&
       !c.story.overview().completed &&
@@ -236,7 +249,12 @@ export class HudScene extends Phaser.Scene {
               : "Убрать снасти",
           action: "fishing",
         }
-      : this.contextGuide || (quietPreparation?{title:'',text:'',action:null}:null) || (storyGoal
+      : (this.suppliesGuide?{
+          title:"Припасы у брода",
+          text:"Заберите ящик до рассвета. После заката у брода темно.",
+          button:"К броду",
+          action:"supplies",
+        }:null) || this.contextGuide || (quietPreparation?{title:'',text:'',action:null}:null) || (storyGoal
         ? {
             title: storyGoal.chapter,
             text: `${storyGoal.title}. ${storyGoal.text}`,
@@ -250,18 +268,18 @@ export class HudScene extends Phaser.Scene {
         .setFontSize(this.scale.width < 600 ? 14 : 12)
         .setWordWrapWidth(this.scale.width - 64);
       this.guideButton.setFontSize(14).setWordWrapWidth(Math.min(430,this.scale.width-64));
+      this.discovery.setWordWrapWidth(Math.max(120,Math.min(460,this.scale.width-60)));
     }
-    this.tutorial
-      .setPosition(this.scale.width / 2, this.scale.height - dockInset(this) - 12)
-      .setText(guide.text)
-      .setVisible(false);
+    const guideBottom=this.scale.height-dockInset(this)-10;
+    const showGuide=!c.state.gameOver&&!c.paused&&!(c.actors||[c]).some(a=>a.player.menuOpen);
     this.guideButton
-      .setText(fishing ? guide.button || "" : guide.action ? `${guide.title} · ${guide.button || "К цели"}` : "")
-      .setPosition(
-        this.scale.width / 2,
-        this.scale.height - dockInset(this) - 8,
-      )
-      .setVisible(!!guide.action && !c.state.gameOver && !c.paused && !(c.actors||[c]).some(a=>a.player.menuOpen));
+      .setText(guide.button || "К цели")
+      .setPosition(this.scale.width/2,guideBottom)
+      .setVisible(showGuide&&!!guide.action);
+    this.tutorial
+      .setPosition(this.scale.width/2,guideBottom-(this.guideButton.visible?this.guideButton.height+5:0))
+      .setText(guide.text?`${guide.title}\n${guide.text}`:"")
+      .setVisible(showGuide&&!!guide.text);
     this.watcherHud.refresh();
     this.repairControl.refresh();
     const messageY = this.dayHud.warning.visible
@@ -270,15 +288,17 @@ export class HudScene extends Phaser.Scene {
         ? this.watcherHud.bottom + 12
         : 168;
     this.banner.setPosition(this.scale.width / 2, messageY);
+    const notice=c.elapsed<this.world.atmosphere.discoveryUntil?
+      this.world.atmosphere.discovery:c.notice;
     this.discovery
       .setVisible(
-        c.elapsed < this.world.atmosphere.discoveryUntil &&
+        !!notice && showGuide &&
           !this.banner.visible &&
           !this.world.expansionBanner &&
           !this.dayHud.warning.visible,
       )
       .setPosition(this.scale.width / 2, messageY)
-      .setText(this.world.atmosphere.discovery);
+      .setText(notice);
     if(this.world.dayBanner){const day=this.world.dayBanner.day;this.world.dayBanner=null;
       this.banner.setText(`ДЕНЬ ${day}\nПережито ночей: ${c.state.nightsSurvived}`).setVisible(true).setAlpha(1);
       this.tweens.killTweensOf(this.banner);this.tweens.add({targets:this.banner,alpha:0,delay:1800,duration:800,onComplete:()=>this.banner.setVisible(false)});

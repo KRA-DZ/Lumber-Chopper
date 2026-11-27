@@ -1,6 +1,7 @@
 import {BERRIES} from "./berries.js";
 import { hasCampBuilding } from "./camp-projects.js";
-import { CENTER, DAY_SECONDS } from "./config.js";
+import { CENTER } from "./config.js";
+import { NIGHT_START } from "./cycle.js";
 import { passageOpen } from "./locations.js";
 import { OUTPOST } from "./outposts.js";
 
@@ -25,6 +26,13 @@ export const ITEMS = Object.freeze({
   relic: { name: "Реликвия крепости", limit: 12 },
   salve: { name: "Лесная мазь", limit: 3 },
 });
+export const FORD_SUPPLIES = Object.freeze({
+  id:"ford-supplies", kind:"supplies", name:"Припасы у брода",
+  description:"Заберите 35 монет до рассвета. После заката у брода темно.",
+  x:832, y:1885, regionId:"0:0",
+});
+export const fordSuppliesAvailable = state => state.calendarDay === 0 &&
+  state.worldTime >= NIGHT_START - 60 && !state.campMilestones.fordSupplies;
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 export function createExploration({
   state,
@@ -48,6 +56,7 @@ export function createExploration({
     bag = data.items;
   const price = base => Math.ceil(base * (state.priceMultiplier || 1));
   const sites = [
+    FORD_SUPPLIES,
     {
       id: "fishing",
       kind: "pond",
@@ -98,6 +107,7 @@ export function createExploration({
   const available = (s) =>
     !!s &&
     regions.isOpen(s) &&
+    (s !== FORD_SUPPLIES || fordSuppliesAvailable(state)) &&
     (!s.requiredWorks||!!state.worldWorks.built[s.requiredWorks]) &&
     (!s.requiresLow||state.worldWorks.level==="low") &&
     (!s.requiresCart||state.sawmill.cart.built) &&
@@ -108,7 +118,7 @@ export function createExploration({
     available(s) &&
     distance(player, s) < EXPLORATION.range &&
     nav.hasLineOfSight(player, s);
-  const isDay = () => state.worldTime < DAY_SECONDS * .75;
+  const isDay = () => state.worldTime < NIGHT_START;
   const caughtToday = () =>
     data.fishDay === state.calendarDay ? data.fishToday : 0;
   function changed(type, event = {}) {
@@ -168,7 +178,9 @@ export function createExploration({
     const rows = [];
     const add = (action, name, description, reason = "") =>
       rows.push({ action, name, description, enabled: !reason, reason });
-    if (s.kind === "merchant") {
+    if (s === FORD_SUPPLIES) {
+      add("take-supplies","Забрать 35 монет","Ящик можно забрать один раз за забег.",available(s)?"":"Припасов больше нет");
+    } else if (s.kind === "merchant") {
       add(
         "buy-rod",
         `Удочка · ${price(EXPLORATION.rodPrice)} монет`,
@@ -330,7 +342,10 @@ export function createExploration({
       changed("sawmill-used",{site:s,action});return true;
     }
     let event = { site: s, action };
-    if (action === "buy-rod") {
+    if (action === "take-supplies") {
+      state.campMilestones.fordSupplies = true;
+      state.coins += 35;
+    } else if (action === "buy-rod") {
       state.coins -= price(EXPLORATION.rodPrice);
       data.rod = true;
     } else if (action === "buy-key") {
@@ -513,7 +528,7 @@ export function createExploration({
     const location = world.locations.find((l) => l.regionId === region.id);
     if (location?.routeToEntrance) return location.entrance;
     const list = sites.filter(
-      (s) => s.regionId === region.id && s.kind !== "kitchen",
+      (s) => s.regionId === region.id && s.kind !== "kitchen" && s !== FORD_SUPPLIES,
     );
     return (
       list.find(
