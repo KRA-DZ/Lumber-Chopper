@@ -6,5 +6,7 @@ export function upgradeCell(button,offer){
   const icon=itemShopIcon(offer.id,offer),image=document.createElement(icon?'img':'span'),name=document.createElement('strong'),price=document.createElement('small'),level=document.createElement('meter');
   if(icon){image.src=icon;image.alt='';image.width=image.height=40;}else image.textContent=offer.id==='lantern'?'☼':'➟';
   name.textContent=offer.name;price.textContent=offer.maxed?'Максимум':`${offer.price} монет · ${offer.level}/${offer.maxLevel}`;level.min=0;level.max=offer.maxLevel;level.value=offer.level;level.setAttribute('aria-label',`${offer.name}: ${offer.level}/${offer.maxLevel}`);
-  button.append(image,name,price,level);button.setAttribute('aria-label',`${offer.name}, ${price.textContent}, уровень ${offer.level}/${offer.maxLevel}`);
+  const effect=document.createElement("span");
+  effect.className="upgrade-effect";effect.textContent=offer.description;
+  button.append(image,name,effect,level,price);button.setAttribute('aria-label',`${offer.name}, ${price.textContent}, уровень ${offer.level}/${offer.maxLevel}`);
 }

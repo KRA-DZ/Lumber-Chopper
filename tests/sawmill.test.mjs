@@ -6,7 +6,10 @@ import { insideLocation } from "../game/locations.js";
 
 function create(emit) {
   const g = createSimulation({ regional: true, survival: false, emit });
-  for (const id of ["1:0", "1:1"]) {
+  g.state.campLevel=3; // The grove opens when the camp has fire and a fence.
+  g.update(0.05);
+  assert.ok(g.regions.unlocked.has("1:0"));
+  for (const id of ["1:1"]) {
     const gate = g.regions.frontiers().find((p) => p.region.id === id);
     Object.assign(g.player, {
       x: gate.x,

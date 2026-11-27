@@ -1,3 +1,6 @@
+import { CAMP_PROJECTS, hasCampBuilding } from "../game/camp-projects.js";
+import { BUYER_ORDERS } from "../game/buyer-orders.js";
+import { RAID_INTERVAL } from "../game/config.js";
 import { HERO_APPEARANCES } from "../game/appearances.js";
 import {createHeroCustomizer} from './hero-customizer.js';
 import {touchOnlyControls} from './device-profile.js';
@@ -19,6 +22,14 @@ export function selectHero(scene, start) {
   if(saved.data){
     const s=saved.data.actors[0].state,count=saved.data.actors.length;
     info.textContent+=(info.textContent?' ':'')+`${saved.data.name} · день ${s.calendarDay+1} · ${count===2?'вдвоём':'один игрок'} · ${new Date(saved.data.savedAt).toLocaleString('ru-RU')}.`;
+    const project=CAMP_PROJECTS.find(p=>p.id===s.buildProject);
+    const order=BUYER_ORDERS.find(o=>o.id===s.buyerOrders?.active?.id);
+    const nextRaid=Math.ceil((s.calendarDay+1)/RAID_INTERVAL)*RAID_INTERVAL;
+    form.querySelector('[data-session-goal]').textContent=project?
+      `${project.name} · сдано ${s.buildWood} из ${project.cost} брёвен`:
+      order?`Активный заказ · ${order.name}`:
+      !hasCampBuilding(s,"fire")?"Ближайшая цель · построить костёр":
+      `Следующий налёт · ночь ${nextRaid}`;
     resume.disabled=touchOnly&&count===2;
     if(resume.disabled)info.textContent+=' Для продолжения вдвоём откройте игру на компьютере.';
     form.querySelector('[data-hero-start]').textContent='Начать новую игру';

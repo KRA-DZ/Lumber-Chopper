@@ -1,3 +1,4 @@
+import { CAMP } from "../game/camp-layout.js";
 import { NIGHT_START } from "../game/cycle.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -284,14 +285,15 @@ test("a repair order resumes its route after a modal pause and never spends whil
 test("axe knockback respects the base of a solid building", () => {
   const g = create();
   night(g);
-  // Shop occupies x1340..1500, y1588..1620. Push into its southern edge.
+  // The shop base extends 16 px below its centreline; allow clearance for feet.
+  const edge=CAMP.stall.y-30+32+10;
   const r = g.survival.raiders[0];
-  Object.assign(r, { x: 1450, y: 1631, path: [], repath: 100 });
-  Object.assign(g.player, { x: 1450, y: 1671, path: [], autoTimer: 0 });
+  Object.assign(r, { x: CAMP.stall.x, y: edge + 1, path: [], repath: 100 });
+  Object.assign(g.player, { x: CAMP.stall.x, y: edge + 41, path: [], autoTimer: 0 });
   assert.ok(g.nav.isWalkable(r.x, r.y));
   assert.ok(g.tryAttack(r.id));
   assert.ok(g.nav.isWalkable(r.x, r.y));
-  assert.ok(r.y >= 1630);
+  assert.ok(r.y >= edge - 0.005);
 });
 
 test("an upgraded axe and actual focus pursuit can repel the first full wave without scripted damage", () => {

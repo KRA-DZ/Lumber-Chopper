@@ -484,6 +484,8 @@ export function createSimulation({
     if (type === "sunset-warning") {
       sunsetWarning = { ...event, until: elapsed + 7 };
       showNotice(
+        event.night===1&&event.seconds===60?
+          "У западного брода оставили припасы. Заберите их до рассвета или подготовьте костёр.":
         gameState.cycleSpeed===2.5?`До темноты ${Math.ceil(event.seconds/2.5)} секунд. Возвращайтесь к огню!` : event.seconds === 60
           ? event.raid
             ? `Через минуту налёт «${raidPlan(event.night).name}»! ${raidPlan(event.night).hint}`
@@ -644,7 +646,7 @@ export function createSimulation({
       if(contribution){transferTimer=.18;if(contribution.complete)completeBuilding(contribution.project,materialTarget,oldMaterialRadius);updateUI();return true;}
     }
     if(!target||target==="sell"){
-      if(orders.current&&distance(player,sale)<sale.radius){
+      if(orders.current?.resource==="logs"&&distance(player,sale)<sale.radius){
         const delivered=orders.deliver();if(delivered){transferTimer=.25;updateUI();}return delivered;
       }
     }

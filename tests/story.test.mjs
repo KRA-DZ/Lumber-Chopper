@@ -5,6 +5,12 @@ import { STORY } from "../game/story.js";
 const create = (emit) =>
   createSimulation({ regional: true, survival: false, emit });
 function open(g, id) {
+  if(id==="1:0"){
+    g.state.campLevel=Math.max(g.state.campLevel,3);
+    g.update(0.05);
+    assert.ok(g.regions.unlocked.has(id));
+    return;
+  }
   const gate = g.regions.frontiers().find((p) => p.region.id === id);
   Object.assign(g.player, { x: gate.x, y: gate.y, path: [] });
   while (g.state.wood) g.forestry.takeCargo();
@@ -184,10 +190,11 @@ test("both final choices require fifth dawn, daytime, tent and camp inspection, 
     decode(g);
     visit(g, "camp-kitchen");
     assert.equal(g.exploration.perform("camp-kitchen", action), false);
+    g.state.campBuildings={fire:true,fence:true};
     while (g.state.nightsSurvived < 5) dawn(g);
     visit(g, "camp-kitchen");
     assert.equal(g.exploration.perform("camp-kitchen", action), false);
-    g.state.campLevel = 2;
+    g.state.campBuildings.tent=true;
     g.nav.rebuildObstacles();
     g.state.worldTime = 450;
     assert.equal(g.exploration.perform("camp-kitchen", action), false);
