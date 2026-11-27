@@ -259,14 +259,15 @@ dialog :is(.build-option,.activity-card,.camp-card,.worker-cell,.inventory-slot)
 }
 
 
-/* The title screen shows one panel at a time, including one co-op portrait. */
+/* A single character sheet with a preview, new-run options and save actions. */
 #heroDialog {
-  --hero-gap:clamp(5px,1.6dvh,16px);
-  width:min(660px,calc(100vw - 20px));
-  max-height:calc(100dvh - 16px);
-  padding:clamp(8px,2.4dvh,22px);
-  overflow:hidden;
-  background:radial-gradient(ellipse at top,#344437,#182622 70%);
+  --hero-gap:clamp(7px,1.5dvh,14px);
+  width:min(830px,calc(100vw - 16px));
+  max-height:calc(100dvh - 12px);
+  padding:clamp(10px,2dvh,22px);
+  overflow:auto;
+  scrollbar-width:none;
+  background:radial-gradient(ellipse at top,#344437,#182622 72%);
   border:1px solid #b49563;
   box-shadow:inset 0 0 0 3px #192823,inset 0 0 0 4px #827252,0 18px 55px #0a120e;
 }
@@ -274,66 +275,79 @@ dialog :is(.build-option,.activity-card,.camp-card,.worker-cell,.inventory-slot)
 #heroDialog [hidden] { display:none !important; }
 .hero-menu { display:grid; gap:var(--hero-gap); }
 .hero-heading { display:block; margin:0; text-align:center; }
-#heroTitle { margin:0; font:700 clamp(22px,5dvh,40px)/1.05 Georgia,serif; color:#f4dba5; }
+#heroTitle { margin:0; font:700 clamp(25px,5dvh,42px)/1.05 Georgia,serif; color:#f4dba5; }
 [data-hero-error] { margin:4px 0 0; color:#ffc6a7 !important; font-size:12px; }
 [data-hero-error]:empty { display:none; }
-.hero-nav,.hero-player-nav,.hero-save-actions {
-  display:flex;
-  justify-content:center;
-  gap:6px;
-}
-#heroDialog button { margin:0; min-width:0; padding:5px 9px; font-size:clamp(11px,2.65vw,14px); }
-.hero-nav button { flex:1; }
-.hero-nav button,.hero-player-nav button,.hero-save-actions [data-hero-page],
-.hero-preview-controls button,.hero-presets button {
-  color:#f2e6cd; background:#273a31; border-color:#657761; box-shadow:none;
-}
-#heroDialog button[aria-pressed=true] { background:#e9c781; color:#251e15; border-color:#f1dda8; }
-.hero-stage { min-width:0; }
-.hero-save,.hero-settings,.hero-customizer fieldset {
-  margin:0; min-width:0; padding:var(--hero-gap);
-  background:#14231e; border:1px solid #65755e; border-radius:6px;
-}
-.hero-save h3,.hero-save p,.hero-settings p { margin:0 0 var(--hero-gap); }
-.hero-save p:empty { display:none; }
+.hero-stage { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,3fr); gap:var(--hero-gap); }
 .hero-choices {
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px;
   padding:0; margin:0; min-width:0; border:0;
 }
-.hero-choices legend { margin-bottom:5px; color:#ded9be; font-size:13px; }
+.hero-choices legend,.hero-look h3 {
+  margin:0 0 6px; padding:0; color:#edcf94; font-size:14px; font-weight:700;
+}
 .hero-card {
-  position:relative; display:grid; justify-items:center; align-content:center;
-  gap:4px; padding:var(--hero-gap) 4px; min-width:0; cursor:pointer;
-  text-align:center; font-size:clamp(11px,3.1vw,16px);
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; padding:7px 3px; min-width:0; cursor:pointer;
+  text-align:center; font-size:clamp(11px,1.9vw,14px);
   border:1px solid #687963; border-radius:6px;
   background:radial-gradient(ellipse at bottom,#3c4d37,#192b24 75%);
 }
 .hero-card:has(input:checked) { border-color:#edca86; box-shadow:inset 0 0 0 1px #edca86; }
 .hero-card:focus-within { outline:2px solid #edca86; outline-offset:2px; }
-.hero-card input { position:absolute; top:5px; left:5px; accent-color:#edca86; }
-.hero-card img { width:auto; height:clamp(32px,21dvh,150px); max-width:95%; object-fit:contain; image-rendering:pixelated; }
-.hero-settings { display:grid; gap:var(--hero-gap); }
-.hero-settings fieldset { margin:0; min-width:0; border:1px solid #516653; }
-.hero-settings fieldset p { margin:4px 0 0; font-size:12px; }
-.hero-settings>label,.hero-color-settings label { display:flex; align-items:center; justify-content:space-between; gap:5px; }
-.hero-menu select,.hero-menu input:not([type=radio]) {
-  min-width:0; width:min(54%,240px); padding:4px; border:1px solid #768570;
-  border-radius:4px; color:#f6e9cd; background:#24382d; font:inherit;
+.hero-card input { position:absolute; top:4px; left:4px; margin:0; accent-color:#edca86; }
+.hero-card img { width:auto; height:clamp(32px,17dvh,112px); max-width:95%; object-fit:contain; image-rendering:pixelated; }
+.hero-look-heading { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:6px; }
+.hero-look h3 { margin:0; }
+.hero-player-nav { display:flex; margin-left:auto; gap:4px; }
+.hero-customizer fieldset {
+  display:grid; grid-template-columns:minmax(64px,1fr) minmax(0,2.25fr);
+  align-items:center; gap:8px; margin:0; padding:7px; min-width:0;
+  border:1px solid #65755e; border-radius:6px; background:#14231e;
 }
-.hero-player-nav { margin-bottom:5px; }
-.hero-customizer fieldset { display:grid; grid-template-columns:minmax(68px,1fr) minmax(0,2fr); align-items:center; gap:8px; }
 #heroDialog .hero-live-preview {
-  display:block; width:100%; max-width:152px; height:auto; max-height:28dvh;
-  margin:0 auto; border:0; box-shadow:none; object-fit:contain; background:none;
+  width:100%; max-width:126px; height:auto; aspect-ratio:192/208; object-fit:contain;
+  margin:0 auto; border:0; box-shadow:none;
+  background:radial-gradient(ellipse at 50% 78%,#475339,transparent 67%);
 }
-.hero-color-settings { display:grid; gap:4px; font-size:clamp(11px,3vw,14px); }
+.hero-color-settings { display:grid; gap:4px; font-size:12px; }
+.hero-color-settings label { display:grid; grid-template-columns:minmax(48px,auto) 1fr; align-items:center; gap:5px; }
 .hero-preview-controls,.hero-presets { display:flex; flex-wrap:wrap; gap:4px; }
-#heroDialog .hero-color-settings button { min-height:29px; padding:3px 5px; }
-.hero-actions button { width:100%; }
-@media(max-height:440px) {
-  #heroDialog button { min-height:28px; }
-  #heroDialog .hero-color-settings button { min-height:22px; }
-  .hero-color-settings { gap:2px; }
-  .hero-menu select,.hero-menu input:not([type=radio]) { padding-block:1px; }
-  .hero-settings fieldset { padding-block:2px; }
+.hero-preview-controls select { flex:1; }
+.hero-settings {
+  display:grid; grid-template-columns:1fr 1fr auto; align-items:end; gap:8px;
+  padding:8px; border-radius:6px; background:#14231e; font-size:13px;
+}
+.hero-settings>label { display:grid; gap:3px; min-width:0; }
+.hero-settings fieldset { display:flex; gap:7px; margin:0; padding:3px 5px; min-width:0; border:0; }
+.hero-settings fieldset label { white-space:nowrap; }
+.hero-settings input[type=radio] { margin:0 2px 0 0; accent-color:#edca86; }
+.hero-menu select,.hero-menu input:not([type=radio]) {
+  box-sizing:border-box; min-width:0; width:100%; min-height:28px; padding:3px 5px;
+  border:1px solid #768570; border-radius:4px; color:#f6e9cd; background:#24382d; font:inherit;
+}
+.hero-save { display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px 12px; padding:6px 9px; background:#24362d; border-left:2px solid #c8ac73; font-size:12px; }
+#heroDialog .hero-save p { margin:0; overflow-wrap:anywhere; }
+#heroDialog [data-session-goal] { color:#efcf91; padding:0; border:0; background:none; }
+.hero-save p:empty { display:none; }
+.hero-actions { display:flex; gap:8px; }
+#heroDialog button { margin:0; padding:4px 7px; min-width:0; font-size:13px; }
+.hero-actions button { flex:1; }
+#heroDialog [data-session-continue]:not([hidden]) + [data-hero-start],
+#heroDialog :is(.hero-player-nav,.hero-preview-controls,.hero-presets) button {
+  color:#f2e6cd; background:#283c32; border-color:#687963; box-shadow:none;
+}
+#heroDialog :is(.hero-player-nav,.hero-preview-controls,.hero-presets) button { min-height:27px; font-size:11px; }
+#heroDialog button[aria-pressed=true] { color:#251e15; background:#e9c781; }
+@media(max-width:620px) and (orientation:portrait), (max-width:460px) {
+  .hero-stage { grid-template-columns:1fr; }
+  .hero-card { flex-direction:row; min-height:48px; padding-left:20px; }
+  .hero-card img { height:clamp(30px,9dvh,66px); }
+  .hero-settings { grid-template-columns:1fr 1fr; }
+  .hero-settings fieldset { grid-column:1/-1; }
+}
+@media(max-height:500px) and (min-width:461px) {
+  #heroDialog { --hero-gap:6px; }
+  #heroTitle { font-size:24px; }
+  #heroDialog .hero-actions button { min-height:34px; }
 }

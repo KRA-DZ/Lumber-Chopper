@@ -5,6 +5,7 @@ import {heroPreviewFrame} from './hero-color-art.js';
 export function createHeroCustomizer(scene,form){
   const root=form.querySelector('[data-hero-customizer]'),pack=scene.registry.get('peoplePack');
   const playerNav=form.querySelector("[data-hero-player-nav]");
+  const heroLegend=form.querySelector("[data-hero-legend]");
   let activePlayer=0;
   root.replaceChildren();let secondTouched=false,request=0,last=-Infinity;
   const panels=[0,1].map(i=>{
@@ -29,7 +30,7 @@ export function createHeroCustomizer(scene,form){
     for(const [k,name] of [['hair','Волосы'],['jacket','Куртка'],['pants','Брюки']]){
       const label=document.createElement('label');label.textContent=name+' ';const select=document.createElement('select');select.name=`${k}${i}`;select.dataset.heroMaterial=k;
       for(const [id,p] of Object.entries(HERO_PALETTES))select.add(new Option(p.name,id));
-      label.append(select);field.append(label);selects[k]=select;
+      label.append(select);settings.append(label);selects[k]=select;
     }
     field.append(settings);
     root.append(field);return {field,appearance,canvas,motion,selects,direction:0,cache:new Map(),signature:''};
@@ -41,6 +42,7 @@ export function createHeroCustomizer(scene,form){
     const coop=new FormData(form).get("players")==="2";
     if(!coop)activePlayer=0;
     playerNav.hidden=!coop;
+    heroLegend.textContent=coop?"Персонаж игрока 1":"Персонаж";
     for(const button of playerNav.querySelectorAll("button"))
       button.setAttribute("aria-pressed",String(+button.dataset.customizePlayer===activePlayer));
     for(const [i,panel] of panels.entries())panel.field.hidden=i!==activePlayer;
@@ -59,7 +61,7 @@ export function createHeroCustomizer(scene,form){
   };
   playerNav.addEventListener("click",switchPlayer);
   function draw(time){
-    if(time-last>=125&&!document.hidden&&!root.closest('[data-hero-screen]').hidden){last=time;const profiles=choices();
+    if(time-last>=125&&!document.hidden){last=time;const profiles=choices();
       panels.forEach((p,i)=>{
         if(p.field.hidden)return;
         const profile=profiles[i],role=HERO_APPEARANCES[profile.appearance].role,dir=['down','side','up','side'][p.direction],action=p.motion.value;

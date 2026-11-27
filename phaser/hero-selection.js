@@ -14,33 +14,15 @@ export function selectHero(scene, start) {
   mode.disabled=touchOnly;mode.closest('fieldset').hidden=touchOnly;
   if(touchOnly)form.querySelector('[name=players][value="1"]').checked=true;
   const customizer=createHeroCustomizer(scene,form);
-  const pages = [...form.querySelectorAll("[data-hero-screen]")];
-  const tabs = [...form.querySelectorAll(".hero-nav [data-hero-page]")];
-  const startRow = form.querySelector(".hero-actions");
-  let currentPage;
-  function showPage(page) {
-    currentPage = page;
-    for (const section of pages) section.hidden = section.dataset.heroScreen !== page;
-    for (const tab of tabs) tab.setAttribute("aria-pressed", String(tab.dataset.heroPage === page));
-    startRow.hidden = page === "save";
-  }
-  function navigate(event) {
-    const button = event.target.closest("[data-hero-page]");
-    if (!button) return;
-    const page = button.dataset.heroPage;
-    showPage(page);
-    if (!tabs.includes(button)) tabs.find(tab => tab.dataset.heroPage === page)?.focus();
-  }
-  form.addEventListener("click", navigate);
   const store=sessionStore(),saved=store.read(),resume=form.querySelector('[data-session-continue]'),info=form.querySelector('[data-session-info]');
   const previous=saved.exists;
-  tabs[0].hidden = !previous && !scene.registry.get('saveLoadError') && !saved.message;
   info.textContent=scene.registry.get('saveLoadError')||saved.message;
+  form.querySelector('[data-hero-save]').hidden = !saved.data && !info.textContent;
   scene.registry.remove('saveLoadError');
   resume.hidden=!saved.data;
   if(saved.data){
     const s=saved.data.actors[0].state,count=saved.data.actors.length;
-    info.textContent+=(info.textContent?' ':'')+`${saved.data.name} · день ${s.calendarDay+1} · ${count===2?'вдвоём':'один игрок'} · ${new Date(saved.data.savedAt).toLocaleString('ru-RU')}.`;
+    info.textContent+=(info.textContent?' ':'')+`${saved.data.name} · день ${s.calendarDay+1} · ${count===2?'вдвоём':'один игрок'}`;
     const project=CAMP_PROJECTS.find(p=>p.id===s.buildProject);
     const order=BUYER_ORDERS.find(o=>o.id===s.buyerOrders?.active?.id);
     const nextRaid=Math.ceil((s.calendarDay+1)/RAID_INTERVAL)*RAID_INTERVAL;
@@ -53,7 +35,6 @@ export function selectHero(scene, start) {
     if(resume.disabled)info.textContent+=' Для продолжения вдвоём откройте игру на компьютере.';
     form.querySelector('[data-hero-start]').textContent='Начать новую игру';
   }
-  showPage(tabs[0].hidden ? "heroes" : "save");
   function begin(){cleanup();dialog.close();document.body.classList.add('game-live');start();}
   const continueRun=()=>{
     if(!saved.data||resume.disabled)return;
@@ -67,7 +48,6 @@ export function selectHero(scene, start) {
   const prevent = (event) => event.preventDefault();
   const submit = (event) => {
     event.preventDefault();
-    if (currentPage === "save") return;
     const id = new FormData(form).get("appearance");
     if (!Object.hasOwn(HERO_APPEARANCES, id)) {
       error.textContent = "Выберите персонажа.";
@@ -85,7 +65,6 @@ export function selectHero(scene, start) {
   };
   function cleanup() {
     customizer.dispose();
-    form.removeEventListener("click", navigate);
     resume.removeEventListener('click',continueRun);
     form.removeEventListener("submit", submit);
     dialog.removeEventListener("cancel", prevent);
@@ -95,5 +74,5 @@ export function selectHero(scene, start) {
   dialog.addEventListener("cancel", prevent);
   scene.events.once("shutdown", cleanup);
   dialog.showModal();
-  if (currentPage === "save" && !resume.hidden && !resume.disabled) resume.focus();
+  if (!resume.hidden && !resume.disabled) resume.focus();
 }

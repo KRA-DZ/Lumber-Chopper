@@ -57,7 +57,6 @@ try:
             q.on("pageerror", lambda e: errors.append(str(e)))
             q.goto(f"http://127.0.0.1:{server.server_port}/" + ("dist/" if canvas else "index.html"))
             q.wait_for_selector("#heroDialog[open]")
-            q.locator('.hero-nav [data-hero-page="settings"]').click()
             q.locator('input[name=players][value="2"]').check()
             q.locator('[data-hero-start]').click()
             q.wait_for_function("window.lumberPhaser?.scene.hudReady", timeout=60000)

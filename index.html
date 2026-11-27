@@ -599,66 +599,56 @@
         <h2 id="heroTitle">Лесная смена</h2>
         <p data-hero-error role="alert"></p>
       </header>
-      <nav class="hero-nav" aria-label="Подготовка к игре">
-        <button type="button" data-hero-page="save" hidden>Сохранение</button>
-        <button type="button" data-hero-page="heroes">Герой</button>
-        <button type="button" data-hero-page="colors">Цвета</button>
-        <button type="button" data-hero-page="settings">Настройки</button>
-      </nav>
       <div class="hero-stage">
-        <section data-hero-screen="save" class="hero-save" aria-label="Сохранённая игра" hidden>
-          <h3>Продолжить смену</h3>
-          <p data-session-info role="status"></p>
-          <p data-session-goal></p>
-          <div class="hero-save-actions">
-            <button type="button" data-session-continue hidden>Продолжить</button>
-            <button type="button" data-hero-page="heroes">Новая игра</button>
-          </div>
-        </section>
-        <section data-hero-screen="heroes" aria-label="Выбор персонажа">
-      <fieldset class="hero-choices">
-        <legend>Персонаж игрока 1</legend>
-        <label class="hero-card">
-          <input type="radio" name="appearance" value="traveler" checked />
-          <img
-            src="./src/assets/people/hero2-portrait.png"
-            alt="Путешественник в бирюзовой куртке"
-            width="72"
-            height="104"
-          />
-          <b>Путешественник</b>
-        </label>
-        <label class="hero-card">
-          <input type="radio" name="appearance" value="woodcutter" />
-          <img
-            src="./src/assets/people/hero3-portrait.png"
-            alt="Лесорубка с косой и зелёным шарфом"
-            width="72"
-            height="104"
-          />
-          <b>Лесорубка</b>
-        </label>
-      </fieldset>
-        </section>
-        <section data-hero-screen="colors" aria-label="Цвета персонажа" hidden>
-          <div class="hero-player-nav" data-hero-player-nav hidden>
-            <button type="button" data-customize-player="0">Игрок 1</button>
-            <button type="button" data-customize-player="1">Игрок 2</button>
+        <fieldset class="hero-choices">
+          <legend data-hero-legend>Персонаж</legend>
+          <label class="hero-card">
+            <input type="radio" name="appearance" value="traveler" checked />
+            <img
+              src="./src/assets/people/hero2-portrait.png"
+              alt="Путешественник в бирюзовой куртке"
+              width="72"
+              height="104"
+            />
+            <b>Путешественник</b>
+          </label>
+          <label class="hero-card">
+            <input type="radio" name="appearance" value="woodcutter" />
+            <img
+              src="./src/assets/people/hero3-portrait.png"
+              alt="Лесорубка с косой и зелёным шарфом"
+              width="72"
+              height="104"
+            />
+            <b>Лесорубка</b>
+          </label>
+        </fieldset>
+        <section class="hero-look" aria-label="Внешность">
+          <div class="hero-look-heading">
+            <h3>Внешность</h3>
+            <div class="hero-player-nav" data-hero-player-nav hidden>
+              <button type="button" data-customize-player="0">Игрок 1</button>
+              <button type="button" data-customize-player="1">Игрок 2</button>
+            </div>
           </div>
           <div data-hero-customizer class="hero-customizer"></div>
         </section>
-        <section data-hero-screen="settings" class="hero-settings" aria-label="Настройки смены" hidden>
-          <label>Имя для рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
-          <label>Темп смены <select name="tempo"><option value="normal">Обычный · 10 мин</option><option value="quick">Быстрый · 4 мин</option></select></label>
-          <fieldset>
-            <legend>Режим игры</legend>
-            <label><input type="radio" name="players" value="1" checked /> Соло</label>
-            <label><input type="radio" name="players" value="2" /> Вдвоём</label>
-            <p>Игрок 1 — WASD и E. Игрок 2 — стрелки и Enter.</p>
-          </fieldset>
-        </section>
       </div>
+      <section class="hero-settings" aria-label="Параметры новой смены">
+        <label>Имя для рекордов <input name="runName" maxlength="32" placeholder="Лесоруб" /></label>
+        <label>Темп смены <select name="tempo"><option value="normal">Обычный · 10 мин</option><option value="quick">Быстрый · 4 мин</option></select></label>
+        <fieldset>
+          <legend>Режим игры</legend>
+          <label><input type="radio" name="players" value="1" checked /> Соло</label>
+          <label title="На одном компьютере: WASD и E / стрелки и Enter"><input type="radio" name="players" value="2" /> Вдвоём</label>
+        </fieldset>
+      </section>
+      <section class="hero-save" data-hero-save aria-label="Сохранённая игра" hidden>
+        <p data-session-info role="status"></p>
+        <p data-session-goal></p>
+      </section>
       <div class="hero-actions">
+        <button type="button" data-session-continue hidden>Продолжить смену</button>
         <button type="submit" data-hero-start>Начать смену</button>
       </div>
     </form>

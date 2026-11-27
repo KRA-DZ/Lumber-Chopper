@@ -19,7 +19,6 @@ try:
             q.on('pageerror',lambda e:errors.append(str(e)))
             q.goto(f'http://127.0.0.1:{server.server_port}/'+('dist/' if mobile else ''))
             q.wait_for_selector('#heroDialog[open]')
-            q.locator('.hero-nav [data-hero-page="colors"]').click()
             q.wait_for_function("!!document.querySelector('[data-hero-preview]')?.dataset.frame")
             assert q.evaluate('!window.lumberPhaser')
             assert not q.locator('[data-hero-player="1"]').is_visible()
@@ -29,9 +28,7 @@ try:
             q.wait_for_function("document.querySelector('[data-hero-preview]').dataset.colors==='forest/forest/burgundy'&&document.querySelector('[data-hero-preview]').dataset.direction==='right'")
             if mobile:q.locator('[name=appearance][value=woodcutter]').check()
             else:
-                q.locator('.hero-nav [data-hero-page="settings"]').click()
                 q.locator('[name=players][value="2"]').check()
-                q.locator('.hero-nav [data-hero-page="colors"]').click()
                 q.locator('[data-customize-player="1"]').click()
                 q.wait_for_selector('[data-hero-player="1"]')
                 q.select_option('[name=appearance2]','traveler')

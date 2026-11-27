@@ -8,7 +8,6 @@ def choose_hero(page, appearance="traveler"):
     )
     if page.evaluate("!!window.lumberPhaser?.scene?.hudReady"):
         return
-    page.locator('.hero-nav [data-hero-page="heroes"]').click()
     page.locator(f'#heroDialog input[value="{appearance}"]').check()
     page.locator("[data-hero-start]").click()
     page.wait_for_function("!!window.lumberPhaser?.scene?.hudReady", timeout=60000)
